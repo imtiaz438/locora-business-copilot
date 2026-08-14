@@ -1,0 +1,6 @@
+{
+  "name": "Locora AI — Business Copilot",
+  "description": "AI-powered business copilot for small businesses featuring CRM, invoicing, proposal generation, document creation, local SEO, marketing planner, website analysis, and AI chat.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,45 @@
+[
+  {
+    "id": "usr_guest",
+    "name": "Guest User",
+    "email": "usr_guest",
+    "companyName": "Guest Business Workspace",
+    "role": "owner",
+    "planTier": "free",
+    "subscriptionStatus": "active",
+    "billingCycle": "monthly",
+    "monthlyAiCredits": 15,
+    "aiCreditsUsed": 0,
+    "memberSince": "2026-07-31T10:44:59.318Z",
+    "nextBillingDate": "2026-08-30T10:44:59.319Z"
+  },
+  {
+    "id": "usr_1785495287099_jfg70",
+    "name": "Imtiaz Baloch",
+    "email": "imtiazbaloch3322@gmail.com",
+    "companyName": "Locora",
+    "role": "admin",
+    "planTier": "free",
+    "subscriptionStatus": "active",
+    "billingCycle": "monthly",
+    "monthlyAiCredits": 25,
+    "aiCreditsUsed": 0,
+    "memberSince": "2026-07-31T10:54:47.099Z",
+    "nextBillingDate": "2026-08-30T10:54:47.099Z",
+    "passwordHash": "Admin@123"
+  },
+  {
+    "id": "usr_admin_default",
+    "name": "System Admin",
+    "email": "admin@locora.ai",
+    "companyName": "Locora AI Admin",
+    "role": "admin",
+    "planTier": "agency",
+    "subscriptionStatus": "active",
+    "billingCycle": "monthly",
+    "monthlyAiCredits": 9999,
+    "aiCreditsUsed": 0,
+    "memberSince": "2026-08-07T17:55:01.237Z",
+    "nextBillingDate": "2026-09-06T17:55:01.237Z"
+  }
+]
