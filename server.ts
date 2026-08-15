@@ -3831,6 +3831,71 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
   }
 });
 
+// Direct SEO & Google Search Console Endpoints
+app.get('/robots.txt', (req, res) => {
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  const baseUrl = getRequestBaseUrl(req);
+  res.send(`User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin
+Disallow: /auth/callback
+
+Sitemap: ${baseUrl}/sitemap.xml
+`);
+});
+
+app.get('/sitemap.xml', (req, res) => {
+  try {
+    const baseUrl = getRequestBaseUrl(req);
+    const today = new Date().toISOString().split('T')[0];
+
+    const pages = [
+      { path: '/', priority: '1.0', changefreq: 'daily' },
+      { path: '/features', priority: '0.9', changefreq: 'weekly' },
+      { path: '/pricing', priority: '0.9', changefreq: 'weekly' },
+      { path: '/about', priority: '0.7', changefreq: 'monthly' },
+      { path: '/contact', priority: '0.7', changefreq: 'monthly' },
+      { path: '/security', priority: '0.6', changefreq: 'monthly' },
+      { path: '/privacy', priority: '0.5', changefreq: 'monthly' },
+      { path: '/terms', priority: '0.5', changefreq: 'monthly' },
+      { path: '/login', priority: '0.6', changefreq: 'monthly' },
+      { path: '/signup', priority: '0.6', changefreq: 'monthly' },
+      // Programmatic Industry Landing Pages
+      { path: '/for/dentists', priority: '0.85', changefreq: 'weekly' },
+      { path: '/for/hvac-contractors', priority: '0.85', changefreq: 'weekly' },
+      { path: '/for/real-estate', priority: '0.85', changefreq: 'weekly' },
+      { path: '/for/law-firms', priority: '0.85', changefreq: 'weekly' },
+      { path: '/for/plumbers', priority: '0.85', changefreq: 'weekly' },
+      { path: '/for/med-spas', priority: '0.85', changefreq: 'weekly' },
+      { path: '/for/restaurants', priority: '0.85', changefreq: 'weekly' },
+      { path: '/for/auto-repair', priority: '0.85', changefreq: 'weekly' },
+    ];
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n`;
+
+    pages.forEach((p) => {
+      xml += `  <url>\n`;
+      xml += `    <loc>${baseUrl}${p.path}</loc>\n`;
+      xml += `    <lastmod>${today}</lastmod>\n`;
+      xml += `    <changefreq>${p.changefreq}</changefreq>\n`;
+      xml += `    <priority>${p.priority}</priority>\n`;
+      xml += `  </url>\n`;
+    });
+
+    xml += `</urlset>`;
+
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return res.send(xml);
+  } catch (err: any) {
+    console.error('Sitemap generation error:', err);
+    res.status(500).send('Error generating sitemap');
+  }
+});
+
 // Start Server with Vite / Static middleware
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
