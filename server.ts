@@ -13,8 +13,39 @@ import * as dbService from './src/db/service.ts';
 const app = express();
 const PORT = 3000;
 
+app.set('trust proxy', 1);
+
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
+
+// Dynamic Base URL Resolver for OAuth, Stripe & Email Links
+function getRequestBaseUrl(req: express.Request): string {
+  // 1. Explicit production APP_URL (if configured to a non-localhost custom domain)
+  if (process.env.APP_URL && process.env.APP_URL.trim() && !process.env.APP_URL.includes('localhost')) {
+    return process.env.APP_URL.trim().replace(/\/+$/, '');
+  }
+  // 2. Client Origin header (passed in fetch/xhr/post)
+  if (req.headers.origin && typeof req.headers.origin === 'string') {
+    return req.headers.origin.trim().replace(/\/+$/, '');
+  }
+  // 3. Client Referer header (passed in browser GET requests)
+  if (req.headers.referer && typeof req.headers.referer === 'string') {
+    try {
+      const refUrl = new URL(req.headers.referer);
+      return refUrl.origin.trim().replace(/\/+$/, '');
+    } catch {
+      // ignore
+    }
+  }
+  // 4. Reverse Proxy headers (Nginx, Cloudflare, Cloud Run, Load Balancer)
+  const forwardedProto = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'https';
+  const forwardedHost = (req.headers['x-forwarded-host'] as string) || req.get('host');
+  if (forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`.replace(/\/+$/, '');
+  }
+  // 5. Fallback to default configured APP_URL or localhost
+  return (process.env.APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
+}
 
 // Stripe Client Helper (Lazy Init & Multi-Mode Safe)
 let stripeClient: Stripe | null = null;
@@ -1138,7 +1169,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       resetCode,
     });
 
-    const host = req.headers.origin || process.env.APP_URL || 'http://localhost:3000';
+    const host = getRequestBaseUrl(req);
     const magicResetUrl = `${host}/?reset_token=${magicToken}&email=${encodeURIComponent(normalizedEmail)}`;
 
     // Compose rich HTML verification email with Magic Reset Button & Link
@@ -1870,7 +1901,7 @@ app.post('/api/workspace/activity-logs', async (req, res) => {
 app.get('/api/auth/oauth/url', (req, res) => {
   try {
     const provider = (req.query.provider as string) || 'linkedin';
-    const host = req.headers.origin || process.env.APP_URL || 'http://localhost:3000';
+    const host = getRequestBaseUrl(req);
     const redirectUri = (req.query.redirectUri as string) || `${host}/auth/callback`;
 
     if (provider === 'linkedin') {
@@ -2068,7 +2099,7 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
     }
 
     const stripe = getStripe();
-    const host = req.headers.origin || process.env.APP_URL || 'http://localhost:3000';
+    const host = getRequestBaseUrl(req);
 
     if (!stripe) {
       return res.status(400).json({
@@ -3121,7 +3152,7 @@ async function executeWeeklyNewsletterDispatch(hostOverride?: string) {
     return { sentCount: 0, packTitle: 'No subscribers' };
   }
 
-  const host = hostOverride || `http://localhost:3000`;
+  const host = hostOverride || (process.env.APP_URL && !process.env.APP_URL.includes('localhost') ? process.env.APP_URL : 'https://locoraai.com');
   const packIndex = newsletterState.currentWeekIndex % WEEKLY_PROMPT_PACKS.length;
   const pack = WEEKLY_PROMPT_PACKS[packIndex];
 

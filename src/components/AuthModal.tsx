@@ -253,7 +253,9 @@ export const AuthModal: React.FC = () => {
 
   const handleOAuthConnect = async (provider: 'linkedin' | 'google') => {
     try {
-      const res = await fetch(`/api/auth/oauth/url?provider=${provider}`);
+      const currentOrigin = window.location.origin;
+      const redirectUri = `${currentOrigin}/auth/callback`;
+      const res = await fetch(`/api/auth/oauth/url?provider=${provider}&redirectUri=${encodeURIComponent(redirectUri)}`);
       const data = await res.json();
       if (data.url) {
         const width = 480;
@@ -827,4 +829,3 @@ export const AuthModal: React.FC = () => {
     </div>
   );
 };
-
