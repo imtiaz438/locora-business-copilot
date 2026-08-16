@@ -63,7 +63,7 @@ export const SubscriptionView: React.FC = () => {
   };
 
   const handleCopySupportEmail = () => {
-    navigator.clipboard.writeText('support@locora.ai');
+    navigator.clipboard.writeText('support@locoraai.com');
     setCopiedEmail(true);
     setTimeout(() => setCopiedEmail(false), 2500);
   };
@@ -359,12 +359,12 @@ export const SubscriptionView: React.FC = () => {
             
             <p className="text-xs text-slate-600 leading-relaxed">
               To cancel or request a refund for your subscription, please drop an email to our support team at{' '}
-              <strong className="text-slate-900 font-mono">support@locora.ai</strong>. Our team will review and take action within <strong>48 hours</strong>.
+              <strong className="text-slate-900 font-mono">support@locoraai.com</strong>. Our team will review and take action within <strong>48 hours</strong>.
             </p>
 
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-700">
-                <span>support@locora.ai</span>
+                <span>support@locoraai.com</span>
                 <button
                   type="button"
                   onClick={handleCopySupportEmail}
@@ -457,10 +457,10 @@ export const SubscriptionView: React.FC = () => {
                 <p>
                   To cancel or request a refund for your subscription, please drop an email to our support team at{' '}
                   <a
-                    href={`mailto:support@locora.ai?subject=Subscription%20Cancellation%20or%20Refund%20Request%20-%20${encodeURIComponent(user.email)}&body=Hi%20Locora%20Support%20Team%2C%0A%0AI%20would%20like%20to%20request%20cancellation%2Frefund%20for%20my%20account%3A%20${encodeURIComponent(user.email)}.%0A%0AThank%20you!`}
+                    href={`mailto:support@locoraai.com?subject=Subscription%20Cancellation%20or%20Refund%20Request%20-%20${encodeURIComponent(user.email)}&body=Hi%20Locora%20Support%20Team%2C%0A%0AI%20would%20like%20to%20request%20cancellation%2Frefund%20for%20my%20account%3A%20${encodeURIComponent(user.email)}.%0A%0AThank%20you!`}
                     className="font-mono text-[#059669] font-bold underline"
                   >
-                    support@locora.ai
+                    support@locoraai.com
                   </a>.
                 </p>
                 <p className="text-[11px] text-slate-500">
@@ -479,7 +479,7 @@ export const SubscriptionView: React.FC = () => {
 
             <div className="flex gap-3 pt-2">
               <a
-                href={`mailto:support@locora.ai?subject=Subscription%20Cancellation%20or%20Refund%20Request%20-%20${encodeURIComponent(user.email)}&body=Hi%20Locora%20Support%20Team%2C%0A%0AI%20would%20like%20to%20request%20cancellation%2Frefund%20for%20my%20account%3A%20${encodeURIComponent(user.email)}.%0A%0AThank%20you!`}
+                href={`mailto:support@locoraai.com?subject=Subscription%20Cancellation%20or%20Refund%20Request%20-%20${encodeURIComponent(user.email)}&body=Hi%20Locora%20Support%20Team%2C%0A%0AI%20would%20like%20to%20request%20cancellation%2Frefund%20for%20my%20account%3A%20${encodeURIComponent(user.email)}.%0A%0AThank%20you!`}
                 className="flex-1 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-2xs text-center flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Mail className="w-4 h-4" />
@@ -500,4 +500,3 @@ export const SubscriptionView: React.FC = () => {
     </div>
   );
 };
-

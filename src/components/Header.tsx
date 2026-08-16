@@ -137,7 +137,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <span>Billing & Subscription</span>
                 </button>
 
-                {(user.role === 'admin' || user.role === 'owner' || user.email === 'imtiazbaloch3322@gmail.com' || user.email === 'admin@locora.ai') && (
+                {(user.role === 'admin' || user.role === 'owner' || user.email === 'imtiazbaloch3322@gmail.com' || user.email === 'support@locoraai.com') && (
                   <button
                     type="button"
                     onClick={() => {

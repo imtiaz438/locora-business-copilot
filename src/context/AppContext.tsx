@@ -295,7 +295,7 @@ const PATH_TO_TAB: Record<string, string> = {
       .then((data) => {
         if (data && data.user && data.user.email) {
           const normalizedEmailToFetch = data.user.email.toLowerCase().trim();
-          const isSuperAdminEmail = normalizedEmailToFetch === 'imtiazbaloch3322@gmail.com' || normalizedEmailToFetch === 'admin@locora.ai';
+          const isSuperAdminEmail = normalizedEmailToFetch === 'imtiazbaloch3322@gmail.com' || normalizedEmailToFetch === 'support@locoraai.com';
           setUser({
             ...data.user,
             role: isSuperAdminEmail ? 'admin' : (data.user.role || 'customer'),
@@ -464,7 +464,7 @@ const PATH_TO_TAB: Record<string, string> = {
       usedCredits = initialCreditsUsed;
     }
 
-    const isSuperAdmin = userEmail === 'imtiazbaloch3322@gmail.com' || userEmail === 'admin@locora.ai';
+    const isSuperAdmin = userEmail === 'imtiazbaloch3322@gmail.com' || userEmail === 'support@locoraai.com';
     const assignedRole: UserRole = isSuperAdmin ? 'admin' : (role || 'customer');
 
     const newUser: UserProfile = {

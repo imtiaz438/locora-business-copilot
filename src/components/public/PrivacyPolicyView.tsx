@@ -193,11 +193,11 @@ export const PrivacyPolicyView: React.FC = () => {
               <p>If you have any questions, concerns, or data requests regarding this Privacy Policy, please contact us:</p>
               <div className="flex flex-col sm:flex-row gap-4 pt-2">
                 <a
-                  href="mailto:privacy@locora.ai"
+                  href="mailto:support@locoraai.com"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl border border-slate-200 transition-colors"
                 >
                   <Mail className="w-4 h-4 text-[#059669]" />
-                  <span>Email: privacy@locora.ai</span>
+                  <span>Email: support@locoraai.com</span>
                 </a>
                 <button
                   onClick={() => setActiveTab('contact')}

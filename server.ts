@@ -63,114 +63,93 @@ function getStripe(): Stripe | null {
   return stripeClient;
 }
 
-// Universal Multi-Provider Email Service Helper (Resend, SendGrid, SMTP, & Test Mode)
+// Resend REST API Email Service (Active for Resend API Only)
 interface SendEmailParams {
   to: string;
   subject: string;
   text?: string;
   html: string;
+  replyTo?: string;
 }
 
-async function sendEmail({ to, subject, text, html }: SendEmailParams): Promise<{ success: boolean; provider: string; messageId?: string; error?: string }> {
-  // 1. Resend API (HTTP REST API integration)
-  const resendApiKey = process.env.RESEND_API_KEY || '';
-  if (resendApiKey && resendApiKey.trim()) {
+const SUPPORT_EMAIL = 'support@locoraai.com';
+
+async function sendEmail({ to, subject, text, html, replyTo = SUPPORT_EMAIL }: SendEmailParams): Promise<{ success: boolean; provider: string; messageId?: string; error?: string }> {
+  const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
+
+  // Active Resend API Dispatch
+  if (resendApiKey) {
     try {
-      const fromEmail = process.env.SMTP_FROM || 'Locora AI <onboarding@resend.dev>';
-      const res = await fetch('https://api.resend.com/emails', {
+      let fromEmail = process.env.SMTP_FROM || `Locora AI <${SUPPORT_EMAIL}>`;
+      
+      let res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${resendApiKey.trim()}`,
+          'Authorization': `Bearer ${resendApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           from: fromEmail,
           to: [to],
+          reply_to: replyTo,
           subject,
           text: text || html.replace(/<[^>]+>/g, ''),
           html,
         }),
       });
-      const data = await res.json();
+
+      let data = await res.json();
+
+      // If custom domain is not yet verified in Resend, automatically retry with default sandbox sender
+      if (!res.ok && data?.message && (data.message.includes('domain') || data.message.includes('from'))) {
+        console.warn(`[Email:Resend] Retrying with onboarding sender: ${data.message}`);
+        fromEmail = 'Locora AI <onboarding@resend.dev>';
+        res = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: fromEmail,
+            to: [to],
+            reply_to: replyTo,
+            subject,
+            text: text || html.replace(/<[^>]+>/g, ''),
+            html,
+          }),
+        });
+        data = await res.json();
+      }
+
       if (res.ok && data.id) {
-        console.log(`[Email] Dispatched via Resend API to ${to} (ID: ${data.id})`);
+        console.log(`[Email:Resend] Successfully dispatched to ${to} (Message ID: ${data.id})`);
         return { success: true, provider: 'resend', messageId: data.id };
       }
-      console.warn('[Email] Resend API error response:', data);
+
+      console.warn('[Email:Resend] API Error:', data);
+      return { success: false, provider: 'resend', error: data?.message || 'Resend delivery failed' };
     } catch (err: any) {
-      console.error('[Email] Resend fetch exception:', err.message);
+      console.error('[Email:Resend] Exception:', err.message);
+      return { success: false, provider: 'resend', error: err.message };
     }
   }
 
-  // 2. SendGrid API
-  if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.trim()) {
-    try {
-      const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.SENDGRID_API_KEY.trim()}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          personalizations: [{ to: [{ email: to }] }],
-          from: { email: process.env.SMTP_FROM || 'no-reply@locoraai.com', name: 'Locora AI Copilot' },
-          subject,
-          content: [
-            { type: 'text/plain', value: text || html.replace(/<[^>]+>/g, '') },
-            { type: 'text/html', value: html },
-          ],
-        }),
-      });
-      if (res.ok) {
-        console.log(`[Email] Dispatched via SendGrid to ${to}`);
-        return { success: true, provider: 'sendgrid' };
-      }
-    } catch (err: any) {
-      console.error('[Email] SendGrid exception:', err.message);
-    }
-  }
-
-  // 3. SMTP Transport (Nodemailer)
-  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-    try {
-      const port = parseInt(process.env.SMTP_PORT || '587', 10);
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST.trim(),
-        port,
-        secure: port === 465,
-        auth: {
-          user: process.env.SMTP_USER.trim(),
-          pass: process.env.SMTP_PASS.trim(),
-        },
-      });
-
-      const info = await transporter.sendMail({
-        from: process.env.SMTP_FROM || `"Locora AI" <${process.env.SMTP_USER.trim()}>`,
-        to,
-        subject,
-        text: text || html.replace(/<[^>]+>/g, ''),
-        html,
-      });
-
-      console.log(`[Email] Dispatched via SMTP (${process.env.SMTP_HOST}) to ${to} (Message ID: ${info.messageId})`);
-      return { success: true, provider: 'smtp', messageId: info.messageId };
-    } catch (err: any) {
-      console.error('[Email] SMTP exception:', err.message);
-    }
-  }
-
-  // 4. Simulated Live Mode Log Fallback
-  console.log(`\n================ [EMAIL DISPATCH LOG] ================
+  // Development / Test Log Fallback when RESEND_API_KEY is not configured
+  console.log(`\n================ [RESEND EMAIL DISPATCH LOG] ================
+PROVIDER: Resend API (Waiting for RESEND_API_KEY env variable)
+FROM: Locora AI <${SUPPORT_EMAIL}>
+REPLY-TO: ${replyTo}
 TO: ${to}
 SUBJECT: ${subject}
-BODY (HTML Snippet):
-${html.slice(0, 300)}...
-====================================================\n`);
+BODY (HTML Preview):
+${html.slice(0, 350)}...
+============================================================\n`);
 
   return {
     success: true,
     provider: 'simulated_live',
-    messageId: `sim_${Date.now()}`,
+    messageId: `resend_sim_${Date.now()}`,
   };
 }
 
@@ -553,7 +532,7 @@ const seedDefaultUsers = () => {
     {
       id: 'usr_admin_default',
       name: 'System Admin',
-      email: 'admin@locora.ai',
+      email: 'support@locoraai.com',
       companyName: 'Locora AI Admin',
       role: 'admin',
       planTier: 'agency',
@@ -628,7 +607,7 @@ async function findUserByEmail(email: string): Promise<UserRecord | null> {
     const foundSql = sqlUsers.find((u) => u.email?.toLowerCase().trim() === normalized);
     if (foundSql) {
       const sqlRole = ((foundSql as any).role as string) || '';
-      const fallbackRole = sqlRole || (normalized === 'imtiazbaloch3322@gmail.com' || normalized === 'admin@locora.ai' ? 'admin' : foundSql.planTier && foundSql.planTier !== 'free' ? 'subscriber' : 'customer');
+      const fallbackRole = sqlRole || (normalized === 'imtiazbaloch3322@gmail.com' || normalized === 'support@locoraai.com' ? 'admin' : foundSql.planTier && foundSql.planTier !== 'free' ? 'subscriber' : 'customer');
 
       const record: UserRecord = {
         id: foundSql.uid,
@@ -902,12 +881,12 @@ app.post('/api/book-demo', async (req, res) => {
     // 2. Save to demo requests list
     fs.writeFileSync(DEMO_REQUESTS_FILE, JSON.stringify(requestsList, null, 2), 'utf-8');
 
-    // 3. Dispatch Email Notification to Admin
-    const adminEmail = process.env.ADMIN_EMAIL || 'imtiazbaloch3322@gmail.com';
+    // 3. Dispatch Email Notification to Admin Support
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.SUPPORT_EMAIL || SUPPORT_EMAIL;
     await sendEmail({
       to: adminEmail,
       subject: `🚨 New Demo Access Request from ${nameStr}`,
-      text: `Hello Admin,\n\n${nameStr} (${normalizedEmail}) has requested free demo access to Locora AI Copilot.\n\nPlease review and email the guest user password to try the demo.\n\nSender Name: ${nameStr}\nSender Email: ${normalizedEmail}\nTime: ${new Date().toLocaleString()}`,
+      text: `Hello Support Team,\n\n${nameStr} (${normalizedEmail}) has requested free demo access to Locora AI Copilot.\n\nSender Name: ${nameStr}\nSender Email: ${normalizedEmail}\nTime: ${new Date().toLocaleString()}`,
       html: `
         <div style="font-family: sans-serif; padding: 24px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
           <h2 style="color: #059669; margin-top: 0;">🚀 New Locora AI Demo Access Request</h2>
@@ -917,14 +896,42 @@ app.post('/api/book-demo', async (req, res) => {
             <tr><td style="padding: 10px 14px; font-weight: bold; border-bottom: 1px solid #e2e8f0; color: #475569;">Sender Email:</td><td style="padding: 10px 14px; border-bottom: 1px solid #e2e8f0;"><a href="mailto:${normalizedEmail}" style="color: #059669; font-weight: bold;">${normalizedEmail}</a></td></tr>
             <tr><td style="padding: 10px 14px; font-weight: bold; color: #475569;">Requested At:</td><td style="padding: 10px 14px;">${new Date().toLocaleString()}</td></tr>
           </table>
-          <p style="margin-top: 16px; font-size: 13px; color: #64748b;"><strong>Action Required:</strong> Please email ${normalizedEmail} with the guest user password or access credentials to try the demo.</p>
+          <p style="margin-top: 16px; font-size: 13px; color: #64748b;"><strong>Status:</strong> Confirmation email with guest access guidance dispatched to ${normalizedEmail}.</p>
         </div>
       `,
     });
 
+    // 4. Dispatch Instant Demo Access Confirmation to the User
+    await sendEmail({
+      to: normalizedEmail,
+      subject: `🎯 Your Locora AI Demo Access & Interactive Tour, ${nameStr}!`,
+      text: `Hello ${nameStr},\n\nThank you for requesting demo access to Locora AI Copilot!\n\nYou can explore our interactive demo mode directly at https://locoraai.com by clicking 'Live Demo' or create your free account in 1 click.\n\nBest regards,\nLocora AI Support Team\nsupport@locoraai.com`,
+      html: `
+        <div style="font-family: sans-serif; padding: 28px; color: #1e293b; background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #059669; margin: 0; font-size: 24px; font-weight: 800;">Locora AI Demo Access</h1>
+            <p style="color: #64748b; font-size: 14px; margin-top: 4px;">Welcome to Your Live AI Copilot Experience</p>
+          </div>
+          <p style="font-size: 15px; color: #334155;">Hello <strong>${nameStr}</strong>,</p>
+          <p style="font-size: 14px; color: #334155; line-height: 1.5;">We are delighted to welcome you! Your demo request has been registered and our team is excited for you to experience the full power of Locora AI.</p>
+          
+          <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 18px; border-radius: 10px; margin: 20px 0;">
+            <h3 style="margin: 0 0 8px 0; color: #166534; font-size: 15px;">🌟 Explore Live Demo Mode</h3>
+            <p style="margin: 0; font-size: 13px; color: #15803d; line-height: 1.5;">You can test proposal generation, run real-time local SEO audits, simulate AI invoice creation, and experiment with our CRM copilot right now.</p>
+          </div>
+
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="https://locoraai.com" style="display: inline-block; padding: 12px 24px; background-color: #059669; color: #ffffff; font-weight: bold; text-decoration: none; border-radius: 8px; font-size: 14px;">Launch Demo & Sign In</a>
+          </div>
+
+          <p style="font-size: 12px; color: #64748b; margin-top: 24px; text-align: center;">Questions? Reach us anytime at <a href="mailto:${SUPPORT_EMAIL}" style="color: #059669; font-weight: bold;">${SUPPORT_EMAIL}</a>.</p>
+        </div>
+      `,
+    }).catch(err => console.error('[Email] Demo confirmation email failed:', err));
+
     res.json({
       success: true,
-      message: `Thank you, ${nameStr}! Your demo access request has been submitted to the admin (${adminEmail}). Please check your inbox shortly for your guest user password to try the demo.`,
+      message: `Thank you, ${nameStr}! Your demo access request has been received and confirmed. Please check your inbox (${normalizedEmail}) for access guidance.`,
       demoRequest,
     });
   } catch (err: any) {
@@ -976,7 +983,7 @@ app.post('/api/auth/register', async (req, res) => {
     const requestedPlan = plan || 'free';
     const creditsMap: Record<string, number> = { free: 25, pro: 250, agency: 9999 };
     const initialRole = role || (
-      normalizedEmail === 'imtiazbaloch3322@gmail.com' || normalizedEmail === 'admin@locora.ai' ? 'admin' :
+      normalizedEmail === 'imtiazbaloch3322@gmail.com' || normalizedEmail === 'support@locoraai.com' ? 'admin' :
       requestedPlan !== 'free' ? 'subscriber' : 'customer'
     );
     const newUser: UserRecord = {
@@ -1000,7 +1007,7 @@ app.post('/api/auth/register', async (req, res) => {
     await saveUserToSql(newUser);
 
     // Send confirmation email to new user & notification to admin
-    const adminEmail = process.env.ADMIN_EMAIL || 'imtiazbaloch3322@gmail.com';
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.SUPPORT_EMAIL || SUPPORT_EMAIL;
 
     // 1. Send Account Confirmation Email to the New User
     sendEmail({
@@ -1361,30 +1368,100 @@ app.post('/api/auth/reset-password', async (req, res) => {
 // Social Login Direct Proxy
 app.post('/api/auth/social', async (req, res) => {
   try {
-    const { provider, email, name } = req.body;
-    const userEmail = (email || `user.${provider || 'social'}@locoraai.com`).toLowerCase().trim();
-    const userName = name || (provider === 'linkedin' ? 'LinkedIn User' : 'Google User');
+    const { provider, email, name, companyName, planTier } = req.body;
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ error: 'A valid email address is required for social login.' });
+    }
+    const userEmail = email.toLowerCase().trim();
+    const fallbackName = userEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+    const userName = (name && name.trim()) ? name.trim() : fallbackName;
+    const isSuperAdmin = userEmail === 'imtiazbaloch3322@gmail.com' || userEmail === 'support@locoraai.com';
 
     let user = await findUserByEmail(userEmail);
+    let isNewUser = false;
     if (!user) {
+      isNewUser = true;
       user = {
-        id: `usr_soc_${Date.now()}`,
+        id: `usr_soc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         name: userName,
         email: userEmail,
-        companyName: `${userName}'s Agency`,
-        role: 'member',
-        planTier: 'pro',
+        companyName: companyName || `${userName}'s Business Workspace`,
+        role: isSuperAdmin ? 'admin' : 'customer',
+        planTier: planTier === 'pro' || planTier === 'agency' ? planTier : 'free',
         subscriptionStatus: 'active',
         billingCycle: 'monthly',
-        monthlyAiCredits: 250,
+        monthlyAiCredits: planTier === 'agency' ? 9999 : planTier === 'pro' ? 250 : 25,
         aiCreditsUsed: 0,
+        invoicesCreatedCount: 0,
         memberSince: new Date().toISOString(),
         nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
-        paymentMethod: { cardLast4: '4242', cardBrand: 'Visa', expDate: '12/28' },
       };
       usersDb.set(userEmail, user);
-      await saveUserToSql(user);
+      saveUsersToDisk();
+      await saveUserToSql(user).catch(() => {});
+
+      // Dispatch Welcome Email to New Social User & Notification to Admin
+      const adminEmail = process.env.ADMIN_EMAIL || process.env.SUPPORT_EMAIL || SUPPORT_EMAIL;
+      const providerLabel = provider ? provider.toUpperCase() : 'Social Single Sign-On';
+
+      sendEmail({
+        to: user.email,
+        subject: `🎉 Welcome to Locora AI, ${user.name}! Your ${providerLabel} Sign-In is Confirmed`,
+        text: `Hello ${user.name},\n\nWelcome to Locora AI Copilot! Your account has been connected via ${providerLabel}.\n\nAccount Details:\n- Name: ${user.name}\n- Email: ${user.email}\n- Business Workspace: ${user.companyName}\n- Plan Tier: ${user.planTier.toUpperCase()}\n- Monthly AI Credits: ${user.monthlyAiCredits}\n\nBest regards,\nLocora AI Team\n${SUPPORT_EMAIL}`,
+        html: `
+          <div style="font-family: sans-serif; padding: 28px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <h1 style="color: #059669; margin: 0; font-size: 24px; font-weight: 800;">Locora AI Business Copilot</h1>
+              <p style="color: #64748b; font-size: 14px; margin-top: 4px;">${providerLabel} Authentication Confirmed</p>
+            </div>
+            <p style="font-size: 15px; color: #334155;">Hello <strong>${user.name}</strong>,</p>
+            <p style="font-size: 14px; color: #334155; line-height: 1.5;">Welcome aboard! Your Locora AI workspace has been created and connected with your real profile (<strong>${user.email}</strong>).</p>
+
+            <div style="background-color: #ffffff; padding: 18px; border-radius: 10px; border: 1px solid #e2e8f0; margin: 20px 0;">
+              <h3 style="margin-top: 0; color: #0f172a; font-size: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">Workspace Overview</h3>
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <tr><td style="padding: 6px 0; color: #64748b; font-weight: 600;">Full Name:</td><td style="padding: 6px 0; color: #0f172a; font-weight: bold;">${user.name}</td></tr>
+                <tr><td style="padding: 6px 0; color: #64748b; font-weight: 600;">Email Address:</td><td style="padding: 6px 0; color: #059669; font-weight: bold;">${user.email}</td></tr>
+                <tr><td style="padding: 6px 0; color: #64748b; font-weight: 600;">Connected Via:</td><td style="padding: 6px 0; color: #0f172a; font-weight: 600;">${providerLabel}</td></tr>
+                <tr><td style="padding: 6px 0; color: #64748b; font-weight: 600;">Plan Tier:</td><td style="padding: 6px 0; color: #059669; font-weight: bold; text-transform: uppercase;">${user.planTier}</td></tr>
+                <tr><td style="padding: 6px 0; color: #64748b; font-weight: 600;">Monthly AI Credits:</td><td style="padding: 6px 0; color: #0f172a; font-weight: bold;">${user.monthlyAiCredits} Credits</td></tr>
+              </table>
+            </div>
+
+            <div style="text-align: center; margin-top: 24px;">
+              <a href="${process.env.APP_URL || 'https://locoraai.com'}" style="display: inline-block; padding: 12px 24px; background-color: #059669; color: #ffffff; font-weight: bold; text-decoration: none; border-radius: 8px; font-size: 14px;">Open Your AI Workspace</a>
+            </div>
+            <p style="font-size: 12px; color: #64748b; margin-top: 24px; text-align: center;">Support Contact: <a href="mailto:${SUPPORT_EMAIL}" style="color: #059669; font-weight: bold;">${SUPPORT_EMAIL}</a></p>
+          </div>
+        `,
+      }).catch(() => {});
+
+      sendEmail({
+        to: adminEmail,
+        subject: `🌐 New ${providerLabel} Sign-In: ${user.name} (${user.email})`,
+        text: `New user signed in via ${providerLabel}:\nName: ${user.name}\nEmail: ${user.email}\nCompany: ${user.companyName}\nPlan: ${user.planTier}\nTime: ${new Date().toLocaleString()}`,
+        html: `
+          <div style="font-family: sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <h3 style="color: #059669; margin-top: 0;">🌐 New ${providerLabel} Registration</h3>
+            <p><strong>Name:</strong> ${user.name}</p>
+            <p><strong>Email:</strong> ${user.email}</p>
+            <p><strong>Company:</strong> ${user.companyName}</p>
+            <p><strong>Plan:</strong> ${user.planTier.toUpperCase()}</p>
+            <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+          </div>
+        `,
+      }).catch(() => {});
+    } else {
+      // If user exists, update name if previously missing
+      if (userName && (!user.name || user.name.startsWith('User ') || user.name === 'Alex Vance')) {
+        user.name = userName;
+        usersDb.set(userEmail, user);
+        saveUsersToDisk();
+      }
     }
+
+    // Ensure isolated workspace disk store exists
+    getUserWorkspaceDiskStore(userEmail);
 
     res.cookie('auth_email', userEmail, {
       httpOnly: true,
@@ -1428,7 +1505,7 @@ app.post('/api/auth/sync', async (req, res) => {
       if (password && password.length >= 6) user.passwordHash = password;
     } else {
       const initialRole = role || (
-        normalizedEmail === 'imtiazbaloch3322@gmail.com' || normalizedEmail === 'admin@locora.ai' ? 'admin' :
+        normalizedEmail === 'imtiazbaloch3322@gmail.com' || normalizedEmail === 'support@locoraai.com' ? 'admin' :
         (planTier && planTier !== 'free' ? 'subscriber' : 'customer')
       );
       user = {
@@ -2089,8 +2166,66 @@ app.get(['/auth/callback', '/auth/callback/'], async (req, res) => {
   }
 
   if (!email) {
-    email = `user.${provider}@locoraai.com`;
+    // If no email was captured from provider token, present an interactive user identity confirmation form
+    const isLinkedIn = provider === 'linkedin';
+    return res.send(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Confirm Your ${isLinkedIn ? 'LinkedIn' : 'Google'} Account</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0b1329; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 1.5rem; box-sizing: border-box; }
+          .card { background: #151f38; border: 1px solid #2a3b60; border-radius: 1.25rem; padding: 2rem; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6); }
+          .logo { width: 52px; height: 52px; border-radius: 1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; }
+          .linkedin-logo { background: #0077b5; color: white; }
+          .google-logo { background: white; }
+          h2 { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.5rem; }
+          p { font-size: 0.85rem; color: #94a3b8; margin: 0 0 1.25rem; line-height: 1.4; }
+          .form-group { text-align: left; margin-bottom: 1rem; }
+          label { display: block; font-size: 0.75rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.05em; }
+          input { width: 100%; padding: 0.75rem 0.85rem; background: #0a1124; border: 1px solid #334155; border-radius: 0.65rem; color: white; font-size: 0.9rem; box-sizing: border-box; outline: none; transition: border-color 0.2s; }
+          input:focus { border-color: ${isLinkedIn ? '#0077b5' : '#059669'}; }
+          .btn { display: block; width: 100%; padding: 0.85rem; background: ${isLinkedIn ? '#0077b5' : '#059669'}; color: white; font-weight: bold; border: none; border-radius: 0.75rem; font-size: 0.9rem; cursor: pointer; transition: opacity 0.2s; text-decoration: none; box-sizing: border-box; margin-top: 1.25rem; }
+          .btn:hover { opacity: 0.9; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="logo ${isLinkedIn ? 'linkedin-logo' : 'google-logo'}">
+            ${isLinkedIn 
+              ? `<svg width="28" height="28" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.25V10.9H6.46M7.86 6.72a1.4 1.4 0 1 0 1.4 1.4 1.4 0 0 0-1.4-1.4z"/></svg>`
+              : `<svg width="28" height="28" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>`
+            }
+          </div>
+          <h2>Confirm ${isLinkedIn ? 'LinkedIn' : 'Google'} Profile</h2>
+          <p>Please enter your real name and email to connect your workspace.</p>
+
+          <form action="/auth/callback" method="GET">
+            <input type="hidden" name="provider" value="${provider}">
+            <input type="hidden" name="code" value="oauth_done_${Date.now()}">
+
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" name="name" required placeholder="e.g. Imtiaz Baloch">
+            </div>
+
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" name="email" required placeholder="e.g. imtiazbaloch3322@gmail.com">
+            </div>
+
+            <button type="submit" class="btn">
+              Complete Sign In & Open Dashboard
+            </button>
+          </form>
+        </div>
+      </body>
+      </html>
+    `);
   }
+
   if (!name) {
     name = email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
@@ -2099,7 +2234,7 @@ app.get(['/auth/callback', '/auth/callback/'], async (req, res) => {
   let user = usersDb.get(normalizedEmail);
 
   if (!user) {
-    const isSuperAdmin = normalizedEmail === 'imtiazbaloch3322@gmail.com' || normalizedEmail === 'admin@locora.ai';
+    const isSuperAdmin = normalizedEmail === 'imtiazbaloch3322@gmail.com' || normalizedEmail === 'support@locoraai.com';
     user = {
       id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       name: name,
@@ -2117,6 +2252,35 @@ app.get(['/auth/callback', '/auth/callback/'], async (req, res) => {
     };
     usersDb.set(normalizedEmail, user);
     saveUsersToDisk();
+
+    // Send Welcome Email to New User & Alert to Admin
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.SUPPORT_EMAIL || SUPPORT_EMAIL;
+    const providerLabel = provider ? provider.toUpperCase() : 'Single Sign-On';
+
+    sendEmail({
+      to: user.email,
+      subject: `🎉 Welcome to Locora AI, ${user.name}! Your ${providerLabel} Sign-In is Confirmed`,
+      text: `Hello ${user.name},\n\nWelcome to Locora AI Copilot! Your account has been registered via ${providerLabel}.\n\nAccount Details:\n- Name: ${user.name}\n- Email: ${user.email}\n- Business Workspace: ${user.companyName}\n- Plan: FREE (25 Monthly AI Credits)\n\nBest regards,\nLocora AI Team\n${SUPPORT_EMAIL}`,
+      html: `
+        <div style="font-family: sans-serif; padding: 28px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #059669; margin-top: 0;">🎉 Welcome to Locora AI, ${user.name}!</h2>
+          <p>Your workspace is now ready and authenticated via ${providerLabel}.</p>
+          <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0;">
+            <p style="margin: 4px 0;"><strong>Name:</strong> ${user.name}</p>
+            <p style="margin: 4px 0;"><strong>Email:</strong> ${user.email}</p>
+            <p style="margin: 4px 0;"><strong>Plan:</strong> FREE (25 Credits/mo)</p>
+          </div>
+          <p>Login anytime at <a href="https://locoraai.com" style="color: #059669; font-weight: bold;">https://locoraai.com</a>.</p>
+        </div>
+      `,
+    }).catch(() => {});
+
+    sendEmail({
+      to: adminEmail,
+      subject: `🌐 New ${providerLabel} Registration: ${user.name} (${user.email})`,
+      text: `New user registered via ${providerLabel}:\nName: ${user.name}\nEmail: ${user.email}\nTime: ${new Date().toLocaleString()}`,
+      html: `<p>New user registered via <strong>${providerLabel}</strong>:</p><p>Name: <strong>${user.name}</strong></p><p>Email: <strong>${user.email}</strong></p>`,
+    }).catch(() => {});
   }
 
   // Sync OAuth user to Cloud SQL PostgreSQL database
@@ -2331,7 +2495,7 @@ app.get('/api/stripe/verify-session', async (req, res) => {
       }).catch(() => {});
 
       // Notify Admin
-      const adminEmail = process.env.ADMIN_EMAIL || 'imtiazbaloch3322@gmail.com';
+      const adminEmail = process.env.ADMIN_EMAIL || process.env.SUPPORT_EMAIL || SUPPORT_EMAIL;
       sendEmail({
         to: adminEmail,
         subject: `💰 New Paid Subscription: ${email} subscribed to ${plan.toUpperCase()} (${planPriceStr})`,
@@ -3055,7 +3219,7 @@ app.post('/api/contact', async (req, res) => {
     }
 
     const ticketId = `LOC-${Math.floor(100000 + Math.random() * 900000)}`;
-    const supportRecipient = process.env.SUPPORT_EMAIL || 'imtiazbaloch3322@gmail.com';
+    const supportRecipient = process.env.SUPPORT_EMAIL || SUPPORT_EMAIL;
 
     // 1. Send Notification Email to Locora AI Support Team
     await sendEmail({
@@ -3394,7 +3558,7 @@ async function verifyAdminAccessAsync(req: express.Request): Promise<boolean> {
   const userEmail = ((req.headers['x-user-email'] as string) || (req.query.userEmail as string) || (req.body && req.body.userEmail) || '').toLowerCase().trim();
 
   if (userEmail) {
-    if (userEmail === 'imtiazbaloch3322@gmail.com' || userEmail === 'admin@locora.ai') {
+    if (userEmail === 'imtiazbaloch3322@gmail.com' || userEmail === 'support@locoraai.com') {
       return true;
     }
     let usr = usersDb.get(userEmail);
@@ -3413,7 +3577,7 @@ function verifyAdminAccess(req: express.Request): boolean {
   const userEmail = ((req.headers['x-user-email'] as string) || (req.query.userEmail as string) || (req.body && req.body.userEmail) || '').toLowerCase().trim();
 
   if (userEmail) {
-    if (userEmail === 'imtiazbaloch3322@gmail.com' || userEmail === 'admin@locora.ai') {
+    if (userEmail === 'imtiazbaloch3322@gmail.com' || userEmail === 'support@locoraai.com') {
       return true;
     }
     const usr = usersDb.get(userEmail);
@@ -3897,7 +4061,7 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
     });
 
     // Send Admin Notification to Support Team
-    const supportEmail = process.env.SUPPORT_EMAIL || 'imtiazbaloch3322@gmail.com';
+    const supportEmail = process.env.SUPPORT_EMAIL || SUPPORT_EMAIL;
     await sendEmail({
       to: supportEmail,
       subject: `[New Subscriber] Weekly Newsletter: ${normalizedEmail}`,

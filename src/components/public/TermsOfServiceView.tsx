@@ -186,12 +186,18 @@ export const TermsOfServiceView: React.FC = () => {
             </h2>
             <div className="text-xs sm:text-sm text-slate-600 leading-relaxed pl-8 space-y-3">
               <p>For questions or notices regarding these Terms of Service, please reach out to our legal department:</p>
-              <div className="pt-2">
-                <button
-                  onClick={() => setActiveTab('contact')}
+              <div className="pt-2 flex flex-wrap items-center gap-3">
+                <a
+                  href="mailto:support@locoraai.com"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
                 >
-                  <span>Contact Locora Legal & Support</span>
+                  <span>Email: support@locoraai.com</span>
+                </a>
+                <button
+                  onClick={() => setActiveTab('contact')}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer border border-slate-200"
+                >
+                  <span>Open Contact Form</span>
                 </button>
               </div>
             </div>

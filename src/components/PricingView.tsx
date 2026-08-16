@@ -132,7 +132,7 @@ export const PricingView: React.FC = () => {
     },
     {
       q: 'Can I change or cancel my subscription anytime?',
-      a: 'Absolutely. You can toggle auto-renewal or switch billing terms anytime in your Subscription & Billing portal. For plan cancellations or refunds, simply drop an email to support@locora.ai and our team will process your request within 48 hours.',
+      a: 'Absolutely. You can toggle auto-renewal or switch billing terms anytime in your Subscription & Billing portal. For plan cancellations or refunds, simply drop an email to support@locoraai.com and our team will process your request within 48 hours.',
     },
     {
       q: 'What payment methods do you accept?',

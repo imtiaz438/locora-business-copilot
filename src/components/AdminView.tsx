@@ -307,12 +307,12 @@ export const AdminView: React.FC = () => {
   };
 
   useEffect(() => {
-    if (user.isAuthenticated && (user.role === 'admin' || user.role === 'owner' || user.email === 'imtiazbaloch3322@gmail.com' || user.email === 'admin@locora.ai')) {
+    if (user.isAuthenticated && (user.role === 'admin' || user.role === 'owner' || user.email === 'imtiazbaloch3322@gmail.com' || user.email === 'support@locoraai.com')) {
       fetchAdminData();
     }
   }, [user.email, user.role, user.isAuthenticated]);
 
-  const isOwner = user.isAuthenticated && (user.role === 'admin' || user.role === 'owner' || user.email === 'imtiazbaloch3322@gmail.com' || user.email === 'admin@locora.ai');
+  const isOwner = user.isAuthenticated && (user.role === 'admin' || user.role === 'owner' || user.email === 'imtiazbaloch3322@gmail.com' || user.email === 'support@locoraai.com');
 
   const handleUpdateUserPlan = async (targetEmail: string, planTier: string) => {
     try {

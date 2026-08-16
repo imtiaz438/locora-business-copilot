@@ -142,7 +142,7 @@ const MainContent: React.FC = () => {
       {activeTab === 'pricing' && <PricingView />}
       {activeTab === 'subscription' && <SubscriptionView />}
       {activeTab === 'settings' && <SettingsView />}
-      {activeTab === 'admin' && (user.isAuthenticated && (user.role === 'admin' || user.role === 'owner' || user.email === 'imtiazbaloch3322@gmail.com' || user.email === 'admin@locora.ai') ? <AdminView /> : <DashboardView />)}
+      {activeTab === 'admin' && (user.isAuthenticated && (user.role === 'admin' || user.role === 'owner' || user.email === 'imtiazbaloch3322@gmail.com' || user.email === 'support@locoraai.com') ? <AdminView /> : <DashboardView />)}
     </AppShell>
   );
 };

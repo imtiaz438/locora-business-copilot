@@ -194,7 +194,10 @@ export const ContactView: React.FC = () => {
               <div className="flex items-start gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
                 <Phone className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold text-slate-900">Online Support Timings </p>
+                  <p className="font-bold text-slate-900">Phone Support (US Toll Free)</p>
+                  <a href="tel:+18005555626" className="text-indigo-600 hover:underline text-[11px] font-semibold block">
+                    +1 (800) 555-5626
+                  </a>
                   <p className="text-[10px] text-slate-500 pt-0.5">Mon - Fri • 8am - 8pm EST</p>
                 </div>
               </div>
