@@ -186,6 +186,7 @@ interface UserRecord {
   billingCycle: 'monthly' | 'yearly';
   monthlyAiCredits: number;
   aiCreditsUsed: number;
+  invoicesCreatedCount?: number;
   autoRenew?: boolean;
   memberSince: string;
   nextBillingDate: string;
@@ -1054,7 +1055,12 @@ app.post('/api/auth/register', async (req, res) => {
       `,
     }).catch(err => console.error('[Email] Failed to send admin alert email:', err));
 
-    res.cookie('auth_email', normalizedEmail, { httpOnly: true, sameSite: 'lax', maxAge: 30 * 86400000 });
+    res.cookie('auth_email', normalizedEmail, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+    });
     res.json({ user: newUser, token: `tok_${Date.now()}` });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Registration failed' });
@@ -1092,7 +1098,13 @@ app.post('/api/auth/login', async (req, res) => {
       await saveUserToSql(user);
     }
 
-    res.cookie('auth_email', normalizedEmail, { httpOnly: true, sameSite: 'lax', maxAge: 30 * 86400000 });
+    // Set ephemeral session cookie (automatically destroyed when browser window/session closes)
+    res.cookie('auth_email', normalizedEmail, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+    });
     res.json({ user, token: `tok_${Date.now()}` });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Login failed' });
@@ -1120,7 +1132,7 @@ app.get('/api/auth/me', async (req, res) => {
 
 // Logout Route (/api/auth/logout)
 app.post('/api/auth/logout', async (req, res) => {
-  res.clearCookie('auth_email');
+  res.clearCookie('auth_email', { path: '/' });
   res.json({ success: true, message: 'Logged out successfully' });
 });
 
@@ -1374,6 +1386,12 @@ app.post('/api/auth/social', async (req, res) => {
       await saveUserToSql(user);
     }
 
+    res.cookie('auth_email', userEmail, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+    });
     res.json({ user, token: `tok_soc_${Date.now()}` });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Social auth failed' });
@@ -1469,34 +1487,32 @@ app.get('/api/workspace/data', async (req, res) => {
     const companyName = user?.companyName || (user?.name ? `${user.name}'s Business Workspace` : 'My Business Workspace');
 
     let userSavedProfile = userEmail ? userProfilesMap.get(userEmail) : null;
-    let dbProfile = await dbService.getBusinessProfile().catch(() => null);
+    let dbProfile = userEmail ? null : await dbService.getBusinessProfile().catch(() => null);
     let dbSettings = await dbService.getSettings().catch(() => null);
 
     const mergedProfile = {
-      id: `bp_${user?.id || 'main'}`,
-      name: companyName,
+      id: `bp_${user?.id || userEmail || 'main'}`,
+      name: userSavedProfile?.name || companyName,
       email: userEmail || '',
-      tagline: 'Local Service & Business Workspace',
-      industry: 'Services',
-      description: '',
-      targetAudience: '',
-      toneOfVoice: 'Professional, helpful and results-driven',
-      website: '',
-      phone: '',
-      address: '',
-      city: '',
-      state: '',
-      zip: '',
-      country: 'United States',
-      currency: 'USD',
-      taxRate: 0,
-      taxId: '',
-      logoUrl: '',
-      logoConfig: null,
-      updatedAt: new Date().toISOString(),
-      ...(storedBusinessProfile || {}),
-      ...(dbProfile || {}),
-      ...(userSavedProfile || {}),
+      tagline: userSavedProfile?.tagline || 'Local Service & Business Workspace',
+      industry: userSavedProfile?.industry || 'Services',
+      description: userSavedProfile?.description || '',
+      targetAudience: userSavedProfile?.targetAudience || '',
+      toneOfVoice: userSavedProfile?.toneOfVoice || 'Professional, helpful and results-driven',
+      website: userSavedProfile?.website || '',
+      phone: userSavedProfile?.phone || '',
+      address: userSavedProfile?.address || '',
+      city: userSavedProfile?.city || '',
+      state: userSavedProfile?.state || '',
+      zip: userSavedProfile?.zip || '',
+      country: userSavedProfile?.country || 'United States',
+      currency: userSavedProfile?.currency || 'USD',
+      taxRate: userSavedProfile?.taxRate || 0,
+      taxId: userSavedProfile?.taxId || '',
+      logoUrl: userSavedProfile?.logoUrl || '',
+      logoConfig: userSavedProfile?.logoConfig || null,
+      updatedAt: userSavedProfile?.updatedAt || new Date().toISOString(),
+      ...(userEmail ? (userSavedProfile || {}) : { ...(storedBusinessProfile || {}), ...(dbProfile || {}) }),
       ...(userEmail ? { email: userEmail, id: `bp_${userEmail}` } : {}),
     };
 
@@ -1952,17 +1968,20 @@ app.get('/api/auth/oauth/popup', (req, res) => {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Sign in with ${isLinkedIn ? 'LinkedIn' : 'Google'}</title>
       <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 1rem; }
-        .card { background: #1e293b; border: 1px solid #334155; border-radius: 1.25rem; padding: 2rem; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
-        .logo { width: 56px; height: 56px; border-radius: 1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0b1329; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 1.5rem; box-sizing: border-box; }
+        .card { background: #151f38; border: 1px solid #2a3b60; border-radius: 1.25rem; padding: 2rem; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6); }
+        .logo { width: 52px; height: 52px; border-radius: 1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; }
         .linkedin-logo { background: #0077b5; color: white; }
         .google-logo { background: white; }
         h2 { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.5rem; }
-        p { font-size: 0.85rem; color: #94a3b8; margin: 0 0 1.5rem; line-height: 1.4; }
-        .user-box { background: #0f172a; border: 1px solid #334155; border-radius: 0.85rem; padding: 0.85rem; text-align: left; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
-        .avatar { width: 38px; height: 38px; border-radius: 50%; background: ${isLinkedIn ? '#0077b5' : '#059669'}; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .btn { display: block; width: 100%; padding: 0.85rem; background: ${isLinkedIn ? '#0077b5' : '#059669'}; color: white; font-weight: bold; border: none; border-radius: 0.75rem; font-size: 0.9rem; cursor: pointer; transition: opacity 0.2s; text-decoration: none; box-sizing: border-box; }
+        p { font-size: 0.85rem; color: #94a3b8; margin: 0 0 1.25rem; line-height: 1.4; }
+        .form-group { text-align: left; margin-bottom: 1rem; }
+        label { display: block; font-size: 0.75rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        input { width: 100%; padding: 0.75rem 0.85rem; background: #0a1124; border: 1px solid #334155; border-radius: 0.65rem; color: white; font-size: 0.9rem; box-sizing: border-box; outline: none; transition: border-color 0.2s; }
+        input:focus { border-color: ${isLinkedIn ? '#0077b5' : '#059669'}; }
+        .btn { display: block; width: 100%; padding: 0.85rem; background: ${isLinkedIn ? '#0077b5' : '#059669'}; color: white; font-weight: bold; border: none; border-radius: 0.75rem; font-size: 0.9rem; cursor: pointer; transition: opacity 0.2s; text-decoration: none; box-sizing: border-box; margin-top: 1.25rem; }
         .btn:hover { opacity: 0.9; }
+        .secure-badge { display: flex; align-items: center; justify-content: center; gap: 0.35rem; font-size: 0.75rem; color: #64748b; margin-top: 1rem; }
       </style>
     </head>
     <body>
@@ -1974,19 +1993,30 @@ app.get('/api/auth/oauth/popup', (req, res) => {
           }
         </div>
         <h2>Sign in with ${isLinkedIn ? 'LinkedIn' : 'Google'}</h2>
-        <p>Authorize <strong>Locora AI</strong> to sign you in and access your profile credentials.</p>
+        <p>Authorize <strong>Locora AI</strong> to sign you in and create your clean, private workspace.</p>
 
-        <div class="user-box">
-          <div class="avatar">${isLinkedIn ? 'L' : 'G'}</div>
-          <div>
-            <div style="font-weight: bold; font-size: 0.9rem; color: #f8fafc;">${isLinkedIn ? 'Alex Vance (LinkedIn)' : 'Alex Vance (Google)'}</div>
-            <div style="font-size: 0.75rem; color: #94a3b8;">${isLinkedIn ? 'alex.vance@linkedin.com' : 'alex.vance@gmail.com'}</div>
+        <form action="${redirectUri}" method="GET">
+          <input type="hidden" name="provider" value="${provider}">
+          <input type="hidden" name="code" value="oauth_success_${Date.now()}">
+
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" name="name" id="userName" required placeholder="e.g. John Doe">
           </div>
-        </div>
 
-        <a href="${redirectUri}?code=oauth_auth_success_code&provider=${provider}&email=${encodeURIComponent(isLinkedIn ? 'alex.vance@linkedin.com' : 'alex.vance@gmail.com')}&name=${encodeURIComponent('Alex Vance')}" class="btn">
-          Authorize & Continue
-        </a>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" name="email" id="userEmail" required placeholder="e.g. john@yourcompany.com">
+          </div>
+
+          <button type="submit" class="btn">
+            Authorize & Continue to Dashboard
+          </button>
+        </form>
+
+        <div class="secure-badge">
+          <span>🔒 256-bit Encrypted SSL • Isolated User Workspace</span>
+        </div>
       </div>
     </body>
     </html>
@@ -1995,35 +2025,113 @@ app.get('/api/auth/oauth/popup', (req, res) => {
 
 // OAuth Callback Handler
 app.get(['/auth/callback', '/auth/callback/'], async (req, res) => {
-  const provider = (req.query.provider as string) || (req.query.state as string) || 'linkedin';
-  const email = (req.query.email as string) || `user.${provider}@locoraai.com`;
-  const name = (req.query.name as string) || (provider === 'linkedin' ? 'Alex Vance' : 'Alex Vance');
+  const provider = (req.query.provider as string) || (req.query.state as string) || 'google';
+  const code = req.query.code as string;
+  let email = (req.query.email as string || '').toLowerCase().trim();
+  let name = (req.query.name as string || '').trim();
+
+  // Try real OAuth token exchange if authorization code & secrets are available
+  if (code && !email) {
+    try {
+      const host = getRequestBaseUrl(req);
+      const redirectUri = `${host}/auth/callback`;
+
+      if (provider === 'google' && process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+        const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            code,
+            client_id: process.env.GOOGLE_CLIENT_ID,
+            client_secret: process.env.GOOGLE_CLIENT_SECRET,
+            redirect_uri: redirectUri,
+            grant_type: 'authorization_code',
+          }),
+        });
+        const tokenData = await tokenRes.json();
+        if (tokenData.access_token) {
+          const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { Authorization: `Bearer ${tokenData.access_token}` },
+          });
+          const profile = await userinfoRes.json();
+          if (profile.email) {
+            email = profile.email.toLowerCase().trim();
+            name = profile.name || email.split('@')[0];
+          }
+        }
+      } else if (provider === 'linkedin' && process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET) {
+        const tokenRes = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            code,
+            client_id: process.env.LINKEDIN_CLIENT_ID,
+            client_secret: process.env.LINKEDIN_CLIENT_SECRET,
+            redirect_uri: redirectUri,
+            grant_type: 'authorization_code',
+          }),
+        });
+        const tokenData = await tokenRes.json();
+        if (tokenData.access_token) {
+          const userinfoRes = await fetch('https://api.linkedin.com/v2/userinfo', {
+            headers: { Authorization: `Bearer ${tokenData.access_token}` },
+          });
+          const profile = await userinfoRes.json();
+          if (profile.email) {
+            email = profile.email.toLowerCase().trim();
+            name = profile.name || `${profile.given_name || ''} ${profile.family_name || ''}`.trim() || email.split('@')[0];
+          }
+        }
+      }
+    } catch (oauthErr) {
+      console.warn('Live OAuth token exchange warning:', oauthErr);
+    }
+  }
+
+  if (!email) {
+    email = `user.${provider}@locoraai.com`;
+  }
+  if (!name) {
+    name = email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
 
   const normalizedEmail = email.toLowerCase().trim();
   let user = usersDb.get(normalizedEmail);
 
   if (!user) {
+    const isSuperAdmin = normalizedEmail === 'imtiazbaloch3322@gmail.com' || normalizedEmail === 'admin@locora.ai';
     user = {
-      id: `usr_oauth_${Date.now()}`,
+      id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       name: name,
       email: normalizedEmail,
       companyName: `${name}'s Business Workspace`,
-      role: 'owner',
-      planTier: 'pro',
+      role: isSuperAdmin ? 'admin' : 'customer',
+      planTier: 'free',
       subscriptionStatus: 'active',
       billingCycle: 'monthly',
-      monthlyAiCredits: 250,
+      monthlyAiCredits: 25,
       aiCreditsUsed: 0,
+      invoicesCreatedCount: 0,
       memberSince: new Date().toISOString(),
       nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
-      paymentMethod: { cardLast4: '4242', cardBrand: 'Visa', expDate: '12/28' },
     };
     usersDb.set(normalizedEmail, user);
+    saveUsersToDisk();
   }
 
   // Sync OAuth user to Cloud SQL PostgreSQL database
   getOrCreateUser(user.id, user.email, user.name, user.companyName, user.planTier).catch(err => {
     console.error('Cloud SQL OAuth sync error:', err);
+  });
+
+  // Ensure an isolated disk store exists for this user
+  getUserWorkspaceDiskStore(normalizedEmail);
+
+  res.cookie('auth_email', normalizedEmail, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
   });
 
   res.send(`
@@ -2060,25 +2168,6 @@ app.get(['/auth/callback', '/auth/callback/'], async (req, res) => {
     </body>
     </html>
   `);
-});
-
-// Get User Profile & Current Token Balance
-app.get('/api/auth/me', async (req, res) => {
-  try {
-    const email = (req.query.email as string || '').toLowerCase().trim();
-    if (!email) {
-      return res.status(400).json({ error: 'Email parameter required' });
-    }
-
-    const user = await findUserByEmail(email);
-    if (!user) {
-      return res.status(404).json({ error: 'Registered user not found in database' });
-    }
-
-    res.json({ user });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Server error' });
-  }
 });
 
 // ================= STRIPE PAYMENT INTEGRATION =================

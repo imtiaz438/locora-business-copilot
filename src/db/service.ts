@@ -127,7 +127,7 @@ export async function getCustomers(userEmail?: string) {
         .where(eq(schema.customersTable.userEmail, cleanEmail))
         .orderBy(desc(schema.customersTable.createdAt));
     }
-    return await db.select().from(schema.customersTable).orderBy(desc(schema.customersTable.createdAt));
+    return [];
   } catch (err) {
     console.error('Error fetching customers:', err);
     return [];
@@ -217,7 +217,7 @@ export async function getProjects(userEmail?: string) {
         .where(eq(schema.projectsTable.userEmail, cleanEmail))
         .orderBy(desc(schema.projectsTable.createdAt));
     }
-    return await db.select().from(schema.projectsTable).orderBy(desc(schema.projectsTable.createdAt));
+    return [];
   } catch (err) {
     console.error('Error fetching projects:', err);
     return [];
@@ -306,7 +306,7 @@ export async function getInvoices(userEmail?: string) {
         .where(eq(schema.invoicesTable.userEmail, cleanEmail))
         .orderBy(desc(schema.invoicesTable.createdAt));
     }
-    return await db.select().from(schema.invoicesTable).orderBy(desc(schema.invoicesTable.createdAt));
+    return [];
   } catch (err) {
     console.error('Error fetching invoices:', err);
     return [];
@@ -387,7 +387,7 @@ export async function getProposals(userEmail?: string) {
         .where(eq(schema.proposalsTable.userEmail, cleanEmail))
         .orderBy(desc(schema.proposalsTable.createdAt));
     }
-    return await db.select().from(schema.proposalsTable).orderBy(desc(schema.proposalsTable.createdAt));
+    return [];
   } catch (err) {
     console.error('Error fetching proposals:', err);
     return [];
@@ -466,7 +466,7 @@ export async function getDocuments(userEmail?: string) {
         .where(eq(schema.documentsTable.userEmail, cleanEmail))
         .orderBy(desc(schema.documentsTable.createdAt));
     }
-    return await db.select().from(schema.documentsTable).orderBy(desc(schema.documentsTable.createdAt));
+    return [];
   } catch (err) {
     console.error('Error fetching documents:', err);
     return [];
@@ -522,7 +522,7 @@ export async function getAiConversations(userEmail?: string) {
         .where(eq(schema.aiConversationsTable.userEmail, cleanEmail))
         .orderBy(desc(schema.aiConversationsTable.updatedAt));
     } else {
-      convs = await db.select().from(schema.aiConversationsTable).orderBy(desc(schema.aiConversationsTable.updatedAt));
+      return [];
     }
 
     if (!convs || convs.length === 0) return [];
@@ -649,7 +649,7 @@ export async function getActivityLogs(limit: number = 20, userEmail?: string) {
         .orderBy(desc(schema.activityLogsTable.createdAt))
         .limit(limit);
     }
-    return await db.select().from(schema.activityLogsTable).orderBy(desc(schema.activityLogsTable.createdAt)).limit(limit);
+    return [];
   } catch (err) {
     console.error('Error fetching activity logs:', err);
     return [];

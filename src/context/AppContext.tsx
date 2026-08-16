@@ -205,7 +205,13 @@ const PATH_TO_TAB: Record<string, string> = {
   'login': 'login',
   'signup': 'signup',
   'privacy': 'privacy',
+  'privacy-policy': 'privacy',
   'terms': 'terms',
+  'terms-of-service': 'terms',
+  'terms-conditions': 'terms',
+  'terms-and-conditions': 'terms',
+  'term-condition': 'terms',
+  'terms-condition': 'terms',
   'security': 'security',
   'dashboard': 'dashboard',
   'chat': 'chat',
@@ -253,8 +259,34 @@ const PATH_TO_TAB: Record<string, string> = {
   const [checkoutModalCycle, setCheckoutModalCycleState] = useState<BillingCycle>('monthly');
   const [pendingPlanAfterAuth, setPendingPlanAfterAuth] = useState<{ plan: UserPlan; cycle: BillingCycle } | null>(null);
 
-  // Hydrate user session directly from PostgreSQL database on load
+  // Hydrate user session directly from PostgreSQL database on load only if active window session exists
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const hasActiveSession = sessionStorage.getItem('locora_active_session') === 'true';
+    const lastActiveStr = sessionStorage.getItem('locora_last_active');
+    const lastActive = lastActiveStr ? Number(lastActiveStr) : 0;
+    const now = Date.now();
+    const INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes inactivity limit
+
+    // If window or browser was closed and reopened, sessionStorage will be empty
+    // In that case, enforce logged-out state and clear any stale cookie
+    if (!hasActiveSession) {
+      fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+      setUser(DEFAULT_USER);
+      return;
+    }
+
+    // If inactivity timeout exceeded within the same session
+    if (lastActive && (now - lastActive > INACTIVITY_TIMEOUT_MS)) {
+      sessionStorage.removeItem('locora_active_session');
+      sessionStorage.removeItem('locora_last_active');
+      fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+      setUser(DEFAULT_USER);
+      return;
+    }
+
+    // Active window session is valid: fetch user data
     fetch('/api/auth/me', { credentials: 'include' })
       .then((res) => {
         if (!res.ok) throw new Error('No active session');
@@ -269,12 +301,59 @@ const PATH_TO_TAB: Record<string, string> = {
             role: isSuperAdminEmail ? 'admin' : (data.user.role || 'customer'),
             isAuthenticated: true,
           });
+          sessionStorage.setItem('locora_last_active', String(Date.now()));
+        } else {
+          sessionStorage.removeItem('locora_active_session');
+          sessionStorage.removeItem('locora_last_active');
+          setUser(DEFAULT_USER);
         }
       })
       .catch(() => {
-        // No active session or unauthenticated
+        sessionStorage.removeItem('locora_active_session');
+        sessionStorage.removeItem('locora_last_active');
+        setUser(DEFAULT_USER);
       });
   }, []);
+
+  // Inactivity Watcher & Window Activity Tracker
+  useEffect(() => {
+    if (typeof window === 'undefined' || !user.isAuthenticated) return;
+
+    let lastThrottle = Date.now();
+    const handleUserActivity = () => {
+      const now = Date.now();
+      if (now - lastThrottle > 10000) { // update at most once every 10s
+        lastThrottle = now;
+        sessionStorage.setItem('locora_last_active', String(now));
+      }
+    };
+
+    window.addEventListener('mousemove', handleUserActivity, { passive: true });
+    window.addEventListener('mousedown', handleUserActivity, { passive: true });
+    window.addEventListener('keydown', handleUserActivity, { passive: true });
+    window.addEventListener('touchstart', handleUserActivity, { passive: true });
+    window.addEventListener('scroll', handleUserActivity, { passive: true });
+
+    // Periodic check for inactivity timeout (every 30 seconds)
+    const intervalId = setInterval(() => {
+      const lastActiveStr = sessionStorage.getItem('locora_last_active');
+      const lastActive = lastActiveStr ? Number(lastActiveStr) : Date.now();
+      const now = Date.now();
+      const INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000; // 60 mins
+      if (lastActive && (now - lastActive > INACTIVITY_TIMEOUT_MS)) {
+        logout();
+      }
+    }, 30000);
+
+    return () => {
+      window.removeEventListener('mousemove', handleUserActivity);
+      window.removeEventListener('mousedown', handleUserActivity);
+      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener('touchstart', handleUserActivity);
+      window.removeEventListener('scroll', handleUserActivity);
+      clearInterval(intervalId);
+    };
+  }, [user.isAuthenticated]);
 
   const setCheckoutModalPlan = (plan: UserPlan | null, cycle: BillingCycle = 'monthly') => {
     if (plan && (!user.isAuthenticated || !user.email)) {
@@ -409,6 +488,12 @@ const PATH_TO_TAB: Record<string, string> = {
 
     setUser(newUser);
 
+    // Set active session in sessionStorage so it only persists for the current window/tab session
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('locora_active_session', 'true');
+      sessionStorage.setItem('locora_last_active', String(Date.now()));
+    }
+
     // Sync user state with backend DB and hydrate latest session from database
     fetch('/api/auth/sync', {
       method: 'POST',
@@ -528,6 +613,10 @@ const PATH_TO_TAB: Record<string, string> = {
   };
 
   const logout = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('locora_active_session');
+      sessionStorage.removeItem('locora_last_active');
+    }
     fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
     setUser(DEFAULT_USER);
     setAuthModalOpen(false);

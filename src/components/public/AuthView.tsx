@@ -133,7 +133,18 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
           setResetInfoMsg('Password reset link loaded. Enter your new password below.');
         });
     }
-  }, []);
+
+    const handleOAuthMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'OAUTH_AUTH_SUCCESS' && event.data.user) {
+        const u = event.data.user;
+        login(u.email, u.name, u.companyName, u.planTier || 'pro', u.aiCreditsUsed || 0, u.role, u.id);
+        setActiveTab('dashboard');
+      }
+    };
+
+    window.addEventListener('message', handleOAuthMessage);
+    return () => window.removeEventListener('message', handleOAuthMessage);
+  }, [login, setActiveTab]);
 
   useEffect(() => {
     if (user.isAuthenticated) {
