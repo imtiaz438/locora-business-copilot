@@ -250,6 +250,8 @@ export const AdminView: React.FC = () => {
 
   // Search & Filters
   const [userSearch, setUserSearch] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState<'all' | 'admin' | 'subscriber' | 'customer'>('all');
+  const [userAutoRenewFilter, setUserAutoRenewFilter] = useState<'all' | 'on' | 'off'>('all');
   const [subSearch, setSubSearch] = useState('');
   const [newSubEmail, setNewSubEmail] = useState('');
   const [invoiceFilter, setInvoiceFilter] = useState<'all' | 'paid' | 'pending' | 'cancelled'>('all');
@@ -317,6 +319,9 @@ export const AdminView: React.FC = () => {
   const handleUpdateUserPlan = async (targetEmail: string, planTier: string) => {
     try {
       const newRole = planTier !== 'free' ? 'subscriber' : undefined;
+      // Optimistic update
+      setUsersTable(prev => prev.map(u => u.email === targetEmail ? { ...u, planTier, ...(newRole ? { role: newRole } : {}) } : u));
+      
       const res = await fetch('/api/admin/update-user-plan', {
         method: 'POST',
         headers: {
@@ -329,15 +334,22 @@ export const AdminView: React.FC = () => {
       if (res.ok && data.success) {
         setActionSuccessMsg(`Updated ${targetEmail} plan to ${planTier.toUpperCase()}${newRole ? ' & role to SUBSCRIBER' : ''}`);
         fetchAdminData();
+      } else {
+        setActionSuccessMsg(data.error || `Failed to update plan for ${targetEmail}`);
+        fetchAdminData();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setActionSuccessMsg(`Error: ${err.message}`);
     }
   };
 
   const handleToggleUserAutoRenew = async (targetEmail: string, currentAutoRenew?: boolean) => {
     try {
       const nextVal = currentAutoRenew === false ? true : false;
+      // Optimistic update
+      setUsersTable(prev => prev.map(u => u.email === targetEmail ? { ...u, autoRenew: nextVal } : u));
+
       const res = await fetch('/api/admin/update-user-plan', {
         method: 'POST',
         headers: {
@@ -348,16 +360,23 @@ export const AdminView: React.FC = () => {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setActionSuccessMsg(`Set auto-renew to ${nextVal ? 'ENABLED' : 'DISABLED'} for ${targetEmail}`);
+        setActionSuccessMsg(`Set auto-renew to ${nextVal ? 'ENABLED (ON)' : 'DISABLED (OFF)'} for ${targetEmail}`);
+        fetchAdminData();
+      } else {
+        setActionSuccessMsg(data.error || `Failed to toggle auto-renew for ${targetEmail}`);
         fetchAdminData();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setActionSuccessMsg(`Error: ${err.message}`);
     }
   };
 
   const handleUpdateUserBillingCycle = async (targetEmail: string, billingCycle: string) => {
     try {
+      // Optimistic update
+      setUsersTable(prev => prev.map(u => u.email === targetEmail ? { ...u, billingCycle } : u));
+
       const res = await fetch('/api/admin/update-user-plan', {
         method: 'POST',
         headers: {
@@ -370,14 +389,20 @@ export const AdminView: React.FC = () => {
       if (res.ok && data.success) {
         setActionSuccessMsg(`Updated billing cycle to ${billingCycle.toUpperCase()} for ${targetEmail}`);
         fetchAdminData();
+      } else {
+        setActionSuccessMsg(data.error || `Failed to update billing cycle`);
+        fetchAdminData();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
     }
   };
 
   const handleUpdateUserSubscriptionStatus = async (targetEmail: string, subscriptionStatus: string) => {
     try {
+      // Optimistic update
+      setUsersTable(prev => prev.map(u => u.email === targetEmail ? { ...u, subscriptionStatus } : u));
+
       const res = await fetch('/api/admin/update-user-plan', {
         method: 'POST',
         headers: {
@@ -390,14 +415,20 @@ export const AdminView: React.FC = () => {
       if (res.ok && data.success) {
         setActionSuccessMsg(`Updated subscription status to ${subscriptionStatus.toUpperCase()} for ${targetEmail}`);
         fetchAdminData();
+      } else {
+        setActionSuccessMsg(data.error || `Failed to update status`);
+        fetchAdminData();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
     }
   };
 
   const handleUpdateUserRole = async (targetEmail: string, role: string) => {
     try {
+      // Optimistic update
+      setUsersTable(prev => prev.map(u => u.email === targetEmail ? { ...u, role } : u));
+
       const res = await fetch('/api/admin/update-user-plan', {
         method: 'POST',
         headers: {
@@ -410,9 +441,13 @@ export const AdminView: React.FC = () => {
       if (res.ok && data.success) {
         setActionSuccessMsg(`Assigned role ${role.toUpperCase()} to ${targetEmail}`);
         fetchAdminData();
+      } else {
+        setActionSuccessMsg(data.error || `Failed to assign role for ${targetEmail}`);
+        fetchAdminData();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setActionSuccessMsg(`Error: ${err.message}`);
     }
   };
 
@@ -641,9 +676,23 @@ export const AdminView: React.FC = () => {
   const totalPaidRevenue = paidInvoices.reduce((acc, i) => acc + (i.total || 0), 0);
   const totalPendingAmount = pendingInvoices.reduce((acc, i) => acc + (i.total || 0), 0);
 
-  const filteredUsers = usersTable.filter(
-    (u) => u.email?.toLowerCase().includes(userSearch.toLowerCase()) || u.name?.toLowerCase().includes(userSearch.toLowerCase())
-  );
+  const filteredUsers = usersTable.filter((u) => {
+    const matchesSearch = u.email?.toLowerCase().includes(userSearch.toLowerCase()) || u.name?.toLowerCase().includes(userSearch.toLowerCase());
+    if (!matchesSearch) return false;
+
+    if (userRoleFilter !== 'all') {
+      if (userRoleFilter === 'admin' && u.role !== 'admin' && u.role !== 'owner') return false;
+      if (userRoleFilter === 'subscriber' && u.role !== 'subscriber') return false;
+      if (userRoleFilter === 'customer' && (u.role === 'admin' || u.role === 'owner' || u.role === 'subscriber')) return false;
+    }
+
+    if (userAutoRenewFilter !== 'all') {
+      if (userAutoRenewFilter === 'on' && u.autoRenew === false) return false;
+      if (userAutoRenewFilter === 'off' && u.autoRenew !== false) return false;
+    }
+
+    return true;
+  });
   const filteredSubscribers = subscribersTable.filter((s) => s.email?.toLowerCase().includes(subSearch.toLowerCase()));
 
   const filteredInvoicesList = invoices.filter((i) => {
@@ -952,6 +1001,86 @@ export const AdminView: React.FC = () => {
                   placeholder="Search by name or email..."
                   className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#059669]"
                 />
+              </div>
+            </div>
+
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1 border-t border-slate-100">
+              {/* Role & Auto-Renew Filter Chips */}
+              <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                <span className="text-[11px] font-bold text-slate-400 mr-1 uppercase">Filter:</span>
+                <button
+                  type="button"
+                  onClick={() => setUserRoleFilter('all')}
+                  className={`px-2.5 py-1 rounded-lg font-semibold text-[11px] transition-colors cursor-pointer ${
+                    userRoleFilter === 'all'
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  All ({usersTable.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserRoleFilter('admin')}
+                  className={`px-2.5 py-1 rounded-lg font-semibold text-[11px] transition-colors cursor-pointer ${
+                    userRoleFilter === 'admin'
+                      ? 'bg-purple-700 text-white'
+                      : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+                  }`}
+                >
+                  Admins
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserRoleFilter('subscriber')}
+                  className={`px-2.5 py-1 rounded-lg font-semibold text-[11px] transition-colors cursor-pointer ${
+                    userRoleFilter === 'subscriber'
+                      ? 'bg-emerald-700 text-white'
+                      : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                  }`}
+                >
+                  Subscribers
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserRoleFilter('customer')}
+                  className={`px-2.5 py-1 rounded-lg font-semibold text-[11px] transition-colors cursor-pointer ${
+                    userRoleFilter === 'customer'
+                      ? 'bg-slate-700 text-white'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  Customers
+                </button>
+
+                <span className="text-slate-300 mx-1">|</span>
+
+                <button
+                  type="button"
+                  onClick={() => setUserAutoRenewFilter(userAutoRenewFilter === 'on' ? 'all' : 'on')}
+                  className={`px-2.5 py-1 rounded-lg font-semibold text-[11px] transition-colors cursor-pointer ${
+                    userAutoRenewFilter === 'on'
+                      ? 'bg-emerald-700 text-white'
+                      : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                  }`}
+                >
+                  Auto-Renew ON
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserAutoRenewFilter(userAutoRenewFilter === 'off' ? 'all' : 'off')}
+                  className={`px-2.5 py-1 rounded-lg font-semibold text-[11px] transition-colors cursor-pointer ${
+                    userAutoRenewFilter === 'off'
+                      ? 'bg-amber-700 text-white'
+                      : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
+                  }`}
+                >
+                  Auto-Renew OFF
+                </button>
+              </div>
+
+              <div className="text-[11px] text-slate-500 font-mono">
+                Showing {filteredUsers.length} of {usersTable.length} accounts
               </div>
             </div>
 

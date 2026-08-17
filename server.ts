@@ -72,7 +72,7 @@ interface SendEmailParams {
   replyTo?: string;
 }
 
-const SUPPORT_EMAIL = 'support@locoraai.com';
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || process.env.CONTACT_TO_EMAIL || 'support@locoraai.com';
 
 async function sendEmail({ to, subject, text, html, replyTo = SUPPORT_EMAIL }: SendEmailParams): Promise<{ success: boolean; provider: string; messageId?: string; error?: string }> {
   const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
@@ -80,7 +80,7 @@ async function sendEmail({ to, subject, text, html, replyTo = SUPPORT_EMAIL }: S
   // Active Resend API Dispatch
   if (resendApiKey) {
     try {
-      let fromEmail = process.env.SMTP_FROM || `Locora AI <${SUPPORT_EMAIL}>`;
+      let fromEmail = process.env.RESEND_FROM_EMAIL || process.env.CONTACT_FROM_EMAIL || process.env.SMTP_FROM || `Locora AI <${SUPPORT_EMAIL}>`;
       
       let res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -101,8 +101,8 @@ async function sendEmail({ to, subject, text, html, replyTo = SUPPORT_EMAIL }: S
       let data = await res.json();
 
       // If custom domain is not yet verified in Resend, automatically retry with default sandbox sender
-      if (!res.ok && data?.message && (data.message.includes('domain') || data.message.includes('from'))) {
-        console.warn(`[Email:Resend] Retrying with onboarding sender: ${data.message}`);
+      if (!res.ok && data?.message && (data.message.toLowerCase().includes('domain') || data.message.toLowerCase().includes('from') || data.message.toLowerCase().includes('verify'))) {
+        console.warn(`[Email:Resend] Retrying with Resend onboarding sandbox sender because domain is not yet verified: ${data.message}`);
         fromEmail = 'Locora AI <onboarding@resend.dev>';
         res = await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -123,33 +123,34 @@ async function sendEmail({ to, subject, text, html, replyTo = SUPPORT_EMAIL }: S
       }
 
       if (res.ok && data.id) {
-        console.log(`[Email:Resend] Successfully dispatched to ${to} (Message ID: ${data.id})`);
+        console.log(`[Email:Resend] Successfully dispatched to ${to} (Message ID: ${data.id}) via ${fromEmail}`);
         return { success: true, provider: 'resend', messageId: data.id };
       }
 
-      console.warn('[Email:Resend] API Error:', data);
+      console.warn('[Email:Resend] Delivery Error from Resend API:', data);
       return { success: false, provider: 'resend', error: data?.message || 'Resend delivery failed' };
     } catch (err: any) {
-      console.error('[Email:Resend] Exception:', err.message);
+      console.error('[Email:Resend] Exception during dispatch:', err.message);
       return { success: false, provider: 'resend', error: err.message };
     }
   }
 
   // Development / Test Log Fallback when RESEND_API_KEY is not configured
-  console.log(`\n================ [RESEND EMAIL DISPATCH LOG] ================
-PROVIDER: Resend API (Waiting for RESEND_API_KEY env variable)
+  console.log(`\n================ [RESEND EMAIL DISPATCH NOTICE] ================
+PROVIDER: Resend API (Waiting for RESEND_API_KEY in environment)
+STATUS: Simulated Send
 FROM: Locora AI <${SUPPORT_EMAIL}>
 REPLY-TO: ${replyTo}
 TO: ${to}
 SUBJECT: ${subject}
-BODY (HTML Preview):
-${html.slice(0, 350)}...
-============================================================\n`);
+BODY PREVIEW: ${text ? text.slice(0, 150) : html.replace(/<[^>]+>/g, '').slice(0, 150)}...
+=================================================================\n`);
 
   return {
     success: true,
-    provider: 'simulated_live',
+    provider: 'simulated_local',
     messageId: `resend_sim_${Date.now()}`,
+    error: 'RESEND_API_KEY is not set in server environment. Add RESEND_API_KEY to enable live email delivery.',
   };
 }
 
@@ -3702,13 +3703,37 @@ app.get('/api/admin/database-tables', async (req, res) => {
     const sqlSubscribers = await dbService.getNewsletterSubscribers().catch(() => []);
     
     const subscribers = Array.from(newsletterSubscribersDb.values());
-    const registeredUsers = Array.from(usersDb.values());
+    
+    // Merge SQL users with memory Map
+    const usersMap = new Map<string, UserRecord>(usersDb);
+    sqlUsers.forEach((su: any) => {
+      const emailNorm = (su.email || '').toLowerCase().trim();
+      if (emailNorm && !usersMap.has(emailNorm)) {
+        usersMap.set(emailNorm, {
+          id: su.uid || `usr_${Date.now()}`,
+          name: su.name || 'User',
+          email: emailNorm,
+          companyName: su.companyName || 'My Business',
+          role: (su.role as any) || (emailNorm === 'imtiazbaloch3322@gmail.com' || emailNorm === 'support@locoraai.com' ? 'admin' : 'customer'),
+          planTier: (su.planTier as any) || 'free',
+          subscriptionStatus: 'active',
+          billingCycle: 'monthly',
+          autoRenew: true,
+          monthlyAiCredits: su.planTier === 'agency' ? 9999 : su.planTier === 'pro' ? 250 : 25,
+          aiCreditsUsed: 0,
+          memberSince: su.createdAt ? new Date(su.createdAt).toISOString() : new Date().toISOString(),
+          nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
+        });
+      }
+    });
+
+    const registeredUsers = Array.from(usersMap.values());
 
     res.json({
       success: true,
       databaseEngine: 'PostgreSQL Cloud SQL',
       stats: {
-        totalUsers: Math.max(registeredUsers.length, sqlUsers.length),
+        totalUsers: registeredUsers.length,
         totalSubscribers: Math.max(subscribers.length, sqlSubscribers.length),
         lastNewsletterDispatch: newsletterState.lastDispatchedAt,
         totalEmailsSent: newsletterState.totalEmailsSent,
@@ -3729,7 +3754,7 @@ app.get('/api/admin/database-tables', async (req, res) => {
 // Admin User Plan & Credit Manager API
 app.post('/api/admin/update-user-plan', async (req, res) => {
   try {
-    if (!verifyAdminAccess(req)) {
+    if (!(await verifyAdminAccessAsync(req))) {
       return res.status(403).json({ error: 'Access Denied. Admin key required.' });
     }
 
@@ -3737,14 +3762,32 @@ app.post('/api/admin/update-user-plan', async (req, res) => {
     if (!email) return res.status(400).json({ error: 'Target user email is required.' });
 
     const normalizedEmail = email.toLowerCase().trim();
-    let user = usersDb.get(normalizedEmail);
-    if (!user) return res.status(404).json({ error: 'User not found in database.' });
+    let user = await findUserByEmail(normalizedEmail);
+
+    if (!user) {
+      const fallbackName = normalizedEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+      user = {
+        id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        name: fallbackName,
+        email: normalizedEmail,
+        companyName: `${fallbackName}'s Workspace`,
+        role: (role as any) || (normalizedEmail === 'imtiazbaloch3322@gmail.com' || normalizedEmail === 'support@locoraai.com' ? 'admin' : 'customer'),
+        planTier: (planTier as any) || 'free',
+        subscriptionStatus: 'active',
+        billingCycle: 'monthly',
+        autoRenew: true,
+        monthlyAiCredits: 25,
+        aiCreditsUsed: 0,
+        memberSince: new Date().toISOString(),
+        nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
+      };
+    }
 
     if (planTier) {
       const creditsMap: Record<string, number> = { free: 25, pro: 250, agency: 9999 };
       user.planTier = planTier;
       user.monthlyAiCredits = monthlyAiCredits || creditsMap[planTier] || 25;
-      if (!role && user.role !== 'admin') {
+      if (!role && user.role !== 'admin' && user.role !== 'owner') {
         user.role = planTier !== 'free' ? 'subscriber' : 'customer';
       }
     }
@@ -3756,6 +3799,7 @@ app.post('/api/admin/update-user-plan', async (req, res) => {
     if (subscriptionStatus) user.subscriptionStatus = subscriptionStatus;
 
     usersDb.set(normalizedEmail, user);
+    saveUsersToDisk();
     await saveUserToSql(user);
 
     res.json({ success: true, message: `Updated user ${normalizedEmail} successfully!`, user });
@@ -3767,7 +3811,7 @@ app.post('/api/admin/update-user-plan', async (req, res) => {
 // Admin API to Delete User Account permanently
 app.post('/api/admin/delete-user', async (req, res) => {
   try {
-    if (!verifyAdminAccess(req)) {
+    if (!(await verifyAdminAccessAsync(req))) {
       return res.status(403).json({ error: 'Access Denied. Admin key required.' });
     }
 
@@ -3775,7 +3819,7 @@ app.post('/api/admin/delete-user', async (req, res) => {
     if (!email) return res.status(400).json({ error: 'Target user email is required.' });
 
     const normalizedEmail = email.toLowerCase().trim();
-    const existingUser = usersDb.get(normalizedEmail);
+    const existingUser = await findUserByEmail(normalizedEmail);
     usersDb.delete(normalizedEmail);
     await removeUserFromSql(normalizedEmail, existingUser?.id);
 

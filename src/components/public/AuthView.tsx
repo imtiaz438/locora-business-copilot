@@ -20,6 +20,7 @@ import {
 import { UserPlan } from '../../types';
 import { validateRealEmail } from '../../lib/emailValidation';
 import { LocoraLogo } from '../LocoraLogo';
+import { SocialAuthModal } from '../SocialAuthModal';
 
 interface AuthViewProps {
   initialMode?: 'login' | 'signup';
@@ -29,6 +30,10 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
   const { user, login, logout, setActiveTab, pendingPlanAfterAuth } = useApp();
   const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
   const [showPassword, setShowPassword] = useState(false);
+
+  // Social Auth Modal State
+  const [socialModalOpen, setSocialModalOpen] = useState(false);
+  const [socialProvider, setSocialProvider] = useState<'google' | 'linkedin'>('google');
 
   // Form State
   const [email, setEmail] = useState('');
@@ -292,13 +297,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
 
   const handleOAuthConnect = async (provider: 'linkedin' | 'google') => {
     try {
-      const currentOrigin = window.location.origin;
-      const redirectUri = `${currentOrigin}/auth/callback`;
+      setLoading(true);
+      setErrorMessage(null);
+      const redirectUri = `${window.location.origin}/auth/callback`;
       const res = await fetch(`/api/auth/oauth/url?provider=${provider}&redirectUri=${encodeURIComponent(redirectUri)}`);
       const data = await res.json();
       if (data.url) {
-        const width = 480;
-        const height = 580;
+        const width = 500;
+        const height = 650;
         const left = window.screenX + (window.innerWidth - width) / 2;
         const top = window.screenY + (window.innerHeight - height) / 2;
         window.open(
@@ -307,10 +313,11 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
           `width=${width},height=${height},left=${left},top=${top},status=yes,scrollbars=yes`
         );
       }
-    } catch (err) {
-      console.error('OAuth connect failed:', err);
-      login(`user.${provider}@locoramarketing.com`, provider === 'linkedin' ? 'LinkedIn User' : 'Google User', 'Agency Workspace', 'pro');
-      setActiveTab('dashboard');
+    } catch (err: any) {
+      console.error('OAuth launch error:', err);
+      setErrorMessage(`Could not start ${provider === 'google' ? 'Google' : 'LinkedIn'} sign-in.`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -899,6 +906,13 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
           </div>
         </div>
       </div>
+
+      {/* Social Auth Modal */}
+      <SocialAuthModal
+        isOpen={socialModalOpen}
+        onClose={() => setSocialModalOpen(false)}
+        provider={socialProvider}
+      />
     </div>
   );
 };
