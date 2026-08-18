@@ -699,7 +699,73 @@ export async function deleteUser(email: string, uid?: string) {
   }
 }
 
-// --- Newsletter Subscribers ---
+// --- Payment Transactions ---
+export async function getTransactions() {
+  try {
+    return await db.select().from(schema.transactionsTable).orderBy(desc(schema.transactionsTable.createdAt));
+  } catch (err) {
+    console.error('Error fetching transactions from Cloud SQL:', err);
+    return [];
+  }
+}
+
+export async function saveTransaction(txn: any) {
+  try {
+    const existing = await db.select().from(schema.transactionsTable).where(eq(schema.transactionsTable.id, txn.id));
+    if (existing.length > 0) {
+      const updated = await db
+        .update(schema.transactionsTable)
+        .set({
+          ...txn,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.transactionsTable.id, txn.id))
+        .returning();
+      return updated[0];
+    } else {
+      const inserted = await db
+        .insert(schema.transactionsTable)
+        .values({
+          id: txn.id,
+          userId: txn.userId || '',
+          userEmail: (txn.userEmail || '').toLowerCase().trim(),
+          userName: txn.userName || '',
+          planTier: txn.planTier || 'pro',
+          billingCycle: txn.billingCycle || 'monthly',
+          amount: txn.amount || 0,
+          currency: txn.currency || 'USD',
+          paymentMethod: txn.paymentMethod || 'card',
+          lemonSqueezyDetails: txn.lemonSqueezyDetails || null,
+          cardDetails: txn.cardDetails || null,
+          status: txn.status || 'success',
+          failureReason: txn.failureReason || null,
+          refundedAmount: txn.refundedAmount || null,
+          refundReason: txn.refundReason || null,
+          refundedAt: txn.refundedAt || null,
+          invoiceId: txn.invoiceId || null,
+          isTestMode: !!txn.isTestMode,
+          createdAt: txn.createdAt ? new Date(txn.createdAt) : new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+      return inserted[0];
+    }
+  } catch (err) {
+    console.error('Error saving transaction to Cloud SQL:', err);
+    return null;
+  }
+}
+
+export async function deleteTransaction(transactionId: string) {
+  try {
+    await db.delete(schema.transactionsTable).where(eq(schema.transactionsTable.id, transactionId));
+    return true;
+  } catch (err) {
+    console.error('Error deleting transaction from Cloud SQL:', err);
+    return false;
+  }
+}
+
 export async function getNewsletterSubscribers() {
   try {
     return await db.select().from(schema.newsletterSubscribersTable);

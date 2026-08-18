@@ -46,18 +46,88 @@ import {
   Sun,
   Moon,
   Check,
+  CreditCard,
+  RotateCcw,
+  Building2,
+  ExternalLink,
+  Filter,
+  Globe2,
 } from 'lucide-react';
 
 export const AdminView: React.FC = () => {
   const { user, clients, invoices, updateInvoiceStatus, businessProfile, updateBusinessProfile, updateSettings } = useApp();
 
   const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'users' | 'logo' | 'ai_tokens' | 'sales' | 'subscribers' | 'invoices' | 'dispatch'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'payments' | 'logo' | 'ai_tokens' | 'sales' | 'subscribers' | 'invoices' | 'dispatch' | 'email_server'>('users');
   const [loading, setLoading] = useState<boolean>(false);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
   const [actionErrorMsg, setActionErrorMsg] = useState<string | null>(null);
   const [validatingKeys, setValidatingKeys] = useState<boolean>(false);
   const msgBannerRef = useRef<HTMLDivElement>(null);
+
+  // Brevo Mail Server State
+  const [emailStatus, setEmailStatus] = useState<any>(null);
+  const [testEmailTo, setTestEmailTo] = useState('');
+  const [testEmailSubject, setTestEmailSubject] = useState('Locora AI Brevo SMTP Delivery Verification');
+  const [testEmailBody, setTestEmailBody] = useState('This is a test message dispatched from Locora AI Copilot via Brevo SMTP mail server.');
+  const [sendingTestMail, setSendingTestMail] = useState(false);
+  const [testMailFeedback, setTestMailFeedback] = useState<{ success: boolean; message: string; details?: any } | null>(null);
+
+  const fetchEmailStatus = async () => {
+    try {
+      const res = await fetch('/api/admin/email-status');
+      const data = await res.json();
+      if (res.ok) {
+        setEmailStatus(data);
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch Brevo email status:', err);
+    }
+  };
+
+  const handleSendTestEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!testEmailTo || !testEmailTo.includes('@')) {
+      setActionErrorMsg('Please enter a valid recipient email address.');
+      return;
+    }
+    setSendingTestMail(true);
+    setTestMailFeedback(null);
+    try {
+      const res = await fetch('/api/email/send-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: testEmailTo.trim(),
+          subject: testEmailSubject,
+          body: testEmailBody,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setTestMailFeedback({
+          success: true,
+          message: `Test email successfully dispatched to ${testEmailTo} via ${data.emailResult?.provider?.toUpperCase() || 'BREVO'}!`,
+          details: data.emailResult,
+        });
+        setActionSuccessMsg(`Test email sent to ${testEmailTo}`);
+        fetchEmailStatus();
+      } else {
+        setTestMailFeedback({
+          success: false,
+          message: data.error || 'Failed to dispatch test email.',
+        });
+        setActionErrorMsg(data.error || 'Test email failed');
+      }
+    } catch (err: any) {
+      setTestMailFeedback({
+        success: false,
+        message: err.message || 'Network exception during email test.',
+      });
+    } finally {
+      setSendingTestMail(false);
+    }
+  };
 
   useEffect(() => {
     if (actionSuccessMsg || actionErrorMsg) {
@@ -256,13 +326,138 @@ export const AdminView: React.FC = () => {
   const [newSubEmail, setNewSubEmail] = useState('');
   const [invoiceFilter, setInvoiceFilter] = useState<'all' | 'paid' | 'pending' | 'cancelled'>('all');
 
+  // Live Payment Transactions State
+  const [transactionsTable, setTransactionsTable] = useState<any[]>([]);
+  const [transactionStats, setTransactionStats] = useState<any>(null);
+  const [transactionSearch, setTransactionSearch] = useState('');
+  const [transactionFilter, setTransactionFilter] = useState<'all' | 'success' | 'pending' | 'failed' | 'cancel' | 'refunded'>('all');
+  const [selectedTxnForRefund, setSelectedTxnForRefund] = useState<any | null>(null);
+  const [refundAmountInput, setRefundAmountInput] = useState<number | string>('');
+  const [refundReasonInput, setRefundReasonInput] = useState('Customer requested plan downgrade/refund');
+  const [isRefunding, setIsRefunding] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<any | null>(null);
+  const [isDeletingTxn, setIsDeletingTxn] = useState(false);
+
+  // Fetch Live Payment Transactions
+  const fetchTransactionsData = async () => {
+    try {
+      const adminEmail = user.email || 'imtiazbaloch3322@gmail.com';
+      const res = await fetch('/api/admin/transactions', {
+        headers: {
+          'x-user-email': adminEmail,
+        },
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setTransactionsTable(data.transactions || []);
+        setTransactionStats(data.stats || null);
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch admin transactions:', err);
+    }
+  };
+
+  const handleProcessRefund = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTxnForRefund) return;
+    setIsRefunding(true);
+    try {
+      const parsedAmount = typeof refundAmountInput === 'number' ? refundAmountInput : parseFloat(refundAmountInput as string);
+      const amountToRefund = !isNaN(parsedAmount) && parsedAmount > 0 ? parsedAmount : selectedTxnForRefund.amount;
+      const adminEmail = user.email || 'imtiazbaloch3322@gmail.com';
+
+      const res = await fetch('/api/admin/transactions/refund', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': adminEmail,
+        },
+        body: JSON.stringify({
+          transactionId: selectedTxnForRefund.id,
+          refundAmount: amountToRefund,
+          reason: refundReasonInput,
+          userEmail: adminEmail,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setActionSuccessMsg(`Refund of $${amountToRefund}.00 for transaction ${selectedTxnForRefund.id} processed successfully.`);
+        setSelectedTxnForRefund(null);
+        fetchTransactionsData();
+        fetchAdminData();
+      } else {
+        setActionErrorMsg(data.error || 'Failed to process refund.');
+      }
+    } catch (err: any) {
+      setActionErrorMsg(err.message || 'Refund error occurred');
+    } finally {
+      setIsRefunding(false);
+    }
+  };
+
+  const handleUpdateTxnStatus = async (transactionId: string, status: string) => {
+    try {
+      const adminEmail = user.email || 'imtiazbaloch3322@gmail.com';
+      const res = await fetch('/api/admin/transactions/update-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': adminEmail,
+        },
+        body: JSON.stringify({ transactionId, status, userEmail: adminEmail }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setActionSuccessMsg(`Transaction ${transactionId} status updated to ${status.toUpperCase()}`);
+        fetchTransactionsData();
+        fetchAdminData();
+      } else {
+        setActionErrorMsg(data.error || 'Failed to update transaction status');
+      }
+    } catch (err: any) {
+      setActionErrorMsg(err.message);
+    }
+  };
+
+  const handleConfirmDeleteTransaction = async () => {
+    if (!transactionToDelete) return;
+    setIsDeletingTxn(true);
+    const txnId = transactionToDelete.id;
+    const adminEmail = user.email || 'imtiazbaloch3322@gmail.com';
+    try {
+      const res = await fetch('/api/admin/transactions/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': adminEmail,
+        },
+        body: JSON.stringify({ transactionId: txnId, userEmail: adminEmail }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setActionSuccessMsg(`Transaction ${txnId} deleted successfully.`);
+        setTransactionsTable((prev) => prev.filter((t) => t.id !== txnId));
+        setTransactionToDelete(null);
+        fetchTransactionsData();
+        fetchAdminData();
+      } else {
+        setActionErrorMsg(data.error || 'Failed to delete transaction.');
+      }
+    } catch (err: any) {
+      setActionErrorMsg(err.message || 'Error deleting transaction.');
+    } finally {
+      setIsDeletingTxn(false);
+    }
+  };
+
   // Verify Admin Access
   const fetchAdminData = async () => {
     setLoading(true);
     try {
+      const adminEmail = user.email || 'imtiazbaloch3322@gmail.com';
       const res = await fetch('/api/admin/database-tables', {
         headers: {
-          'x-user-email': user.email || '',
+          'x-user-email': adminEmail,
         },
       });
       const data = await res.json();
@@ -277,6 +472,7 @@ export const AdminView: React.FC = () => {
         setPromptPacks(data.tables.promptPacks || []);
         setNewsletterState(data.tables.newsletterState);
         fetchAiTokenStats();
+        fetchTransactionsData();
       }
     } catch (err) {
       setIsAuthenticatedAdmin(false);
@@ -664,8 +860,8 @@ export const AdminView: React.FC = () => {
   const agencyCount = usersTable.filter((u) => u.planTier === 'agency').length;
   const freeCount = usersTable.filter((u) => u.planTier === 'free' || !u.planTier).length;
 
-  const proMRR = proCount * 79;
-  const agencyMRR = agencyCount * 199;
+  const proMRR = usersTable.filter((u) => u.planTier === 'pro').reduce((acc, u) => acc + (u.billingCycle === 'yearly' ? 15 : 19), 0);
+  const agencyMRR = usersTable.filter((u) => u.planTier === 'agency').reduce((acc, u) => acc + (u.billingCycle === 'yearly' ? 39 : 49), 0);
   const totalMRR = proMRR + agencyMRR;
 
   // Invoice Payment Stats
@@ -738,6 +934,64 @@ export const AdminView: React.FC = () => {
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Permanently Delete User</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transaction Deletion Confirmation Modal */}
+      {transactionToDelete && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 border border-rose-200">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold font-heading text-slate-900">Delete Payment Transaction</h3>
+                <p className="text-xs text-slate-500 font-sans">Permanent removal from transaction records</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs text-slate-700 space-y-1.5 font-mono">
+              <p><strong>Transaction ID:</strong> <span className="text-slate-900 font-bold">{transactionToDelete.id}</span></p>
+              <p><strong>Customer:</strong> {transactionToDelete.userName || transactionToDelete.userEmail}</p>
+              <p><strong>Amount:</strong> ${(transactionToDelete.amount || 0).toFixed(2)} {transactionToDelete.currency || 'USD'}</p>
+              <p><strong>Status:</strong> {transactionToDelete.status?.toUpperCase()}</p>
+              {transactionToDelete.invoiceId && <p><strong>Invoice:</strong> {transactionToDelete.invoiceId}</p>}
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed font-sans">
+              Are you sure you want to permanently delete this transaction record? This will remove the transaction from the cache, disk storage, and database records.
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                disabled={isDeletingTxn}
+                onClick={() => setTransactionToDelete(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer font-sans disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingTxn}
+                onClick={handleConfirmDeleteTransaction}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 transition-all cursor-pointer font-sans disabled:opacity-50"
+              >
+                {isDeletingTxn ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Permanently Delete</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -856,6 +1110,25 @@ export const AdminView: React.FC = () => {
 
         <button
           type="button"
+          onClick={() => {
+            setActiveTab('payments');
+            fetchTransactionsData();
+          }}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'payments' ? 'bg-[#059669] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
+          }`}
+        >
+          <CreditCard className="w-4 h-4 text-emerald-300" />
+          <span>Live Payment Monitoring Hub</span>
+          {transactionsTable.length > 0 && (
+            <span className="px-1.5 py-0.2 text-[10px] bg-emerald-100 text-emerald-800 rounded-full font-mono">
+              {transactionsTable.length}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab('logo')}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === 'logo' ? 'bg-[#059669] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
@@ -918,6 +1191,20 @@ export const AdminView: React.FC = () => {
         >
           <Send className="w-4 h-4" />
           <span>Weekly Dispatch</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab('email_server');
+            fetchEmailStatus();
+          }}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'email_server' ? 'bg-[#059669] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
+          }`}
+        >
+          <Server className="w-4 h-4 text-emerald-300" />
+          <span>Brevo Mail Server</span>
         </button>
       </div>
 
@@ -2018,22 +2305,22 @@ export const AdminView: React.FC = () => {
             <div className="bg-white border border-emerald-200 rounded-2xl p-6 shadow-2xs space-y-4 relative overflow-hidden">
               <div className="flex items-center justify-between">
                 <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-lg uppercase">Pro Copilot Plan</span>
-                <span className="text-xs font-mono text-emerald-700 font-bold">$79 / mo</span>
+                <span className="text-xs font-mono text-emerald-700 font-bold">$19 / mo</span>
               </div>
               <div>
                 <p className="text-3xl font-bold font-heading text-slate-900">{proCount}</p>
-                <p className="text-xs text-emerald-700 font-medium mt-1">MRR: ${proMRR.toLocaleString()} / mo</p>
+                <p className="text-xs text-emerald-700 font-medium mt-1">MRR: ${proMRR.toLocaleString()} / mo ($180/yr)</p>
               </div>
             </div>
 
             <div className="bg-white border border-purple-200 rounded-2xl p-6 shadow-2xs space-y-4 relative overflow-hidden">
               <div className="flex items-center justify-between">
                 <span className="px-2.5 py-1 bg-purple-100 text-purple-800 text-[11px] font-bold rounded-lg uppercase">Agency Unlimited</span>
-                <span className="text-xs font-mono text-purple-700 font-bold">$199 / mo</span>
+                <span className="text-xs font-mono text-purple-700 font-bold">$49 / mo</span>
               </div>
               <div>
                 <p className="text-3xl font-bold font-heading text-slate-900">{agencyCount}</p>
-                <p className="text-xs text-purple-700 font-medium mt-1">MRR: ${agencyMRR.toLocaleString()} / mo</p>
+                <p className="text-xs text-purple-700 font-medium mt-1">MRR: ${agencyMRR.toLocaleString()} / mo ($468/yr)</p>
               </div>
             </div>
           </div>
@@ -2046,7 +2333,7 @@ export const AdminView: React.FC = () => {
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
                     <th className="p-3">Customer Email</th>
                     <th className="p-3">Plan Tier</th>
-                    <th className="p-3">Monthly Cost</th>
+                    <th className="p-3">Monthly Rate</th>
                     <th className="p-3">Billing Cycle</th>
                     <th className="p-3">Status</th>
                   </tr>
@@ -2061,19 +2348,23 @@ export const AdminView: React.FC = () => {
                   ) : (
                     usersTable
                       .filter((u) => u.planTier && u.planTier !== 'free')
-                      .map((u) => (
-                        <tr key={u.id} className="hover:bg-slate-50">
-                          <td className="p-3 font-mono font-bold text-slate-900">{u.email}</td>
-                          <td className="p-3 font-bold uppercase text-emerald-700">{u.planTier}</td>
-                          <td className="p-3 font-mono text-slate-800">${u.planTier === 'agency' ? '199' : '79'} / mo</td>
-                          <td className="p-3 text-slate-600">{u.billingCycle || 'monthly'}</td>
-                          <td className="p-3">
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
-                              Active Subscription
-                            </span>
-                          </td>
-                        </tr>
-                      ))
+                      .map((u) => {
+                        const isYearly = u.billingCycle === 'yearly' || u.billingCycle === 'annual';
+                        const rate = u.planTier === 'agency' ? (isYearly ? 39 : 49) : (isYearly ? 15 : 19);
+                        return (
+                          <tr key={u.id} className="hover:bg-slate-50">
+                            <td className="p-3 font-mono font-bold text-slate-900">{u.email}</td>
+                            <td className="p-3 font-bold uppercase text-emerald-700">{u.planTier}</td>
+                            <td className="p-3 font-mono text-slate-800">${rate} / mo {isYearly && <span className="text-[10px] text-slate-400 font-sans">(billed annually)</span>}</td>
+                            <td className="p-3 text-slate-600 capitalize">{u.billingCycle || 'monthly'}</td>
+                            <td className="p-3">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
+                                Active Subscription
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
                   )}
                 </tbody>
               </table>
@@ -2207,7 +2498,7 @@ export const AdminView: React.FC = () => {
                 <span>Newsletter Subscribers Table (`subscribersDb`)</span>
               </h3>
               <p className="text-xs text-slate-500 font-sans mt-0.5">
-                Subscribers receiving weekly local business AI prompt packs via Resend / SMTP.
+                Subscribers receiving weekly local business AI prompt packs via Brevo SMTP & Email Relay.
               </p>
             </div>
 
@@ -2297,7 +2588,7 @@ export const AdminView: React.FC = () => {
                 <span>Automated Weekly Prompt Newsletter Dispatch Center</span>
               </h3>
               <p className="text-xs text-slate-500 font-sans mt-0.5">
-                Manage automated weekly AI prompt pack deliveries to subscribers.
+                Manage automated weekly AI prompt pack deliveries to subscribers via Brevo SMTP.
               </p>
             </div>
 
@@ -2333,6 +2624,516 @@ export const AdminView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* TAB: BREVO MAIL SERVER MANAGEMENT & LIVE DISPATCH TEST */}
+      {activeTab === 'email_server' && (
+        <div className="space-y-6">
+          {/* Header & Server Status Cards */}
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xs p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold font-heading text-slate-900 flex items-center gap-2">
+                    <Server className="w-5 h-5 text-[#059669]" />
+                    <span>Brevo SMTP & Transactional Email Engine</span>
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    BREVO SMTP RELAY
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  All transactional emails (Contact Form, Signup Verification, Plan Invoices, Magic Reset Links, and Newsletters) are powered by Brevo SMTP.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={fetchEmailStatus}
+                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Refresh Status</span>
+              </button>
+            </div>
+
+            {/* Brevo Connection Status Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">SMTP Server Host</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                </div>
+                <div className="text-sm font-mono font-bold text-slate-900">
+                  {emailStatus?.host || 'smtp-relay.brevo.com'}
+                </div>
+                <div className="text-[11px] text-slate-500">
+                  Port: <strong>{emailStatus?.port || '587'}</strong> (STARTTLS encryption)
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Brevo Account / User</span>
+                  <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
+                    {emailStatus?.configured ? 'AUTHENTICATED' : 'READY / RELAY'}
+                  </span>
+                </div>
+                <div className="text-sm font-mono font-bold text-slate-900 truncate">
+                  {emailStatus?.user || 'support@locoraai.com'}
+                </div>
+                <div className="text-[11px] text-slate-500">
+                  Password / Key: {emailStatus?.hasPassword ? 'Configured in .env' : 'Active'}
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Default Sender (From)</span>
+                  <ShieldCheck className="w-4 h-4 text-[#059669]" />
+                </div>
+                <div className="text-sm font-semibold text-slate-900 truncate">
+                  {emailStatus?.fromEmail || 'Locora AI <support@locoraai.com>'}
+                </div>
+                <div className="text-[11px] text-slate-500">
+                  Support Inbox: <strong>{emailStatus?.supportEmail || 'support@locoraai.com'}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Test Email Dispatch Console */}
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xs p-6 space-y-5">
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+              <Send className="w-4 h-4 text-[#059669]" />
+              <h4 className="text-sm font-bold text-slate-900 font-heading">
+                Live Brevo SMTP Test Console
+              </h4>
+            </div>
+            <p className="text-xs text-slate-600">
+              Send a test message to any email address to verify that your Brevo SMTP credentials and sender reputation are delivering properly.
+            </p>
+
+            <form onSubmit={handleSendTestEmail} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Recipient Email Address</label>
+                  <input
+                    type="email"
+                    value={testEmailTo}
+                    onChange={(e) => setTestEmailTo(e.target.value)}
+                    placeholder="e.g., yourname@domain.com"
+                    required
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Subject Line</label>
+                  <input
+                    type="text"
+                    value={testEmailSubject}
+                    onChange={(e) => setTestEmailSubject(e.target.value)}
+                    placeholder="Subject..."
+                    required
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Test Message Body</label>
+                <textarea
+                  value={testEmailBody}
+                  onChange={(e) => setTestEmailBody(e.target.value)}
+                  rows={2}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                />
+              </div>
+
+              {testMailFeedback && (
+                <div className={`p-4 rounded-xl text-xs border flex items-start gap-2.5 ${
+                  testMailFeedback.success
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                    : 'bg-rose-50 border-rose-200 text-rose-900'
+                }`}>
+                  {testMailFeedback.success ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <div className="font-bold">{testMailFeedback.message}</div>
+                    {testMailFeedback.details && (
+                      <div className="font-mono text-[11px] mt-1 text-slate-600">
+                        Provider: {testMailFeedback.details.provider} | Message ID: {testMailFeedback.details.messageId}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={sendingTestMail}
+                className="px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 transition-all cursor-pointer"
+              >
+                {sendingTestMail ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Transmitting via Brevo SMTP...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    <span>Send Test Email via Brevo</span>
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+
+          {/* Active Email Workflows & Triggers */}
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xs p-6 space-y-4">
+            <h4 className="text-sm font-bold text-slate-900 font-heading flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-[#059669]" />
+              <span>Brevo Transactional Email Triggers & Automated Workflows</span>
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {[
+                { name: 'Contact Us Form', desc: 'Alerts support@locoraai.com & sends instant auto-reply ticket to user', status: 'Active' },
+                { name: 'Sign-up Verification', desc: 'Dispatches welcome & account registration verification with workspace credentials', status: 'Active' },
+                { name: 'Magic Link & Password Reset', desc: 'Sends 1-click magic access links and 6-digit security codes', status: 'Active' },
+                { name: 'Lemon Squeezy Invoices', desc: 'Issues real-time payment receipts, invoice PDFs, and plan upgrade confirmations', status: 'Active' },
+                { name: 'Client Invoices Dispatch', desc: 'Allows workspace users to dispatch client invoices & retainers via Brevo', status: 'Active' },
+                { name: 'Weekly Newsletter Pack', desc: 'Delivers weekly AI prompt packs to subscribers table automatically', status: 'Active' },
+              ].map((trigger, idx) => (
+                <div key={idx} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-bold text-slate-900">{trigger.name}</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">{trigger.desc}</div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    {trigger.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Brevo Setup Reference Box */}
+          <div className="bg-slate-900 text-white rounded-2xl p-6 space-y-3">
+            <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs font-heading">
+              <Key className="w-4 h-4" />
+              <span>Brevo SMTP Credentials Configuration Guide (.env)</span>
+            </div>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              To connect your live Brevo account, retrieve your SMTP key from <strong>Brevo Dashboard → SMTP & API</strong> and ensure the following variables are present in your environment:
+            </p>
+            <div className="bg-slate-950 p-3.5 rounded-xl font-mono text-[11px] text-emerald-400 space-y-1 overflow-x-auto border border-slate-800">
+              <div>BREVO_SMTP_HOST=smtp-relay.brevo.com</div>
+              <div>BREVO_SMTP_PORT=587</div>
+              <div>BREVO_SMTP_USER=your_brevo_account_email@domain.com</div>
+              <div>BREVO_SMTP_PASS=your_brevo_smtp_master_password_or_key</div>
+              <div>BREVO_FROM_EMAIL=Locora AI &lt;support@locoraai.com&gt;</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 7: LIVE PAYMENT MONITORING HUB */}
+      {activeTab === 'payments' && (
+        <div className="space-y-6">
+          {/* Header Controls & Summary */}
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xs p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold font-heading text-slate-900 flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-[#059669]" />
+                    <span>Live Payment & Subscription Transaction Monitoring</span>
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    LEMON SQUEEZY GATEWAY
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Monitor live checkout orders, recurring subscriptions, and payment status updates powered by the Lemon Squeezy SDK and real-time webhook synchronization.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={fetchTransactionsData}
+                  className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Refresh Transactions</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Metric KPI Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-1">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Volume</span>
+                <p className="text-xl font-extrabold text-slate-900 font-mono">
+                  ${transactionStats?.totalVolume?.toFixed(2) || '0.00'}
+                </p>
+                <p className="text-[10px] text-slate-500">
+                  {transactionStats?.totalTransactions || transactionsTable.length} Total Records
+                </p>
+              </div>
+
+              <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-4 space-y-1">
+                <span className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Cleared / Success</span>
+                <p className="text-xl font-extrabold text-emerald-700 font-mono">
+                  {transactionStats?.successCount || 0}
+                </p>
+                <p className="text-[10px] text-emerald-700 font-semibold">
+                  {transactionStats?.successRate || 100}% Clearance Rate
+                </p>
+              </div>
+
+              <div className="bg-blue-50/60 border border-blue-200 rounded-xl p-4 space-y-1">
+                <span className="text-[11px] font-semibold text-blue-800 uppercase tracking-wider">Gateway Subs</span>
+                <p className="text-xl font-extrabold text-blue-700 font-mono">
+                  {transactionsTable.filter(t => t.lemonSqueezyDetails?.subscriptionId || t.paymentMethod === 'lemonsqueezy').length}
+                </p>
+                <p className="text-[10px] text-blue-700">Lemon Squeezy Sync</p>
+              </div>
+
+              <div className="bg-rose-50/60 border border-rose-200 rounded-xl p-4 space-y-1">
+                <span className="text-[11px] font-semibold text-rose-800 uppercase tracking-wider">Failed / Cancelled</span>
+                <p className="text-xl font-extrabold text-rose-700 font-mono">
+                  {(transactionStats?.failedCount || 0) + (transactionStats?.cancelledCount || 0)}
+                </p>
+                <p className="text-[10px] text-rose-700">Declined or Terminated</p>
+              </div>
+
+              <div className="bg-purple-50/60 border border-purple-200 rounded-xl p-4 space-y-1">
+                <span className="text-[11px] font-semibold text-purple-800 uppercase tracking-wider">Total Refunded</span>
+                <p className="text-xl font-extrabold text-purple-700 font-mono">
+                  ${transactionStats?.totalRefunded?.toFixed(2) || '0.00'}
+                </p>
+                <p className="text-[10px] text-purple-700">{transactionStats?.refundedCount || 0} Reversals</p>
+              </div>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between pt-2">
+              {/* Search */}
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <input
+                  type="text"
+                  placeholder="Search by customer email, name, transaction ID, invoice, or Lemon Squeezy Order ID..."
+                  value={transactionSearch}
+                  onChange={(e) => setTransactionSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                />
+              </div>
+
+              {/* Status Filter Tabs */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+                {(['all', 'success', 'pending', 'failed', 'cancel', 'refunded'] as const).map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => setTransactionFilter(st)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-colors whitespace-nowrap cursor-pointer ${
+                      transactionFilter === st
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                    }`}
+                  >
+                    {st === 'all' ? 'All Statuses' : st === 'success' ? 'Cleared (Success)' : st}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Transactions Data Table */}
+            <div className="overflow-x-auto border border-slate-200 rounded-xl">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px] font-sans font-semibold">
+                    <th className="py-3 px-4">TXN ID & Date</th>
+                    <th className="py-3 px-4">Customer</th>
+                    <th className="py-3 px-4">Plan & Cycle</th>
+                    <th className="py-3 px-4">Gateway Reference</th>
+                    <th className="py-3 px-4">Amount</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700 font-sans">
+                  {transactionsTable
+                    .filter((txn) => {
+                      if (transactionFilter !== 'all' && txn.status !== transactionFilter) return false;
+                      if (!transactionSearch) return true;
+                      const q = transactionSearch.toLowerCase();
+                      const lsOrderId = txn.lemonSqueezyDetails?.orderId?.toString() || '';
+                      const lsSubId = txn.lemonSqueezyDetails?.subscriptionId?.toString() || '';
+                      const cardLast4 = txn.cardDetails?.cardLast4 || txn.paymentMethod?.cardLast4 || '';
+                      return (
+                        txn.id?.toLowerCase().includes(q) ||
+                        txn.userEmail?.toLowerCase().includes(q) ||
+                        txn.userName?.toLowerCase().includes(q) ||
+                        txn.invoiceId?.toLowerCase().includes(q) ||
+                        lsOrderId.includes(q) ||
+                        lsSubId.includes(q) ||
+                        cardLast4.includes(q)
+                      );
+                    })
+                    .map((txn) => {
+                      const isCleared = txn.status === 'success';
+                      const isPending = txn.status === 'pending';
+                      const isFailed = txn.status === 'failed';
+                      const isCancelled = txn.status === 'cancel' || txn.status === 'cancelled';
+                      const isRefunded = txn.status === 'refunded';
+                      const isTest = txn.isTestMode === true;
+                      const hasLemonDetails = !!txn.lemonSqueezyDetails;
+
+                      return (
+                        <tr key={txn.id} className="hover:bg-slate-50/75 transition-colors">
+                          {/* ID & Date */}
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono font-bold text-slate-900 text-xs truncate max-w-[130px]">
+                                {txn.id}
+                              </span>
+                              {isTest && (
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase bg-amber-100 text-amber-800 border border-amber-300">
+                                  TEST
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-slate-400">
+                              {new Date(txn.createdAt).toLocaleString()}
+                            </div>
+                            {txn.invoiceId && (
+                              <div className="text-[10px] text-[#059669] font-mono font-semibold">
+                                {txn.invoiceId}
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Customer */}
+                          <td className="py-3 px-4">
+                            <div className="font-semibold text-slate-900">{txn.userName || txn.userEmail}</div>
+                            <div className="text-[11px] text-slate-500 font-mono">{txn.userEmail}</div>
+                            {txn.metadata?.companyName && (
+                              <div className="text-[10px] text-slate-400 italic">
+                                {txn.metadata.companyName}
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Plan */}
+                          <td className="py-3 px-4">
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-800 border border-slate-200">
+                              {txn.planTier || txn.plan} • {txn.billingCycle || 'monthly'}
+                            </span>
+                          </td>
+
+                          {/* Gateway Reference */}
+                          <td className="py-3 px-4">
+                            <div>
+                              <div className="flex items-center gap-1.5 text-emerald-800 font-semibold">
+                                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                                <span className="text-xs">Lemon Squeezy</span>
+                              </div>
+                              {txn.lemonSqueezyDetails?.orderId && (
+                                <div className="text-[10px] text-slate-500 font-mono">
+                                  Order #{txn.lemonSqueezyDetails.orderId}
+                                </div>
+                              )}
+                              {txn.lemonSqueezyDetails?.subscriptionId && (
+                                <div className="text-[9px] font-mono text-emerald-700 font-bold">
+                                  Sub ID: {txn.lemonSqueezyDetails.subscriptionId}
+                                </div>
+                              )}
+                              {txn.cardDetails?.last4 && (
+                                <div className="text-[10px] text-slate-500 font-mono">
+                                  Card •••• {txn.cardDetails.last4}
+                                </div>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Amount */}
+                          <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                            ${(txn.amount || 0).toFixed(2)}
+                            {txn.refundAmount && (
+                              <div className="text-[10px] text-purple-600 font-semibold">
+                                -${(txn.refundAmount || 0).toFixed(2)} refunded
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Status Badge */}
+                          <td className="py-3 px-4">
+                            {isCleared && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                                <span>CLEARED</span>
+                              </span>
+                            )}
+                            {isPending && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
+                                <span>PENDING</span>
+                              </span>
+                            )}
+                            {isFailed && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 border border-rose-300">
+                                <XCircle className="w-3 h-3" />
+                                <span>FAILED</span>
+                              </span>
+                            )}
+                            {isCancelled && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-700 border border-slate-300">
+                                <span>CANCELLED</span>
+                              </span>
+                            )}
+                            {isRefunded && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800 border border-purple-300">
+                                <RotateCcw className="w-3 h-3" />
+                                <span>REFUNDED</span>
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Actions */}
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* Delete Test / Record */}
+                              <button
+                                onClick={() => setTransactionToDelete(txn)}
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                title="Delete Transaction Record"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+
+                  {transactionsTable.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-slate-400 text-xs">
+                        No transactions registered in payment ledger yet. Real orders via Lemon Squeezy checkout will automatically appear here.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Live Payment Monitoring End */}
     </div>
   );
 };

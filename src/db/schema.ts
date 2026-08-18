@@ -190,3 +190,46 @@ export const newsletterSubscribersTable = pgTable('newsletter_subscribers', {
   subscribedAt: timestamp('subscribed_at').defaultNow().notNull(),
 });
 
+export const transactionsTable = pgTable('payment_transactions', {
+  id: text('id').primaryKey(),
+  userId: text('user_id'),
+  userEmail: text('user_email').notNull(),
+  userName: text('user_name'),
+  planTier: text('plan_tier').notNull(),
+  billingCycle: text('billing_cycle').notNull(),
+  amount: doublePrecision('amount').notNull(),
+  currency: text('currency').default('USD').notNull(),
+  paymentMethod: text('payment_method').notNull(), // 'lemonsqueezy' | 'card' | 'apple_pay' | 'google_pay' | 'paypal'
+  lemonSqueezyDetails: jsonb('lemon_squeezy_details').$type<{
+    subscriptionId?: string;
+    orderId?: string;
+    customerId?: string;
+    variantId?: string;
+    productId?: string;
+    status?: string;
+    customerPortalUrl?: string;
+    updatePaymentMethodUrl?: string;
+    paymentMethodBrand?: string;
+    receiptUrl?: string;
+  }>(),
+  cardDetails: jsonb('card_details').$type<{
+    brand?: string;
+    last4?: string;
+    expMonth?: string;
+    expYear?: string;
+    cardholderName?: string;
+    country?: string;
+    postalCode?: string;
+    isTestCard?: boolean;
+    walletType?: 'apple_pay' | 'google_pay' | 'none';
+  }>(),
+  status: text('status').notNull(), // 'success' | 'failed' | 'cancelled' | 'pending' | 'refunded'
+  failureReason: text('failure_reason'),
+  refundedAmount: doublePrecision('refunded_amount'),
+  refundReason: text('refund_reason'),
+  refundedAt: text('refunded_at'),
+  invoiceId: text('invoice_id'),
+  isTestMode: boolean('is_test_mode').default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});

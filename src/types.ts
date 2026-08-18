@@ -286,6 +286,12 @@ export interface UserProfile {
   memberSince: string;
   nextBillingDate: string;
   autoRenew?: boolean;
+  cancelAtPeriodEnd?: boolean;
+  paymentProvider?: 'lemonsqueezy' | 'card' | 'apple_pay' | 'google_pay';
+  lemonSqueezySubscriptionId?: string;
+  lemonSqueezyCustomerId?: string;
+  lemonSqueezyCustomerPortalUrl?: string;
+  lemonSqueezyUpdatePaymentMethodUrl?: string;
   paymentMethod?: {
     cardLast4: string;
     cardBrand: string;
@@ -294,12 +300,61 @@ export interface UserProfile {
   isAuthenticated: boolean;
 }
 
+export type PaymentMethodType = 'lemonsqueezy' | 'card' | 'apple_pay' | 'google_pay' | 'paypal';
+export type PaymentTransactionStatus = 'success' | 'failed' | 'cancelled' | 'pending' | 'refunded';
+
+export interface PaymentTransaction {
+  id: string;
+  userId?: string;
+  userEmail: string;
+  userName: string;
+  planTier: UserPlan;
+  billingCycle: BillingCycle;
+  amount: number;
+  currency: string;
+  paymentMethod: PaymentMethodType;
+  lemonSqueezyDetails?: {
+    subscriptionId?: string;
+    orderId?: string;
+    customerId?: string;
+    variantId?: string;
+    productId?: string;
+    status?: string;
+    customerPortalUrl?: string;
+    updatePaymentMethodUrl?: string;
+    paymentMethodBrand?: string;
+    receiptUrl?: string;
+  };
+  cardDetails?: {
+    brand?: string;
+    last4?: string;
+    expMonth?: string;
+    expYear?: string;
+    cardholderName?: string;
+    country?: string;
+    postalCode?: string;
+    isTestCard?: boolean;
+    walletType?: 'apple_pay' | 'google_pay' | 'none';
+  };
+  status: PaymentTransactionStatus;
+  failureReason?: string;
+  refundedAmount?: number;
+  refundReason?: string;
+  refundedAt?: string;
+  invoiceId?: string;
+  isTestMode?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface SubscriptionInvoice {
   id: string;
   amount: number;
   date: string;
-  status: 'paid' | 'pending' | 'failed';
+  status: 'paid' | 'pending' | 'failed' | 'refunded';
   planName: string;
+  transactionId?: string;
+  paymentMethod?: string;
 }
 
 export interface ActivityLogItem {
