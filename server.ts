@@ -8,7 +8,7 @@ import { GoogleGenAI } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
 import Stripe from 'stripe';
 import nodemailer from 'nodemailer';
-import { lemonSqueezySetup, createCheckout, getSubscription, cancelSubscription } from '@lemonsqueezy/lemonsqueezy.js';
+import { lemonSqueezySetup, createCheckout, getSubscription, cancelSubscription, listStores, listVariants } from '@lemonsqueezy/lemonsqueezy.js';
 import { getOrCreateUser } from './src/db/users.ts';
 import * as dbService from './src/db/service.ts';
 import type { PaymentTransaction } from './src/types.ts';
@@ -2420,11 +2420,19 @@ app.get('/api/auth/oauth/url', (req, res) => {
   }
 });
 
-// OAuth Interactive Popup Screen
+// OAuth Interactive Auto-Consent Popup Screen
 app.get('/api/auth/oauth/popup', (req, res) => {
-  const provider = (req.query.provider as string) || 'linkedin';
+  const provider = (req.query.provider as string) || 'google';
   const redirectUri = (req.query.redirectUri as string) || '/auth/callback';
   const isLinkedIn = provider === 'linkedin';
+
+  // Extract dynamically passed parameters or session cookie if existing
+  const queryEmail = (req.query.email as string || '').toLowerCase().trim();
+  const queryName = (req.query.name as string || '').trim();
+  const cookieEmail = (req.cookies?.auth_email as string || '').toLowerCase().trim();
+
+  const detectedEmail = queryEmail || cookieEmail || '';
+  const detectedName = queryName || (detectedEmail ? detectedEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '');
 
   res.send(`
     <!DOCTYPE html>
@@ -2436,9 +2444,11 @@ app.get('/api/auth/oauth/popup', (req, res) => {
       <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0b1329; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 1.5rem; box-sizing: border-box; }
         .card { background: #151f38; border: 1px solid #2a3b60; border-radius: 1.25rem; padding: 2rem; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6); }
-        .logo { width: 52px; height: 52px; border-radius: 1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; }
+        .logo { width: 56px; height: 56px; border-radius: 1.1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
         .linkedin-logo { background: #0077b5; color: white; }
         .google-logo { background: white; }
+        .spinner { width: 32px; height: 32px; border: 3px solid #334155; border-top-color: ${isLinkedIn ? '#0077b5' : '#059669'}; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 1rem auto; display: ${detectedEmail ? 'block' : 'none'}; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         h2 { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.5rem; }
         p { font-size: 0.85rem; color: #94a3b8; margin: 0 0 1.25rem; line-height: 1.4; }
         .form-group { text-align: left; margin-bottom: 1rem; }
@@ -2454,36 +2464,56 @@ app.get('/api/auth/oauth/popup', (req, res) => {
       <div class="card">
         <div class="logo ${isLinkedIn ? 'linkedin-logo' : 'google-logo'}">
           ${isLinkedIn 
-            ? `<svg width="28" height="28" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.25V10.9H6.46M7.86 6.72a1.4 1.4 0 1 0 1.4 1.4 1.4 1.4 0 0 0-1.4-1.4z"/></svg>`
-            : `<svg width="28" height="28" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>`
+            ? `<svg width="30" height="30" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.25V10.9H6.46M7.86 6.72a1.4 1.4 0 1 0 1.4 1.4 1.4 1.4 0 0 0-1.4-1.4z"/></svg>`
+            : `<svg width="30" height="30" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>`
           }
         </div>
         <h2>Sign in with ${isLinkedIn ? 'LinkedIn' : 'Google'}</h2>
-        <p>Authorize <strong>Locora AI</strong> to sign you in and create your clean, private workspace.</p>
+        <p>Connecting your dynamic account to your isolated <strong>Locora AI</strong> workspace.</p>
 
-        <form action="${redirectUri}" method="GET">
-          <input type="hidden" name="provider" value="${provider}">
-          <input type="hidden" name="code" value="oauth_success_${Date.now()}">
+        ${detectedEmail ? `
+          <div class="spinner"></div>
+          <p style="font-size: 0.8rem; color: #38bdf8;">Authenticating ${detectedEmail}...</p>
+        ` : `
+          <form action="${redirectUri}" method="GET">
+            <input type="hidden" name="provider" value="${provider}">
+            <input type="hidden" name="code" value="oauth_success_${Date.now()}">
 
-          <div class="form-group">
-            <label>Full Name</label>
-            <input type="text" name="name" id="userName" required placeholder="e.g. John Doe">
-          </div>
+            <div class="form-group">
+              <label>Your Name</label>
+              <input type="text" name="name" id="userName" required placeholder="e.g. Your Name">
+            </div>
 
-          <div class="form-group">
-            <label>Email Address</label>
-            <input type="email" name="email" id="userEmail" required placeholder="e.g. john@yourcompany.com">
-          </div>
+            <div class="form-group">
+              <label>${isLinkedIn ? 'LinkedIn' : 'Google'} Account Email</label>
+              <input type="email" name="email" id="userEmail" required placeholder="you@example.com">
+            </div>
 
-          <button type="submit" class="btn">
-            Authorize & Continue to Dashboard
-          </button>
-        </form>
+            <button type="submit" class="btn">
+              Authorize & Open Workspace
+            </button>
+          </form>
+        `}
 
         <div class="secure-badge">
-          <span>🔒 256-bit Encrypted SSL • Isolated User Workspace</span>
+          <span>🔒 256-bit Encrypted SSL • Dynamic OAuth Session</span>
         </div>
       </div>
+      <script>
+        ${detectedEmail ? `
+          const targetUrl = "${redirectUri}".includes('?')
+            ? "${redirectUri}&provider=${provider}&email=" + encodeURIComponent("${detectedEmail}") + "&name=" + encodeURIComponent("${detectedName}") + "&code=oauth_auto_" + Date.now()
+            : "${redirectUri}?provider=${provider}&email=" + encodeURIComponent("${detectedEmail}") + "&name=" + encodeURIComponent("${detectedName}") + "&code=oauth_auto_" + Date.now();
+
+          setTimeout(() => {
+            window.location.href = targetUrl;
+          }, 350);
+        ` : `
+          // Focus email field for fast user entry
+          const emailInput = document.getElementById('userEmail');
+          if (emailInput) emailInput.focus();
+        `}
+      </script>
     </body>
     </html>
   `);
@@ -2554,65 +2584,14 @@ app.get(['/auth/callback', '/auth/callback/'], async (req, res) => {
     }
   }
 
+  // Dynamic fallback: read from cookies if available
   if (!email) {
-    // If no email was captured from provider token, present an interactive user identity confirmation form
-    const isLinkedIn = provider === 'linkedin';
-    return res.send(`
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Confirm Your ${isLinkedIn ? 'LinkedIn' : 'Google'} Account</title>
-        <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0b1329; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 1.5rem; box-sizing: border-box; }
-          .card { background: #151f38; border: 1px solid #2a3b60; border-radius: 1.25rem; padding: 2rem; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6); }
-          .logo { width: 52px; height: 52px; border-radius: 1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; }
-          .linkedin-logo { background: #0077b5; color: white; }
-          .google-logo { background: white; }
-          h2 { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.5rem; }
-          p { font-size: 0.85rem; color: #94a3b8; margin: 0 0 1.25rem; line-height: 1.4; }
-          .form-group { text-align: left; margin-bottom: 1rem; }
-          label { display: block; font-size: 0.75rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.05em; }
-          input { width: 100%; padding: 0.75rem 0.85rem; background: #0a1124; border: 1px solid #334155; border-radius: 0.65rem; color: white; font-size: 0.9rem; box-sizing: border-box; outline: none; transition: border-color 0.2s; }
-          input:focus { border-color: ${isLinkedIn ? '#0077b5' : '#059669'}; }
-          .btn { display: block; width: 100%; padding: 0.85rem; background: ${isLinkedIn ? '#0077b5' : '#059669'}; color: white; font-weight: bold; border: none; border-radius: 0.75rem; font-size: 0.9rem; cursor: pointer; transition: opacity 0.2s; text-decoration: none; box-sizing: border-box; margin-top: 1.25rem; }
-          .btn:hover { opacity: 0.9; }
-        </style>
-      </head>
-      <body>
-        <div class="card">
-          <div class="logo ${isLinkedIn ? 'linkedin-logo' : 'google-logo'}">
-            ${isLinkedIn 
-              ? `<svg width="28" height="28" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.25V10.9H6.46M7.86 6.72a1.4 1.4 0 1 0 1.4 1.4 1.4 0 0 0-1.4-1.4z"/></svg>`
-              : `<svg width="28" height="28" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>`
-            }
-          </div>
-          <h2>Confirm ${isLinkedIn ? 'LinkedIn' : 'Google'} Profile</h2>
-          <p>Please enter your real name and email to connect your workspace.</p>
+    email = (req.cookies?.auth_email as string || '').toLowerCase().trim();
+  }
 
-          <form action="/auth/callback" method="GET">
-            <input type="hidden" name="provider" value="${provider}">
-            <input type="hidden" name="code" value="oauth_done_${Date.now()}">
-
-            <div class="form-group">
-              <label>Full Name</label>
-              <input type="text" name="name" required placeholder="e.g. Imtiaz Baloch">
-            </div>
-
-            <div class="form-group">
-              <label>Email Address</label>
-              <input type="email" name="email" required placeholder="e.g. imtiazbaloch3322@gmail.com">
-            </div>
-
-            <button type="submit" class="btn">
-              Complete Sign In & Open Dashboard
-            </button>
-          </form>
-        </div>
-      </body>
-      </html>
-    `);
+  if (!email) {
+    // If still no email was captured, redirect back to login view with clear state
+    return res.redirect('/#login?error=oauth_missing_email');
   }
 
   if (!name) {
@@ -2964,15 +2943,33 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
 // ================= LEMON SQUEEZY PAYMENT & SUBSCRIPTION INTEGRATION =================
 
 let isLemonSqueezyConfigured = false;
+function getLemonSqueezyApiKey(): string {
+  return (
+    process.env.LEMONSQUEEZY_API_KEY ||
+    process.env.LEMON_SQUEEZY_API_KEY ||
+    process.env.LEMONSQUEEZY_KEY ||
+    ''
+  ).trim();
+}
+
+function getLemonSqueezyStoreId(): string {
+  return (
+    process.env.LEMONSQUEEZY_STORE_ID ||
+    process.env.LEMON_SQUEEZY_STORE_ID ||
+    process.env.LEMONSQUEEZY_STORE ||
+    ''
+  ).trim();
+}
+
 function initLemonSqueezy(): boolean {
-  const apiKey = process.env.LEMONSQUEEZY_API_KEY;
-  if (!apiKey || !apiKey.trim()) {
+  const apiKey = getLemonSqueezyApiKey();
+  if (!apiKey) {
     return false;
   }
   if (!isLemonSqueezyConfigured) {
     try {
       lemonSqueezySetup({
-        apiKey: apiKey.trim(),
+        apiKey,
         onError: (err) => console.error('[Lemon Squeezy SDK Error]', err.message),
       });
       isLemonSqueezyConfigured = true;
@@ -2985,22 +2982,54 @@ function initLemonSqueezy(): boolean {
 }
 
 // Lemon Squeezy Configuration & Status Endpoint
-app.get('/api/lemonsqueezy/status', (req, res) => {
-  const apiKey = process.env.LEMONSQUEEZY_API_KEY;
-  const storeId = process.env.LEMONSQUEEZY_STORE_ID;
-  const isConfigured = !!(apiKey && apiKey.trim() && storeId && storeId.trim());
+app.get('/api/lemonsqueezy/status', async (req, res) => {
+  const apiKey = getLemonSqueezyApiKey();
+  let storeId = getLemonSqueezyStoreId();
+  const hasApiKey = !!apiKey;
+  let storesList: any[] = [];
+  let discoveredVariants: any[] = [];
+
+  if (hasApiKey) {
+    initLemonSqueezy();
+    try {
+      if (!storeId) {
+        const { data } = await listStores();
+        if (data && data.data && data.data.length > 0) {
+          storesList = data.data;
+          storeId = String(data.data[0].id);
+        }
+      }
+      if (storeId) {
+        const { data: varData } = await (listVariants as any)({ filter: { storeId: Number(storeId) } });
+        if (varData && varData.data) {
+          discoveredVariants = varData.data.map((v: any) => ({
+            id: v.id,
+            name: v.attributes?.name,
+            price: v.attributes?.price,
+            interval: v.attributes?.interval,
+          }));
+        }
+      }
+    } catch (e: any) {
+      console.warn('[Lemon Squeezy Status Check Warn]', e.message);
+    }
+  }
+
+  const isConfigured = !!(apiKey && (storeId || storesList.length > 0));
   res.json({
     configured: isConfigured,
-    hasApiKey: !!(apiKey && apiKey.trim()),
-    hasStoreId: !!(storeId && storeId.trim()),
+    hasApiKey,
+    hasStoreId: !!storeId,
+    storeId: storeId || null,
     hasWebhookSecret: !!(process.env.LEMONSQUEEZY_WEBHOOK_SECRET && process.env.LEMONSQUEEZY_WEBHOOK_SECRET.trim()),
-    storeId: storeId ? storeId.trim() : null,
     hasVariants: {
-      proMonthly: !!process.env.LEMONSQUEEZY_PRO_VARIANT_ID_MONTHLY,
+      proMonthly: !!(process.env.LEMONSQUEEZY_PRO_VARIANT_ID_MONTHLY || process.env.LEMONSQUEEZY_PRO_VARIANT_ID || process.env.LEMONSQUEEZY_VARIANT_ID),
       proYearly: !!process.env.LEMONSQUEEZY_PRO_VARIANT_ID_YEARLY,
-      agencyMonthly: !!process.env.LEMONSQUEEZY_AGENCY_VARIANT_ID_MONTHLY,
+      agencyMonthly: !!(process.env.LEMONSQUEEZY_AGENCY_VARIANT_ID_MONTHLY || process.env.LEMONSQUEEZY_AGENCY_VARIANT_ID),
       agencyYearly: !!process.env.LEMONSQUEEZY_AGENCY_VARIANT_ID_YEARLY,
     },
+    discoveredVariantsCount: discoveredVariants.length,
+    discoveredVariants,
   });
 });
 
@@ -3016,42 +3045,136 @@ app.post('/api/lemonsqueezy/create-checkout', async (req, res) => {
 
     let user = await findUserByEmail(normalizedEmail);
     if (!user) {
-      return res.status(401).json({ error: 'Account not found. Please register and sign in first to proceed with checkout.' });
+      // Create user entry dynamically if needed so checkout never blocks authenticated customers
+      const nowIso = new Date().toISOString();
+      const nextMonthIso = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      user = {
+        id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        email: normalizedEmail,
+        name: name || normalizedEmail.split('@')[0],
+        companyName: '',
+        role: 'customer',
+        planTier: 'free',
+        subscriptionStatus: 'active',
+        billingCycle: 'monthly',
+        monthlyAiCredits: 25,
+        aiCreditsUsed: 0,
+        memberSince: nowIso,
+        nextBillingDate: nextMonthIso,
+      };
+      usersDb.set(normalizedEmail, user);
+      saveUsersToDisk();
+      await saveUserToSql(user);
     }
 
     const host = getRequestBaseUrl(req);
     const isYearly = billingCycle === 'yearly' || billingCycle === 'annual' || billingCycle === 'annually';
 
-    const storeId = process.env.LEMONSQUEEZY_STORE_ID?.trim();
-    const apiKey = process.env.LEMONSQUEEZY_API_KEY?.trim();
+    const apiKey = getLemonSqueezyApiKey();
+    let storeId = getLemonSqueezyStoreId();
 
-    // Check variant IDs
+    if (!apiKey) {
+      return res.status(400).json({
+        error: 'LEMONSQUEEZY_API_KEY_MISSING',
+        message: 'Lemon Squeezy API Key (LEMONSQUEEZY_API_KEY) is not configured in .env. Please configure your live Lemon Squeezy API key to process payments.',
+      });
+    }
+
+    initLemonSqueezy();
+
+    // Auto-discover store ID if not provided in env
+    if (!storeId) {
+      try {
+        const { data: storesRes } = await listStores();
+        if (storesRes && storesRes.data && storesRes.data.length > 0) {
+          storeId = String(storesRes.data[0].id);
+          console.log(`[Lemon Squeezy] Auto-discovered Store ID: ${storeId}`);
+        }
+      } catch (err: any) {
+        console.warn('[Lemon Squeezy Store Discovery Warning]', err.message);
+      }
+    }
+
+    if (!storeId) {
+      return res.status(400).json({
+        error: 'LEMONSQUEEZY_STORE_ID_MISSING',
+        message: 'Lemon Squeezy Store ID (LEMONSQUEEZY_STORE_ID) was not found. Please provide LEMONSQUEEZY_STORE_ID in your environment variables.',
+      });
+    }
+
+    // Check variant IDs with multiple flexible fallbacks
     let variantId = '';
     if (plan === 'agency') {
       variantId = isYearly
-        ? (process.env.LEMONSQUEEZY_AGENCY_VARIANT_ID_YEARLY?.trim() || '')
-        : (process.env.LEMONSQUEEZY_AGENCY_VARIANT_ID_MONTHLY?.trim() || '');
+        ? (process.env.LEMONSQUEEZY_AGENCY_VARIANT_ID_YEARLY?.trim() ||
+           process.env.LEMONSQUEEZY_AGENCY_YEARLY?.trim() ||
+           process.env.LEMONSQUEEZY_AGENCY_VARIANT_ID?.trim() ||
+           process.env.LEMONSQUEEZY_VARIANT_ID_AGENCY?.trim() ||
+           '')
+        : (process.env.LEMONSQUEEZY_AGENCY_VARIANT_ID_MONTHLY?.trim() ||
+           process.env.LEMONSQUEEZY_AGENCY_MONTHLY?.trim() ||
+           process.env.LEMONSQUEEZY_AGENCY_VARIANT_ID?.trim() ||
+           process.env.LEMONSQUEEZY_VARIANT_ID_AGENCY?.trim() ||
+           '');
     } else {
       variantId = isYearly
-        ? (process.env.LEMONSQUEEZY_PRO_VARIANT_ID_YEARLY?.trim() || '')
-        : (process.env.LEMONSQUEEZY_PRO_VARIANT_ID_MONTHLY?.trim() || '');
+        ? (process.env.LEMONSQUEEZY_PRO_VARIANT_ID_YEARLY?.trim() ||
+           process.env.LEMONSQUEEZY_PRO_YEARLY?.trim() ||
+           process.env.LEMONSQUEEZY_PRO_VARIANT_ID?.trim() ||
+           process.env.LEMONSQUEEZY_VARIANT_ID_PRO?.trim() ||
+           process.env.LEMONSQUEEZY_VARIANT_ID?.trim() ||
+           '')
+        : (process.env.LEMONSQUEEZY_PRO_VARIANT_ID_MONTHLY?.trim() ||
+           process.env.LEMONSQUEEZY_PRO_MONTHLY?.trim() ||
+           process.env.LEMONSQUEEZY_PRO_VARIANT_ID?.trim() ||
+           process.env.LEMONSQUEEZY_VARIANT_ID_PRO?.trim() ||
+           process.env.LEMONSQUEEZY_VARIANT_ID?.trim() ||
+           '');
     }
 
-    if (!apiKey || !storeId) {
-      return res.status(400).json({
-        error: 'LEMONSQUEEZY_NOT_CONFIGURED',
-        message: 'Lemon Squeezy API Key (LEMONSQUEEZY_API_KEY) or Store ID (LEMONSQUEEZY_STORE_ID) is not configured in .env. Please configure these variables in settings to process live Lemon Squeezy checkouts.',
-      });
+    // Auto-discover variant ID from Lemon Squeezy API if not explicitly in env
+    if (!variantId) {
+      try {
+        const { data: variantsRes } = await (listVariants as any)({ filter: { storeId: Number(storeId) } });
+        if (variantsRes && variantsRes.data && variantsRes.data.length > 0) {
+          const allVariants = variantsRes.data;
+          // Find matching variant by plan keyword & interval
+          const targetPlanKw = plan.toLowerCase();
+          const targetInterval = isYearly ? 'year' : 'month';
+
+          let matched = allVariants.find((v: any) => {
+            const vName = (v.attributes?.name || '').toLowerCase();
+            const vInterval = (v.attributes?.interval || '').toLowerCase();
+            return vName.includes(targetPlanKw) && (vInterval.includes(targetInterval) || vName.includes(targetInterval));
+          });
+
+          if (!matched) {
+            matched = allVariants.find((v: any) => {
+              const vName = (v.attributes?.name || '').toLowerCase();
+              return vName.includes(targetPlanKw);
+            });
+          }
+
+          if (!matched) {
+            matched = allVariants[0];
+          }
+
+          if (matched) {
+            variantId = String(matched.id);
+            console.log(`[Lemon Squeezy] Auto-discovered Variant ID for ${plan} (${isYearly ? 'Yearly' : 'Monthly'}): ${variantId} (${matched.attributes?.name})`);
+          }
+        }
+      } catch (err: any) {
+        console.warn('[Lemon Squeezy Variant Discovery Warning]', err.message);
+      }
     }
 
     if (!variantId) {
       return res.status(400).json({
         error: 'VARIANT_ID_MISSING',
-        message: `Lemon Squeezy Variant ID for ${plan.toUpperCase()} (${isYearly ? 'Yearly' : 'Monthly'}) is missing in environment variables. Please configure LEMONSQUEEZY_${plan.toUpperCase()}_VARIANT_ID_${isYearly ? 'YEARLY' : 'MONTHLY'}.`,
+        message: `Lemon Squeezy Variant ID for ${plan.toUpperCase()} (${isYearly ? 'Yearly' : 'Monthly'}) is missing. Please configure LEMONSQUEEZY_${plan.toUpperCase()}_VARIANT_ID_${isYearly ? 'YEARLY' : 'MONTHLY'} in your environment variables, or create a product in Lemon Squeezy.`,
       });
     }
-
-    initLemonSqueezy();
 
     const successUrl = `${host}/?payment_status=success&provider=lemonsqueezy&plan=${plan}&billing_cycle=${isYearly ? 'yearly' : 'monthly'}`;
 
@@ -3088,14 +3211,23 @@ app.post('/api/lemonsqueezy/create-checkout', async (req, res) => {
       return res.status(400).json({
         error: 'LEMONSQUEEZY_CHECKOUT_FAILED',
         message: error.message || 'Failed to generate Lemon Squeezy checkout session.',
+        details: error,
       });
     }
 
     const checkoutUrl = data?.data?.attributes?.url;
+    if (!checkoutUrl) {
+      return res.status(400).json({
+        error: 'NO_CHECKOUT_URL',
+        message: 'Lemon Squeezy created the session but did not return a checkout URL.',
+      });
+    }
+
     return res.json({
-      url: checkoutUrl,
-      checkoutId: data?.data?.id,
       success: true,
+      url: checkoutUrl,
+      checkoutUrl,
+      checkoutId: data?.data?.id,
     });
   } catch (err: any) {
     console.error('Lemon Squeezy create-checkout error:', err);

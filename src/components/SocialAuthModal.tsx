@@ -14,25 +14,32 @@ export const SocialAuthModal: React.FC<SocialAuthModalProps> = ({
   onClose,
   provider,
 }) => {
-  const { login, setActiveTab } = useApp();
+  const { user, login, setActiveTab } = useApp();
   const isGoogle = provider === 'google';
 
-  const [socialName, setSocialName] = useState('');
-  const [socialEmail, setSocialEmail] = useState('');
+  const [inputName, setInputName] = useState('');
+  const [inputEmail, setInputEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Set default placeholders based on provider
+  // Initialize with current user context or saved cookies if available, without hardcoding
   useEffect(() => {
     if (isOpen) {
       setErrorMsg(null);
       setLoading(false);
-      // If user had previously entered an email or admin is testing
-      if (!socialEmail) {
-        setSocialEmail('');
+      if (user.email && user.email !== 'guest@demo.com') {
+        setInputEmail(user.email);
+        setInputName(user.name || '');
+      } else {
+        const storedEmail = localStorage.getItem('locora_last_auth_email') || '';
+        const storedName = localStorage.getItem('locora_last_auth_name') || '';
+        if (storedEmail) {
+          setInputEmail(storedEmail);
+          setInputName(storedName);
+        }
       }
     }
-  }, [isOpen, provider]);
+  }, [isOpen, provider, user.email, user.name]);
 
   if (!isOpen) return null;
 
@@ -42,7 +49,15 @@ export const SocialAuthModal: React.FC<SocialAuthModalProps> = ({
       setErrorMsg(null);
       const currentOrigin = window.location.origin;
       const redirectUri = `${currentOrigin}/auth/callback`;
-      const res = await fetch(`/api/auth/oauth/url?provider=${provider}&redirectUri=${encodeURIComponent(redirectUri)}`);
+      let queryParams = `provider=${provider}&redirectUri=${encodeURIComponent(redirectUri)}`;
+      if (inputEmail.trim()) {
+        queryParams += `&email=${encodeURIComponent(inputEmail.trim())}`;
+      }
+      if (inputName.trim()) {
+        queryParams += `&name=${encodeURIComponent(inputName.trim())}`;
+      }
+      
+      const res = await fetch(`/api/auth/oauth/url?${queryParams}`);
       const data = await res.json();
       if (data.url) {
         const width = 480;
@@ -57,17 +72,17 @@ export const SocialAuthModal: React.FC<SocialAuthModalProps> = ({
       }
     } catch (err) {
       console.error('Popup launch failed:', err);
-      setErrorMsg('Could not launch popup window. Please complete direct authentication below.');
+      setErrorMsg('Could not launch OAuth window. Please sign in directly below.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDirectSocialSubmit = async (e: React.FormEvent) => {
+  const handleDynamicSocialLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
-    const trimmedEmail = socialEmail.trim().toLowerCase();
+    const trimmedEmail = inputEmail.trim().toLowerCase();
     if (!trimmedEmail) {
       setErrorMsg(`Please enter your ${isGoogle ? 'Google' : 'LinkedIn'} email address.`);
       return;
@@ -75,11 +90,11 @@ export const SocialAuthModal: React.FC<SocialAuthModalProps> = ({
 
     const emailCheck = validateRealEmail(trimmedEmail);
     if (!emailCheck.valid) {
-      setErrorMsg(emailCheck.error || 'Please enter a valid email address.');
+      setErrorMsg(emailCheck.error || 'Please enter a valid real email address.');
       return;
     }
 
-    const trimmedName = socialName.trim() || trimmedEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const derivedName = inputName.trim() || trimmedEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
     setLoading(true);
     try {
@@ -89,8 +104,8 @@ export const SocialAuthModal: React.FC<SocialAuthModalProps> = ({
         body: JSON.stringify({
           provider,
           email: trimmedEmail,
-          name: trimmedName,
-          companyName: `${trimmedName}'s Business Workspace`,
+          name: derivedName,
+          companyName: `${derivedName}'s Business Workspace`,
           planTier: 'free',
         }),
       });
@@ -102,6 +117,11 @@ export const SocialAuthModal: React.FC<SocialAuthModalProps> = ({
       }
 
       if (data.user) {
+        try {
+          localStorage.setItem('locora_last_auth_email', data.user.email);
+          localStorage.setItem('locora_last_auth_name', data.user.name);
+        } catch (_) {}
+
         login(
           data.user.email,
           data.user.name,
@@ -154,7 +174,7 @@ export const SocialAuthModal: React.FC<SocialAuthModalProps> = ({
                 Continue with {isGoogle ? 'Google' : 'LinkedIn'}
               </h3>
               <p className="text-xs text-slate-500 font-sans">
-                Sign in and connect your isolated Locora AI workspace
+                Sign in with your {isGoogle ? 'Google' : 'LinkedIn'} account
               </p>
             </div>
           </div>
@@ -168,20 +188,20 @@ export const SocialAuthModal: React.FC<SocialAuthModalProps> = ({
             </div>
           )}
 
-          {/* Direct Profile Input */}
-          <form onSubmit={handleDirectSocialSubmit} className="space-y-3.5">
+          {/* Dynamic Profile Input Form */}
+          <form onSubmit={handleDynamicSocialLogin} className="space-y-3.5">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
-                <span>Your Full Name</span>
-                <span className="text-[10px] text-slate-400 font-normal">For dashboard & proposals</span>
+                <span>Full Name</span>
+                <span className="text-[10px] text-slate-400 font-normal">Optional</span>
               </label>
               <div className="relative">
                 <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  value={socialName}
-                  onChange={(e) => setSocialName(e.target.value)}
-                  placeholder="e.g. Imtiaz Baloch"
+                  value={inputName}
+                  onChange={(e) => setInputName(e.target.value)}
+                  placeholder="Enter your name"
                   className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#059669] focus:border-transparent transition-all"
                 />
               </div>
@@ -189,22 +209,23 @@ export const SocialAuthModal: React.FC<SocialAuthModalProps> = ({
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center justify-between">
-                <span>{isGoogle ? 'Google' : 'LinkedIn'} Account Email *</span>
-                <span className="text-[10px] text-[#059669] font-semibold">Real account</span>
+                <span>{isGoogle ? 'Google' : 'LinkedIn'} Email Address *</span>
+                <span className="text-[10px] text-emerald-600 font-semibold">Required</span>
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   required
-                  value={socialEmail}
-                  onChange={(e) => setSocialEmail(e.target.value)}
-                  placeholder={isGoogle ? 'your.name@gmail.com' : 'your.name@linkedin.com'}
+                  value={inputEmail}
+                  onChange={(e) => setInputEmail(e.target.value)}
+                  placeholder={isGoogle ? 'you@gmail.com' : 'you@linkedin.com'}
                   className="w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#059669] focus:border-transparent transition-all font-mono"
                 />
               </div>
             </div>
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
@@ -221,7 +242,11 @@ export const SocialAuthModal: React.FC<SocialAuthModalProps> = ({
                 </>
               ) : (
                 <>
-                  <span>Sign In as {socialName || (socialEmail ? socialEmail.split('@')[0] : (isGoogle ? 'Google User' : 'LinkedIn User'))}</span>
+                  <span>
+                    {inputEmail 
+                      ? `Sign In as ${inputName || inputEmail.split('@')[0]}` 
+                      : `Continue with ${isGoogle ? 'Google' : 'LinkedIn'}`}
+                  </span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -232,7 +257,7 @@ export const SocialAuthModal: React.FC<SocialAuthModalProps> = ({
           <div className="relative flex items-center justify-center pt-2 pb-1">
             <div className="border-t border-slate-200 w-full" />
             <span className="bg-white px-2.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap font-sans">
-              Or authorize via popup
+              Or launch OAuth popup window
             </span>
           </div>
 
@@ -244,16 +269,17 @@ export const SocialAuthModal: React.FC<SocialAuthModalProps> = ({
             className="w-full py-2.5 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Open {isGoogle ? 'Google' : 'LinkedIn'} Consent Window</span>
+            <span>Open {isGoogle ? 'Google' : 'LinkedIn'} SSO Window</span>
           </button>
 
           {/* Security note */}
           <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 pt-1">
             <Lock className="w-3 h-3 text-slate-400" />
-            <span>256-bit encrypted authentication & clean isolated workspace</span>
+            <span>256-bit encrypted authentication • Dynamic profile detection</span>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
