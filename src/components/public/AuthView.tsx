@@ -866,7 +866,10 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
             <div className="grid grid-cols-2 gap-3 font-sans">
               <button
                 type="button"
-                onClick={() => handleOAuthConnect('google')}
+                onClick={() => {
+                  setSocialProvider('google');
+                  setSocialModalOpen(true);
+                }}
                 className="py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs border border-slate-200 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -880,7 +883,10 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
 
               <button
                 type="button"
-                onClick={() => handleOAuthConnect('linkedin')}
+                onClick={() => {
+                  setSocialProvider('linkedin');
+                  setSocialModalOpen(true);
+                }}
                 className="py-2.5 px-3 bg-[#0077b5] hover:bg-[#006097] text-white font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
               >
                 <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">

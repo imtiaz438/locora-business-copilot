@@ -791,7 +791,10 @@ export const AuthModal: React.FC = () => {
             <div className="space-y-2">
               <button
                 type="button"
-                onClick={() => handleOAuthConnect('google')}
+                onClick={() => {
+                  setSocialProvider('google');
+                  setSocialModalOpen(true);
+                }}
                 className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs border border-slate-200 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs font-sans"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -817,7 +820,10 @@ export const AuthModal: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => handleOAuthConnect('linkedin')}
+                onClick={() => {
+                  setSocialProvider('linkedin');
+                  setSocialModalOpen(true);
+                }}
                 className="w-full py-2.5 px-4 bg-[#0077b5] hover:bg-[#006097] text-white font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs font-sans"
               >
                 <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">

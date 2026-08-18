@@ -296,12 +296,13 @@ const PATH_TO_TAB: Record<string, string> = {
         if (data && data.user && data.user.email) {
           const normalizedEmailToFetch = data.user.email.toLowerCase().trim();
           const isSuperAdminEmail = normalizedEmailToFetch === 'imtiazbaloch3322@gmail.com' || normalizedEmailToFetch === 'support@locoraai.com';
+          sessionStorage.setItem('locora_active_session', 'true');
+          sessionStorage.setItem('locora_last_active', String(Date.now()));
           setUser({
             ...data.user,
             role: isSuperAdminEmail ? 'admin' : (data.user.role || 'customer'),
             isAuthenticated: true,
           });
-          sessionStorage.setItem('locora_last_active', String(Date.now()));
         } else {
           sessionStorage.removeItem('locora_active_session');
           sessionStorage.removeItem('locora_last_active');
@@ -313,6 +314,31 @@ const PATH_TO_TAB: Record<string, string> = {
         sessionStorage.removeItem('locora_last_active');
         setUser(DEFAULT_USER);
       });
+  }, []);
+
+  // Global listener for OAuth cross-window message events
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleOAuthPostMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'OAUTH_AUTH_SUCCESS' && event.data.user) {
+        const u = event.data.user;
+        login(
+          u.email,
+          u.name,
+          u.companyName,
+          u.planTier || 'free',
+          u.aiCreditsUsed || 0,
+          u.role,
+          u.id
+        );
+        setActiveTabState('dashboard');
+        setAuthModalOpen(false);
+      }
+    };
+
+    window.addEventListener('message', handleOAuthPostMessage);
+    return () => window.removeEventListener('message', handleOAuthPostMessage);
   }, []);
 
   // Inactivity Watcher & Window Activity Tracker
