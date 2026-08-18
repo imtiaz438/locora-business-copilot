@@ -92,8 +92,13 @@ export const PricingView: React.FC = () => {
         'JSON-LD Schema Generator',
         'Up to 5 Team Member Seats',
       ],
-      ctaText: user.planTier === 'pro' ? 'Current Active Plan' : 'Upgrade to Pro Growth',
-      ctaDisabled: user.planTier === 'pro',
+      ctaText:
+        user.planTier === 'pro'
+          ? 'Current Active Plan'
+          : user.planTier === 'agency'
+          ? 'Included in Agency Elite'
+          : 'Upgrade to Pro Growth',
+      ctaDisabled: user.planTier === 'pro' || user.planTier === 'agency',
       popular: true,
     },
     {
@@ -361,10 +366,18 @@ export const PricingView: React.FC = () => {
                 </p>
               </div>
               <button
-                onClick={() => setCheckoutModalPlan('pro')}
+                onClick={() => {
+                  if (user.planTier === 'agency') {
+                    setActiveTab('subscription');
+                  } else if (user.planTier === 'pro') {
+                    setCheckoutModalPlan('agency');
+                  } else {
+                    setCheckoutModalPlan('pro');
+                  }
+                }}
                 className="px-3 py-1.5 bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold rounded-lg shadow-2xs transition-colors cursor-pointer"
               >
-                Claim ROI Now
+                {user.planTier === 'agency' ? 'Manage Elite Plan' : user.planTier === 'pro' ? 'Upgrade to Agency' : 'Claim ROI Now'}
               </button>
             </div>
           </div>

@@ -321,18 +321,43 @@ export const SubscriptionView: React.FC = () => {
           {/* Upgrade / Change CTA Box */}
           <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
             <div className="space-y-0.5">
-              <p className="text-xs font-bold text-slate-900 font-heading">Need higher generation velocity?</p>
+              <p className="text-xs font-bold text-slate-900 font-heading">
+                {user.planTier === 'agency'
+                  ? 'Agency Elite Active (Highest Tier)'
+                  : user.planTier === 'pro'
+                  ? 'Scale to Unlimited AI Velocity & White-Label'
+                  : 'Need higher generation velocity?'}
+              </p>
               <p className="text-[11px] text-slate-600 font-sans">
-                Upgrade to Pro Growth ($19/mo) for 250 Credits or Agency Elite ($49/mo) for Unlimited Credits.
+                {user.planTier === 'agency'
+                  ? 'You have Unlimited AI Generations, 5 team seats, and white-label report cards unlocked.'
+                  : user.planTier === 'pro'
+                  ? 'You are on Pro Growth (250 credits/mo). Upgrade to Agency Elite ($49/mo) for Unlimited AI Credits.'
+                  : 'Upgrade to Pro Growth ($19/mo) for 250 Credits or Agency Elite ($49/mo) for Unlimited Credits.'}
               </p>
             </div>
 
-            <button
-              onClick={() => setCheckoutModalPlan(user.planTier === 'free' ? 'pro' : 'agency', user.billingCycle)}
-              className="px-3.5 py-2 bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold rounded-xl shadow-2xs transition-colors flex-shrink-0 cursor-pointer font-sans"
-            >
-              {user.planTier === 'free' ? 'Upgrade to Pro' : 'Upgrade to Agency'}
-            </button>
+            {user.planTier === 'agency' ? (
+              <span className="px-3 py-1.5 bg-indigo-100 text-indigo-800 text-[11px] font-bold rounded-xl border border-indigo-200 flex-shrink-0 font-sans">
+                Active Elite Tier
+              </span>
+            ) : user.planTier === 'pro' ? (
+              <button
+                id="upgrade_to_agency_btn_sub_view"
+                onClick={() => setCheckoutModalPlan('agency', user.billingCycle)}
+                className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-2xs transition-colors flex-shrink-0 cursor-pointer font-sans"
+              >
+                Upgrade to Agency Elite
+              </button>
+            ) : (
+              <button
+                id="upgrade_to_pro_btn_sub_view"
+                onClick={() => setCheckoutModalPlan('pro', user.billingCycle)}
+                className="px-3.5 py-2 bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold rounded-xl shadow-2xs transition-colors flex-shrink-0 cursor-pointer font-sans"
+              >
+                Upgrade to Pro Growth
+              </button>
+            )}
           </div>
         </div>
 

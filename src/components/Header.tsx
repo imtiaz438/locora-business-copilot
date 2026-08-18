@@ -80,15 +80,29 @@ export const Header: React.FC<HeaderProps> = ({
         {/* AI Credit Meter (Always Visible) */}
         <AiCreditMeter />
 
-        {/* Upgrade Callout if Free Tier */}
-        {user.planTier === 'free' && (
+        {/* Upgrade / Plan Badge */}
+        {user.planTier === 'free' ? (
           <button
+            id="header_upgrade_to_pro_btn"
             onClick={() => setCheckoutModalPlan('pro')}
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-sm transition-all cursor-pointer font-sans"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>Upgrade</span>
+            <span>Upgrade to Pro</span>
           </button>
+        ) : user.planTier === 'pro' ? (
+          <button
+            id="header_upgrade_to_agency_btn"
+            onClick={() => setCheckoutModalPlan('agency')}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all cursor-pointer font-sans"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>Upgrade to Agency</span>
+          </button>
+        ) : (
+          <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 font-extrabold text-[11px] font-sans">
+            <span>Agency Elite</span>
+          </div>
         )}
 
         {/* User Avatar Dropdown */}

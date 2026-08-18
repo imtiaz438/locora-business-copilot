@@ -9,12 +9,16 @@ import {
 } from 'lucide-react';
 
 export const PricingPublicView: React.FC = () => {
-  const { setCheckoutModalPlan, setActiveTab } = useApp();
+  const { setCheckoutModalPlan, setActiveTab, user } = useApp();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   const handleSelectPlan = (plan: 'free' | 'pro' | 'agency') => {
     if (plan === 'free') {
-      setActiveTab('signup');
+      if (user && user.planTier !== 'free') {
+        setActiveTab('subscription');
+      } else {
+        setActiveTab('signup');
+      }
     } else {
       setCheckoutModalPlan(plan, billingCycle);
     }
@@ -107,7 +111,7 @@ export const PricingPublicView: React.FC = () => {
             onClick={() => handleSelectPlan('free')}
             className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition-all text-center cursor-pointer font-sans"
           >
-            Get Started Free
+            {user && user.planTier !== 'free' ? 'Manage Account' : 'Get Started Free'}
           </button>
         </div>
 
@@ -168,7 +172,13 @@ export const PricingPublicView: React.FC = () => {
             onClick={() => handleSelectPlan('pro')}
             className="w-full py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-2 cursor-pointer font-sans"
           >
-            <span>Upgrade to Pro Growth</span>
+            <span>
+              {user?.planTier === 'pro'
+                ? 'Current Active Plan'
+                : user?.planTier === 'agency'
+                ? 'Included in Agency Elite'
+                : 'Upgrade to Pro Growth'}
+            </span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -218,7 +228,7 @@ export const PricingPublicView: React.FC = () => {
             onClick={() => handleSelectPlan('agency')}
             className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all text-center flex items-center justify-center gap-2 cursor-pointer font-sans"
           >
-            <span>Upgrade to Agency Elite</span>
+            <span>{user?.planTier === 'agency' ? 'Current Active Plan' : 'Upgrade to Agency Elite'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

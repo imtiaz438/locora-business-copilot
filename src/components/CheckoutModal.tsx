@@ -16,6 +16,8 @@ import {
   ExternalLink,
   Sparkles,
   RefreshCw,
+  Crown,
+  ArrowUpRight,
 } from 'lucide-react';
 
 export const CheckoutModal: React.FC = () => {
@@ -26,36 +28,47 @@ export const CheckoutModal: React.FC = () => {
     user,
     updateUser,
     logActivity,
+    setActiveTab,
   } = useApp();
 
   const [paymentChannel, setPaymentChannel] = useState<'cards' | 'wallets'>('cards');
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successData, setSuccessData] = useState<any | null>(null);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [copiedRef, setCopiedRef] = useState(false);
 
   useEffect(() => {
     if (checkoutModalPlan) {
       setErrorMessage(null);
       setSuccessData(null);
+      setRedirectUrl(null);
     }
   }, [checkoutModalPlan, user]);
 
   if (!checkoutModalPlan) return null;
 
+  const currentPlan = user.planTier || 'free';
   const isYearly = checkoutModalCycle === 'yearly';
-  const planName = checkoutModalPlan.toUpperCase();
+  const planName = checkoutModalPlan === 'agency' ? 'Agency Elite' : 'Pro Growth';
   const monthlyPrice = checkoutModalPlan === 'agency' ? 49 : 19;
   const annualMonthlyEquivalent = checkoutModalPlan === 'agency' ? 39 : 15;
   const totalAmount = isYearly
     ? (checkoutModalPlan === 'agency' ? 468 : 180)
     : monthlyPrice;
 
+  // Scenario 1: User is already on Agency Elite (Top Tier)
+  const isAlreadyAgency = currentPlan === 'agency';
+
+  // Scenario 2: User is on Pro and selected Pro again
+  const isProSelectingPro = currentPlan === 'pro' && checkoutModalPlan === 'pro';
+
   // Seamless Unified Checkout Handler
   const handleProceedToCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setIsProcessing(true);
+    setRedirectUrl(null);
 
     const customerEmail = user.email || 'customer@example.com';
     const customerName = user.name || user.companyName || customerEmail.split('@')[0];
@@ -83,11 +96,39 @@ export const CheckoutModal: React.FC = () => {
           `Checkout Session Created (${planName})`,
           `Proceeding to secure checkout for Locora AI ${planName} (${checkoutModalCycle}).`
         );
-        window.location.href = checkoutUrl;
+
+        setRedirectUrl(checkoutUrl);
+
+        // Try opening in new tab/window immediately
+        try {
+          const win = window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
+          if (win) {
+            win.focus();
+          }
+        } catch (popupErr) {
+          console.warn('[Popup Blocked]', popupErr);
+        }
+
+        // Try top window navigation fallback if allowed
+        try {
+          if (window.top && window.top !== window) {
+            window.top.location.href = checkoutUrl;
+          } else {
+            window.location.href = checkoutUrl;
+          }
+        } catch (navErr) {
+          console.warn('[Navigation Blocked by Frame Sandbox]', navErr);
+        }
+
         return;
       }
 
-      // 2. Seamless Instant Activation Fallback
+      // If Lemon Squeezy returned a specific configuration error, display it clearly
+      if (lsData.error === 'LEMONSQUEEZY_API_KEY_MISSING' || lsData.error === 'LEMONSQUEEZY_STORE_ID_MISSING' || lsData.error === 'VARIANT_ID_MISSING') {
+        throw new Error(lsData.message || 'Lemon Squeezy credentials or product variants are not configured.');
+      }
+
+      // 2. Direct Process Fallback (Instant Settlement)
       const fallbackResponse = await fetch('/api/checkout/process-card', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -140,7 +181,7 @@ export const CheckoutModal: React.FC = () => {
         brand: paymentChannel === 'wallets' ? 'Digital Wallet (PayPal / Apple Pay)' : 'Visa',
       });
     } catch (err: any) {
-      setErrorMessage(err.message || 'Unable to connect to checkout gateway. Please try again.');
+      setErrorMessage(err.message || 'Unable to connect to checkout gateway. Please check credentials or retry.');
     } finally {
       setIsProcessing(false);
     }
@@ -170,10 +211,14 @@ export const CheckoutModal: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-white tracking-tight">
-                  Upgrade to Locora AI {planName}
+                  {isAlreadyAgency
+                    ? 'Active Elite Subscription'
+                    : isProSelectingPro
+                    ? 'Current Plan: Pro Growth'
+                    : `Upgrade to Locora AI ${planName}`}
                 </h2>
                 <span className="text-[11px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  Instant Activation
+                  {isAlreadyAgency ? 'Top Tier' : isProSelectingPro ? 'Active Plan' : 'Instant Activation'}
                 </span>
               </div>
               <p className="text-xs text-slate-400">
@@ -190,8 +235,161 @@ export const CheckoutModal: React.FC = () => {
           </button>
         </div>
 
-        {/* Success View */}
-        {successData ? (
+        {/* State A: User is ALREADY on Agency Elite */}
+        {isAlreadyAgency ? (
+          <div className="p-8 space-y-6 text-center">
+            <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto border-4 border-indigo-100 shadow-xs">
+              <Crown className="w-9 h-9" />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-2xl font-extrabold text-slate-900">
+                You Already Have Active Agency Elite!
+              </h3>
+              <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+                Your account is currently active on our highest tier, <strong>Agency Elite</strong>, with Unlimited AI Copilot credits, white-label client reports, and 5 team seats.
+              </p>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-left text-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-slate-700">Active Tier:</span>
+                <span className="font-bold text-indigo-700 uppercase">Agency Elite (Unlimited)</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-slate-700">Account Email:</span>
+                <span className="font-mono text-slate-600">{user.email}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-slate-700">Next Renewal:</span>
+                <span className="font-medium text-slate-600">{new Date(user.nextBillingDate).toLocaleDateString()}</span>
+              </div>
+            </div>
+
+            <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                id="agency_already_manage_btn"
+                onClick={() => {
+                  setCheckoutModalPlan(null);
+                  setActiveTab('subscription');
+                }}
+                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Manage Subscription & Billing</span>
+                <ExternalLink className="w-4 h-4" />
+              </button>
+              <button
+                id="agency_already_close_btn"
+                onClick={() => setCheckoutModalPlan(null)}
+                className="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-colors cursor-pointer"
+              >
+                Return to Workspace
+              </button>
+            </div>
+          </div>
+        ) : isProSelectingPro ? (
+          /* State B: User is on Pro and clicked Pro again */
+          <div className="p-8 space-y-6 text-center">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border-4 border-emerald-100 shadow-xs">
+              <CheckCircle2 className="w-9 h-9" />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-2xl font-extrabold text-slate-900">
+                You Already Have Active Pro Growth!
+              </h3>
+              <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+                You are currently subscribed to the <strong>Pro Growth ($19/mo)</strong> plan with 250 AI Copilot credits/month and full CRM invoicing.
+              </p>
+            </div>
+
+            {/* Upgrade to Agency Prompt Box */}
+            <div className="bg-gradient-to-br from-indigo-50/80 to-purple-50/80 border border-indigo-200 rounded-2xl p-5 text-left space-y-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-indigo-600" />
+                <h4 className="text-sm font-bold text-indigo-950 font-heading">
+                  Upgrade to Agency Elite for Unlimited Power ($49/mo)
+                </h4>
+              </div>
+              <p className="text-xs text-indigo-900/80 leading-relaxed">
+                Need unlimited AI generations, white-label client report cards, JSON-LD Schema generators, and up to 5 team member seats? Upgrade to Agency Elite today.
+              </p>
+              <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                <button
+                  id="upgrade_to_agency_from_pro_btn"
+                  onClick={() => setCheckoutModalPlan('agency', checkoutModalCycle)}
+                  className="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Crown className="w-4 h-4" />
+                  <span>Upgrade to Agency Elite (${isYearly ? '39/mo' : '49/mo'})</span>
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </button>
+                <button
+                  id="manage_pro_sub_btn"
+                  onClick={() => {
+                    setCheckoutModalPlan(null);
+                    setActiveTab('subscription');
+                  }}
+                  className="w-full sm:w-auto px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-xl border border-slate-200 transition-colors cursor-pointer"
+                >
+                  Manage Billing
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : redirectUrl ? (
+          /* State C: Lemon Squeezy Redirect Ready Screen */
+          <div className="p-8 space-y-6 text-center">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border-4 border-emerald-100 shadow-xs">
+              <ExternalLink className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-2xl font-extrabold text-slate-900">
+                Checkout Session Ready!
+              </h3>
+              <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+                Click below to complete your secure payment on <strong>Lemon Squeezy</strong> for <strong>Locora AI {planName}</strong>.
+              </p>
+            </div>
+
+            <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl text-left text-xs space-y-3">
+              <div className="flex justify-between items-center text-slate-700">
+                <span className="font-semibold text-slate-500">Plan:</span>
+                <span className="font-bold text-slate-900">{planName} ({isYearly ? 'Annual' : 'Monthly'})</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-700">
+                <span className="font-semibold text-slate-500">Total:</span>
+                <span className="font-extrabold text-emerald-700 text-sm">${totalAmount}.00 USD</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-700">
+                <span className="font-semibold text-slate-500">Merchant of Record:</span>
+                <span className="font-medium text-slate-900">Lemon Squeezy Global Payments</span>
+              </div>
+            </div>
+
+            <div className="pt-2 space-y-3">
+              <a
+                id="open_lemon_squeezy_checkout_btn"
+                href={redirectUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer no-underline"
+              >
+                <span>OPEN LEMON SQUEEZY CHECKOUT</span>
+                <ArrowUpRight className="w-5 h-5" />
+              </a>
+
+              <button
+                onClick={() => setRedirectUrl(null)}
+                className="w-full py-2.5 text-xs text-slate-500 hover:text-slate-800 transition-colors cursor-pointer font-medium"
+              >
+                Back to Payment Options
+              </button>
+            </div>
+          </div>
+        ) : successData ? (
+          /* State D: Success View */
           <div className="p-8 space-y-6 text-center">
             <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto border-4 border-emerald-50 shadow-xs">
               <CheckCircle2 className="w-9 h-9" />
@@ -260,6 +458,7 @@ export const CheckoutModal: React.FC = () => {
             </div>
           </div>
         ) : (
+          /* State E: Main Checkout Form */
           <form onSubmit={handleProceedToCheckout} className="p-6 space-y-5">
             {/* Plan Summary Card */}
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -270,7 +469,7 @@ export const CheckoutModal: React.FC = () => {
                 <div>
                   <div className="flex items-center gap-2">
                     <h4 className="text-sm font-bold text-slate-900">
-                      Locora AI {planName} Subscription
+                      Locora AI {planName}
                     </h4>
                     {isYearly && (
                       <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md">
@@ -326,7 +525,7 @@ export const CheckoutModal: React.FC = () => {
                     )}
                   </div>
                   <div className="text-[11px] text-slate-500">
-                    Visa, MasterCard, American Express, Discover
+                    Visa, MasterCard, American Express, Discover (Lemon Squeezy)
                   </div>
                 </button>
 
@@ -359,9 +558,11 @@ export const CheckoutModal: React.FC = () => {
 
             {/* Error Notification */}
             {errorMessage && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 text-xs text-red-700">
-                <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                <span>{errorMessage}</span>
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl space-y-2 text-xs text-red-700">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                  <span className="font-semibold">{errorMessage}</span>
+                </div>
               </div>
             )}
 
@@ -392,7 +593,7 @@ export const CheckoutModal: React.FC = () => {
               {isProcessing ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Connecting to Secure Checkout...</span>
+                  <span>Generating Lemon Squeezy Checkout...</span>
                 </>
               ) : (
                 <>
@@ -409,7 +610,7 @@ export const CheckoutModal: React.FC = () => {
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 <span>256-bit Encrypted SSL Checkout</span>
               </div>
-              <span>Cancel auto-renewal anytime in Settings</span>
+              <span>Merchant of Record • Lemon Squeezy</span>
             </div>
           </form>
         )}
