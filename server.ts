@@ -2530,52 +2530,119 @@ app.get(['/auth/callback', '/auth/callback/'], async (req, res) => {
   if (code && !email) {
     try {
       const host = getRequestBaseUrl(req);
-      const redirectUri = `${host}/auth/callback`;
+      const possibleRedirectUris = [
+        `${host}/auth/callback`,
+        `${host}/auth/callback/`,
+        'https://locoraai.com/auth/callback',
+        'https://www.locoraai.com/auth/callback',
+      ];
 
       if (provider === 'google' && process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-        const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            code,
-            client_id: process.env.GOOGLE_CLIENT_ID,
-            client_secret: process.env.GOOGLE_CLIENT_SECRET,
-            redirect_uri: redirectUri,
-            grant_type: 'authorization_code',
-          }),
-        });
-        const tokenData = await tokenRes.json();
-        if (tokenData.access_token) {
-          const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-            headers: { Authorization: `Bearer ${tokenData.access_token}` },
-          });
-          const profile = await userinfoRes.json();
-          if (profile.email) {
-            email = profile.email.toLowerCase().trim();
-            name = profile.name || email.split('@')[0];
+        let tokenData: any = null;
+        // Try each candidate redirect_uri in case Google Console was configured with www or trailing slash
+        for (const candidateUri of possibleRedirectUris) {
+          try {
+            const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: new URLSearchParams({
+                code,
+                client_id: process.env.GOOGLE_CLIENT_ID,
+                client_secret: process.env.GOOGLE_CLIENT_SECRET,
+                redirect_uri: candidateUri,
+                grant_type: 'authorization_code',
+              }),
+            });
+            const resJson = await tokenRes.json();
+            if (resJson.access_token || resJson.id_token) {
+              tokenData = resJson;
+              break;
+            } else {
+              console.warn(`Google OAuth token exchange candidate '${candidateUri}' response:`, resJson);
+            }
+          } catch (tryErr) {
+            console.warn(`Error trying candidate URI ${candidateUri}:`, tryErr);
+          }
+        }
+
+        if (tokenData?.access_token) {
+          try {
+            const userinfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+              headers: { Authorization: `Bearer ${tokenData.access_token}` },
+            });
+            const profile = await userinfoRes.json();
+            if (profile.email) {
+              email = profile.email.toLowerCase().trim();
+              name = profile.name || email.split('@')[0];
+            }
+          } catch (uErr) {
+            console.warn('Google userinfo fetch failed:', uErr);
+          }
+        }
+
+        // Fallback: decode id_token if access_token userinfo failed
+        if (!email && tokenData?.id_token) {
+          try {
+            const payloadBase64 = tokenData.id_token.split('.')[1];
+            const decoded = JSON.parse(Buffer.from(payloadBase64, 'base64').toString('utf8'));
+            if (decoded.email) {
+              email = decoded.email.toLowerCase().trim();
+              name = decoded.name || email.split('@')[0];
+            }
+          } catch (jwtErr) {
+            console.warn('Google id_token decode error:', jwtErr);
           }
         }
       } else if (provider === 'linkedin' && process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET) {
-        const tokenRes = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            code,
-            client_id: process.env.LINKEDIN_CLIENT_ID,
-            client_secret: process.env.LINKEDIN_CLIENT_SECRET,
-            redirect_uri: redirectUri,
-            grant_type: 'authorization_code',
-          }),
-        });
-        const tokenData = await tokenRes.json();
-        if (tokenData.access_token) {
-          const userinfoRes = await fetch('https://api.linkedin.com/v2/userinfo', {
-            headers: { Authorization: `Bearer ${tokenData.access_token}` },
-          });
-          const profile = await userinfoRes.json();
-          if (profile.email) {
-            email = profile.email.toLowerCase().trim();
-            name = profile.name || `${profile.given_name || ''} ${profile.family_name || ''}`.trim() || email.split('@')[0];
+        let tokenData: any = null;
+        for (const candidateUri of possibleRedirectUris) {
+          try {
+            const tokenRes = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: new URLSearchParams({
+                code,
+                client_id: process.env.LINKEDIN_CLIENT_ID,
+                client_secret: process.env.LINKEDIN_CLIENT_SECRET,
+                redirect_uri: candidateUri,
+                grant_type: 'authorization_code',
+              }),
+            });
+            const resJson = await tokenRes.json();
+            if (resJson.access_token || resJson.id_token) {
+              tokenData = resJson;
+              break;
+            }
+          } catch (tryErr) {
+            console.warn(`Error trying LinkedIn candidate URI ${candidateUri}:`, tryErr);
+          }
+        }
+
+        if (tokenData?.access_token) {
+          try {
+            const userinfoRes = await fetch('https://api.linkedin.com/v2/userinfo', {
+              headers: { Authorization: `Bearer ${tokenData.access_token}` },
+            });
+            const profile = await userinfoRes.json();
+            if (profile.email) {
+              email = profile.email.toLowerCase().trim();
+              name = profile.name || `${profile.given_name || ''} ${profile.family_name || ''}`.trim() || email.split('@')[0];
+            }
+          } catch (uErr) {
+            console.warn('LinkedIn userinfo fetch failed:', uErr);
+          }
+        }
+
+        if (!email && tokenData?.id_token) {
+          try {
+            const payloadBase64 = tokenData.id_token.split('.')[1];
+            const decoded = JSON.parse(Buffer.from(payloadBase64, 'base64').toString('utf8'));
+            if (decoded.email) {
+              email = decoded.email.toLowerCase().trim();
+              name = decoded.name || email.split('@')[0];
+            }
+          } catch (jwtErr) {
+            console.warn('LinkedIn id_token decode error:', jwtErr);
           }
         }
       }
