@@ -3760,19 +3760,44 @@ const handlePaddleCustomerPortalRequest = async (req: express.Request, res: expr
     }
 
     const paddle = getPaddleClient();
-    if (paddle && user.paddleCustomerId) {
-      try {
-        const portalSession = await (paddle as any).customerPortalSessions.create(user.paddleCustomerId, {
-          subscriptionIds: user.paddleSubscriptionId ? [user.paddleSubscriptionId] : undefined,
-        });
-        if (portalSession?.urls?.general?.overview) {
-          return res.json({
-            url: portalSession.urls.general.overview,
-            customerPortalUrl: portalSession.urls.general.overview,
-          });
+    if (paddle) {
+      let customerId = user.paddleCustomerId;
+
+      // If customer ID is not cached, search customer in Paddle by email
+      if (!customerId) {
+        try {
+          const customerList = await (paddle as any).customers.list({ email: [email] });
+          const firstCustomer = typeof customerList?.next === 'function' 
+            ? (await customerList.next())?.value?.[0]
+            : customerList?.data?.[0] || customerList?.[0];
+          
+          if (firstCustomer?.id) {
+            customerId = firstCustomer.id;
+            user.paddleCustomerId = customerId;
+            usersDb.set(email, user);
+            await saveUserToSql(user);
+          }
+        } catch (lookupErr: any) {
+          console.warn('[Paddle Customer Lookup Warn]', lookupErr?.message);
         }
-      } catch (portalErr: any) {
-        console.warn('[Paddle Customer Portal Session Warn]', portalErr.message);
+      }
+
+      if (customerId) {
+        try {
+          const portalSession = await (paddle as any).customerPortalSessions.create(customerId, {
+            subscriptionIds: user.paddleSubscriptionId ? [user.paddleSubscriptionId] : undefined,
+          });
+          if (portalSession?.urls?.general?.overview) {
+            return res.json({
+              url: portalSession.urls.general.overview,
+              customerPortalUrl: portalSession.urls.general.overview,
+              type: 'direct_session',
+              message: 'Authenticated Paddle customer portal session created.',
+            });
+          }
+        } catch (portalErr: any) {
+          console.warn('[Paddle Customer Portal Session Warn]', portalErr?.message);
+        }
       }
     }
 
@@ -3781,7 +3806,8 @@ const handlePaddleCustomerPortalRequest = async (req: express.Request, res: expr
     return res.json({
       url: fallbackUrl,
       customerPortalUrl: fallbackUrl,
-      message: 'Paddle customer management portal',
+      type: 'public_portal',
+      message: 'Paddle Buyer Portal: Enter your account email to access your receipts, update payment method, and manage subscriptions.',
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -4222,6 +4248,19 @@ app.post('/api/user/cancel-auto-renew', async (req, res) => {
     user.autoRenew = false;
     user.cancelAtPeriodEnd = true;
 
+    // Synchronize cancellation with Paddle API so Paddle stops future recurring billing
+    const paddle = getPaddleClient();
+    if (paddle && user.paddleSubscriptionId) {
+      try {
+        await (paddle as any).subscriptions.cancel(user.paddleSubscriptionId, {
+          effectiveFrom: 'next_billing_period',
+        });
+        console.log(`[Paddle Sync] Scheduled recurring cancellation for ${user.paddleSubscriptionId}`);
+      } catch (padErr: any) {
+        console.warn('[Paddle Cancel API Notice]', padErr?.message);
+      }
+    }
+
     usersDb.set(normalizedEmail, user);
     saveUsersToDisk();
     await saveUserToSql(user);
@@ -4279,6 +4318,19 @@ app.post('/api/user/resume-auto-renew', async (req, res) => {
 
     user.autoRenew = true;
     user.cancelAtPeriodEnd = false;
+
+    // Synchronize resuming with Paddle API so Paddle keeps subscription active
+    const paddle = getPaddleClient();
+    if (paddle && user.paddleSubscriptionId) {
+      try {
+        await (paddle as any).subscriptions.update(user.paddleSubscriptionId, {
+          scheduledChange: null,
+        });
+        console.log(`[Paddle Sync] Resumed active recurring billing for ${user.paddleSubscriptionId}`);
+      } catch (padErr: any) {
+        console.warn('[Paddle Resume API Notice]', padErr?.message);
+      }
+    }
 
     usersDb.set(normalizedEmail, user);
     saveUsersToDisk();
