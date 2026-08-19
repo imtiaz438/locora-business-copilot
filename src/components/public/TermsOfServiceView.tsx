@@ -142,7 +142,7 @@ export const TermsOfServiceView: React.FC = () => {
 
           <hr className="border-slate-100" />
 
-            {/* Section 5 */}
+          {/* Section 5 */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold font-heading text-slate-900 flex items-center gap-2">
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">5</span>
@@ -183,14 +183,12 @@ export const TermsOfServiceView: React.FC = () => {
               Questions & Legal Contact
             </h2>
             <div className="text-xs sm:text-sm text-slate-600 leading-relaxed pl-8 space-y-3">
-              <p>For questions or notices regarding these Terms of Service, please reach out to the platform operator:</p>
-              <p className="font-bold text-slate-900 text-sm pl-1">Imtiaz Hussain</p>
+              <p>For questions or notices regarding these Terms of Service, please reach out to our legal department:</p>
               <div className="pt-2 flex flex-wrap items-center gap-3">
                 <a
                   href="mailto:support@locoraai.com"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
                 >
-                  <Mail className="w-4 h-4" />
                   <span>Email: support@locoraai.com</span>
                 </a>
                 <button
