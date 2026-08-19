@@ -36,7 +36,7 @@ export const TermsOfServiceView: React.FC = () => {
               Locora AI Terms of Service
             </h1>
             <p className="text-sm text-slate-600 leading-relaxed max-w-2xl">
-              These Terms of Service ("Terms") govern your access to and use of the Locora AI platform, application operating system, AI copilot tools, and related services provided by Locora AI Platform, Inc.
+              These Terms of Service ("Terms") govern your access to and use of the Locora AI platform, application operating system, AI copilot tools, and related services owned and operated by Imtiaz Hussain, an individual developer based in Pakistan.
             </p>
           </div>
 
@@ -117,8 +117,9 @@ export const TermsOfServiceView: React.FC = () => {
                 Locora AI offers recurring subscription tiers (Free, Pro at $19/mo or $15/mo billed annually, and Agency at $49/mo or $39/mo billed annually).
               </p>
               <ul className="list-disc pl-5 space-y-1.5 text-slate-600">
-                <li><strong>Payment Processing:</strong> All subscription payments are processed securely via Stripe. You authorize Locora AI to charge your payment method according to your selected plan and billing cycle.</li>
-                <li><strong>Cancellation Policy:</strong> You may cancel your subscription at any time from your Account Settings. Cancellation will take effect at the conclusion of your current billing period, retaining full access until that date.</li>
+                <li><strong>Payment Processing:</strong> Our order process is conducted by our Merchant of Record, Paddle. Paddle acts as the merchant of record for all our orders, handles global sales tax calculations, compliance operations, and securely executes subscription billing lifecycle workflows.</li>
+                <li><strong>Cancellation Policy:</strong> You may cancel your recurring subscription at any time directly through your Account Settings interface. Cancellation will take effect at the conclusion of your active, paid billing period. You will retain unhindered access to all tier features until your current expiration date.</li>
+                <li><strong>Refund Policy:</strong> Due to the immediate computing costs associated with server-side AI model executions, all sales are final and non-refundable once AI credits have been actively spent within an account cycle. If you experience technical errors or have a dispute regarding duplicate billing charges, please contact our support desk at <a href="mailto:support@locoraai.com" className="text-[#059669] font-semibold hover:underline">support@locoraai.com</a> within 14 days to request an adjustment review.</li>
                 <li><strong>Credits & Allocation:</strong> AI Copilot credits reset monthly based on your plan tier (Free: 25 credits/mo, Pro: 250 credits/mo, Agency: Unlimited). Unused credits do not roll over to subsequent months.</li>
               </ul>
             </div>
@@ -133,18 +134,15 @@ export const TermsOfServiceView: React.FC = () => {
               Intellectual Property & Content Ownership
             </h2>
             <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-                <p className="font-bold text-xs text-slate-900">Your Content Belongs To You</p>
-                <p className="text-xs leading-relaxed text-slate-600">
-                  As between you and Locora AI, you own all rights, title, and interest in the business data, customer records, invoices, proposals, and SEO assets generated using the Locora AI platform. Locora AI retains all ownership rights to the platform software, trademarks, logos, and underlying source code.
-                </p>
-              </div>
+              <p>
+                You retain complete intellectual property rights and full content ownership over all client data, custom proposals, CRM profiles, and documents generated on the platform. Locora AI does not claim ownership or storage execution rights over any content you create.
+              </p>
             </div>
           </section>
 
           <hr className="border-slate-100" />
 
-          {/* Section 5 */}
+            {/* Section 5 */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold font-heading text-slate-900 flex items-center gap-2">
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">5</span>
@@ -170,8 +168,8 @@ export const TermsOfServiceView: React.FC = () => {
               Limitation of Liability & Warranty Disclaimer
             </h2>
             <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
-              <p>
-                LOCORA AI IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED. IN NO EVENT SHALL LOCORA AI PLATFORM, INC. BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF YOUR USE OF THE PLATFORM.
+              <p className="uppercase">
+                Locora AI is provided "as is" and "as available" without warranties of any kind, either express or implied. In no event shall the individual platform operator, Imtiaz Hussain, be liable for indirect, incidental, special, or consequential damages arising out of your use of the platform.
               </p>
             </div>
           </section>
@@ -185,12 +183,14 @@ export const TermsOfServiceView: React.FC = () => {
               Questions & Legal Contact
             </h2>
             <div className="text-xs sm:text-sm text-slate-600 leading-relaxed pl-8 space-y-3">
-              <p>For questions or notices regarding these Terms of Service, please reach out to our legal department:</p>
+              <p>For questions or notices regarding these Terms of Service, please reach out to the platform operator:</p>
+              <p className="font-bold text-slate-900 text-sm pl-1">Imtiaz Hussain</p>
               <div className="pt-2 flex flex-wrap items-center gap-3">
                 <a
                   href="mailto:support@locoraai.com"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
                 >
+                  <Mail className="w-4 h-4" />
                   <span>Email: support@locoraai.com</span>
                 </a>
                 <button

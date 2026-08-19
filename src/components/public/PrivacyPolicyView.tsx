@@ -36,7 +36,7 @@ export const PrivacyPolicyView: React.FC = () => {
               Locora AI Privacy Policy
             </h1>
             <p className="text-sm text-slate-600 leading-relaxed max-w-2xl">
-              Your privacy and the security of your local business data are our highest priorities. This policy outlines how Locora AI Platform, Inc. collects, protects, uses, and respects your personal and business information.
+              Your privacy and the security of your local business data are our highest priorities. This policy outlines how Locora AI, owned and operated by Imtiaz Hussain, an individual developer based in Pakistan, collects, protects, uses, and respects your personal and business information.
             </p>
           </div>
 
@@ -100,7 +100,7 @@ export const PrivacyPolicyView: React.FC = () => {
               <p>Locora AI uses your data strictly for legitimate operational purposes:</p>
               <ul className="list-disc pl-5 space-y-1.5 text-slate-600">
                 <li>To generate custom proposals, local SEO schemas, invoice PDFs, and automated CRM records.</li>
-                <li>To process subscription billing and issue transaction receipts via our Stripe payment gateway integration.</li>
+                <li>To process subscription billing, manage tax calculations, and issue transaction receipts via our Merchant of Record (Paddle).</li>
                 <li>To send transactional emails, account notifications, and weekly AI prompt dispatches if you have subscribed to Locora Growth Dispatch.</li>
                 <li>To detect, prevent, and mitigate fraud, technical issues, or security breaches.</li>
               </ul>
@@ -137,19 +137,11 @@ export const PrivacyPolicyView: React.FC = () => {
               Third-Party Service Providers
             </h2>
             <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
-              <p>
-                We do not sell, rent, or trade your personal data. We share data only with trusted infrastructure subprocessors required to operate our service:
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                  <p className="text-xs font-bold text-slate-900">Stripe Payment Gateway</p>
-                  <p className="text-[11px] text-slate-500">Handles PCI-DSS compliant credit card processing and subscription lifecycle.</p>
-                </div>
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                  <p className="text-xs font-bold text-slate-900">Google Cloud Platform & Firebase</p>
-                  <p className="text-[11px] text-slate-500">Provides secure database storage, serverless hosting, and encrypted backups.</p>
-                </div>
-              </div>
+              <p>We do not sell, rent, or trade your personal data. We share data only with trusted infrastructure subprocessors required to operate our service:</p>
+              <ul className="list-disc pl-5 space-y-1.5 text-slate-600">
+                <li><strong>Paddle:</strong> Functions as our global Merchant of Record to handle PCI-DSS compliant credit card processing, subscription billing cycles, and regional sales tax remittance.</li>
+                <li><strong>Google Cloud Platform & Firebase:</strong> Provides secure database storage, serverless hosting, and encrypted backups.</li>
+              </ul>
             </div>
           </section>
 
