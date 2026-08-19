@@ -2802,7 +2802,7 @@ export const AdminView: React.FC = () => {
                 { name: 'Contact Us Form', desc: 'Alerts support@locoraai.com & sends instant auto-reply ticket to user', status: 'Active' },
                 { name: 'Sign-up Verification', desc: 'Dispatches welcome & account registration verification with workspace credentials', status: 'Active' },
                 { name: 'Magic Link & Password Reset', desc: 'Sends 1-click magic access links and 6-digit security codes', status: 'Active' },
-                { name: 'Lemon Squeezy Invoices', desc: 'Issues real-time payment receipts, invoice PDFs, and plan upgrade confirmations', status: 'Active' },
+                { name: 'Paddle Invoices & Receipts', desc: 'Issues real-time payment receipts, invoice PDFs, and plan upgrade confirmations', status: 'Active' },
                 { name: 'Client Invoices Dispatch', desc: 'Allows workspace users to dispatch client invoices & retainers via Brevo', status: 'Active' },
                 { name: 'Weekly Newsletter Pack', desc: 'Delivers weekly AI prompt packs to subscribers table automatically', status: 'Active' },
               ].map((trigger, idx) => (
@@ -2852,11 +2852,11 @@ export const AdminView: React.FC = () => {
                     <span>Live Payment & Subscription Transaction Monitoring</span>
                   </h3>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                    LEMON SQUEEZY GATEWAY
+                    PADDLE GATEWAY
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  Monitor live checkout orders, recurring subscriptions, and payment status updates powered by the Lemon Squeezy SDK and real-time webhook synchronization.
+                  Monitor live checkout orders, recurring subscriptions, and payment status updates powered by the Paddle Billing SDK and real-time webhook synchronization.
                 </p>
               </div>
 
@@ -2896,9 +2896,9 @@ export const AdminView: React.FC = () => {
               <div className="bg-blue-50/60 border border-blue-200 rounded-xl p-4 space-y-1">
                 <span className="text-[11px] font-semibold text-blue-800 uppercase tracking-wider">Gateway Subs</span>
                 <p className="text-xl font-extrabold text-blue-700 font-mono">
-                  {transactionsTable.filter(t => t.lemonSqueezyDetails?.subscriptionId || t.paymentMethod === 'lemonsqueezy').length}
+                  {transactionsTable.filter(t => t.paddleDetails?.subscriptionId || t.lemonSqueezyDetails?.subscriptionId || t.paymentMethod === 'paddle' || t.paymentMethod === 'lemonsqueezy').length}
                 </p>
-                <p className="text-[10px] text-blue-700">Lemon Squeezy Sync</p>
+                <p className="text-[10px] text-blue-700">Paddle Billing Sync</p>
               </div>
 
               <div className="bg-rose-50/60 border border-rose-200 rounded-xl p-4 space-y-1">
@@ -2925,7 +2925,7 @@ export const AdminView: React.FC = () => {
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                 <input
                   type="text"
-                  placeholder="Search by customer email, name, transaction ID, invoice, or Lemon Squeezy Order ID..."
+                  placeholder="Search by customer email, name, transaction ID, invoice, Paddle/Gateway ID..."
                   value={transactionSearch}
                   onChange={(e) => setTransactionSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#059669]"
@@ -2970,6 +2970,8 @@ export const AdminView: React.FC = () => {
                       if (transactionFilter !== 'all' && txn.status !== transactionFilter) return false;
                       if (!transactionSearch) return true;
                       const q = transactionSearch.toLowerCase();
+                      const paddleTxnId = txn.paddleDetails?.transactionId?.toString() || '';
+                      const paddleSubId = txn.paddleDetails?.subscriptionId?.toString() || '';
                       const lsOrderId = txn.lemonSqueezyDetails?.orderId?.toString() || '';
                       const lsSubId = txn.lemonSqueezyDetails?.subscriptionId?.toString() || '';
                       const cardLast4 = txn.cardDetails?.cardLast4 || txn.paymentMethod?.cardLast4 || '';
@@ -2978,6 +2980,8 @@ export const AdminView: React.FC = () => {
                         txn.userEmail?.toLowerCase().includes(q) ||
                         txn.userName?.toLowerCase().includes(q) ||
                         txn.invoiceId?.toLowerCase().includes(q) ||
+                        paddleTxnId.includes(q) ||
+                        paddleSubId.includes(q) ||
                         lsOrderId.includes(q) ||
                         lsSubId.includes(q) ||
                         cardLast4.includes(q)
@@ -2990,7 +2994,7 @@ export const AdminView: React.FC = () => {
                       const isCancelled = txn.status === 'cancel' || txn.status === 'cancelled';
                       const isRefunded = txn.status === 'refunded';
                       const isTest = txn.isTestMode === true;
-                      const hasLemonDetails = !!txn.lemonSqueezyDetails;
+                      const isPaddle = txn.paymentMethod === 'paddle' || !!txn.paddleDetails;
 
                       return (
                         <tr key={txn.id} className="hover:bg-slate-50/75 transition-colors">
@@ -3039,16 +3043,21 @@ export const AdminView: React.FC = () => {
                             <div>
                               <div className="flex items-center gap-1.5 text-emerald-800 font-semibold">
                                 <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                                <span className="text-xs">Lemon Squeezy</span>
+                                <span className="text-xs">{isPaddle ? 'Paddle Billing' : 'Paddle / Direct'}</span>
                               </div>
+                              {txn.paddleDetails?.transactionId && (
+                                <div className="text-[10px] text-slate-500 font-mono">
+                                  Txn: {txn.paddleDetails.transactionId}
+                                </div>
+                              )}
+                              {txn.paddleDetails?.subscriptionId && (
+                                <div className="text-[9px] font-mono text-emerald-700 font-bold">
+                                  Sub ID: {txn.paddleDetails.subscriptionId}
+                                </div>
+                              )}
                               {txn.lemonSqueezyDetails?.orderId && (
                                 <div className="text-[10px] text-slate-500 font-mono">
                                   Order #{txn.lemonSqueezyDetails.orderId}
-                                </div>
-                              )}
-                              {txn.lemonSqueezyDetails?.subscriptionId && (
-                                <div className="text-[9px] font-mono text-emerald-700 font-bold">
-                                  Sub ID: {txn.lemonSqueezyDetails.subscriptionId}
                                 </div>
                               )}
                               {txn.cardDetails?.last4 && (
@@ -3122,7 +3131,7 @@ export const AdminView: React.FC = () => {
                   {transactionsTable.length === 0 && (
                     <tr>
                       <td colSpan={7} className="py-8 text-center text-slate-400 text-xs">
-                        No transactions registered in payment ledger yet. Real orders via Lemon Squeezy checkout will automatically appear here.
+                        No transactions registered in payment ledger yet. Real orders via Paddle checkout will automatically appear here.
                       </td>
                     </tr>
                   )}

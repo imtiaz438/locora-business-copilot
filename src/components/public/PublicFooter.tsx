@@ -232,6 +232,15 @@ export const PublicFooter: React.FC = () => {
             </button>
             <button
               onClick={() => {
+                setActiveTab('refund');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="hover:text-slate-900 transition-colors cursor-pointer"
+            >
+              Refund Policy
+            </button>
+            <button
+              onClick={() => {
                 setActiveTab('security');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}

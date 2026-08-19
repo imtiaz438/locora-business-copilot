@@ -33,24 +33,24 @@ export const SubscriptionView: React.FC = () => {
   const [portalLoading, setPortalLoading] = useState(false);
   const [portalMsg, setPortalMsg] = useState<string | null>(null);
 
-  const handleOpenLemonSqueezyPortal = async () => {
+  const handleOpenPaddlePortal = async () => {
     setPortalLoading(true);
     setPortalMsg(null);
     try {
-      const res = await fetch('/api/lemonsqueezy/customer-portal', {
+      const res = await fetch('/api/paddle/customer-portal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: user.email }),
       });
       const data = await res.json();
-      if (data.customerPortalUrl) {
-        window.open(data.customerPortalUrl, '_blank');
+      if (data.customerPortalUrl || data.url) {
+        window.open(data.customerPortalUrl || data.url, '_blank');
       } else {
-        setPortalMsg(data.message || 'Direct settlement active. No hosted Lemon Squeezy customer portal found.');
+        setPortalMsg(data.message || 'Direct settlement active. No hosted Paddle billing portal session found.');
         setTimeout(() => setPortalMsg(null), 5000);
       }
     } catch (err) {
-      setPortalMsg('Unable to connect to billing portal.');
+      setPortalMsg('Unable to connect to Paddle billing portal.');
       setTimeout(() => setPortalMsg(null), 5000);
     } finally {
       setPortalLoading(false);
@@ -392,12 +392,12 @@ export const SubscriptionView: React.FC = () => {
             {!showEditCard ? (
               <div className="space-y-2">
                 <button
-                  onClick={handleOpenLemonSqueezyPortal}
+                  onClick={handleOpenPaddlePortal}
                   disabled={portalLoading}
                   className="w-full py-2 bg-emerald-50 hover:bg-emerald-100/80 text-xs font-bold text-emerald-800 rounded-xl border border-emerald-300 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   {portalLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ExternalLink className="w-3.5 h-3.5 text-emerald-600" />}
-                  <span>Manage via Lemon Squeezy Portal</span>
+                  <span>Manage via Paddle Billing Portal</span>
                 </button>
 
                 <button
@@ -564,6 +564,20 @@ export const SubscriptionView: React.FC = () => {
                 <p className="text-[11px] text-slate-500">
                   Our team will review and take action within <strong>48 hours</strong>.
                 </p>
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCancelModal(false);
+                      setActiveTab('refund');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold underline cursor-pointer inline-flex items-center gap-1"
+                  >
+                    <span>Read our Cancellation & Refund Policy</span>
+                    <ArrowUpRight className="w-3 h-3" />
+                  </button>
+                </div>
               </div>
 
               <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-[11px] text-emerald-900 space-y-1">

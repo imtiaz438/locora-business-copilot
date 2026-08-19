@@ -20,7 +20,7 @@ import {
 import { UserPlan } from '../../types';
 import { validateRealEmail } from '../../lib/emailValidation';
 import { LocoraLogo } from '../LocoraLogo';
-import { SocialAuthModal } from '../SocialAuthModal';
+import { triggerGoogleSSO, triggerLinkedInSSO } from '../../lib/oauthService';
 
 interface AuthViewProps {
   initialMode?: 'login' | 'signup';
@@ -30,10 +30,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
   const { user, login, logout, setActiveTab, pendingPlanAfterAuth } = useApp();
   const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
   const [showPassword, setShowPassword] = useState(false);
-
-  // Social Auth Modal State
-  const [socialModalOpen, setSocialModalOpen] = useState(false);
-  const [socialProvider, setSocialProvider] = useState<'google' | 'linkedin'>('google');
 
   // Form State
   const [email, setEmail] = useState('');
@@ -906,13 +902,6 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
           </div>
         </div>
       </div>
-
-      {/* Social Auth Modal */}
-      <SocialAuthModal
-        isOpen={socialModalOpen}
-        onClose={() => setSocialModalOpen(false)}
-        provider={socialProvider}
-      />
     </div>
   );
 };

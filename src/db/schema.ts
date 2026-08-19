@@ -199,7 +199,18 @@ export const transactionsTable = pgTable('payment_transactions', {
   billingCycle: text('billing_cycle').notNull(),
   amount: doublePrecision('amount').notNull(),
   currency: text('currency').default('USD').notNull(),
-  paymentMethod: text('payment_method').notNull(), // 'lemonsqueezy' | 'card' | 'apple_pay' | 'google_pay' | 'paypal'
+  paymentMethod: text('payment_method').notNull(), // 'paddle' | 'lemonsqueezy' | 'card' | 'apple_pay' | 'google_pay' | 'paypal'
+  paddleDetails: jsonb('paddle_details').$type<{
+    subscriptionId?: string;
+    transactionId?: string;
+    customerId?: string;
+    priceId?: string;
+    status?: string;
+    customerPortalUrl?: string;
+    updatePaymentMethodUrl?: string;
+    receiptUrl?: string;
+    paymentMethodBrand?: string;
+  }>(),
   lemonSqueezyDetails: jsonb('lemon_squeezy_details').$type<{
     subscriptionId?: string;
     orderId?: string;

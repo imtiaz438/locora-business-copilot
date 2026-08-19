@@ -28,6 +28,7 @@ import { AuthView } from './components/public/AuthView';
 import { PrivacyPolicyView } from './components/public/PrivacyPolicyView';
 import { TermsOfServiceView } from './components/public/TermsOfServiceView';
 import { SecurityOverviewView } from './components/public/SecurityOverviewView';
+import { RefundPolicyView } from './components/public/RefundPolicyView';
 import { IndustryPseoView } from './components/public/IndustryPseoView';
 
 const PATH_TO_TAB: Record<string, string> = {
@@ -46,6 +47,10 @@ const PATH_TO_TAB: Record<string, string> = {
   'terms-and-conditions': 'terms',
   'term-condition': 'terms',
   'terms-condition': 'terms',
+  'refund': 'refund',
+  'refunds': 'refund',
+  'refund-policy': 'refund',
+  'cancellation-policy': 'refund',
   'security': 'security',
   'dashboard': 'dashboard',
   'chat': 'chat',
@@ -125,6 +130,7 @@ const MainContent: React.FC = () => {
       {activeTab === 'signup' && <AuthView initialMode="signup" />}
       {activeTab === 'privacy' && <PrivacyPolicyView />}
       {activeTab === 'terms' && <TermsOfServiceView />}
+      {activeTab === 'refund' && <RefundPolicyView />}
       {activeTab === 'security' && <SecurityOverviewView />}
 
       {/* Authenticated OS Modules */}

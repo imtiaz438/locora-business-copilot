@@ -19,6 +19,7 @@ import {
   Crown,
   ArrowUpRight,
 } from 'lucide-react';
+import { openPaddleCheckout } from '../lib/paddleService';
 
 export const CheckoutModal: React.FC = () => {
   const {
@@ -63,7 +64,7 @@ export const CheckoutModal: React.FC = () => {
   // Scenario 2: User is on Pro and selected Pro again
   const isProSelectingPro = currentPlan === 'pro' && checkoutModalPlan === 'pro';
 
-  // Seamless Unified Checkout Handler
+  // Seamless Unified Checkout Handler powered by Paddle SDK
   const handleProceedToCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -74,58 +75,62 @@ export const CheckoutModal: React.FC = () => {
     const customerName = user.name || user.companyName || customerEmail.split('@')[0];
 
     try {
-      // 1. Attempt Lemon Squeezy hosted checkout
-      const lsResponse = await fetch('/api/lemonsqueezy/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: customerEmail,
-          name: customerName,
-          plan: checkoutModalPlan,
-          billingCycle: checkoutModalCycle,
-          preferredChannel: paymentChannel,
-        }),
+      // 1. Attempt Paddle Checkout (SDK Overlay or Hosted Session)
+      const paddleResult = await openPaddleCheckout({
+        plan: checkoutModalPlan,
+        billingCycle: checkoutModalCycle,
+        email: customerEmail,
+        name: customerName,
+        userId: user.id,
+        onSuccess: (pData) => {
+          logActivity(
+            'payment',
+            `Subscription Activated: ${planName}`,
+            `Payment of $${totalAmount}.00 cleared via Paddle for Locora AI ${planName}. Workspace ready.`
+          );
+          setSuccessData({
+            brand: paymentChannel === 'wallets' ? 'Digital Wallet (Apple Pay / Google Pay / PayPal)' : 'Paddle Payment',
+            referenceCode: pData?.id || pData?.transaction_id || `PAD-${Date.now().toString().slice(-6)}`,
+            transaction: {
+              id: pData?.id || `txn_pad_${Date.now()}`,
+              invoiceId: `INV-${Date.now().toString().slice(-6)}-PAD`,
+            },
+          });
+          updateUser({
+            planTier: checkoutModalPlan,
+            subscriptionStatus: 'active',
+            billingCycle: checkoutModalCycle,
+            monthlyAiCredits: checkoutModalPlan === 'agency' ? 9999 : 250,
+            aiCreditsUsed: 0,
+            autoRenew: true,
+            cancelAtPeriodEnd: false,
+          });
+          setIsProcessing(false);
+        },
+        onError: (errMsg) => {
+          console.warn('[Paddle Notice]', errMsg);
+        },
       });
 
-      const lsData = await lsResponse.json();
-
-      if (lsResponse.ok && (lsData.checkoutUrl || lsData.url)) {
-        const checkoutUrl = lsData.checkoutUrl || lsData.url;
-        logActivity(
-          'payment',
-          `Checkout Session Created (${planName})`,
-          `Proceeding to secure checkout for Locora AI ${planName} (${checkoutModalCycle}).`
-        );
-
-        setRedirectUrl(checkoutUrl);
-
-        // Try opening in new tab/window immediately
-        try {
-          const win = window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
-          if (win) {
-            win.focus();
-          }
-        } catch (popupErr) {
-          console.warn('[Popup Blocked]', popupErr);
-        }
-
-        // Try top window navigation fallback if allowed
-        try {
-          if (window.top && window.top !== window) {
-            window.top.location.href = checkoutUrl;
-          } else {
-            window.location.href = checkoutUrl;
-          }
-        } catch (navErr) {
-          console.warn('[Navigation Blocked by Frame Sandbox]', navErr);
-        }
-
+      if (paddleResult.directSettled) {
         return;
       }
 
-      // If Lemon Squeezy returned a specific configuration error, display it clearly
-      if (lsData.error === 'LEMONSQUEEZY_API_KEY_MISSING' || lsData.error === 'LEMONSQUEEZY_STORE_ID_MISSING' || lsData.error === 'VARIANT_ID_MISSING') {
-        throw new Error(lsData.message || 'Lemon Squeezy credentials or product variants are not configured.');
+      if (paddleResult.url || paddleResult.checkoutUrl) {
+        const checkoutUrl = paddleResult.url || paddleResult.checkoutUrl;
+        logActivity(
+          'payment',
+          `Paddle Checkout Session Created (${planName})`,
+          `Proceeding to secure checkout for Locora AI ${planName} (${checkoutModalCycle}).`
+        );
+        setRedirectUrl(checkoutUrl);
+        return;
+      }
+
+      // If Paddle returned no direct URL or overlay is opened
+      if (paddleResult.success && !paddleResult.url) {
+        setIsProcessing(false);
+        return;
       }
 
       // 2. Direct Process Fallback (Instant Settlement)
@@ -151,7 +156,7 @@ export const CheckoutModal: React.FC = () => {
       const fallbackData = await fallbackResponse.json();
 
       if (!fallbackResponse.ok) {
-        throw new Error(lsData.message || fallbackData.error || 'Failed to initialize secure checkout.');
+        throw new Error(fallbackData.error || 'Failed to initialize secure checkout.');
       }
 
       if (fallbackData.user) {
@@ -338,7 +343,7 @@ export const CheckoutModal: React.FC = () => {
             </div>
           </div>
         ) : redirectUrl ? (
-          /* State C: Lemon Squeezy Redirect Ready Screen */
+          /* State C: Paddle Redirect Ready Screen */
           <div className="p-8 space-y-6 text-center">
             <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border-4 border-emerald-100 shadow-xs">
               <ExternalLink className="w-8 h-8" />
@@ -349,7 +354,7 @@ export const CheckoutModal: React.FC = () => {
                 Checkout Session Ready!
               </h3>
               <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                Click below to complete your secure payment on <strong>Lemon Squeezy</strong> for <strong>Locora AI {planName}</strong>.
+                Click below to complete your secure payment on <strong>Paddle</strong> for <strong>Locora AI {planName}</strong>.
               </p>
             </div>
 
@@ -364,19 +369,19 @@ export const CheckoutModal: React.FC = () => {
               </div>
               <div className="flex justify-between items-center text-slate-700">
                 <span className="font-semibold text-slate-500">Merchant of Record:</span>
-                <span className="font-medium text-slate-900">Lemon Squeezy Global Payments</span>
+                <span className="font-medium text-slate-900">Paddle Global Payments</span>
               </div>
             </div>
 
             <div className="pt-2 space-y-3">
               <a
-                id="open_lemon_squeezy_checkout_btn"
+                id="open_paddle_checkout_btn"
                 href={redirectUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-3.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer no-underline"
               >
-                <span>OPEN LEMON SQUEEZY CHECKOUT</span>
+                <span>OPEN PADDLE CHECKOUT</span>
                 <ArrowUpRight className="w-5 h-5" />
               </a>
 
@@ -525,7 +530,7 @@ export const CheckoutModal: React.FC = () => {
                     )}
                   </div>
                   <div className="text-[11px] text-slate-500">
-                    Visa, MasterCard, American Express, Discover (Lemon Squeezy)
+                    Visa, MasterCard, American Express, Discover (Paddle)
                   </div>
                 </button>
 
@@ -593,7 +598,7 @@ export const CheckoutModal: React.FC = () => {
               {isProcessing ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Generating Lemon Squeezy Checkout...</span>
+                  <span>Generating Paddle Checkout...</span>
                 </>
               ) : (
                 <>
@@ -610,7 +615,7 @@ export const CheckoutModal: React.FC = () => {
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 <span>256-bit Encrypted SSL Checkout</span>
               </div>
-              <span>Merchant of Record • Lemon Squeezy</span>
+              <span>Merchant of Record • Paddle</span>
             </div>
           </form>
         )}

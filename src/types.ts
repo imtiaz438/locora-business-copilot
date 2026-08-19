@@ -287,7 +287,11 @@ export interface UserProfile {
   nextBillingDate: string;
   autoRenew?: boolean;
   cancelAtPeriodEnd?: boolean;
-  paymentProvider?: 'lemonsqueezy' | 'card' | 'apple_pay' | 'google_pay';
+  paymentProvider?: 'paddle' | 'lemonsqueezy' | 'card' | 'apple_pay' | 'google_pay';
+  paddleSubscriptionId?: string;
+  paddleCustomerId?: string;
+  paddleCustomerPortalUrl?: string;
+  paddleUpdatePaymentMethodUrl?: string;
   lemonSqueezySubscriptionId?: string;
   lemonSqueezyCustomerId?: string;
   lemonSqueezyCustomerPortalUrl?: string;
@@ -300,7 +304,7 @@ export interface UserProfile {
   isAuthenticated: boolean;
 }
 
-export type PaymentMethodType = 'lemonsqueezy' | 'card' | 'apple_pay' | 'google_pay' | 'paypal';
+export type PaymentMethodType = 'paddle' | 'lemonsqueezy' | 'card' | 'apple_pay' | 'google_pay' | 'paypal';
 export type PaymentTransactionStatus = 'success' | 'failed' | 'cancelled' | 'pending' | 'refunded';
 
 export interface PaymentTransaction {
@@ -313,6 +317,17 @@ export interface PaymentTransaction {
   amount: number;
   currency: string;
   paymentMethod: PaymentMethodType;
+  paddleDetails?: {
+    subscriptionId?: string;
+    transactionId?: string;
+    customerId?: string;
+    priceId?: string;
+    status?: string;
+    customerPortalUrl?: string;
+    updatePaymentMethodUrl?: string;
+    receiptUrl?: string;
+    paymentMethodBrand?: string;
+  };
   lemonSqueezyDetails?: {
     subscriptionId?: string;
     orderId?: string;
