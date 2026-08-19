@@ -511,10 +511,84 @@ function loadTransactionsFromDisk() {
           transactionsDb.set(t.id, t);
         }
       });
-      console.log(`[Database] Loaded ${transactionsDb.size} payment transactions from disk storage.`);
+      deduplicateTransactionsMap();
+      console.log(`[Database] Loaded ${transactionsDb.size} unique payment transactions from disk storage.`);
     } catch (e: any) {
       console.error('[Database] Failed to load transactions from disk:', e.message);
     }
+  }
+}
+
+function deduplicateTransactionsMap() {
+  const seenPaddleTxnIds = new Set<string>();
+  const seenPaddleSubIds = new Set<string>();
+  const seenInvoices = new Set<string>();
+  const seenUserOrders = new Map<string, string>();
+  const toDelete = new Set<string>();
+
+  // Sort newest first so newer/more complete records take precedence
+  const list = Array.from(transactionsDb.values())
+    .filter((t) => t && t.id && !deletedTransactionIds.has(t.id))
+    .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime());
+
+  for (const t of list) {
+    const paddleTxnId = (t.paddleDetails?.transactionId || '').trim();
+    const paddleSubId = (t.paddleDetails?.subscriptionId || '').trim();
+    const invoiceId = (t.invoiceId || '').trim();
+    const email = (t.userEmail || '').toLowerCase().trim();
+
+    let isDuplicate = false;
+
+    // 1. Deduplicate by exact Paddle Transaction ID
+    if (paddleTxnId && paddleTxnId !== 'undefined' && paddleTxnId !== 'null' && paddleTxnId.length > 3) {
+      if (seenPaddleTxnIds.has(paddleTxnId)) {
+        isDuplicate = true;
+      } else {
+        seenPaddleTxnIds.add(paddleTxnId);
+      }
+    }
+
+    // 2. Deduplicate by Paddle Subscription ID + Plan
+    if (!isDuplicate && paddleSubId && paddleSubId !== 'undefined' && paddleSubId !== 'null' && paddleSubId.length > 3) {
+      const subKey = `${email}_${paddleSubId}_${t.planTier || ''}`;
+      if (seenPaddleSubIds.has(subKey)) {
+        isDuplicate = true;
+      } else {
+        seenPaddleSubIds.add(subKey);
+      }
+    }
+
+    // 3. Deduplicate by exact Invoice ID
+    if (!isDuplicate && invoiceId && invoiceId !== 'undefined' && invoiceId.length > 3) {
+      if (seenInvoices.has(invoiceId)) {
+        isDuplicate = true;
+      } else {
+        seenInvoices.add(invoiceId);
+      }
+    }
+
+    // 4. Deduplicate close simultaneous checkout events for same user & plan within 5 minutes
+    if (!isDuplicate && email && t.createdAt) {
+      const timeBucket = Math.floor(new Date(t.createdAt).getTime() / (5 * 60 * 1000));
+      const orderKey = `${email}_${t.planTier || ''}_${t.amount || 0}_${timeBucket}`;
+      if (seenUserOrders.has(orderKey)) {
+        isDuplicate = true;
+      } else {
+        seenUserOrders.set(orderKey, t.id);
+      }
+    }
+
+    if (isDuplicate) {
+      toDelete.add(t.id);
+    }
+  }
+
+  if (toDelete.size > 0) {
+    for (const id of toDelete) {
+      transactionsDb.delete(id);
+    }
+    saveTransactionsToDisk();
+    console.log(`[Database] Deduplicated and removed ${toDelete.size} duplicate transaction records.`);
   }
 }
 
@@ -3475,73 +3549,115 @@ app.post('/api/paddle/webhook', async (req: any, res) => {
         await saveUserToSql(user);
       }
 
-      // Record transaction
-      const invoiceId = `INV-${Date.now().toString().slice(-6)}-PAD`;
+      // Idempotent Transaction Record Creation / Update
+      const rawPaddleTxnId = String(data?.id || '').trim();
+      const rawPaddleSubId = String(subscriptionId || data?.subscription_id || '').trim();
       const amountVal = data?.details?.totals?.total || data?.totals?.total;
       const amount = amountVal ? parseFloat(amountVal) / 100 : (plan === 'agency' ? (isYearly ? 468 : 49) : (isYearly ? 180 : 19));
 
-      const newTxn: PaymentTransaction = {
-        id: `txn_pad_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-        userId: user?.id,
-        userEmail: customerEmail,
-        userName: user?.name || customerEmail.split('@')[0],
-        planTier: plan,
-        billingCycle: isYearly ? 'yearly' : 'monthly',
-        amount,
-        currency: data?.currency_code || 'USD',
-        paymentMethod: 'paddle',
-        paddleDetails: {
-          transactionId: String(data?.id || ''),
-          subscriptionId: String(subscriptionId || ''),
-          customerId: String(data?.customer_id || ''),
-          priceId: String(data?.items?.[0]?.price?.id || ''),
+      // Find existing transaction matching Paddle transaction/subscription ID or recent user checkout
+      const allTxns = Array.from(transactionsDb.values());
+      let existingTxn = allTxns.find((t) => {
+        if (rawPaddleTxnId && (t.id === rawPaddleTxnId || t.paddleDetails?.transactionId === rawPaddleTxnId)) return true;
+        if (rawPaddleSubId && (t.id === rawPaddleSubId || t.paddleDetails?.subscriptionId === rawPaddleSubId)) return true;
+        if (t.userEmail === customerEmail && t.planTier === plan) {
+          const diffMs = Math.abs(Date.now() - new Date(t.createdAt).getTime());
+          if (diffMs < 10 * 60 * 1000) return true;
+        }
+        return false;
+      });
+
+      let isNewTxnCreated = false;
+      let targetTxn: PaymentTransaction;
+
+      if (existingTxn) {
+        // Update existing record in-place to avoid duplicate entries in DB and admin view
+        targetTxn = existingTxn;
+        targetTxn.amount = amount || targetTxn.amount;
+        targetTxn.currency = data?.currency_code || targetTxn.currency || 'USD';
+        targetTxn.status = 'success';
+        targetTxn.paddleDetails = {
+          transactionId: rawPaddleTxnId || targetTxn.paddleDetails?.transactionId || '',
+          subscriptionId: rawPaddleSubId || targetTxn.paddleDetails?.subscriptionId || '',
+          customerId: String(data?.customer_id || targetTxn.paddleDetails?.customerId || ''),
+          priceId: String(data?.items?.[0]?.price?.id || targetTxn.paddleDetails?.priceId || ''),
           status: data?.status || 'active',
-        },
-        status: 'success',
-        invoiceId,
-        isTestMode: data?.test_mode || false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+        };
+        targetTxn.updatedAt = new Date().toISOString();
+        transactionsDb.set(targetTxn.id, targetTxn);
+      } else {
+        // Create a single canonical transaction record
+        isNewTxnCreated = true;
+        const txnKey = rawPaddleTxnId.startsWith('txn_') ? rawPaddleTxnId : `txn_pad_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        const invoiceId = `INV-${Date.now().toString().slice(-6)}-PAD`;
 
-      transactionsDb.set(newTxn.id, newTxn);
+        targetTxn = {
+          id: txnKey,
+          userId: user?.id,
+          userEmail: customerEmail,
+          userName: user?.name || customerEmail.split('@')[0],
+          planTier: plan,
+          billingCycle: isYearly ? 'yearly' : 'monthly',
+          amount,
+          currency: data?.currency_code || 'USD',
+          paymentMethod: 'paddle',
+          paddleDetails: {
+            transactionId: rawPaddleTxnId,
+            subscriptionId: rawPaddleSubId,
+            customerId: String(data?.customer_id || ''),
+            priceId: String(data?.items?.[0]?.price?.id || ''),
+            status: data?.status || 'active',
+          },
+          status: 'success',
+          invoiceId,
+          isTestMode: data?.test_mode || false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        transactionsDb.set(targetTxn.id, targetTxn);
+      }
+
+      deduplicateTransactionsMap();
       saveTransactionsToDisk();
-      await dbService.saveTransaction(newTxn);
+      await dbService.saveTransaction(targetTxn).catch(() => {});
 
-      // Send confirmation & invoice receipt email
-      const planPriceStr = plan === 'agency'
-        ? (isYearly ? '$468.00 / year ($39/mo billed annually)' : '$49.00 / month')
-        : (isYearly ? '$180.00 / year ($15/mo billed annually)' : '$19.00 / month');
+      // Send confirmation & invoice receipt email ONLY for newly created transaction sessions
+      if (isNewTxnCreated) {
+        const planPriceStr = plan === 'agency'
+          ? (isYearly ? '$468.00 / year ($39/mo billed annually)' : '$49.00 / month')
+          : (isYearly ? '$180.00 / year ($15/mo billed annually)' : '$19.00 / month');
 
-      sendEmail({
-        to: customerEmail,
-        subject: `🧾 [Receipt & Invoice] Subscription Active - Locora AI ${plan.toUpperCase()} Plan (Paddle)`,
-        text: `Thank you for subscribing to Locora AI ${plan.toUpperCase()} Plan via Paddle! Your subscription is active with ${plan === 'agency' ? 'Unlimited' : '250'} AI Copilot credits. Invoice #${invoiceId}.`,
-        html: `
-          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
-            <div style="border-bottom: 2px solid #059669; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <h2 style="color: #059669; margin: 0; font-size: 22px; font-weight: 800;">Locora AI Copilot</h2>
-                <p style="color: #64748b; font-size: 12px; margin: 2px 0 0;">Official Subscription Invoice & Receipt (Paddle)</p>
+        sendEmail({
+          to: customerEmail,
+          subject: `🧾 [Receipt & Invoice] Subscription Active - Locora AI ${plan.toUpperCase()} Plan (Paddle)`,
+          text: `Thank you for subscribing to Locora AI ${plan.toUpperCase()} Plan via Paddle! Your subscription is active with ${plan === 'agency' ? 'Unlimited' : '250'} AI Copilot credits. Invoice #${targetTxn.invoiceId}.`,
+          html: `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
+              <div style="border-bottom: 2px solid #059669; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <h2 style="color: #059669; margin: 0; font-size: 22px; font-weight: 800;">Locora AI Copilot</h2>
+                  <p style="color: #64748b; font-size: 12px; margin: 2px 0 0;">Official Subscription Invoice & Receipt (Paddle)</p>
+                </div>
+                <span style="background-color: #ecfdf5; color: #047857; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; border: 1px solid #a7f3d0; text-transform: uppercase;">ACTIVE & PAID</span>
               </div>
-              <span style="background-color: #ecfdf5; color: #047857; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; border: 1px solid #a7f3d0; text-transform: uppercase;">ACTIVE & PAID</span>
+              <p style="font-size: 15px; color: #1e293b;">Hello <strong>${user?.name || customerEmail.split('@')[0]}</strong>,</p>
+              <p style="font-size: 14px; color: #475569;">Your subscription to Locora AI <strong>${plan.toUpperCase()}</strong> has been processed via Paddle Merchant of Record.</p>
+              <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin: 20px 0; font-size: 13px;">
+                <p style="margin: 4px 0; color: #334155;"><strong>Plan:</strong> LOCORA AI ${plan.toUpperCase()} (${isYearly ? 'Annual Billing' : 'Monthly Recurring'})</p>
+                <p style="margin: 4px 0; color: #334155;"><strong>Amount:</strong> ${planPriceStr}</p>
+                <p style="margin: 4px 0; color: #334155;"><strong>Invoice ID:</strong> ${targetTxn.invoiceId}</p>
+                <p style="margin: 4px 0; color: #334155;"><strong>Merchant of Record:</strong> Paddle Payments</p>
+                <p style="margin: 4px 0; color: #334155;"><strong>Subscription / Transaction ID:</strong> ${rawPaddleSubId || rawPaddleTxnId || 'N/A'}</p>
+              </div>
+              <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 14px; text-align: center; margin-bottom: 20px;">
+                <p style="margin: 0; color: #065f46; font-size: 13px; font-weight: 700;">🚀 Monthly AI Copilot Credits Allocated: ${plan === 'agency' ? 'Unlimited' : '250 Credits'}</p>
+              </div>
+              <p style="font-size: 11px; color: #94a3b8; text-align: center;">You can manage your subscription or payment method anytime in your account settings or via the Paddle customer portal.</p>
             </div>
-            <p style="font-size: 15px; color: #1e293b;">Hello <strong>${user?.name || customerEmail.split('@')[0]}</strong>,</p>
-            <p style="font-size: 14px; color: #475569;">Your subscription to Locora AI <strong>${plan.toUpperCase()}</strong> has been processed via Paddle Merchant of Record.</p>
-            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin: 20px 0; font-size: 13px;">
-              <p style="margin: 4px 0; color: #334155;"><strong>Plan:</strong> LOCORA AI ${plan.toUpperCase()} (${isYearly ? 'Annual Billing' : 'Monthly Recurring'})</p>
-              <p style="margin: 4px 0; color: #334155;"><strong>Amount:</strong> ${planPriceStr}</p>
-              <p style="margin: 4px 0; color: #334155;"><strong>Invoice ID:</strong> ${invoiceId}</p>
-              <p style="margin: 4px 0; color: #334155;"><strong>Merchant of Record:</strong> Paddle Payments</p>
-              <p style="margin: 4px 0; color: #334155;"><strong>Subscription / Transaction ID:</strong> ${subscriptionId || data?.id || 'N/A'}</p>
-            </div>
-            <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 14px; text-align: center; margin-bottom: 20px;">
-              <p style="margin: 0; color: #065f46; font-size: 13px; font-weight: 700;">🚀 Monthly AI Copilot Credits Allocated: ${plan === 'agency' ? 'Unlimited' : '250 Credits'}</p>
-            </div>
-            <p style="font-size: 11px; color: #94a3b8; text-align: center;">You can manage your subscription or payment method anytime in your account settings or via the Paddle customer portal.</p>
-          </div>
-        `,
-      }).catch(() => {});
+          `,
+        }).catch(() => {});
+      }
     } else if (eventType === 'subscription.updated') {
       if (user) {
         if (data.status) {
@@ -4162,6 +4278,9 @@ app.get('/api/admin/transactions', async (req, res) => {
         });
       }
     });
+
+    // Run strict deduplication pass to ensure single, accurate canonical records
+    deduplicateTransactionsMap();
 
     const allTxns = Array.from(transactionsDb.values())
       .filter((t) => !deletedTransactionIds.has(t.id))
