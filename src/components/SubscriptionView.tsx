@@ -25,9 +25,6 @@ import { BillingCycle } from '../types';
 
 export const SubscriptionView: React.FC = () => {
   const { user, subscriptionInvoices, setCheckoutModalPlan, setActiveTab, updateUser, logActivity } = useApp();
-  const [showEditCard, setShowEditCard] = useState(false);
-  const [cardLast4, setCardLast4] = useState('4242');
-  const [cardBrand, setCardBrand] = useState('Visa');
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
@@ -59,19 +56,6 @@ export const SubscriptionView: React.FC = () => {
 
   const isAutoRenewOn = user.autoRenew !== false && !user.cancelAtPeriodEnd;
   const creditsUsedPct = Math.min(100, Math.round((user.aiCreditsUsed / user.monthlyAiCredits) * 100));
-
-  const handleSavePaymentMethod = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateUser({
-      paymentMethod: {
-        cardLast4: cardLast4.slice(-4) || '4242',
-        cardBrand: cardBrand || 'Visa',
-        expDate: '12/28',
-      },
-    });
-    setShowEditCard(false);
-    logActivity('billing', 'Updated Payment Method', `Updated card ending in ${cardLast4.slice(-4)}`);
-  };
 
   const handleToggleAutoRenew = async () => {
     const turningOff = isAutoRenewOn;
@@ -369,83 +353,74 @@ export const SubscriptionView: React.FC = () => {
                 <CreditCard className="w-4 h-4 text-slate-400" />
                 <span>Payment Credentials</span>
               </h3>
-              <p className="text-xs text-slate-500 mb-4">Primary credit card for recurring subscription billing.</p>
+              <p className="text-xs text-slate-500 mb-4">
+                Primary payment method on file processed via Paddle Merchant of Record.
+              </p>
 
-              {user.paymentMethod ? (
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+              {user.paymentMethod && user.planTier !== 'free' ? (
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-900 uppercase font-heading">{user.paymentMethod.cardBrand}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold rounded-md uppercase font-heading">
+                        {user.paymentMethod.cardBrand || 'Card'}
+                      </span>
+                      <span className="text-[11px] text-slate-500 font-medium">Paddle Billing</span>
+                    </div>
                     <CheckCircle2 className="w-4 h-4 text-[#059669]" />
                   </div>
-                  <p className="text-lg font-mono font-bold text-slate-800">
+                  <p className="text-lg font-mono font-bold text-slate-800 tracking-wider">
                     •••• •••• •••• {user.paymentMethod.cardLast4}
                   </p>
-                  <p className="text-[11px] text-slate-500">Expires {user.paymentMethod.expDate}</p>
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-200/60">
+                    <span>Expires {user.paymentMethod.expDate}</span>
+                    <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3" /> PCI-DSS Level 1 Secure
+                    </span>
+                  </div>
                 </div>
               ) : (
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-400">
-                  No active card on file. Free tier active.
+                <div className="p-5 bg-slate-50/80 border border-dashed border-slate-200 rounded-xl text-center space-y-2">
+                  <div className="w-9 h-9 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                    <CreditCard className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-700">No payment method on file</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      {user.planTier === 'free'
+                        ? 'Free starter plan active. Payment credentials will be securely linked when you upgrade.'
+                        : 'Your subscription is managed directly via the Paddle Merchant of Record.'}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
 
-            {!showEditCard ? (
-              <div className="space-y-2">
+            <div className="space-y-2 pt-1">
+              {user.planTier !== 'free' ? (
                 <button
                   onClick={handleOpenPaddlePortal}
                   disabled={portalLoading}
                   className="w-full py-2 bg-emerald-50 hover:bg-emerald-100/80 text-xs font-bold text-emerald-800 rounded-xl border border-emerald-300 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   {portalLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ExternalLink className="w-3.5 h-3.5 text-emerald-600" />}
-                  <span>Manage via Paddle Billing Portal</span>
+                  <span>Manage Billing & Invoices via Paddle Portal</span>
                 </button>
-
+              ) : (
                 <button
-                  onClick={() => setShowEditCard(true)}
-                  className="w-full py-2 bg-slate-100 hover:bg-slate-200/80 text-xs font-semibold text-slate-800 rounded-xl border border-slate-200 transition-colors cursor-pointer"
+                  onClick={() => setCheckoutModalPlan('pro', user.billingCycle || 'monthly')}
+                  className="w-full py-2 bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold rounded-xl shadow-2xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  Update Card Details Directly
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Upgrade Plan to Add Payment Method</span>
                 </button>
+              )}
 
-                {portalMsg && (
-                  <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 p-2 rounded-lg text-center">
-                    {portalMsg}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <form onSubmit={handleSavePaymentMethod} className="space-y-3 pt-2">
-                <input
-                  type="text"
-                  placeholder="Card Brand (e.g. Visa)"
-                  value={cardBrand}
-                  onChange={(e) => setCardBrand(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#059669]"
-                />
-                <input
-                  type="text"
-                  placeholder="Last 4 Digits (e.g. 8888)"
-                  value={cardLast4}
-                  onChange={(e) => setCardLast4(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#059669]"
-                />
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    className="flex-1 py-1.5 bg-[#059669] text-white text-xs font-bold rounded-xl shadow-2xs cursor-pointer"
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowEditCard(false)}
-                    className="px-3 py-1.5 bg-slate-100 text-slate-600 text-xs rounded-xl border border-slate-200 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
+              {portalMsg && (
+                <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 p-2 rounded-lg text-center">
+                  {portalMsg}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Cancellation & Refund Support Instructions Card */}

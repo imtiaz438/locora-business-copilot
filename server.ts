@@ -3531,6 +3531,25 @@ app.post('/api/paddle/webhook', async (req: any, res) => {
       eventType === 'transaction.completed' ||
       eventType === 'transaction.paid'
     ) {
+      // Extract payment method details from Paddle payload if available
+      const paymentEntry = data?.payments?.[0];
+      const methodDetails = paymentEntry?.method_details || data?.method_details || data?.details?.payment_method;
+      let capturedBrand = '';
+      let capturedLast4 = '';
+      let capturedExp = '';
+
+      if (methodDetails?.card) {
+        capturedBrand = String(methodDetails.card.type || methodDetails.card.brand || 'Visa').toUpperCase();
+        capturedLast4 = String(methodDetails.card.last4 || '');
+        if (methodDetails.card.expiry_month && methodDetails.card.expiry_year) {
+          const mm = String(methodDetails.card.expiry_month).padStart(2, '0');
+          const yy = String(methodDetails.card.expiry_year).slice(-2);
+          capturedExp = `${mm}/${yy}`;
+        }
+      } else if (methodDetails?.type) {
+        capturedBrand = String(methodDetails.type).toUpperCase();
+      }
+
       if (user) {
         user.planTier = plan;
         user.subscriptionStatus = 'active';
@@ -3546,6 +3565,13 @@ app.post('/api/paddle/webhook', async (req: any, res) => {
         }
         if (user.role !== 'admin') {
           user.role = 'subscriber';
+        }
+        if (capturedLast4) {
+          user.paymentMethod = {
+            cardBrand: capturedBrand || 'Card',
+            cardLast4: capturedLast4,
+            expDate: capturedExp || 'Active',
+          };
         }
         usersDb.set(customerEmail, user);
         await saveUserToSql(user);
