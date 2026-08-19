@@ -506,9 +506,7 @@ const PATH_TO_TAB: Record<string, string> = {
       aiCreditsUsed: usedCredits,
       memberSince: new Date().toISOString(),
       nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
-      paymentMethod: isProOrAgency
-        ? { cardLast4: '4242', cardBrand: 'Visa', expDate: '12/28' }
-        : undefined,
+      paymentMethod: undefined,
       isAuthenticated: true,
     };
 

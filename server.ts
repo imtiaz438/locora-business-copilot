@@ -1306,7 +1306,7 @@ app.post('/api/auth/register', async (req, res) => {
       memberSince: new Date().toISOString(),
       nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
       passwordHash: password,
-      paymentMethod: requestedPlan !== 'free' ? { cardLast4: '4242', cardBrand: 'Visa', expDate: '12/28' } : undefined,
+      paymentMethod: undefined,
     };
 
     usersDb.set(normalizedEmail, newUser);
@@ -1436,6 +1436,12 @@ app.get('/api/auth/me', async (req, res) => {
     let user = await findUserByEmail(email);
     if (!user) {
       return res.status(404).json({ error: 'User account not found' });
+    }
+    // Clean out legacy mock paymentMethod if present
+    if (user.paymentMethod && user.paymentMethod.cardLast4 === '4242') {
+      delete user.paymentMethod;
+      usersDb.set(email, user);
+      await saveUserToSql(user);
     }
     res.json({ user });
   } catch (err: any) {

@@ -357,7 +357,7 @@ export const SubscriptionView: React.FC = () => {
                 Primary payment method on file processed via Paddle Merchant of Record.
               </p>
 
-              {user.paymentMethod && user.planTier !== 'free' ? (
+              {user.paymentMethod && user.paymentMethod.cardLast4 && user.paymentMethod.cardLast4 !== '4242' && user.planTier !== 'free' ? (
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -378,6 +378,29 @@ export const SubscriptionView: React.FC = () => {
                     </span>
                   </div>
                 </div>
+              ) : user.planTier !== 'free' ? (
+                <div className="p-4 bg-emerald-50/60 border border-emerald-200/80 rounded-xl space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-extrabold rounded-md uppercase font-heading">
+                        Paddle Billing
+                      </span>
+                      <span className="text-[11px] text-emerald-800 font-semibold">Active Plan</span>
+                    </div>
+                    <CheckCircle2 className="w-4 h-4 text-[#059669]" />
+                  </div>
+                  <p className="text-xs text-slate-700 leading-relaxed">
+                    Recurring payment method is securely vault-encrypted & tokenized via <strong>Paddle Merchant of Record</strong>.
+                  </p>
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-emerald-200/60">
+                    <span className="font-mono text-[10px] text-slate-600 uppercase">
+                      {user.billingCycle || 'monthly'} Billing
+                    </span>
+                    <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5" /> PCI-DSS Level 1 Encrypted
+                    </span>
+                  </div>
+                </div>
               ) : (
                 <div className="p-5 bg-slate-50/80 border border-dashed border-slate-200 rounded-xl text-center space-y-2">
                   <div className="w-9 h-9 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
@@ -386,9 +409,7 @@ export const SubscriptionView: React.FC = () => {
                   <div>
                     <p className="text-xs font-bold text-slate-700">No payment method on file</p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      {user.planTier === 'free'
-                        ? 'Free starter plan active. Payment credentials will be securely linked when you upgrade.'
-                        : 'Your subscription is managed directly via the Paddle Merchant of Record.'}
+                      Free starter plan active. Payment credentials will be securely linked when you upgrade.
                     </p>
                   </div>
                 </div>
