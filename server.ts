@@ -523,7 +523,7 @@ function deduplicateTransactionsMap() {
   const seenPaddleTxnIds = new Set<string>();
   const seenPaddleSubIds = new Set<string>();
   const seenInvoices = new Set<string>();
-  const seenUserOrders = new Map<string, string>();
+  const seenUserPlans = new Set<string>();
   const toDelete = new Set<string>();
 
   // Sort newest first so newer/more complete records take precedence
@@ -536,6 +536,7 @@ function deduplicateTransactionsMap() {
     const paddleSubId = (t.paddleDetails?.subscriptionId || '').trim();
     const invoiceId = (t.invoiceId || '').trim();
     const email = (t.userEmail || '').toLowerCase().trim();
+    const plan = (t.planTier || t.plan || 'pro').toLowerCase().trim();
 
     let isDuplicate = false;
 
@@ -550,7 +551,7 @@ function deduplicateTransactionsMap() {
 
     // 2. Deduplicate by Paddle Subscription ID + Plan
     if (!isDuplicate && paddleSubId && paddleSubId !== 'undefined' && paddleSubId !== 'null' && paddleSubId.length > 3) {
-      const subKey = `${email}_${paddleSubId}_${t.planTier || ''}`;
+      const subKey = `${email}_${paddleSubId}_${plan}`;
       if (seenPaddleSubIds.has(subKey)) {
         isDuplicate = true;
       } else {
@@ -567,19 +568,19 @@ function deduplicateTransactionsMap() {
       }
     }
 
-    // 4. Deduplicate close simultaneous checkout events for same user & plan within 5 minutes
-    if (!isDuplicate && email && t.createdAt) {
-      const timeBucket = Math.floor(new Date(t.createdAt).getTime() / (5 * 60 * 1000));
-      const orderKey = `${email}_${t.planTier || ''}_${t.amount || 0}_${timeBucket}`;
-      if (seenUserOrders.has(orderKey)) {
+    // 4. Ensure a single canonical active transaction record per user & subscription plan
+    if (!isDuplicate && email) {
+      const userPlanKey = `${email}_${plan}`;
+      if (seenUserPlans.has(userPlanKey)) {
         isDuplicate = true;
       } else {
-        seenUserOrders.set(orderKey, t.id);
+        seenUserPlans.add(userPlanKey);
       }
     }
 
     if (isDuplicate) {
       toDelete.add(t.id);
+      deletedTransactionIds.add(t.id);
     }
   }
 
@@ -588,6 +589,7 @@ function deduplicateTransactionsMap() {
       transactionsDb.delete(id);
     }
     saveTransactionsToDisk();
+    saveDeletedTransactionsToDisk();
     console.log(`[Database] Deduplicated and removed ${toDelete.size} duplicate transaction records.`);
   }
 }

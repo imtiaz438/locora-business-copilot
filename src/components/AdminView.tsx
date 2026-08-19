@@ -349,7 +349,31 @@ export const AdminView: React.FC = () => {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setTransactionsTable(data.transactions || []);
+        // Strict deduplication safeguard by transaction ID, invoice ID, and user plan
+        const rawList = data.transactions || [];
+        const seenIds = new Set<string>();
+        const seenInvoices = new Set<string>();
+        const seenUserPlans = new Set<string>();
+        const cleanList: any[] = [];
+
+        for (const t of rawList) {
+          if (!t || !t.id) continue;
+          const email = (t.userEmail || '').toLowerCase().trim();
+          const plan = (t.planTier || t.plan || 'pro').toLowerCase().trim();
+          const invoice = (t.invoiceId || '').trim();
+          const userPlanKey = email ? `${email}_${plan}` : '';
+
+          if (seenIds.has(t.id)) continue;
+          if (invoice && seenInvoices.has(invoice)) continue;
+          if (userPlanKey && seenUserPlans.has(userPlanKey)) continue;
+
+          seenIds.add(t.id);
+          if (invoice) seenInvoices.add(invoice);
+          if (userPlanKey) seenUserPlans.add(userPlanKey);
+          cleanList.push(t);
+        }
+
+        setTransactionsTable(cleanList);
         setTransactionStats(data.stats || null);
       }
     } catch (err: any) {
