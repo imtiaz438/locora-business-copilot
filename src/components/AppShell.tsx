@@ -55,6 +55,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     activeTab === 'signup' ||
     activeTab === 'privacy' ||
     activeTab === 'terms' ||
+    activeTab === 'refund' ||
     activeTab === 'security';
 
   // Render Public Website Layout
