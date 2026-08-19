@@ -147,32 +147,29 @@ export async function openPaddleCheckout(options: OpenPaddleCheckoutOptions): Pr
   const data = await res.json();
 
   if (!res.ok) {
-    const errorMsg = data.message || data.error || 'Failed to create Paddle checkout session.';
+    const errorMsg = data.message || data.error || 'Failed to create Paddle checkout session. Please check gateway configuration.';
     if (onError) onError(errorMsg);
     throw new Error(errorMsg);
-  }
-
-  // If server directly provisioned (e.g. instant settlement fallback)
-  if (data.directSettled) {
-    if (onSuccess) onSuccess(data);
-    return { success: true, directSettled: true, ...data };
   }
 
   const priceId = data.priceId;
   const transactionId = data.transactionId;
   const checkoutUrl = data.checkoutUrl || data.url;
 
+  if (!priceId && !transactionId && !checkoutUrl) {
+    const errorMsg = 'Paddle checkout details were not generated. Please configure your Paddle API credentials and price IDs.';
+    if (onError) onError(errorMsg);
+    throw new Error(errorMsg);
+  }
+
   // 2. Try Paddle.js overlay checkout if priceId or transactionId is present
   try {
     const paddle = await initPaddleClient((event) => {
       if (
         event?.name === 'checkout.completed' ||
-        event?.name === 'checkout.payment.succeeded' ||
-        event?.name === 'checkout.loaded'
+        event?.name === 'checkout.payment.succeeded'
       ) {
-        if (event.name !== 'checkout.loaded') {
-          if (onSuccess) onSuccess(event.data);
-        }
+        if (onSuccess) onSuccess(event.data);
       }
       if (event?.name === 'checkout.closed' && onClose) {
         onClose();
@@ -227,8 +224,8 @@ export async function openPaddleCheckout(options: OpenPaddleCheckoutOptions): Pr
     } catch {
       window.location.href = checkoutUrl;
     }
-    return { success: true, url: checkoutUrl };
+    return { success: true, url: checkoutUrl, checkoutUrl };
   }
 
-  return { success: true, ...data };
+  throw new Error('Could not open Paddle checkout. Please verify your Paddle API keys and client token.');
 }

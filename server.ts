@@ -3358,62 +3358,19 @@ app.post('/api/paddle/create-checkout', async (req, res) => {
       });
     }
 
-    // Direct provision fallback if Paddle credentials are still pending configuration
-    const invoiceId = `INV-${Date.now().toString().slice(-6)}-PAD`;
-    const amount = plan === 'agency' ? (isYearly ? 468 : 49) : (isYearly ? 180 : 19);
-
-    user.planTier = plan as any;
-    user.subscriptionStatus = 'active';
-    user.billingCycle = isYearly ? 'yearly' : 'monthly';
-    user.monthlyAiCredits = plan === 'agency' ? 9999 : 250;
-    user.autoRenew = true;
-    user.cancelAtPeriodEnd = false;
-    user.paymentProvider = 'paddle';
-    user.paddleSubscriptionId = `sub_pad_direct_${Date.now()}`;
-    user.paddleCustomerId = `ctm_pad_direct_${Date.now()}`;
-    user.nextBillingDate = new Date(Date.now() + (isYearly ? 365 : 30) * 24 * 60 * 60 * 1000).toISOString();
-    if (user.role !== 'admin') {
-      user.role = 'subscriber';
-    }
-    usersDb.set(normalizedEmail, user);
-    saveUsersToDisk();
-    await saveUserToSql(user);
-
-    const fallbackTxn: PaymentTransaction = {
-      id: `txn_pad_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      userId: user.id,
-      userEmail: normalizedEmail,
-      userName: name || user.name || normalizedEmail.split('@')[0],
-      planTier: plan,
-      billingCycle: isYearly ? 'yearly' : 'monthly',
-      amount,
-      currency: 'USD',
-      paymentMethod: 'paddle',
-      paddleDetails: {
-        transactionId: `txn_pad_direct_${Date.now()}`,
-        subscriptionId: user.paddleSubscriptionId,
-        customerId: user.paddleCustomerId,
-        status: 'active',
+    // If neither Paddle SDK transaction nor client token with priceId could be used:
+    // DO NOT auto-upgrade! Return a 400 error requiring Paddle keys/tokens and Price IDs to be configured.
+    const apiKey = getPaddleApiKey();
+    return res.status(400).json({
+      error: 'PADDLE_GATEWAY_NOT_CONFIGURED',
+      message: 'Paddle Payment Gateway is not activated. Please configure your Live or Sandbox Paddle API credentials (PADDLE_API_KEY, PADDLE_CLIENT_TOKEN, and Price IDs) in your environment or Admin settings before proceeding with checkout.',
+      details: {
+        plan,
+        billingCycle: isYearly ? 'yearly' : 'monthly',
+        hasApiKey: !!apiKey,
+        hasClientToken: !!clientToken,
+        hasPriceId: !!priceId,
       },
-      status: 'success',
-      invoiceId,
-      isTestMode: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    transactionsDb.set(fallbackTxn.id, fallbackTxn);
-    saveTransactionsToDisk();
-    await dbService.saveTransaction(fallbackTxn);
-
-    return res.json({
-      success: true,
-      directSettled: true,
-      transaction: fallbackTxn,
-      invoice: { invoiceNumber: invoiceId },
-      brand: 'Paddle Direct Settlement',
-      referenceCode: `PAD-${Date.now().toString().slice(-8)}`,
-      message: `Paddle checkout completed for ${plan.toUpperCase()} plan.`,
     });
   } catch (err: any) {
     console.error('Paddle create-checkout error:', err);

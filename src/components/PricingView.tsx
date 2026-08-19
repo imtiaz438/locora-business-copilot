@@ -141,7 +141,7 @@ export const PricingView: React.FC = () => {
     },
     {
       q: 'What payment methods do you accept?',
-      a: 'We process payments securely via Stripe, supporting all major credit cards (Visa, Mastercard, American Express, Discover), Apple Pay, and Google Pay.',
+      a: 'We process payments securely via Paddle (Merchant of Record), supporting all major credit and debit cards (Visa, Mastercard, American Express, Discover), PayPal, Apple Pay, and Google Pay.',
     },
   ];
 

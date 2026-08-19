@@ -18,8 +18,10 @@ import {
   RefreshCw,
   Crown,
   ArrowUpRight,
+  Key,
+  ShieldAlert,
 } from 'lucide-react';
-import { openPaddleCheckout } from '../lib/paddleService';
+import { openPaddleCheckout, getPaddleConfig, PaddleConfig } from '../lib/paddleService';
 
 export const CheckoutModal: React.FC = () => {
   const {
@@ -38,12 +40,23 @@ export const CheckoutModal: React.FC = () => {
   const [successData, setSuccessData] = useState<any | null>(null);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [copiedRef, setCopiedRef] = useState(false);
+  const [paddleConfig, setPaddleConfig] = useState<PaddleConfig | null>(null);
+  const [configLoading, setConfigLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (checkoutModalPlan) {
       setErrorMessage(null);
       setSuccessData(null);
       setRedirectUrl(null);
+      setConfigLoading(true);
+      getPaddleConfig()
+        .then((cfg) => {
+          setPaddleConfig(cfg);
+          setConfigLoading(false);
+        })
+        .catch(() => {
+          setConfigLoading(false);
+        });
     }
   }, [checkoutModalPlan, user]);
 
@@ -64,15 +77,31 @@ export const CheckoutModal: React.FC = () => {
   // Scenario 2: User is on Pro and selected Pro again
   const isProSelectingPro = currentPlan === 'pro' && checkoutModalPlan === 'pro';
 
-  // Seamless Unified Checkout Handler powered by Paddle SDK
+  // Check if gateway is activated (Live or Sandbox credentials configured)
+  const isGatewayConfigured = !!(
+    paddleConfig?.configured ||
+    (paddleConfig?.clientToken && (paddleConfig?.priceIds?.proMonthly || paddleConfig?.priceIds?.agencyMonthly)) ||
+    paddleConfig?.hasApiKey
+  );
+
+  // Unified Checkout Handler requiring verified payment before any upgrade
   const handleProceedToCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
-    setIsProcessing(true);
     setRedirectUrl(null);
 
     const customerEmail = user.email || 'customer@example.com';
     const customerName = user.name || user.companyName || customerEmail.split('@')[0];
+
+    // Strict Validation: Block progress if gateway is not activated with live or test keys
+    if (!isGatewayConfigured && !paddleConfig?.hasApiKey && !paddleConfig?.clientToken) {
+      setErrorMessage(
+        'Paddle Payment Gateway is not activated yet. Please configure your Paddle API Key, Client Token, and Price IDs (Live or Sandbox) in your environment variables or Settings before upgrading plans.'
+      );
+      return;
+    }
+
+    setIsProcessing(true);
 
     try {
       // 1. Attempt Paddle Checkout (SDK Overlay or Hosted Session)
@@ -108,13 +137,9 @@ export const CheckoutModal: React.FC = () => {
           setIsProcessing(false);
         },
         onError: (errMsg) => {
-          console.warn('[Paddle Notice]', errMsg);
+          setErrorMessage(errMsg);
         },
       });
-
-      if (paddleResult.directSettled) {
-        return;
-      }
 
       if (paddleResult.url || paddleResult.checkoutUrl) {
         const checkoutUrl = paddleResult.url || paddleResult.checkoutUrl;
@@ -127,66 +152,15 @@ export const CheckoutModal: React.FC = () => {
         return;
       }
 
-      // If Paddle returned no direct URL or overlay is opened
+      // If Paddle returned no direct URL and overlay was launched
       if (paddleResult.success && !paddleResult.url) {
         setIsProcessing(false);
         return;
       }
-
-      // 2. Direct Process Fallback (Instant Settlement)
-      const fallbackResponse = await fetch('/api/checkout/process-card', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: customerEmail,
-          plan: checkoutModalPlan,
-          billingCycle: checkoutModalCycle,
-          cardDetails: {
-            cardNumber: '4242424242424242',
-            cardholderName: customerName,
-            expMonth: '12',
-            expYear: '2028',
-            cvc: '123',
-            country: 'United States',
-            postalCode: '94107',
-          },
-        }),
-      });
-
-      const fallbackData = await fallbackResponse.json();
-
-      if (!fallbackResponse.ok) {
-        throw new Error(fallbackData.error || 'Failed to initialize secure checkout.');
-      }
-
-      if (fallbackData.user) {
-        updateUser({
-          planTier: fallbackData.user.planTier,
-          subscriptionStatus: 'active',
-          billingCycle: fallbackData.user.billingCycle,
-          autoRenew: true,
-          cancelAtPeriodEnd: false,
-          monthlyAiCredits: fallbackData.user.monthlyAiCredits,
-          aiCreditsUsed: 0,
-          nextBillingDate: fallbackData.user.nextBillingDate,
-          paymentMethod: fallbackData.user.paymentMethod,
-        });
-      }
-
-      logActivity(
-        'payment',
-        `Subscription Activated: ${planName}`,
-        `Payment of $${totalAmount}.00 cleared for Locora AI ${planName}. Workspace ready.`
-      );
-
-      setSuccessData({
-        ...fallbackData,
-        method: paymentChannel === 'wallets' ? 'wallet' : 'card',
-        last4: '4242',
-        brand: paymentChannel === 'wallets' ? 'Digital Wallet (PayPal / Apple Pay)' : 'Visa',
-      });
     } catch (err: any) {
-      setErrorMessage(err.message || 'Unable to connect to checkout gateway. Please check credentials or retry.');
+      setErrorMessage(
+        err.message || 'Payment gateway validation failed. Please check your Paddle API keys and tokens.'
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -560,6 +534,30 @@ export const CheckoutModal: React.FC = () => {
                 </button>
               </div>
             </div>
+
+            {/* Gateway Configuration & Activation Status Notice */}
+            {!configLoading && !isGatewayConfigured && (
+              <div className="p-4 bg-amber-50/90 border border-amber-200 rounded-xl space-y-2 text-xs text-amber-900">
+                <div className="flex items-start gap-2.5">
+                  <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <h5 className="font-bold text-amber-950">
+                      Payment Gateway Setup Required (Live / Test Activation)
+                    </h5>
+                    <p className="text-[11px] text-amber-800 leading-relaxed">
+                      Paddle payment gateway is not yet activated. To accept live or sandbox checkouts, please add your Paddle credentials in your environment variables or Admin settings:
+                    </p>
+                    <div className="pt-1 font-mono text-[10px] space-y-0.5 text-amber-900 bg-amber-100/60 p-2 rounded-lg border border-amber-200/80">
+                      <div>• PADDLE_API_KEY / PADDLE_CLIENT_TOKEN</div>
+                      <div>• PADDLE_PRICE_ID_PRO_MONTHLY / PADDLE_PRICE_ID_AGENCY_MONTHLY</div>
+                    </div>
+                    <p className="text-[10px] text-amber-700 italic pt-0.5">
+                      ⚠️ Automatic plan upgrades are disabled until verified payment gateway credentials are provided.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Error Notification */}
             {errorMessage && (
