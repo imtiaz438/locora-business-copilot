@@ -1,4 +1,12 @@
-export type AIProviderId = 'gemini' | 'openai' | 'claude' | 'perplexity' | 'opus' | 'cursor' | 'grok';
+export type AIProviderId = 'gemini' | 'openai' | 'claude' | 'perplexity' | 'deepseek' | 'groq' | 'opus' | 'cursor' | 'grok' | 'llama4' | 'apple_intelligence';
+
+export interface AIModelOption {
+  id: string;
+  name: string;
+  description: string;
+  badge?: string;
+  isDefault?: boolean;
+}
 
 export interface AIProviderConfig {
   id: AIProviderId;
@@ -7,6 +15,7 @@ export interface AIProviderConfig {
   apiKeyEnv: string;
   isCustomKeySet: boolean;
   model: string;
+  models?: AIModelOption[];
   isUpcoming?: boolean;
   statusTag?: string;
   category?: string;
@@ -63,13 +72,16 @@ export interface BusinessProfile {
 
 export interface AppSettings {
   activeProvider: AIProviderId;
-  providerKeys: Record<AIProviderId, string>;
+  activeModelVersion?: string;
+  providerModels?: Record<string, string>;
+  providerKeys: Record<string, string>;
   theme: 'dark' | 'light' | 'system';
   autoSave: boolean;
   defaultCurrency: string;
   defaultTaxRate: number;
   siteLogoUrl?: string;
   siteLogoConfig?: CustomLogoConfig;
+  userKeyStatus?: Record<string, { isValid: boolean; lastTested?: string; warning?: string; modelDetected?: string }>;
 }
 
 export type CustomerStatus = 'lead' | 'contacted' | 'proposal_sent' | 'client' | 'inactive';

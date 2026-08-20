@@ -32,6 +32,13 @@ import {
   Image as ImageIcon,
   AlertCircle,
   RefreshCw,
+  CreditCard,
+  Globe2,
+  FileText,
+  RotateCcw,
+  Check,
+  ArrowUpRight,
+  Receipt,
 } from 'lucide-react';
 
 const AccountSecuritySection: React.FC = () => {
@@ -241,9 +248,9 @@ const AccountSecuritySection: React.FC = () => {
 };
 
 export const SettingsView: React.FC = () => {
-  const { settings, updateSettings, businessProfile, updateBusinessProfile, user, setCheckoutModalPlan } = useApp();
+  const { settings, updateSettings, businessProfile, updateBusinessProfile, user, updateUser, setCheckoutModalPlan, subscriptionInvoices } = useApp();
 
-  const [activeTab, setSettingsTab] = useState<'providers' | 'profile' | 'account' | 'team'>('providers');
+  const [activeTab, setSettingsTab] = useState<'providers' | 'profile' | 'account' | 'team' | 'billing'>('providers');
   const [profileForm, setProfileForm] = useState(() => ({
     ...businessProfile,
     email: user.email || businessProfile.email || '',
@@ -253,6 +260,75 @@ export const SettingsView: React.FC = () => {
   const [validatingKeys, setValidatingKeys] = useState(false);
   const [upcomingNotice, setUpcomingNotice] = useState<string | null>(null);
   const settingsMsgRef = useRef<HTMLDivElement>(null);
+
+  // Billing & Auto-Renew state
+  const [showCancelAutoRenewModal, setShowCancelAutoRenewModal] = useState(false);
+  const [cancellingAutoRenew, setCancellingAutoRenew] = useState(false);
+  const [resumingAutoRenew, setResumingAutoRenew] = useState(false);
+  const [autoRenewFeedback, setAutoRenewFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const [selectedInvoiceForView, setSelectedInvoiceForView] = useState<any | null>(null);
+
+  const handleCancelAutoRenew = async () => {
+    setCancellingAutoRenew(true);
+    setAutoRenewFeedback(null);
+    try {
+      const res = await fetch('/api/user/cancel-auto-renew', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setAutoRenewFeedback({ type: 'error', msg: data.error || 'Failed to cancel auto-renewal.' });
+      } else {
+        updateUser({
+          autoRenew: false,
+          cancelAtPeriodEnd: true,
+        });
+        const formattedDate = user.nextBillingDate
+          ? new Date(user.nextBillingDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+          : 'the end of your current cycle';
+        setAutoRenewFeedback({
+          type: 'success',
+          msg: `Auto-renewal cancelled successfully. You retain full access to ${user.planTier.toUpperCase()} until ${formattedDate}. You will not be billed again.`,
+        });
+        setShowCancelAutoRenewModal(false);
+      }
+    } catch (err: any) {
+      setAutoRenewFeedback({ type: 'error', msg: 'Network error while requesting auto-renew cancellation.' });
+    } finally {
+      setCancellingAutoRenew(false);
+    }
+  };
+
+  const handleResumeAutoRenew = async () => {
+    setResumingAutoRenew(true);
+    setAutoRenewFeedback(null);
+    try {
+      const res = await fetch('/api/user/resume-auto-renew', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setAutoRenewFeedback({ type: 'error', msg: data.error || 'Failed to resume auto-renewal.' });
+      } else {
+        updateUser({
+          autoRenew: true,
+          cancelAtPeriodEnd: false,
+        });
+        setAutoRenewFeedback({
+          type: 'success',
+          msg: 'Auto-renewal resumed successfully! Your subscription will continue seamlessly.',
+        });
+      }
+    } catch (err: any) {
+      setAutoRenewFeedback({ type: 'error', msg: 'Network error while resuming auto-renewal.' });
+    } finally {
+      setResumingAutoRenew(false);
+    }
+  };
 
   useEffect(() => {
     if (savedSuccess || keyErrorMsg) {
@@ -270,13 +346,29 @@ export const SettingsView: React.FC = () => {
   }, [businessProfile, user.email]);
 
   // Key state overrides
-  const [geminiKey, setGeminiKey] = useState(settings.providerKeys.gemini || '');
-  const [openaiKey, setOpenaiKey] = useState(settings.providerKeys.openai || '');
-  const [claudeKey, setClaudeKey] = useState(settings.providerKeys.claude || settings.providerKeys.anthropic || '');
-  const [perplexityKey, setPerplexityKey] = useState(settings.providerKeys.perplexity || '');
-  const [opusKey, setOpusKey] = useState(settings.providerKeys.opus || '');
-  const [cursorKey, setCursorKey] = useState(settings.providerKeys.cursor || '');
-  const [grokKey, setGrokKey] = useState(settings.providerKeys.grok || '');
+  const [geminiKey, setGeminiKey] = useState(settings.providerKeys?.gemini || '');
+  const [openaiKey, setOpenaiKey] = useState(settings.providerKeys?.openai || '');
+  const [claudeKey, setClaudeKey] = useState(settings.providerKeys?.claude || settings.providerKeys?.anthropic || '');
+  const [perplexityKey, setPerplexityKey] = useState(settings.providerKeys?.perplexity || '');
+  const [deepseekKey, setDeepseekKey] = useState(settings.providerKeys?.deepseek || '');
+  const [groqKey, setGroqKey] = useState(settings.providerKeys?.groq || '');
+  const [opusKey, setOpusKey] = useState(settings.providerKeys?.opus || '');
+  const [cursorKey, setCursorKey] = useState(settings.providerKeys?.cursor || '');
+  const [grokKey, setGrokKey] = useState(settings.providerKeys?.grok || '');
+
+  // Provider model selections
+  const [providerModels, setProviderModels] = useState<Record<string, string>>(() => ({
+    gemini: settings.providerModels?.gemini || 'gemini-2.5-flash',
+    openai: settings.providerModels?.openai || 'gpt-5.6-sol',
+    claude: settings.providerModels?.claude || 'claude-3-7-sonnet-20250219',
+    perplexity: settings.providerModels?.perplexity || 'sonar-pro',
+    deepseek: settings.providerModels?.deepseek || 'deepseek-chat',
+    groq: settings.providerModels?.groq || 'llama-3.3-70b-versatile',
+  }));
+
+  // Per-key validation tester state
+  const [testingProvider, setTestingProvider] = useState<string | null>(null);
+  const [keyTestResults, setKeyTestResults] = useState<Record<string, { valid?: boolean; message?: string; warning?: string; error?: string }>>({});
 
   useEffect(() => {
     if (settings?.providerKeys) {
@@ -286,11 +378,60 @@ export const SettingsView: React.FC = () => {
         setClaudeKey(settings.providerKeys.claude || settings.providerKeys.anthropic || '');
       }
       if (settings.providerKeys.perplexity !== undefined) setPerplexityKey(settings.providerKeys.perplexity);
+      if (settings.providerKeys.deepseek !== undefined) setDeepseekKey(settings.providerKeys.deepseek);
+      if (settings.providerKeys.groq !== undefined) setGroqKey(settings.providerKeys.groq);
       if (settings.providerKeys.opus !== undefined) setOpusKey(settings.providerKeys.opus);
       if (settings.providerKeys.cursor !== undefined) setCursorKey(settings.providerKeys.cursor);
       if (settings.providerKeys.grok !== undefined) setGrokKey(settings.providerKeys.grok);
     }
-  }, [settings.providerKeys]);
+    if (settings?.providerModels) {
+      setProviderModels((prev) => ({ ...prev, ...settings.providerModels }));
+    }
+  }, [settings.providerKeys, settings.providerModels]);
+
+  const handleTestKey = async (provider: string, rawKey: string) => {
+    if (!rawKey || !rawKey.trim()) {
+      setKeyTestResults((prev) => ({
+        ...prev,
+        [provider]: { error: 'Please enter an API key to test validation.' },
+      }));
+      return;
+    }
+    setTestingProvider(provider);
+    setKeyTestResults((prev) => ({ ...prev, [provider]: undefined as any }));
+
+    try {
+      const res = await fetch('/api/ai/validate-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider,
+          apiKey: rawKey.trim(),
+          modelVersion: providerModels[provider],
+          userEmail: user.email,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.valid) {
+        setKeyTestResults((prev) => ({
+          ...prev,
+          [provider]: { valid: true, message: data.message, warning: data.warning },
+        }));
+      } else {
+        setKeyTestResults((prev) => ({
+          ...prev,
+          [provider]: { valid: false, error: data.error || 'API Key validation failed.' },
+        }));
+      }
+    } catch (err: any) {
+      setKeyTestResults((prev) => ({
+        ...prev,
+        [provider]: { valid: false, error: 'Connection error while testing key.' },
+      }));
+    } finally {
+      setTestingProvider(null);
+    }
+  };
 
   // Logo & Branding state for User Profile
   const logoFileInputRef = useRef<HTMLInputElement>(null);
@@ -383,16 +524,22 @@ export const SettingsView: React.FC = () => {
     setKeyErrorMsg(null);
     setSavedSuccess(false);
 
+    const activeModel = providerModels[settings.activeProvider] || 'gemini-2.5-flash';
+
     const res = await updateSettings({
       providerKeys: {
         gemini: geminiKey,
         openai: openaiKey,
         claude: claudeKey,
         perplexity: perplexityKey,
+        deepseek: deepseekKey,
+        groq: groqKey,
         opus: opusKey,
         cursor: cursorKey,
         grok: grokKey,
       },
+      providerModels,
+      activeModelVersion: activeModel,
     });
 
     setValidatingKeys(false);
@@ -426,7 +573,7 @@ export const SettingsView: React.FC = () => {
           <span>Settings & AI Configurations</span>
         </h2>
         <p className="text-xs text-slate-500 font-sans">
-          Switch active AI models, view upcoming model roadmap (Opus, Cursor, Grok), configure API keys, and update your business profile context.
+          Switch active AI models, choose exact model versions, manage private BYOK API keys, and customize your business profile.
         </p>
       </div>
 
@@ -463,6 +610,16 @@ export const SettingsView: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setSettingsTab('billing')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'billing' ? 'bg-[#059669] text-white shadow-2xs font-heading' : 'text-slate-600 hover:text-slate-900 font-sans'
+          }`}
+        >
+          <CreditCard className="w-3.5 h-3.5" />
+          <span>Subscription & Billing</span>
+        </button>
+
+        <button
           onClick={() => setSettingsTab('account')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === 'account' ? 'bg-[#059669] text-white shadow-2xs font-heading' : 'text-slate-600 hover:text-slate-900 font-sans'
@@ -476,6 +633,39 @@ export const SettingsView: React.FC = () => {
       {/* TAB 1: AI PROVIDERS */}
       {activeTab === 'providers' && (
         <div className="space-y-6">
+          {/* User Isolation Security Banner */}
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-emerald-950 font-sans shadow-2xs">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-emerald-600 text-white rounded-xl shrink-0 mt-0.5">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="font-bold text-slate-900 font-heading">
+                  Private User Key Isolation & System Default Quota
+                </h4>
+                <p className="text-slate-600 text-[11px] leading-relaxed">
+                  API keys entered here are stored strictly in your personal account (<strong>{user.email || 'Current User'}</strong>). They are never shared or visible to other users. Key fields remain empty by default, routing through the system starter plan / pay-as-you-go quota until you provide your own personal key.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-center">
+              <span className="px-2.5 py-1 bg-white text-emerald-800 border border-emerald-300 rounded-lg text-[11px] font-bold font-mono">
+                {user.email || 'Isolated User'}
+              </span>
+            </div>
+          </div>
+
+          {/* Region Policy Resilient Notice */}
+          <div className="p-3.5 bg-blue-50/80 border border-blue-200/80 rounded-2xl flex items-start gap-3 text-xs text-blue-950 font-sans">
+            <Globe2 className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <span className="font-bold text-blue-900">Automatic Region Resilience & Location Support</span>
+              <p className="text-blue-800 text-[11px] leading-relaxed">
+                If cloud AI providers return a region error (e.g. <em>User location is not supported</em>), Locora’s multi-region intelligence engine synthesizes your request with zero downtime.
+              </p>
+            </div>
+          </div>
+
           {/* Upcoming Notice Banner */}
           {upcomingNotice && (
             <div className="p-3 bg-purple-50 border border-purple-200 text-purple-900 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-2xs animate-fade-in font-sans">
@@ -484,15 +674,20 @@ export const SettingsView: React.FC = () => {
             </div>
           )}
 
-          {/* ACTIVE AI PROVIDERS */}
+          {/* ACTIVE AI PROVIDERS & MODEL VERSION SELECTION */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xs">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
-                <Cpu className="w-4 h-4 text-[#059669]" />
-                <span>Active AI Model Providers</span>
-              </h3>
-              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 font-mono">
-                4 Models Ready
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
+                  <Cpu className="w-4 h-4 text-[#059669]" />
+                  <span>Active AI Engines & Model Versions</span>
+                </h3>
+                <p className="text-xs text-slate-500 font-sans mt-0.5">
+                  Select which AI engine powers your dashboard and choose the specific model version for optimal reasoning and speed.
+                </p>
+              </div>
+              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 font-mono shrink-0">
+                {ACTIVE_PROVIDERS.length} Providers Ready
               </span>
             </div>
 
@@ -500,50 +695,422 @@ export const SettingsView: React.FC = () => {
               {ACTIVE_PROVIDERS.map((prov) => {
                 const isSelected = settings.activeProvider === prov.id;
                 const isLockedForFree = user.planTier === 'free' && prov.id !== 'gemini';
+                const currentSubModel = providerModels[prov.id] || prov.model || '';
+
                 return (
                   <div
                     key={prov.id}
-                    onClick={() => {
-                      if (isLockedForFree) {
-                        alert(`Accessing ${prov.name} requires a Pro Growth ($19/mo) or Agency Elite plan. Free Starter includes Gemini 3.6 Flash.`);
-                        setCheckoutModalPlan('pro');
-                        return;
-                      }
-                      updateSettings({ activeProvider: prov.id });
-                    }}
-                    className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                    className={`p-4 rounded-xl border transition-all flex flex-col justify-between ${
                       isSelected
-                        ? 'bg-slate-50 border-[#059669] text-slate-900 shadow-2xs'
+                        ? 'bg-emerald-50/40 border-[#059669] text-slate-900 shadow-2xs ring-1 ring-[#059669]/20'
                         : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-sm text-slate-900 font-heading flex items-center gap-1.5">
-                        <span>{prov.name}</span>
-                        {isLockedForFree && (
-                          <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">
-                            PRO
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div
+                          onClick={() => {
+                            if (isLockedForFree) {
+                              alert(`Accessing ${prov.name} requires a Pro Growth ($19/mo) or Agency Elite plan. Free Starter includes Google Gemini.`);
+                              setCheckoutModalPlan('pro');
+                              return;
+                            }
+                            updateSettings({
+                              activeProvider: prov.id,
+                              activeModelVersion: currentSubModel,
+                            });
+                          }}
+                          className="font-bold text-sm text-slate-900 font-heading flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <span>{prov.name}</span>
+                          {isLockedForFree && (
+                            <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">
+                              PRO
+                            </span>
+                          )}
+                        </div>
+
+                        {isSelected ? (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#059669] text-white font-bold font-sans flex items-center gap-1 shadow-2xs">
+                            <Check className="w-3 h-3" /> ACTIVE
                           </span>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              if (isLockedForFree) {
+                                setCheckoutModalPlan('pro');
+                                return;
+                              }
+                              updateSettings({
+                                activeProvider: prov.id,
+                                activeModelVersion: currentSubModel,
+                              });
+                            }}
+                            className="text-[10px] px-2 py-0.5 rounded-lg border border-slate-300 hover:border-slate-400 text-slate-600 font-semibold cursor-pointer"
+                          >
+                            {isLockedForFree ? 'Unlock in Pro' : 'Set as Active'}
+                          </button>
                         )}
-                      </span>
-                      {isSelected ? (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#059669]/10 text-[#059669] border border-[#059669]/30 font-bold font-sans">
-                          ACTIVE
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-slate-400 font-semibold font-sans">
-                          {isLockedForFree ? 'Locked' : 'Select'}
-                        </span>
+                      </div>
+
+                      <p className="text-xs text-slate-500 font-sans leading-relaxed">
+                        {prov.description}
+                      </p>
+
+                      {/* Model Version Dropdown */}
+                      {prov.models && prov.models.length > 0 && (
+                        <div className="pt-2 border-t border-slate-100/80 space-y-1">
+                          <label className="block text-[11px] font-semibold text-slate-700">
+                            Select Model Version / Engine:
+                          </label>
+                          <select
+                            value={currentSubModel}
+                            disabled={isLockedForFree}
+                            onChange={(e) => {
+                              const newModel = e.target.value;
+                              setProviderModels((prev) => ({ ...prev, [prov.id]: newModel }));
+                              if (isSelected) {
+                                updateSettings({
+                                  activeModelVersion: newModel,
+                                  providerModels: { ...providerModels, [prov.id]: newModel },
+                                });
+                              }
+                            }}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-xs text-slate-900 font-medium focus:outline-none focus:border-[#059669]"
+                          >
+                            {prov.models.map((m) => (
+                              <option key={m.id} value={m.id}>
+                                {m.name} — {m.description}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       )}
                     </div>
-                    <p className="text-xs text-slate-500 font-sans">{prov.description}</p>
+
+                    <div className="mt-3 pt-2 text-[10px] text-slate-400 font-mono flex items-center justify-between">
+                      <span>Category: {prov.category}</span>
+                      <span className="font-semibold text-slate-600">
+                        {prov.statusTag}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {/* UPCOMING / COMING SOON AI MODELS */}
+          {/* PER-USER API KEY MANAGER WITH LIVE VALIDATION */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
+                  <Key className="w-4 h-4 text-[#059669]" />
+                  <span>Bring Your Own Keys (BYOK) & Validation</span>
+                </h3>
+                <p className="text-xs text-slate-500 font-sans mt-0.5">
+                  Optionally paste your personal API keys for each provider. Leaving fields empty will use the platform starter plan / pay-as-you-go quota.
+                </p>
+              </div>
+            </div>
+
+            {user.planTier === 'free' && (
+              <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs font-sans space-y-1">
+                <p className="font-bold flex items-center gap-1.5 text-amber-900">
+                  <Lock className="w-3.5 h-3.5 text-amber-700" />
+                  <span>Pro Plan Model Activation Notice</span>
+                </p>
+                <p className="text-[11px] text-amber-800">
+                  You are currently on the Free Starter plan (utilizing Google Gemini). You can paste and test custom keys below, but switching active generation to OpenAI GPT-4o, Claude 3.7 Sonnet, DeepSeek, or Groq requires a <strong>Pro Growth ($19/mo)</strong> or <strong>Agency Elite ($49/mo)</strong> plan.
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-4 text-xs font-sans">
+              {/* 1. Google Gemini */}
+              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-800 font-bold">
+                    Google Gemini API Key
+                  </label>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    Version: {providerModels.gemini || 'gemini-2.5-flash'}
+                  </span>
+                </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <input
+                    type="password"
+                    placeholder="Empty = Uses system starter quota (AI Studio Server)"
+                    value={geminiKey}
+                    onChange={(e) => setGeminiKey(e.target.value)}
+                    className="flex-1 bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-[#059669]"
+                  />
+                  <button
+                    type="button"
+                    disabled={testingProvider === 'gemini'}
+                    onClick={() => handleTestKey('gemini', geminiKey)}
+                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                  >
+                    {testingProvider === 'gemini' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
+                    <span>{testingProvider === 'gemini' ? 'Testing...' : 'Test & Validate Key'}</span>
+                  </button>
+                </div>
+                {keyTestResults.gemini && (
+                  <div className={`p-2.5 rounded-lg text-xs flex items-center gap-2 font-medium ${keyTestResults.gemini.valid ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
+                    {keyTestResults.gemini.valid ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />}
+                    <span>{keyTestResults.gemini.valid ? (keyTestResults.gemini.message || 'Key verified successfully!') : keyTestResults.gemini.error}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. OpenAI */}
+              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-800 font-bold">
+                    OpenAI API Key (GPT-5.6 Sol / Terra / Luna & GPT-4o)
+                  </label>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    Version: {providerModels.openai || 'gpt-5.6-sol'}
+                  </span>
+                </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <input
+                    type="password"
+                    placeholder="sk-... (Empty = Uses system quota)"
+                    value={openaiKey}
+                    onChange={(e) => setOpenaiKey(e.target.value)}
+                    className="flex-1 bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-[#059669]"
+                  />
+                  <button
+                    type="button"
+                    disabled={testingProvider === 'openai'}
+                    onClick={() => handleTestKey('openai', openaiKey)}
+                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                  >
+                    {testingProvider === 'openai' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
+                    <span>{testingProvider === 'openai' ? 'Testing...' : 'Test & Validate Key'}</span>
+                  </button>
+                </div>
+                {keyTestResults.openai && (
+                  <div className={`p-2.5 rounded-lg text-xs flex items-center gap-2 font-medium ${keyTestResults.openai.valid ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
+                    {keyTestResults.openai.valid ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />}
+                    <span>{keyTestResults.openai.valid ? (keyTestResults.openai.message || 'Key verified successfully!') : keyTestResults.openai.error}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* 3. Anthropic Claude */}
+              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-800 font-bold">
+                    Anthropic Claude API Key (Claude 3.7 Sonnet, Opus 4.8 & Haiku 4.5)
+                  </label>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    Version: {providerModels.claude || 'claude-3-7-sonnet-20250219'}
+                  </span>
+                </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <input
+                    type="password"
+                    placeholder="sk-ant-... (Empty = Uses system quota)"
+                    value={claudeKey}
+                    onChange={(e) => setClaudeKey(e.target.value)}
+                    className="flex-1 bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-[#059669]"
+                  />
+                  <button
+                    type="button"
+                    disabled={testingProvider === 'claude'}
+                    onClick={() => handleTestKey('claude', claudeKey)}
+                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                  >
+                    {testingProvider === 'claude' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
+                    <span>{testingProvider === 'claude' ? 'Testing...' : 'Test & Validate Key'}</span>
+                  </button>
+                </div>
+                {keyTestResults.claude && (
+                  <div className={`p-2.5 rounded-lg text-xs flex items-center gap-2 font-medium ${keyTestResults.claude.valid ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
+                    {keyTestResults.claude.valid ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />}
+                    <span>{keyTestResults.claude.valid ? (keyTestResults.claude.message || 'Key verified successfully!') : keyTestResults.claude.error}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* 4. Perplexity AI */}
+              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-800 font-bold">
+                    Perplexity API Key (Sonar Pro Web Search)
+                  </label>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    Version: {providerModels.perplexity || 'sonar-pro'}
+                  </span>
+                </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <input
+                    type="password"
+                    placeholder="pplx-... (Empty = Uses system quota)"
+                    value={perplexityKey}
+                    onChange={(e) => setPerplexityKey(e.target.value)}
+                    className="flex-1 bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-[#059669]"
+                  />
+                  <button
+                    type="button"
+                    disabled={testingProvider === 'perplexity'}
+                    onClick={() => handleTestKey('perplexity', perplexityKey)}
+                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                  >
+                    {testingProvider === 'perplexity' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
+                    <span>{testingProvider === 'perplexity' ? 'Testing...' : 'Test & Validate Key'}</span>
+                  </button>
+                </div>
+                {keyTestResults.perplexity && (
+                  <div className={`p-2.5 rounded-lg text-xs flex items-center gap-2 font-medium ${keyTestResults.perplexity.valid ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
+                    {keyTestResults.perplexity.valid ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />}
+                    <span>{keyTestResults.perplexity.valid ? (keyTestResults.perplexity.message || 'Key verified successfully!') : keyTestResults.perplexity.error}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* 5. DeepSeek */}
+              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-800 font-bold">
+                    DeepSeek API Key (V3 & R1)
+                  </label>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    Version: {providerModels.deepseek || 'deepseek-chat'}
+                  </span>
+                </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <input
+                    type="password"
+                    placeholder="sk-... (Empty = Uses system quota)"
+                    value={deepseekKey}
+                    onChange={(e) => setDeepseekKey(e.target.value)}
+                    className="flex-1 bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-[#059669]"
+                  />
+                  <button
+                    type="button"
+                    disabled={testingProvider === 'deepseek'}
+                    onClick={() => handleTestKey('deepseek', deepseekKey)}
+                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                  >
+                    {testingProvider === 'deepseek' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
+                    <span>{testingProvider === 'deepseek' ? 'Testing...' : 'Test & Validate Key'}</span>
+                  </button>
+                </div>
+                {keyTestResults.deepseek && (
+                  <div className={`p-2.5 rounded-lg text-xs flex items-center gap-2 font-medium ${keyTestResults.deepseek.valid ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
+                    {keyTestResults.deepseek.valid ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />}
+                    <span>{keyTestResults.deepseek.valid ? (keyTestResults.deepseek.message || 'Key verified successfully!') : keyTestResults.deepseek.error}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* 6. Groq */}
+              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-800 font-bold">
+                    Groq API Key (Llama 3.3 70B @ 300+ t/s)
+                  </label>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    Version: {providerModels.groq || 'llama-3.3-70b-versatile'}
+                  </span>
+                </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <input
+                    type="password"
+                    placeholder="gsk_... (Empty = Uses system quota)"
+                    value={groqKey}
+                    onChange={(e) => setGroqKey(e.target.value)}
+                    className="flex-1 bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-[#059669]"
+                  />
+                  <button
+                    type="button"
+                    disabled={testingProvider === 'groq'}
+                    onClick={() => handleTestKey('groq', groqKey)}
+                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                  >
+                    {testingProvider === 'groq' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
+                    <span>{testingProvider === 'groq' ? 'Testing...' : 'Test & Validate Key'}</span>
+                  </button>
+                </div>
+                {keyTestResults.groq && (
+                  <div className={`p-2.5 rounded-lg text-xs flex items-center gap-2 font-medium ${keyTestResults.groq.valid ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
+                    {keyTestResults.groq.valid ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />}
+                    <span>{keyTestResults.groq.valid ? (keyTestResults.groq.message || 'Key verified successfully!') : keyTestResults.groq.error}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Upcoming Roadmap Reservations */}
+              <div className="pt-2 border-t border-slate-100">
+                <span className="text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded font-mono">
+                  Upcoming Model API Keys (Roadmap Reservations)
+                </span>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
+                  <div>
+                    <label className="block text-slate-500 text-[11px] font-medium mb-1">xAI Grok Key (Grok 3 Reasoning)</label>
+                    <input
+                      type="password"
+                      placeholder="Reserved for upcoming release"
+                      value={grokKey}
+                      onChange={(e) => setGrokKey(e.target.value)}
+                      className="w-full bg-slate-50/80 border border-slate-200 rounded-xl p-2 text-slate-700 text-[11px] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-500 text-[11px] font-medium mb-1">Cursor Agent Key (v2 Protocol)</label>
+                    <input
+                      type="password"
+                      placeholder="Reserved for upcoming release"
+                      value={cursorKey}
+                      onChange={(e) => setCursorKey(e.target.value)}
+                      className="w-full bg-slate-50/80 border border-slate-200 rounded-xl p-2 text-slate-700 text-[11px] focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-500 text-[11px] font-medium mb-1">Meta Llama 4 Key (Frontier 400B+)</label>
+                    <input
+                      type="password"
+                      placeholder="Reserved for upcoming release"
+                      value={opusKey}
+                      onChange={(e) => setOpusKey(e.target.value)}
+                      className="w-full bg-slate-50/80 border border-slate-200 rounded-xl p-2 text-slate-700 text-[11px] focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-slate-100">
+              <div ref={settingsMsgRef} className="flex-1">
+                {savedSuccess && (
+                  <span className="text-xs text-[#059669] font-bold flex items-center gap-1 font-sans">
+                    <CheckCircle2 className="w-4 h-4 text-[#059669]" /> All provider settings and keys saved securely!
+                  </span>
+                )}
+                {keyErrorMsg && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-bold flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>{keyErrorMsg}</span>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={handleSaveProviders}
+                disabled={validatingKeys}
+                className="px-6 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] disabled:bg-slate-400 text-white font-bold text-xs shadow-2xs flex items-center justify-center gap-2 transition-all cursor-pointer font-sans shrink-0"
+              >
+                <RefreshCw className={`w-4 h-4 ${validatingKeys ? 'animate-spin' : 'hidden'}`} />
+                <Save className={`w-4 h-4 ${validatingKeys ? 'hidden' : 'block'}`} />
+                <span>{validatingKeys ? 'Saving & Validating...' : 'Save Settings & Keys'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* UPCOMING / COMING SOON AI MODELS BANNER */}
           <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white rounded-2xl p-6 space-y-4 shadow-md border border-slate-700 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
               <Sparkles className="w-32 h-32 text-indigo-300" />
@@ -606,140 +1173,6 @@ export const SettingsView: React.FC = () => {
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* API Keys Configuration */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xs">
-            <h3 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
-              <Key className="w-4 h-4 text-[#059669]" />
-              <span>Provider API Keys</span>
-            </h3>
-
-            <p className="text-xs text-slate-500 font-sans">
-              Google Gemini is pre-configured via server runtime environment variables. You can optionally supply custom keys for OpenAI, Claude, or Perplexity below.
-            </p>
-
-            {user.planTier === 'free' && (
-              <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs font-sans space-y-1">
-                <p className="font-bold flex items-center gap-1.5 text-amber-900">
-                  <Lock className="w-3.5 h-3.5 text-amber-700" />
-                  <span>Pro Plan Model Activation Notice</span>
-                </p>
-                <p className="text-[11px] text-amber-800">
-                  You are currently on the Free Starter plan (utilizing Gemini 3.6 Flash). You can paste custom keys below, but switching active models to OpenAI GPT-4o, Claude 3.5 Sonnet, or Perplexity requires activating a <strong>Pro Growth ($19/mo)</strong> or <strong>Agency Elite ($49/mo)</strong> plan.
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-3 text-xs font-sans">
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Google Gemini API Key (Default)</label>
-                <input
-                  type="password"
-                  placeholder="Managed automatically via process.env.GEMINI_API_KEY"
-                  value={geminiKey}
-                  onChange={(e) => setGeminiKey(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">OpenAI API Key (Optional)</label>
-                <input
-                  type="password"
-                  placeholder="sk-..."
-                  value={openaiKey}
-                  onChange={(e) => setOpenaiKey(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Anthropic Claude API Key (Optional)</label>
-                <input
-                  type="password"
-                  placeholder="sk-ant-..."
-                  value={claudeKey}
-                  onChange={(e) => setClaudeKey(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Perplexity API Key (Optional)</label>
-                <input
-                  type="password"
-                  placeholder="pplx-..."
-                  value={perplexityKey}
-                  onChange={(e) => setPerplexityKey(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
-                />
-              </div>
-
-              <div className="pt-2 border-t border-slate-100">
-                <span className="text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded font-mono">
-                  Upcoming Model API Keys (Preview Reservations)
-                </span>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
-                  <div>
-                    <label className="block text-slate-500 text-[11px] font-medium mb-1">Claude 3.7 Opus Key (Coming Soon)</label>
-                    <input
-                      type="password"
-                      placeholder="Reserved for upcoming release"
-                      value={opusKey}
-                      onChange={(e) => setOpusKey(e.target.value)}
-                      className="w-full bg-slate-50/80 border border-slate-200 rounded-xl p-2 text-slate-700 text-[11px] focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-500 text-[11px] font-medium mb-1">Cursor Agent Key (Coming Soon)</label>
-                    <input
-                      type="password"
-                      placeholder="Reserved for upcoming release"
-                      value={cursorKey}
-                      onChange={(e) => setCursorKey(e.target.value)}
-                      className="w-full bg-slate-50/80 border border-slate-200 rounded-xl p-2 text-slate-700 text-[11px] focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-500 text-[11px] font-medium mb-1">xAI Grok Key (Coming Soon)</label>
-                    <input
-                      type="password"
-                      placeholder="Reserved for upcoming release"
-                      value={grokKey}
-                      onChange={(e) => setGrokKey(e.target.value)}
-                      className="w-full bg-slate-50/80 border border-slate-200 rounded-xl p-2 text-slate-700 text-[11px] focus:outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <div ref={settingsMsgRef} className="flex-1">
-                {savedSuccess && (
-                  <span className="text-xs text-[#059669] font-bold flex items-center gap-1 font-sans">
-                    <CheckCircle2 className="w-4 h-4 text-[#059669]" /> Validated & saved successfully!
-                  </span>
-                )}
-                {keyErrorMsg && (
-                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-bold flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                    <span>{keyErrorMsg}</span>
-                  </div>
-                )}
-              </div>
-
-              <button
-                onClick={handleSaveProviders}
-                disabled={validatingKeys}
-                className="px-5 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] disabled:bg-slate-400 text-white font-bold text-xs shadow-2xs flex items-center justify-center gap-2 transition-all cursor-pointer font-sans shrink-0"
-              >
-                <RefreshCw className={`w-4 h-4 ${validatingKeys ? 'animate-spin' : 'hidden'}`} />
-                <Save className={`w-4 h-4 ${validatingKeys ? 'hidden' : 'block'}`} />
-                <span>{validatingKeys ? 'Validating Keys...' : 'Save Provider Settings'}</span>
-              </button>
             </div>
           </div>
         </div>
@@ -1078,8 +1511,433 @@ export const SettingsView: React.FC = () => {
       {/* TAB 3: TEAM MEMBERS */}
       {activeTab === 'team' && <TeamManagementSection />}
 
-      {/* TAB 4: ACCOUNT SECURITY & DELETION */}
+      {/* TAB 4: SUBSCRIPTION & BILLING */}
+      {activeTab === 'billing' && (
+        <div className="space-y-6">
+          {/* Feedback message */}
+          {autoRenewFeedback && (
+            <div
+              className={`p-4 rounded-xl text-xs font-semibold flex items-center justify-between border ${
+                autoRenewFeedback.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
+                  : 'bg-rose-50 text-rose-900 border-rose-200'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {autoRenewFeedback.type === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                )}
+                <span>{autoRenewFeedback.msg}</span>
+              </div>
+              <button
+                onClick={() => setAutoRenewFeedback(null)}
+                className="text-xs opacity-60 hover:opacity-100 font-bold px-2 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Current Active Plan Overview Card */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+                  Active Subscription Tier
+                </span>
+                <div className="flex items-center gap-3 mt-1">
+                  <h3 className="text-xl font-extrabold text-slate-900 font-heading capitalize">
+                    {user.planTier === 'free'
+                      ? 'Free Starter Plan'
+                      : user.planTier === 'pro'
+                      ? 'Pro Growth Plan'
+                      : 'Agency Elite Plan'}
+                  </h3>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
+                      user.planTier === 'free'
+                        ? 'bg-slate-100 text-slate-700 border-slate-200'
+                        : user.cancelAtPeriodEnd || user.autoRenew === false
+                        ? 'bg-amber-100 text-amber-800 border-amber-300'
+                        : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                    }`}
+                  >
+                    {user.planTier === 'free'
+                      ? 'FREE TIER'
+                      : user.cancelAtPeriodEnd || user.autoRenew === false
+                      ? 'CANCELLING AT PERIOD END'
+                      : 'ACTIVE'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1 font-sans">
+                  {user.planTier === 'free'
+                    ? '10 AI Copilot starter credits. Upgrade to unlock all premium AI engines (OpenAI, Claude, Perplexity) and high-volume limits.'
+                    : user.planTier === 'pro'
+                    ? '$19.00 / month ($180 / year) • 250 AI Copilot credits monthly • All AI models unlocked'
+                    : '$49.00 / month ($468 / year) • Unlimited AI Copilot credits • Priority dedicated AI engines & white-labeling'}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {user.planTier === 'free' ? (
+                  <button
+                    onClick={() => setCheckoutModalPlan('pro')}
+                    className="px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Upgrade to Pro ($19/mo)</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setCheckoutModalPlan('agency')}
+                    className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Change / Switch Plan</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Plan Metrics & Renewal Schedule */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 space-y-1">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  AI Credits Balance
+                </span>
+                <p className="text-lg font-extrabold text-slate-900 font-mono">
+                  {user.planTier === 'agency'
+                    ? 'Unlimited'
+                    : `${Math.max(0, (user.planTier === 'pro' ? 250 : 10) - (user.creditsUsed || 0))} Credits`}
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  {user.creditsUsed || 0} credits used this billing cycle
+                </p>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 space-y-1">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Billing Cycle & Renewal
+                </span>
+                <p className="text-lg font-extrabold text-slate-900 font-mono">
+                  {user.nextBillingDate
+                    ? new Date(user.nextBillingDate).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : 'N/A (Free)'}
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  {user.cancelAtPeriodEnd || user.autoRenew === false
+                    ? 'Access remains active until this date'
+                    : 'Next automatic renewal scheduled'}
+                </p>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 space-y-1">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Auto-Renewal Status
+                </span>
+                <p className="text-lg font-extrabold font-mono flex items-center gap-1.5">
+                  {user.planTier === 'free' ? (
+                    <span className="text-slate-600">Free Tier</span>
+                  ) : user.cancelAtPeriodEnd || user.autoRenew === false ? (
+                    <span className="text-amber-600">Off (Ends Period)</span>
+                  ) : (
+                    <span className="text-emerald-600">Enabled</span>
+                  )}
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  {user.autoRenew === false
+                    ? 'Will not renew upon cycle end'
+                    : 'Renews automatically each cycle'}
+                </p>
+              </div>
+            </div>
+
+            {/* Auto-Renewal Management Notice & Control */}
+            {user.planTier !== 'free' && (
+              <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/60 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 font-heading flex items-center gap-1.5">
+                      <RotateCcw className="w-3.5 h-3.5 text-[#059669]" />
+                      <span>Subscription Auto-Renewal Setting</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      {user.cancelAtPeriodEnd || user.autoRenew === false
+                        ? `Auto-renewal is currently disabled. Your access remains active until ${
+                            user.nextBillingDate
+                              ? new Date(user.nextBillingDate).toLocaleDateString()
+                              : 'your next renewal date'
+                          }. You can resume anytime.`
+                        : 'Your subscription is set to renew automatically. If cancelled, your benefits stay active until the next renewal date.'}
+                    </p>
+                  </div>
+
+                  <div>
+                    {user.cancelAtPeriodEnd || user.autoRenew === false ? (
+                      <button
+                        onClick={handleResumeAutoRenew}
+                        disabled={resumingAutoRenew}
+                        className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${resumingAutoRenew ? 'animate-spin' : ''}`} />
+                        <span>{resumingAutoRenew ? 'Resuming...' : 'Re-enable Auto-Renewal'}</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setShowCancelAutoRenewModal(true)}
+                        className="px-3.5 py-2 bg-slate-200 hover:bg-rose-100 text-slate-700 hover:text-rose-700 text-xs font-bold rounded-xl border border-slate-300 hover:border-rose-300 transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        <span>Cancel Auto-Renewal</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Important Policy Note */}
+                <div className="p-2.5 bg-blue-50/70 border border-blue-200/80 rounded-lg text-[11px] text-blue-900 flex items-start gap-2">
+                  <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Cancellation Policy:</strong> When you cancel auto-renewal, your cancellation applies from your <strong>next renewal date</strong>. You will retain all Pro/Agency privileges and Copilot credits throughout your active paid period.
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Payment Methods & Invoices Section */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
+                  <Receipt className="w-4 h-4 text-[#059669]" />
+                  <span>Billing History & Invoices</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  View and download receipts for all your processed card and Payoneer subscription transactions.
+                </p>
+              </div>
+            </div>
+
+            {/* Invoices Table */}
+            <div className="overflow-x-auto border border-slate-200 rounded-xl">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 uppercase tracking-wider text-[10px] font-sans font-semibold">
+                    <th className="py-3 px-4">Invoice #</th>
+                    <th className="py-3 px-4">Date</th>
+                    <th className="py-3 px-4">Plan Tier</th>
+                    <th className="py-3 px-4">Amount</th>
+                    <th className="py-3 px-4">Payment Method</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Receipt</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700 font-sans">
+                  {subscriptionInvoices && subscriptionInvoices.length > 0 ? (
+                    subscriptionInvoices.map((inv) => (
+                      <tr key={inv.id} className="hover:bg-slate-50/75 transition-colors">
+                        <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                          {inv.id}
+                        </td>
+                        <td className="py-3 px-4 text-slate-500">
+                          {new Date(inv.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="px-2 py-0.5 rounded bg-slate-100 font-bold uppercase text-[10px] text-slate-800 border border-slate-200">
+                            {inv.planTier}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                          ${inv.amount.toFixed(2)}
+                        </td>
+                        <td className="py-3 px-4">
+                          {inv.paymentMethod?.brand ? (
+                            <span className="flex items-center gap-1.5 font-mono text-[11px]">
+                              <CreditCard className="w-3.5 h-3.5 text-blue-600" />
+                              <span>{inv.paymentMethod.brand} •••• {inv.paymentMethod.last4}</span>
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1.5 text-orange-700 font-semibold text-[11px]">
+                              <Globe2 className="w-3.5 h-3.5 text-orange-600" />
+                              <span>Payoneer</span>
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                            <span>Paid</span>
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            onClick={() => setSelectedInvoiceForView(inv)}
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold transition-colors cursor-pointer"
+                          >
+                            View Receipt
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-slate-400 text-xs">
+                        No billing history or invoices found yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: ACCOUNT SECURITY & DELETION */}
       {activeTab === 'account' && <AccountSecuritySection />}
+
+      {/* MODAL: CANCEL AUTO-RENEW CONFIRMATION */}
+      {showCancelAutoRenewModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl animate-fade-in">
+            <div className="flex items-center gap-3 text-amber-600">
+              <div className="p-2.5 bg-amber-100 rounded-xl">
+                <AlertTriangle className="w-6 h-6 text-amber-700" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-slate-900 font-heading text-base">
+                  Cancel Subscription Auto-Renewal?
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Effective from your next renewal date
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 text-xs text-slate-700">
+              <p className="font-semibold text-slate-900">
+                Here is what happens when you cancel:
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-slate-600 text-[11px]">
+                <li>
+                  Your subscription will <strong>remain 100% active</strong> until{' '}
+                  <strong className="text-slate-900">
+                    {user.nextBillingDate
+                      ? new Date(user.nextBillingDate).toLocaleDateString(undefined, {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
+                      : 'the end of your current cycle'}
+                  </strong>.
+                </li>
+                <li>
+                  You retain full access to all {user.planTier.toUpperCase()} features and Copilot AI credits until that date.
+                </li>
+                <li>
+                  No additional charges will occur on your card or Payoneer account.
+                </li>
+                <li>
+                  You can easily re-enable auto-renewal anytime before the cycle ends.
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowCancelAutoRenewModal(false)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              >
+                Keep Subscription Active
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCancelAutoRenew}
+                disabled={cancellingAutoRenew}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition-colors shadow-2xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>{cancellingAutoRenew ? 'Cancelling...' : 'Confirm Cancellation'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: INVOICE RECEIPT VIEWER */}
+      {selectedInvoiceForView && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl animate-fade-in">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Receipt className="w-5 h-5 text-[#059669]" />
+                <h3 className="font-extrabold text-slate-900 font-heading text-base">
+                  Official Subscription Invoice Receipt
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedInvoiceForView(null)}
+                className="text-slate-400 hover:text-slate-700 font-bold text-sm cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 font-sans text-xs">
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500 font-semibold">Invoice Number:</span>
+                <span className="font-mono font-bold text-slate-900">{selectedInvoiceForView.id}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500 font-semibold">Date Issued:</span>
+                <span className="text-slate-900">{new Date(selectedInvoiceForView.createdAt).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500 font-semibold">Account Email:</span>
+                <span className="font-mono text-slate-900">{selectedInvoiceForView.userEmail || user.email}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500 font-semibold">Plan Description:</span>
+                <span className="font-bold text-slate-900 uppercase">
+                  LOCORA AI {selectedInvoiceForView.planTier} PLAN
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500 font-semibold">Amount Paid:</span>
+                <span className="font-mono font-extrabold text-emerald-700 text-sm">
+                  ${selectedInvoiceForView.amount.toFixed(2)} USD
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-semibold">Payment Status:</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 uppercase">
+                  CLEARED & PAID
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-[11px] text-slate-400 font-mono">Locora AI Global Billing System</p>
+              <button
+                onClick={() => window.print()}
+                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Print / Save PDF</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

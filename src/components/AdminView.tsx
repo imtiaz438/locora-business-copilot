@@ -17,6 +17,7 @@ import {
   Zap,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   Search,
   Key,
   Trash2,
@@ -313,6 +314,11 @@ export const AdminView: React.FC = () => {
   const [claudeKeyInput, setClaudeKeyInput] = useState('');
   const [perplexityKeyInput, setPerplexityKeyInput] = useState('');
   const [deepseekKeyInput, setDeepseekKeyInput] = useState('');
+  const [groqKeyInput, setGroqKeyInput] = useState('');
+  const [aiModelSearch, setAiModelSearch] = useState('');
+  const [aiProviderFilter, setAiProviderFilter] = useState<'all' | 'openai' | 'anthropic' | 'gemini' | 'deepseek' | 'perplexity' | 'groq'>('all');
+  const [editingQuotaModelId, setEditingQuotaModelId] = useState<string | null>(null);
+  const [customQuotaInput, setCustomQuotaInput] = useState<number | string>('');
 
   // Admin Transfer & User Management State
   const [transferTargetEmail, setTransferTargetEmail] = useState('');
@@ -521,6 +527,7 @@ export const AdminView: React.FC = () => {
           if (data.savedKeys.anthropic) setClaudeKeyInput(data.savedKeys.anthropic);
           if (data.savedKeys.perplexity) setPerplexityKeyInput(data.savedKeys.perplexity);
           if (data.savedKeys.deepseek) setDeepseekKeyInput(data.savedKeys.deepseek);
+          if (data.savedKeys.groq) setGroqKeyInput(data.savedKeys.groq);
         }
       }
     } catch (err) {
@@ -720,6 +727,7 @@ export const AdminView: React.FC = () => {
           anthropicKey: claudeKeyInput,
           perplexityKey: perplexityKeyInput,
           deepseekKey: deepseekKeyInput,
+          groqKey: groqKeyInput,
         }),
       });
       const data = await res.json();
@@ -753,6 +761,30 @@ export const AdminView: React.FC = () => {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleUpdateQuota = async (modelId: string, allocatedTokens: number) => {
+    try {
+      const res = await fetch('/api/admin/ai-tokens/update-quota', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': user.email || '',
+        },
+        body: JSON.stringify({ modelId, allocatedTokens }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setActionSuccessMsg(data.message || `Updated quota for ${modelId}`);
+        setEditingQuotaModelId(null);
+        setCustomQuotaInput('');
+        fetchAiTokenStats();
+      } else {
+        setActionErrorMsg(data.error || 'Failed to update token quota.');
+      }
+    } catch (err: any) {
+      setActionErrorMsg(err.message || 'Error updating token quota.');
     }
   };
 
@@ -2107,9 +2139,9 @@ export const AdminView: React.FC = () => {
       {/* TAB 2: AI MODELS & CREDIT TOKENS MONITORING HUB */}
       {activeTab === 'ai_tokens' && (
         <div className="space-y-6 font-sans">
-          {/* Top Token Summary Card */}
-          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white rounded-3xl p-6 shadow-xl border border-slate-700 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-700/80 pb-4">
+          {/* AI Models Management & Live Monitoring Dashboard */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6 shadow-xl text-white">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
               <div>
                 <div className="inline-flex items-center gap-2 px-2.5 py-0.5 bg-purple-500/20 text-purple-300 border border-purple-400/30 rounded-full text-[10px] font-bold font-mono uppercase">
                   <Sparkles className="w-3 h-3 text-purple-400" />
@@ -2118,40 +2150,55 @@ export const AdminView: React.FC = () => {
                 <h3 className="text-xl font-bold font-heading text-white mt-1">
                   Live AI Models & Token Monitoring System
                 </h3>
+                <p className="text-xs text-slate-400 mt-0.5 font-sans">
+                  Real-time token allocation, utilization tracking, and live API key management for GPT-5.6, Claude 3.7/Opus 4.8, Gemini 2.5/3.7, DeepSeek, Groq, and Perplexity.
+                </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
+                  type="button"
                   onClick={() => handleRefillTokens(undefined, 5000000)}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Refill +5M Tokens All Models</span>
+                  <span>Refill +5M All Models</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={fetchAiTokenStats}
+                  className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl border border-slate-700 cursor-pointer"
+                  title="Refresh Token Stats"
+                >
+                  <RefreshCw className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
             {/* Metrics Breakdown */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
               <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4">
-                <p className="text-[11px] text-slate-400">Total Purchased Token Quotas</p>
+                <p className="text-[11px] text-slate-400">Total Purchased Quotas</p>
                 <p className="text-2xl font-bold font-heading text-white mt-1">
-                  {aiStats?.summary ? (aiStats.summary.totalAllocatedTokens / 1000000).toFixed(1) + ' Million' : '130.0 Million'}
+                  {aiStats?.summary ? (aiStats.summary.totalAllocatedTokens / 1000000).toFixed(1) + 'M' : '150.0M'}
                 </p>
+                <span className="text-[10px] text-slate-500">Allocated Token Pool</span>
               </div>
 
               <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4">
                 <p className="text-[11px] text-slate-400">Total Utilized Tokens</p>
                 <p className="text-2xl font-bold font-heading text-indigo-400 mt-1">
-                  {aiStats?.summary ? (aiStats.summary.totalUsedTokens / 1000000).toFixed(2) + ' Million' : '0.00 Million'}
+                  {aiStats?.summary ? (aiStats.summary.totalUsedTokens / 1000000).toFixed(2) + 'M' : '0.00M'}
                 </p>
+                <span className="text-[10px] text-slate-500">Live Consumed Tokens</span>
               </div>
 
               <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4">
-                <p className="text-[11px] text-slate-400">Remaining Available Tokens</p>
+                <p className="text-[11px] text-slate-400">Remaining Available</p>
                 <p className="text-2xl font-bold font-heading text-emerald-400 mt-1">
-                  {aiStats?.summary ? (aiStats.summary.totalRemainingTokens / 1000000).toFixed(1) + ' Million' : '130.0 Million'}
+                  {aiStats?.summary ? (aiStats.summary.totalRemainingTokens / 1000000).toFixed(1) + 'M' : '150.0M'}
                 </p>
+                <span className="text-[10px] text-slate-500">Active Token Balance</span>
               </div>
 
               <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4">
@@ -2159,143 +2206,437 @@ export const AdminView: React.FC = () => {
                 <p className="text-2xl font-bold font-heading text-purple-300 mt-1">
                   {aiStats?.summary ? aiStats.summary.utilizationPercentage + '%' : '0.00%'}
                 </p>
+                <span className="text-[10px] text-slate-500">System Load</span>
+              </div>
+
+              <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4 col-span-2 sm:col-span-1">
+                <p className="text-[11px] text-slate-400">Active Models</p>
+                <p className="text-2xl font-bold font-heading text-amber-300 mt-1">
+                  {(aiStats?.models || []).filter((m: any) => m.hasCustomKey && m.allocatedTokens > 0).length} / {(aiStats?.models || []).length}
+                </p>
+                <span className="text-[10px] text-slate-500">Ready in Production</span>
               </div>
             </div>
           </div>
 
-          {/* AI Models Quotas Cards Grid */}
+          {/* AI Models Quotas & Search / Filter Header */}
           <div className="space-y-4">
-            <h4 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-[#059669]" />
-              <span>Live AI Models Credit Status & Utilization</span>
-            </h4>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
+                  <Cpu className="w-4 h-4 text-[#059669]" />
+                  <span>Live AI Models Credit Status, Quotas & Monitoring</span>
+                </h4>
+                <p className="text-xs text-slate-500 font-sans mt-0.5">
+                  Monitor token depletion, adjust model quotas, and top up individual models dynamically.
+                </p>
+              </div>
 
+              {/* Filter Tabs & Search */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={aiModelSearch}
+                    onChange={(e) => setAiModelSearch(e.target.value)}
+                    placeholder="Search model or tier..."
+                    className="pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#059669] w-44"
+                  />
+                </div>
+
+                <div className="flex items-center bg-slate-100 p-0.5 rounded-xl text-[11px] font-semibold text-slate-600">
+                  <button
+                    type="button"
+                    onClick={() => setAiProviderFilter('all')}
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${aiProviderFilter === 'all' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'hover:text-slate-900'}`}
+                  >
+                    All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAiProviderFilter('openai')}
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${aiProviderFilter === 'openai' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'hover:text-slate-900'}`}
+                  >
+                    OpenAI
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAiProviderFilter('anthropic')}
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${aiProviderFilter === 'anthropic' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'hover:text-slate-900'}`}
+                  >
+                    Claude
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAiProviderFilter('gemini')}
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${aiProviderFilter === 'gemini' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'hover:text-slate-900'}`}
+                  >
+                    Gemini
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAiProviderFilter('deepseek')}
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${aiProviderFilter === 'deepseek' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'hover:text-slate-900'}`}
+                  >
+                    DeepSeek
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAiProviderFilter('groq')}
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${aiProviderFilter === 'groq' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'hover:text-slate-900'}`}
+                  >
+                    Groq LPU
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAiProviderFilter('perplexity')}
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${aiProviderFilter === 'perplexity' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'hover:text-slate-900'}`}
+                  >
+                    Perplexity
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* AI Models Quotas Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(aiStats?.models || []).map((m: any) => {
-                const isActive = m.hasCustomKey && m.allocatedTokens > 0;
-                const usedPct = m.allocatedTokens > 0 ? ((m.usedTokens / m.allocatedTokens) * 100).toFixed(1) : '0.0';
-                return (
-                  <div key={m.id} className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-2xs flex flex-col justify-between">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 uppercase">
-                          {m.provider}
-                        </span>
-                        {isActive ? (
-                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                            ACTIVE
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                            NO API KEY
-                          </span>
+              {(aiStats?.models || [])
+                .filter((m: any) => {
+                  const matchProvider = aiProviderFilter === 'all' || m.provider?.toLowerCase() === aiProviderFilter.toLowerCase();
+                  const matchSearch = !aiModelSearch.trim() ||
+                    m.name?.toLowerCase().includes(aiModelSearch.toLowerCase()) ||
+                    m.id?.toLowerCase().includes(aiModelSearch.toLowerCase()) ||
+                    m.badge?.toLowerCase().includes(aiModelSearch.toLowerCase()) ||
+                    m.provider?.toLowerCase().includes(aiModelSearch.toLowerCase());
+                  return matchProvider && matchSearch;
+                })
+                .map((m: any) => {
+                  const isActive = m.hasCustomKey && m.allocatedTokens > 0;
+                  const isDepleted = isActive && m.remainingTokens <= 0;
+                  const isLow = isActive && m.remainingTokens > 0 && (m.remainingTokens / m.allocatedTokens) < 0.15;
+                  const usedPct = m.allocatedTokens > 0 ? ((m.usedTokens / m.allocatedTokens) * 100).toFixed(1) : '0.0';
+                  const isEditingThisQuota = editingQuotaModelId === m.id;
+
+                  return (
+                    <div
+                      key={m.id}
+                      className={`bg-white border rounded-2xl p-5 space-y-4 shadow-2xs flex flex-col justify-between transition-all ${
+                        isDepleted
+                          ? 'border-rose-300 bg-rose-50/20'
+                          : isLow
+                          ? 'border-amber-300 bg-amber-50/20'
+                          : 'border-slate-200'
+                      }`}
+                    >
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 uppercase">
+                              {m.provider}
+                            </span>
+                            {m.badge && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                {m.badge}
+                              </span>
+                            )}
+                          </div>
+
+                          {isActive ? (
+                            isDepleted ? (
+                              <span className="text-[10px] font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded border border-rose-300 flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3 text-rose-600" /> DEPLETED
+                              </span>
+                            ) : isLow ? (
+                              <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3 text-amber-600" /> LOW QUOTA
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
+                                <Check className="w-3 h-3 text-emerald-600" /> ACTIVE
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 flex items-center gap-1">
+                              <Key className="w-3 h-3 text-amber-600" /> NO API KEY
+                            </span>
+                          )}
+                        </div>
+
+                        <div>
+                          <h5 className="text-sm font-bold font-heading text-slate-900">{m.name}</h5>
+                          <span className="text-[10px] font-mono text-slate-400 block mt-0.5">Model ID: {m.id}</span>
+                        </div>
+
+                        {/* Token Bar & Stats */}
+                        <div className="space-y-1.5 pt-1">
+                          <div className="flex items-center justify-between text-[11px] font-mono">
+                            <span className="text-slate-500">Remaining Pool</span>
+                            <span className="font-bold text-slate-900">
+                              {isActive ? `${(m.remainingTokens / 1000000).toFixed(2)}M Tokens` : '0.00M Tokens'}
+                            </span>
+                          </div>
+                          <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                isDepleted
+                                  ? 'bg-rose-500'
+                                  : isLow
+                                  ? 'bg-amber-500'
+                                  : isActive
+                                  ? 'bg-[#059669]'
+                                  : 'bg-slate-300'
+                              }`}
+                              style={{ width: isActive ? `${Math.max(0, 100 - parseFloat(usedPct))}%` : '0%' }}
+                            />
+                          </div>
+                          <div className="flex justify-between text-[10px] text-slate-400 font-sans">
+                            {isActive ? (
+                              <>
+                                <span>Used: {(m.usedTokens / 1000000).toFixed(2)}M ({usedPct}%)</span>
+                                <span>Quota: {(m.allocatedTokens / 1000000).toFixed(1)}M</span>
+                              </>
+                            ) : (
+                              <span className="text-amber-700 font-medium">Add API key below to activate tokens</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Custom Quota Inline Editor */}
+                        {isEditingThisQuota && (
+                          <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
+                            <label className="block text-[11px] font-bold text-slate-700">Set Exact Token Quota (in Millions)</label>
+                            <div className="flex items-center gap-1.5">
+                              <input
+                                type="number"
+                                step="1"
+                                min="1"
+                                placeholder="e.g. 50"
+                                value={customQuotaInput}
+                                onChange={(e) => setCustomQuotaInput(e.target.value)}
+                                className="flex-1 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-mono focus:outline-none focus:border-[#059669]"
+                              />
+                              <span className="text-xs text-slate-500 font-bold">M Tokens</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const num = parseFloat(String(customQuotaInput));
+                                  if (!isNaN(num) && num > 0) {
+                                    handleUpdateQuota(m.id, Math.round(num * 1000000));
+                                  }
+                                }}
+                                className="px-3 py-1.5 bg-[#059669] text-white font-bold rounded-lg text-xs cursor-pointer hover:bg-[#047857]"
+                              >
+                                Save
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingQuotaModelId(null)}
+                                className="px-2 py-1.5 bg-slate-200 text-slate-700 font-semibold rounded-lg text-xs cursor-pointer hover:bg-slate-300"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
                         )}
                       </div>
 
-                      <h5 className="text-sm font-bold font-heading text-slate-900">{m.name}</h5>
-
-                      {/* Token Bar */}
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-[11px] font-mono">
-                          <span className="text-slate-500">Remaining Pool</span>
-                          <span className="font-bold text-slate-900">
-                            {isActive ? `${(m.remainingTokens / 1000000).toFixed(2)}M Tokens` : '0.00M Tokens'}
-                          </span>
-                        </div>
-                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${isActive ? 'bg-[#059669]' : 'bg-slate-300'}`}
-                            style={{ width: isActive ? `${Math.max(0, 100 - parseFloat(usedPct))}%` : '0%' }}
-                          />
-                        </div>
-                        <div className="flex justify-between text-[10px] text-slate-400 font-sans">
-                          {isActive ? (
-                            <>
-                              <span>Used: {(m.usedTokens / 1000000).toFixed(2)}M ({usedPct}%)</span>
-                              <span>Quota: {(m.allocatedTokens / 1000000).toFixed(0)}M</span>
-                            </>
-                          ) : (
-                            <span className="text-amber-700 font-medium">Add API key below to activate tokens</span>
-                          )}
-                        </div>
+                      {/* Action Buttons */}
+                      <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleRefillTokens(m.id, 2000000)}
+                          className="flex-1 py-2 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-200 border border-slate-200 text-slate-800 font-bold text-[11px] rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer font-sans"
+                        >
+                          <Plus className="w-3 h-3 text-[#059669]" />
+                          <span>+2M Top-Up</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRefillTokens(m.id, 5000000)}
+                          className="flex-1 py-2 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-200 border border-slate-200 text-slate-800 font-bold text-[11px] rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer font-sans"
+                        >
+                          <Plus className="w-3 h-3 text-[#059669]" />
+                          <span>+5M Top-Up</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isEditingThisQuota) {
+                              setEditingQuotaModelId(null);
+                            } else {
+                              setEditingQuotaModelId(m.id);
+                              setCustomQuotaInput(m.allocatedTokens > 0 ? (m.allocatedTokens / 1000000).toString() : '20');
+                            }
+                          }}
+                          className="p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 rounded-xl cursor-pointer"
+                          title="Custom Quota"
+                        >
+                          <Sliders className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
-
-                    <button
-                      onClick={() => handleRefillTokens(m.id, 2000000)}
-                      className="w-full py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer font-sans"
-                    >
-                      <Plus className="w-3.5 h-3.5 text-[#059669]" />
-                      <span>Top-Up +2M Tokens</span>
-                    </button>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           </div>
 
           {/* Live API Keys Management Panel */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-2xs">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
               <div>
                 <h4 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
                   <Key className="w-4 h-4 text-[#059669]" />
                   <span>Update Live AI Model API Keys directly from Admin Portal</span>
                 </h4>
                 <p className="text-xs text-slate-500 font-sans mt-0.5">
-                  Enter live API keys here to replenish model tokens dynamically without modifying codebase files.
+                  Enter live API keys here to replenish model tokens dynamically without modifying codebase files. Keys are validated in real-time before saving.
                 </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 font-mono">
+                  6 Providers Configured
+                </span>
               </div>
             </div>
 
             <form onSubmit={handleSaveAiKeys} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Google Gemini API Key (GEMINI_API_KEY)</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* 1. Google Gemini */}
+                <div className="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800">
+                      Google Gemini API Key
+                    </label>
+                    <span className="text-[10px] font-mono text-slate-500 font-bold">
+                      GEMINI_API_KEY
+                    </span>
+                  </div>
                   <input
                     type="password"
                     value={geminiKeyInput}
                     onChange={(e) => setGeminiKeyInput(e.target.value)}
-                    placeholder="AIzaSy... (Leave empty to keep active server key)"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                    placeholder="AIzaSy... (Empty = Uses server key)"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
                   />
+                  <p className="text-[10px] text-slate-400">
+                    Powers Gemini 2.5 Flash, 2.5 Pro, 3.7 Flash & 3.1 Pro Preview.
+                  </p>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">OpenAI API Key (OPENAI_API_KEY)</label>
+                {/* 2. OpenAI */}
+                <div className="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800">
+                      OpenAI API Key
+                    </label>
+                    <span className="text-[10px] font-mono text-slate-500 font-bold">
+                      OPENAI_API_KEY
+                    </span>
+                  </div>
                   <input
                     type="password"
                     value={openaiKeyInput}
                     onChange={(e) => setOpenaiKeyInput(e.target.value)}
-                    placeholder="sk-proj-... (Leave empty to keep active key)"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                    placeholder="sk-proj-... (Empty = Uses server key)"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
                   />
+                  <p className="text-[10px] text-slate-400">
+                    Powers GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-4o & o3-mini.
+                  </p>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Anthropic Claude Key (ANTHROPIC_API_KEY)</label>
+                {/* 3. Anthropic Claude */}
+                <div className="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800">
+                      Anthropic Claude Key
+                    </label>
+                    <span className="text-[10px] font-mono text-slate-500 font-bold">
+                      ANTHROPIC_API_KEY
+                    </span>
+                  </div>
                   <input
                     type="password"
                     value={claudeKeyInput}
                     onChange={(e) => setClaudeKeyInput(e.target.value)}
-                    placeholder="sk-ant-... (Leave empty to keep active key)"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                    placeholder="sk-ant-... (Empty = Uses server key)"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
                   />
+                  <p className="text-[10px] text-slate-400">
+                    Powers Claude 3.7 Sonnet, Claude Opus 4.8 & Claude Haiku 4.5.
+                  </p>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">DeepSeek API Key (DEEPSEEK_API_KEY)</label>
+                {/* 4. DeepSeek */}
+                <div className="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800">
+                      DeepSeek API Key
+                    </label>
+                    <span className="text-[10px] font-mono text-slate-500 font-bold">
+                      DEEPSEEK_API_KEY
+                    </span>
+                  </div>
                   <input
                     type="password"
                     value={deepseekKeyInput}
                     onChange={(e) => setDeepseekKeyInput(e.target.value)}
-                    placeholder="sk-ds-... (Leave empty to keep active key)"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                    placeholder="sk-ds-... (Empty = Uses server key)"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
                   />
+                  <p className="text-[10px] text-slate-400">
+                    Powers DeepSeek V3 (671B MoE) & DeepSeek R1 Reasoning.
+                  </p>
+                </div>
+
+                {/* 5. Groq LPU */}
+                <div className="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800">
+                      Groq LPU API Key
+                    </label>
+                    <span className="text-[10px] font-mono text-slate-500 font-bold">
+                      GROQ_API_KEY
+                    </span>
+                  </div>
+                  <input
+                    type="password"
+                    value={groqKeyInput}
+                    onChange={(e) => setGroqKeyInput(e.target.value)}
+                    placeholder="gsk_... (Empty = Uses server key)"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                  />
+                  <p className="text-[10px] text-slate-400">
+                    Powers Meta Llama 3.3 70B running at 300+ tokens/sec on LPUs.
+                  </p>
+                </div>
+
+                {/* 6. Perplexity AI */}
+                <div className="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800">
+                      Perplexity API Key
+                    </label>
+                    <span className="text-[10px] font-mono text-slate-500 font-bold">
+                      PERPLEXITY_API_KEY
+                    </span>
+                  </div>
+                  <input
+                    type="password"
+                    value={perplexityKeyInput}
+                    onChange={(e) => setPerplexityKeyInput(e.target.value)}
+                    placeholder="pplx-... (Empty = Uses server key)"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                  />
+                  <p className="text-[10px] text-slate-400">
+                    Powers Perplexity Sonar Pro & Sonar Fast search-grounded models.
+                  </p>
                 </div>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-end pt-2">
                 <button
                   type="submit"
                   disabled={validatingKeys}
@@ -2303,7 +2644,7 @@ export const AdminView: React.FC = () => {
                 >
                   <RefreshCw className={`w-4 h-4 ${validatingKeys ? 'animate-spin' : 'hidden'}`} />
                   <Save className={`w-4 h-4 ${validatingKeys ? 'hidden' : 'block'}`} />
-                  <span>{validatingKeys ? 'Validating & Verifying Keys...' : 'Save & Update Live Model API Keys'}</span>
+                  <span>{validatingKeys ? 'Validating & Verifying Live Keys...' : 'Save & Validate All AI Model API Keys'}</span>
                 </button>
               </div>
             </form>
