@@ -295,24 +295,54 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
     try {
       setLoading(true);
       setErrorMessage(null);
-      const redirectUri = `${window.location.origin}/auth/callback`;
-      const res = await fetch(`/api/auth/oauth/url?provider=${provider}&redirectUri=${encodeURIComponent(redirectUri)}`);
-      const data = await res.json();
-      if (data.url) {
-        const width = 500;
-        const height = 650;
-        const left = window.screenX + (window.innerWidth - width) / 2;
-        const top = window.screenY + (window.innerHeight - height) / 2;
-        window.open(
-          data.url,
-          `oauth_${provider}`,
-          `width=${width},height=${height},left=${left},top=${top},status=yes,scrollbars=yes`
-        );
+      if (provider === 'google') {
+        await triggerGoogleSSO({
+          onStart: () => setLoading(true),
+          onSuccess: (authenticatedUser) => {
+            login(
+              authenticatedUser.email,
+              authenticatedUser.name,
+              authenticatedUser.companyName || `${authenticatedUser.name}'s Business Workspace`,
+              authenticatedUser.planTier || 'free',
+              authenticatedUser.aiCreditsUsed || 0,
+              authenticatedUser.role,
+              authenticatedUser.id
+            );
+            setActiveTab('dashboard');
+            setLoading(false);
+          },
+          onError: (err) => {
+            console.warn('Google sign-in error:', err);
+            setErrorMessage(err);
+            setLoading(false);
+          },
+        });
+      } else {
+        await triggerLinkedInSSO({
+          onStart: () => setLoading(true),
+          onSuccess: (authenticatedUser) => {
+            login(
+              authenticatedUser.email,
+              authenticatedUser.name,
+              authenticatedUser.companyName || `${authenticatedUser.name}'s Business Workspace`,
+              authenticatedUser.planTier || 'free',
+              authenticatedUser.aiCreditsUsed || 0,
+              authenticatedUser.role,
+              authenticatedUser.id
+            );
+            setActiveTab('dashboard');
+            setLoading(false);
+          },
+          onError: (err) => {
+            console.warn('LinkedIn sign-in error:', err);
+            setErrorMessage(err);
+            setLoading(false);
+          },
+        });
       }
     } catch (err: any) {
       console.error('OAuth launch error:', err);
       setErrorMessage(`Could not start ${provider === 'google' ? 'Google' : 'LinkedIn'} sign-in.`);
-    } finally {
       setLoading(false);
     }
   };

@@ -13,6 +13,9 @@ import {
   User,
   Loader2,
   ArrowRight,
+  Linkedin,
+  Facebook,
+  Instagram,
 } from 'lucide-react';
 
 interface QuickChatMessage {
@@ -208,6 +211,40 @@ export const ContactView: React.FC = () => {
                   <p className="font-bold text-slate-900">Locora AI Headquarters</p>
                   <p className="text-slate-600 text-[11px]">100 Innovation Way, Suite 400</p>
                   <p className="text-slate-600 text-[11px]">San Francisco, CA 94105, United States</p>
+                </div>
+              </div>
+
+              {/* Social Channels */}
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+                <p className="text-xs font-bold text-slate-900 mb-2">Follow Our Official Channels</p>
+                <div className="flex items-center gap-2">
+                  <a
+                    href="https://www.linkedin.com/company/locoraai"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:text-[#0077b5] hover:border-[#0077b5]/30 hover:bg-slate-50 transition-all shadow-2xs"
+                  >
+                    <Linkedin className="w-3.5 h-3.5" />
+                    <span>LinkedIn</span>
+                  </a>
+                  <a
+                    href="https://www.facebook.com/locoraai"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:text-[#1877f2] hover:border-[#1877f2]/30 hover:bg-slate-50 transition-all shadow-2xs"
+                  >
+                    <Facebook className="w-3.5 h-3.5" />
+                    <span>Facebook</span>
+                  </a>
+                  <a
+                    href="https://www.instagram.com/locoraai"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:text-[#e4405f] hover:border-[#e4405f]/30 hover:bg-slate-50 transition-all shadow-2xs"
+                  >
+                    <Instagram className="w-3.5 h-3.5" />
+                    <span>Instagram</span>
+                  </a>
                 </div>
               </div>
             </div>

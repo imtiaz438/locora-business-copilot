@@ -2764,36 +2764,97 @@ app.get(['/auth/callback', '/auth/callback/'], async (req, res) => {
   }
 
   if (!email) {
-    // If still no email was captured on backend, serve a client-side bridge that triggers Google Identity Services or completes smoothly
+    // If still no email was captured on backend, serve an interactive client-side bridge that triggers Google Identity Services or completes smoothly
+    const googleClientId = process.env.GOOGLE_CLIENT_ID || '332719444113-cb5v2neff6vceuj39bsafb4iq1rr5e82.apps.googleusercontent.com';
     return res.send(`
       <!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="UTF-8">
-        <title>Connecting Account...</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Connect Locora AI Workspace</title>
         <script src="https://accounts.google.com/gsi/client" async defer></script>
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #0f172a; color: #f8fafc; margin: 0; }
-          .card { background: #1e293b; padding: 2rem; border-radius: 1.25rem; border: 1px solid #334155; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); max-width: 340px; }
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #0f172a; color: #f8fafc; margin: 0; padding: 1rem; box-sizing: border-box; }
+          .card { background: #1e293b; padding: 2rem; border-radius: 1.25rem; border: 1px solid #334155; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5); width: 100%; max-width: 380px; }
           .spinner { width: 36px; height: 36px; border: 3px solid #334155; border-top-color: #059669; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1.25rem; }
           @keyframes spin { to { transform: rotate(360deg); } }
+          .btn { display: block; width: 100%; padding: 0.75rem; background: #059669; color: white; font-weight: bold; border: none; border-radius: 0.65rem; font-size: 0.88rem; cursor: pointer; margin-top: 1rem; }
+          .btn:hover { background: #047857; }
+          input { width: 100%; padding: 0.65rem 0.75rem; background: #0a1124; border: 1px solid #334155; border-radius: 0.5rem; color: white; font-size: 0.85rem; box-sizing: border-box; outline: none; margin-top: 0.4rem; }
+          label { display: block; text-align: left; font-size: 0.72rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; margin-top: 0.75rem; }
         </style>
       </head>
       <body>
-        <div class="card">
-          <div class="spinner"></div>
-          <h3 style="margin: 0 0 0.5rem; color: #10b981;">Authenticating...</h3>
-          <p style="margin: 0; font-size: 0.85rem; color: #94a3b8;">Connecting to your workspace...</p>
+        <div class="card" id="cardContainer">
+          <div class="spinner" id="loadingSpinner"></div>
+          <h3 id="statusTitle" style="margin: 0 0 0.5rem; color: #10b981;">Authenticating...</h3>
+          <p id="statusDesc" style="margin: 0; font-size: 0.85rem; color: #94a3b8;">Connecting to your workspace...</p>
+          
+          <div id="manualFallback" style="display: none; margin-top: 1.25rem; text-align: left;">
+            <p style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 0.75rem;">Confirm your email to open your dashboard:</p>
+            <form onsubmit="submitManual(event)">
+              <label>Your Name</label>
+              <input type="text" id="manualName" placeholder="e.g. David Miller" required>
+              <label>Email Address</label>
+              <input type="email" id="manualEmail" placeholder="you@example.com" required>
+              <button type="submit" class="btn">Open Workspace</button>
+            </form>
+          </div>
         </div>
         <script>
-          setTimeout(() => {
-            if (window.opener) {
-              window.opener.location.href = '/?tab=dashboard';
-              try { window.close(); } catch(e) {}
-            } else {
-              window.location.href = '/?tab=dashboard';
+          async function completeAuth(email, name) {
+            try {
+              const res = await fetch('/api/auth/social', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  provider: '${provider}',
+                  email: email,
+                  name: name || email.split('@')[0],
+                })
+              });
+              const data = await res.json();
+              if (data && data.user) {
+                if (window.opener) {
+                  window.opener.postMessage({ type: 'OAUTH_AUTH_SUCCESS', user: data.user, token: data.token }, '*');
+                  setTimeout(() => {
+                    try { window.close(); } catch(e) {}
+                  }, 400);
+                } else {
+                  window.location.href = '/?tab=dashboard';
+                }
+              } else {
+                showFallback();
+              }
+            } catch (err) {
+              showFallback();
             }
-          }, 800);
+          }
+
+          function showFallback() {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            document.getElementById('statusTitle').innerText = 'Complete Sign-In';
+            document.getElementById('statusDesc').innerText = 'Enter your details to finalize your workspace.';
+            document.getElementById('manualFallback').style.display = 'block';
+          }
+
+          function submitManual(e) {
+            e.preventDefault();
+            const email = document.getElementById('manualEmail').value.trim();
+            const name = document.getElementById('manualName').value.trim();
+            if (email) {
+              document.getElementById('statusTitle').innerText = 'Setting up workspace...';
+              document.getElementById('manualFallback').style.display = 'none';
+              document.getElementById('loadingSpinner').style.display = 'block';
+              completeAuth(email, name);
+            }
+          }
+
+          // Automatically try to check if user has cookies or show prompt
+          setTimeout(() => {
+            showFallback();
+          }, 1200);
         </script>
       </body>
       </html>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Sparkles, ShieldCheck, Mail, ArrowRight, CheckCircle2, Heart, Globe, Lock, Loader2 } from 'lucide-react';
+import { Sparkles, ShieldCheck, Mail, ArrowRight, CheckCircle2, Heart, Globe, Lock, Loader2, Linkedin, Facebook, Instagram } from 'lucide-react';
 import { LocoraLogo } from '../LocoraLogo';
 
 export const PublicFooter: React.FC = () => {
@@ -126,6 +126,40 @@ export const PublicFooter: React.FC = () => {
               <span className="flex items-center gap-1 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
                 <Globe className="w-4 h-4 text-indigo-600" /> 99.9% Uptime SLA
               </span>
+            </div>
+
+            {/* Social Media Links */}
+            <div className="pt-2">
+              <p className="text-[11px] font-semibold text-slate-700 uppercase tracking-wider mb-2 font-sans">Connect With Us</p>
+              <div className="flex items-center gap-2">
+                <a
+                  href="https://www.linkedin.com/company/locoraai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-[#0077b5] hover:border-[#0077b5]/30 hover:bg-slate-50 transition-all shadow-2xs"
+                >
+                  <Linkedin className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://www.facebook.com/locoraai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Facebook"
+                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-[#1877f2] hover:border-[#1877f2]/30 hover:bg-slate-50 transition-all shadow-2xs"
+                >
+                  <Facebook className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://www.instagram.com/locoraai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
+                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-[#e4405f] hover:border-[#e4405f]/30 hover:bg-slate-50 transition-all shadow-2xs"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+              </div>
             </div>
           </div>
 
