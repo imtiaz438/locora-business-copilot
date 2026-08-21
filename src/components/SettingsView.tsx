@@ -694,7 +694,7 @@ export const SettingsView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {ACTIVE_PROVIDERS.map((prov) => {
                 const isSelected = settings.activeProvider === prov.id;
-                const isLockedForFree = user.planTier === 'free' && prov.id !== 'gemini';
+                const isLockedForFree = user.planTier === 'free' && prov.id !== 'groq';
                 const currentSubModel = providerModels[prov.id] || prov.model || '';
 
                 return (
@@ -711,7 +711,7 @@ export const SettingsView: React.FC = () => {
                         <div
                           onClick={() => {
                             if (isLockedForFree) {
-                              alert(`Accessing ${prov.name} requires a Pro Growth ($19/mo) or Agency Elite plan. Free Starter includes Google Gemini.`);
+                              alert(`Accessing ${prov.name} requires a Pro Growth ($19/mo) or Agency Elite plan. Free Starter includes Groq (Meta Llama 3.3 70B & 3.1 8B).`);
                               setCheckoutModalPlan('pro');
                               return;
                             }
@@ -821,7 +821,7 @@ export const SettingsView: React.FC = () => {
                   <span>Pro Plan Model Activation Notice</span>
                 </p>
                 <p className="text-[11px] text-amber-800">
-                  You are currently on the Free Starter plan (utilizing Google Gemini). You can paste and test custom keys below, but switching active generation to OpenAI GPT-4o, Claude 3.7 Sonnet, DeepSeek, or Groq requires a <strong>Pro Growth ($19/mo)</strong> or <strong>Agency Elite ($49/mo)</strong> plan.
+                  You are currently on the Free Starter plan (powered by <strong>Groq Ultra-Fast LPU & Meta Llama 3.3 / 3.1</strong>). You can paste and test custom keys below, while switching active platform generation to OpenAI GPT-5.6/4o, Claude 3.7 Sonnet, DeepSeek, or Gemini is available with a <strong>Pro Growth ($19/mo)</strong> or <strong>Agency Elite ($49/mo)</strong> plan.
                 </p>
               </div>
             )}

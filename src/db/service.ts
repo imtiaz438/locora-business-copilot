@@ -106,7 +106,7 @@ export async function saveUserSettings(userEmail: string, data: any) {
         .insert(schema.settingsTable)
         .values({
           id: cleanId,
-          activeProvider: data.activeProvider || 'gemini',
+          activeProvider: data.activeProvider || 'groq',
           providerKeys: data.providerKeys || {},
           theme: data.theme || 'dark',
           autoSave: data.autoSave !== undefined ? data.autoSave : true,
@@ -142,7 +142,7 @@ export async function saveSettings(data: any) {
         .insert(schema.settingsTable)
         .values({
           id,
-          activeProvider: data.activeProvider || 'gemini',
+          activeProvider: data.activeProvider || 'groq',
           providerKeys: data.providerKeys || {},
           theme: data.theme || 'dark',
           autoSave: data.autoSave !== undefined ? data.autoSave : true,

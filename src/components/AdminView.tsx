@@ -522,12 +522,12 @@ export const AdminView: React.FC = () => {
       if (res.ok && data.success) {
         setAiStats(data);
         if (data.savedKeys) {
-          if (data.savedKeys.gemini) setGeminiKeyInput(data.savedKeys.gemini);
-          if (data.savedKeys.openai) setOpenaiKeyInput(data.savedKeys.openai);
-          if (data.savedKeys.anthropic) setClaudeKeyInput(data.savedKeys.anthropic);
-          if (data.savedKeys.perplexity) setPerplexityKeyInput(data.savedKeys.perplexity);
-          if (data.savedKeys.deepseek) setDeepseekKeyInput(data.savedKeys.deepseek);
-          if (data.savedKeys.groq) setGroqKeyInput(data.savedKeys.groq);
+          setGeminiKeyInput(data.savedKeys.gemini || '');
+          setOpenaiKeyInput(data.savedKeys.openai || '');
+          setClaudeKeyInput(data.savedKeys.anthropic || data.savedKeys.claude || '');
+          setPerplexityKeyInput(data.savedKeys.perplexity || '');
+          setDeepseekKeyInput(data.savedKeys.deepseek || '');
+          setGroqKeyInput(data.savedKeys.groq || '');
         }
       }
     } catch (err) {
@@ -732,7 +732,15 @@ export const AdminView: React.FC = () => {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setActionSuccessMsg('Validated & updated Live AI Model API Keys in server configuration!');
+        setActionSuccessMsg('Validated & updated Live AI Model API Keys in database & server configuration!');
+        if (data.savedKeys) {
+          setGeminiKeyInput(data.savedKeys.gemini || '');
+          setOpenaiKeyInput(data.savedKeys.openai || '');
+          setClaudeKeyInput(data.savedKeys.anthropic || data.savedKeys.claude || '');
+          setPerplexityKeyInput(data.savedKeys.perplexity || '');
+          setDeepseekKeyInput(data.savedKeys.deepseek || '');
+          setGroqKeyInput(data.savedKeys.groq || '');
+        }
         fetchAiTokenStats();
       } else {
         setActionErrorMsg(data.error || 'API Key validation failed. Key was not saved and tokens were not allocated.');

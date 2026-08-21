@@ -137,10 +137,10 @@ const COMPARISON_ROWS: Row[] = [
     credits: '0',
   },
   {
-    feature: 'Multi-Model AI Selection (Gemini 3.6, GPT-4o, Claude 3.5, Perplexity)',
-    free: 'Gemini 3.6 Flash',
-    pro: 'All 4 Active Models',
-    agency: 'All 4 Active Models',
+    feature: 'Multi-Model AI Engine (Groq Llama 3.3, GPT-5.6/4o, Claude 3.7, DeepSeek, Gemini)',
+    free: 'Groq LPU (Llama 3.3 & 3.1)',
+    pro: 'All 6 Active Models',
+    agency: 'All 6 Active Models',
     credits: '0',
   },
   {

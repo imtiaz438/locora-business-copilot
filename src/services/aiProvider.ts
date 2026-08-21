@@ -2,21 +2,40 @@ import { AIProviderConfig, AIProviderId } from '../types';
 
 export const SUPPORTED_PROVIDERS: AIProviderConfig[] = [
   {
+    id: 'groq',
+    name: 'Groq (Meta Llama 3.3 70B & 3.1 8B)',
+    description: 'Ultra-low-latency high-speed inference powered by specialized LPU chips for instant real-time AI responses (Default AI Engine on Free & All Plans)',
+    apiKeyEnv: 'GROQ_API_KEY',
+    isCustomKeySet: true,
+    model: 'llama-3.3-70b-versatile',
+    models: [
+      { id: 'llama-3.3-70b-versatile', name: 'Meta Llama 3.3 70B Versatile', description: 'Flagship open model running at 300+ tokens/sec on Groq LPUs (Recommended Default)', badge: 'Ultra Fast Default', isDefault: true },
+      { id: 'llama-3.1-8b-instant', name: 'Meta Llama 3.1 8B Instant', description: 'Sub-second lightweight generation ideal for rapid draft summaries and replies', badge: 'Fastest Free' },
+      { id: 'llama3-70b-8192', name: 'Meta Llama 3 70B', description: 'High-capacity 70B parameter model with 8k context', badge: '70B Capacity' },
+      { id: 'llama3-8b-8192', name: 'Meta Llama 3 8B', description: 'Instant response model for high-frequency commands', badge: 'Instant 8B' },
+      { id: 'mixtral-8x7b-32768', name: 'Mistral Mixtral 8x7B', description: 'High-performance Mixture-of-Experts with 32k context window', badge: 'MoE' },
+      { id: 'gemma2-9b-it', name: 'Google Gemma 2 9B (Groq)', description: 'Google high-efficiency instruction-tuned model running on Groq LPUs', badge: 'Gemma 9B' },
+    ],
+    isUpcoming: false,
+    statusTag: 'Active / Default Engine',
+    category: 'Ultra Fast LPU',
+  },
+  {
     id: 'gemini',
     name: 'Google Gemini 2.5 & 3.7',
-    description: 'Ultra-fast multimodal AI model optimized for business reasoning, code synthesis & document generation (Included on Starter & Pro plans)',
+    description: 'Multimodal AI model optimized for business reasoning, code synthesis & document generation',
     apiKeyEnv: 'GEMINI_API_KEY',
-    isCustomKeySet: true,
+    isCustomKeySet: false,
     model: 'gemini-2.5-flash',
     models: [
-      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Ultra-fast, low latency, intelligent reasoning (Recommended Default)', badge: 'Fast & High Quota', isDefault: true },
+      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Ultra-fast, low latency, intelligent multimodal reasoning', badge: 'Multimodal Flash', isDefault: true },
       { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Advanced mathematical, multi-step business logic and deep reasoning', badge: 'Deep Reasoning' },
       { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash', description: 'Flagship multimodal speed & high-throughput generation', badge: 'Latest Gen' },
       { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', description: 'Next-gen enterprise reasoning and long context capabilities', badge: 'Pro Preview' },
       { id: 'gemini-3.1-flash-lite', name: 'Gemini 3.1 Flash Lite', description: 'Lightweight high-efficiency model for quick utilities', badge: 'Lite' },
     ],
     isUpcoming: false,
-    statusTag: 'Active / Pre-configured',
+    statusTag: 'Active / Multi-Model',
     category: 'Multimodal Engine',
   },
   {
@@ -85,20 +104,6 @@ export const SUPPORTED_PROVIDERS: AIProviderConfig[] = [
     isUpcoming: false,
     statusTag: 'Active / BYOK Ready',
     category: 'High-Efficiency Reasoning',
-  },
-  {
-    id: 'groq',
-    name: 'Groq (Llama 3.3 70B)',
-    description: 'Ultra-low-latency high-speed inference powered by specialized LPU chips for instant real-time AI responses',
-    apiKeyEnv: 'GROQ_API_KEY',
-    isCustomKeySet: false,
-    model: 'llama-3.3-70b-versatile',
-    models: [
-      { id: 'llama-3.3-70b-versatile', name: 'Meta Llama 3.3 70B', description: 'State-of-the-art open model running at 300+ tokens/sec on Groq LPUs', badge: 'Ultra Fast', isDefault: true },
-    ],
-    isUpcoming: false,
-    statusTag: 'Active / BYOK Ready',
-    category: 'Ultra Fast LPU',
   },
   // Upcoming / Future Roadmap AI Models (Coming in Next Releases)
   {

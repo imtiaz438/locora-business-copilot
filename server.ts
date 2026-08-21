@@ -404,15 +404,15 @@ function getUserSettingsDiskStore(email: string) {
   const cleanEmail = (email || '').toLowerCase().trim();
   if (!userSettingsMap.has(cleanEmail)) {
     userSettingsMap.set(cleanEmail, {
-      activeProvider: 'gemini',
-      activeModelVersion: 'gemini-2.5-flash',
+      activeProvider: 'groq',
+      activeModelVersion: 'llama-3.3-70b-versatile',
       providerModels: {
+        groq: 'llama-3.3-70b-versatile',
         gemini: 'gemini-2.5-flash',
         openai: 'gpt-4o',
         claude: 'claude-3-7-sonnet-20250219',
         perplexity: 'sonar-pro',
         deepseek: 'deepseek-chat',
-        groq: 'llama-3.3-70b-versatile',
       },
       providerKeys: {
         gemini: '',
@@ -722,8 +722,13 @@ const DEFAULT_MODEL_POOLS: Record<string, { name: string; provider: string; envV
   'deepseek-chat': { name: 'DeepSeek V3 (671B)', provider: 'DeepSeek', envVar: 'DEEPSEEK_API_KEY', defaultQuota: 35000000, badge: 'V3 671B' },
   'deepseek-reasoner': { name: 'DeepSeek R1 (Reasoning)', provider: 'DeepSeek', envVar: 'DEEPSEEK_API_KEY', defaultQuota: 20000000, badge: 'R1 Reasoning' },
 
-  // Groq LPU Models
-  'llama-3.3-70b': { name: 'Groq Llama 3.3 70B', provider: 'Groq', envVar: 'GROQ_API_KEY', defaultQuota: 45000000, badge: 'Ultra Fast LPU' },
+  // Groq LPU Models (Ultra Fast & Free Global Access)
+  'llama-3.3-70b-versatile': { name: 'Meta Llama 3.3 70B', provider: 'Groq', envVar: 'GROQ_API_KEY', defaultQuota: 45000000, badge: 'Ultra Fast Default' },
+  'llama-3.1-8b-instant': { name: 'Meta Llama 3.1 8B Instant', provider: 'Groq', envVar: 'GROQ_API_KEY', defaultQuota: 50000000, badge: 'Fastest Free' },
+  'llama3-70b-8192': { name: 'Meta Llama 3 70B', provider: 'Groq', envVar: 'GROQ_API_KEY', defaultQuota: 30000000, badge: '70B Capacity' },
+  'llama3-8b-8192': { name: 'Meta Llama 3 8B', provider: 'Groq', envVar: 'GROQ_API_KEY', defaultQuota: 45000000, badge: 'Instant 8B' },
+  'mixtral-8x7b-32768': { name: 'Mistral Mixtral 8x7B', provider: 'Groq', envVar: 'GROQ_API_KEY', defaultQuota: 35000000, badge: 'MoE' },
+  'gemma2-9b-it': { name: 'Google Gemma 2 9B (Groq)', provider: 'Groq', envVar: 'GROQ_API_KEY', defaultQuota: 40000000, badge: 'Gemma 9B' },
 };
 
 const aiModelQuotas = new Map<string, AiModelTokenQuota>();
@@ -829,7 +834,13 @@ async function validateApiKey(provider: string, apiKey: string): Promise<{ valid
       });
       clearTimeout(timeoutId);
       if (res.ok) {
-        return { valid: true, model: 'llama-3.3-70b-versatile' };
+        const mData = await res.json().catch(() => ({}));
+        const modelIds: string[] = Array.isArray(mData?.data) ? mData.data.map((m: any) => m.id) : [];
+        let detected = 'llama-3.1-8b-instant';
+        if (modelIds.includes('llama-3.3-70b-versatile')) detected = 'llama-3.3-70b-versatile';
+        else if (modelIds.includes('llama-3.1-8b-instant')) detected = 'llama-3.1-8b-instant';
+        else if (modelIds.length > 0) detected = modelIds[0];
+        return { valid: true, model: detected };
       }
       const data = await res.json().catch(() => ({}));
       const errMsg = data?.error?.message || `HTTP ${res.status} ${res.statusText}`;
@@ -948,14 +959,49 @@ async function validateAllConfiguredKeys(): Promise<void> {
 
 function syncProviderKeysToEnv(keys: any) {
   if (!keys || typeof keys !== 'object') return;
-  if (keys.gemini && keys.gemini.trim()) process.env.GEMINI_API_KEY = keys.gemini.trim();
-  if (keys.openai && keys.openai.trim()) process.env.OPENAI_API_KEY = keys.openai.trim();
-  if ((keys.claude || keys.anthropic) && (keys.claude || keys.anthropic).trim()) {
-    process.env.ANTHROPIC_API_KEY = (keys.claude || keys.anthropic).trim();
+  if (keys.gemini !== undefined) {
+    if (keys.gemini && typeof keys.gemini === 'string' && keys.gemini.trim()) {
+      process.env.GEMINI_API_KEY = keys.gemini.trim();
+    } else {
+      delete process.env.GEMINI_API_KEY;
+    }
   }
-  if (keys.perplexity && keys.perplexity.trim()) process.env.PERPLEXITY_API_KEY = keys.perplexity.trim();
-  if (keys.deepseek && keys.deepseek.trim()) process.env.DEEPSEEK_API_KEY = keys.deepseek.trim();
-  if (keys.groq && keys.groq.trim()) process.env.GROQ_API_KEY = keys.groq.trim();
+  if (keys.openai !== undefined) {
+    if (keys.openai && typeof keys.openai === 'string' && keys.openai.trim()) {
+      process.env.OPENAI_API_KEY = keys.openai.trim();
+    } else {
+      delete process.env.OPENAI_API_KEY;
+    }
+  }
+  if (keys.claude !== undefined || keys.anthropic !== undefined) {
+    const val = (keys.claude || keys.anthropic || '').trim();
+    if (val) {
+      process.env.ANTHROPIC_API_KEY = val;
+    } else {
+      delete process.env.ANTHROPIC_API_KEY;
+    }
+  }
+  if (keys.perplexity !== undefined) {
+    if (keys.perplexity && typeof keys.perplexity === 'string' && keys.perplexity.trim()) {
+      process.env.PERPLEXITY_API_KEY = keys.perplexity.trim();
+    } else {
+      delete process.env.PERPLEXITY_API_KEY;
+    }
+  }
+  if (keys.deepseek !== undefined) {
+    if (keys.deepseek && typeof keys.deepseek === 'string' && keys.deepseek.trim()) {
+      process.env.DEEPSEEK_API_KEY = keys.deepseek.trim();
+    } else {
+      delete process.env.DEEPSEEK_API_KEY;
+    }
+  }
+  if (keys.groq !== undefined) {
+    if (keys.groq && typeof keys.groq === 'string' && keys.groq.trim()) {
+      process.env.GROQ_API_KEY = keys.groq.trim();
+    } else {
+      delete process.env.GROQ_API_KEY;
+    }
+  }
 
   updateModelQuotasFromValidation();
   // Trigger background live validation
@@ -5139,7 +5185,7 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
   const cleanEmail = (options.userEmail || '').toLowerCase().trim();
   const userSettings = cleanEmail ? getUserSettingsDiskStore(cleanEmail) : null;
 
-  const effectiveProvider = (options.provider || userSettings?.activeProvider || 'gemini').toLowerCase();
+  const effectiveProvider = (options.provider || userSettings?.activeProvider || 'groq').toLowerCase();
   const adminKey = (storedAppSettings?.providerKeys as any)?.[effectiveProvider] ||
     (effectiveProvider === 'claude' ? (storedAppSettings?.providerKeys as any)?.anthropic : undefined) ||
     (effectiveProvider === 'anthropic' ? (storedAppSettings?.providerKeys as any)?.claude : undefined) || '';
@@ -5386,8 +5432,7 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
     if (!apiKey || !apiKey.trim()) {
       throw new Error(`No Groq API key configured. Please enter your Groq API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
     }
-    const targetModel = selectedModel || 'llama-3.3-70b-versatile';
-    modelUsed = targetModel;
+    let targetModel = selectedModel || 'llama-3.3-70b-versatile';
 
     const msgs: any[] = [];
     if (options.systemInstruction) msgs.push({ role: 'system', content: options.systemInstruction });
@@ -5399,7 +5444,7 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
       msgs.push({ role: 'user', content: options.prompt || 'Hello' });
     }
 
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    let res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
       body: JSON.stringify({ model: targetModel, messages: msgs }),
@@ -5408,8 +5453,54 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
     if (!res.ok) {
       const errJson = await res.json().catch(() => ({}));
       const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
-      throw new Error(`Groq API Error: ${msg}`);
+      
+      // Auto-fallback if the requested model is not available or restricted on this account
+      if (res.status === 404 || msg.includes('does not exist') || msg.includes('do not have access') || msg.includes('decommissioned')) {
+        let fallbackModel = 'llama-3.1-8b-instant';
+        try {
+          const modelsRes = await fetch('https://api.groq.com/openai/v1/models', {
+            headers: { Authorization: `Bearer ${apiKey.trim()}` },
+          });
+          if (modelsRes.ok) {
+            const mData = await modelsRes.json();
+            const modelIds: string[] = Array.isArray(mData?.data) ? mData.data.map((m: any) => m.id) : [];
+            const preferred = [
+              'llama-3.1-8b-instant',
+              'llama-3.3-70b-versatile',
+              'llama-3.1-70b-versatile',
+              'llama3-70b-8192',
+              'llama3-8b-8192',
+              'mixtral-8x7b-32768',
+              'gemma2-9b-it',
+              'deepseek-r1-distill-llama-70b',
+            ];
+            for (const pref of preferred) {
+              if (modelIds.includes(pref) && pref !== targetModel) {
+                fallbackModel = pref;
+                break;
+              }
+            }
+          }
+        } catch (_) {}
+
+        targetModel = fallbackModel;
+        res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
+          body: JSON.stringify({ model: targetModel, messages: msgs }),
+        });
+
+        if (!res.ok) {
+          const retryErrJson = await res.json().catch(() => ({}));
+          const retryMsg = retryErrJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
+          throw new Error(`Groq API Error: ${retryMsg}`);
+        }
+      } else {
+        throw new Error(`Groq API Error: ${msg}`);
+      }
     }
+
+    modelUsed = targetModel;
     const data = await res.json();
     text = data.choices?.[0]?.message?.content || '';
     if (!text) {
@@ -6761,12 +6852,12 @@ app.get('/api/admin/ai-tokens/stats', (req, res) => {
       models: modelsList,
       validationStatus: Object.fromEntries(providerKeyValidationStatus.entries()),
       savedKeys: {
-        gemini: storedAppSettings?.providerKeys?.gemini || process.env.GEMINI_API_KEY || '',
-        openai: storedAppSettings?.providerKeys?.openai || process.env.OPENAI_API_KEY || '',
-        anthropic: storedAppSettings?.providerKeys?.claude || storedAppSettings?.providerKeys?.anthropic || process.env.ANTHROPIC_API_KEY || '',
-        perplexity: storedAppSettings?.providerKeys?.perplexity || process.env.PERPLEXITY_API_KEY || '',
-        deepseek: storedAppSettings?.providerKeys?.deepseek || process.env.DEEPSEEK_API_KEY || '',
-        groq: storedAppSettings?.providerKeys?.groq || process.env.GROQ_API_KEY || '',
+        gemini: storedAppSettings?.providerKeys?.gemini !== undefined ? storedAppSettings.providerKeys.gemini : (process.env.GEMINI_API_KEY || ''),
+        openai: storedAppSettings?.providerKeys?.openai !== undefined ? storedAppSettings.providerKeys.openai : (process.env.OPENAI_API_KEY || ''),
+        anthropic: (storedAppSettings?.providerKeys?.claude !== undefined ? storedAppSettings.providerKeys.claude : (storedAppSettings?.providerKeys?.anthropic !== undefined ? storedAppSettings.providerKeys.anthropic : (process.env.ANTHROPIC_API_KEY || ''))),
+        perplexity: storedAppSettings?.providerKeys?.perplexity !== undefined ? storedAppSettings.providerKeys.perplexity : (process.env.PERPLEXITY_API_KEY || ''),
+        deepseek: storedAppSettings?.providerKeys?.deepseek !== undefined ? storedAppSettings.providerKeys.deepseek : (process.env.DEEPSEEK_API_KEY || ''),
+        groq: storedAppSettings?.providerKeys?.groq !== undefined ? storedAppSettings.providerKeys.groq : (process.env.GROQ_API_KEY || ''),
       },
       apiKeysConfigured: {
         gemini: hasEnvKeyForModel('GEMINI_API_KEY'),
@@ -6925,12 +7016,12 @@ app.post('/api/admin/ai-tokens/update-keys', async (req, res) => {
       success: true,
       message: 'Successfully validated live AI model API keys and updated token pools!',
       savedKeys: {
-        gemini: process.env.GEMINI_API_KEY || '',
-        openai: process.env.OPENAI_API_KEY || '',
-        anthropic: process.env.ANTHROPIC_API_KEY || '',
-        perplexity: process.env.PERPLEXITY_API_KEY || '',
-        deepseek: process.env.DEEPSEEK_API_KEY || '',
-        groq: process.env.GROQ_API_KEY || '',
+        gemini: storedAppSettings?.providerKeys?.gemini || '',
+        openai: storedAppSettings?.providerKeys?.openai || '',
+        anthropic: storedAppSettings?.providerKeys?.claude || storedAppSettings?.providerKeys?.anthropic || '',
+        perplexity: storedAppSettings?.providerKeys?.perplexity || '',
+        deepseek: storedAppSettings?.providerKeys?.deepseek || '',
+        groq: storedAppSettings?.providerKeys?.groq || '',
       },
       apiKeysConfigured: {
         gemini: hasEnvKeyForModel('GEMINI_API_KEY'),

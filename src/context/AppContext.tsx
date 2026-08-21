@@ -110,12 +110,23 @@ const DEFAULT_PROFILE: BusinessProfile = {
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
-  activeProvider: 'gemini',
+  activeProvider: 'groq',
+  activeModelVersion: 'llama-3.3-70b-versatile',
+  providerModels: {
+    groq: 'llama-3.3-70b-versatile',
+    gemini: 'gemini-2.5-flash',
+    openai: 'gpt-4o',
+    claude: 'claude-3-7-sonnet-20250219',
+    perplexity: 'sonar-pro',
+    deepseek: 'deepseek-chat',
+  },
   providerKeys: {
     gemini: '',
     openai: '',
     claude: '',
     perplexity: '',
+    deepseek: '',
+    groq: '',
     opus: '',
     cursor: '',
     grok: '',
@@ -124,6 +135,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   autoSave: true,
   defaultCurrency: 'USD',
   defaultTaxRate: 0,
+  userKeyStatus: {},
 };
 
 const DEFAULT_USER: UserProfile = {
@@ -886,7 +898,7 @@ const PATH_TO_TAB: Record<string, string> = {
       const res = await fetch(`/api/workspace/settings?email=${encodeURIComponent(user.email || '')}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newSettings),
+        body: JSON.stringify({ ...newSettings, userEmail: user.email }),
       });
       const data = await res.json();
       if (!res.ok || data.error) {

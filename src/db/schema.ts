@@ -37,7 +37,7 @@ export const businessProfileTable = pgTable('business_profile', {
 
 export const settingsTable = pgTable('settings', {
   id: text('id').primaryKey(),
-  activeProvider: text('active_provider').default('gemini').notNull(),
+  activeProvider: text('active_provider').default('groq').notNull(),
   providerKeys: jsonb('provider_keys').$type<Record<string, string>>().notNull(),
   theme: text('theme').default('dark').notNull(),
   autoSave: boolean('auto_save').default(true).notNull(),
@@ -244,3 +244,5 @@ export const transactionsTable = pgTable('payment_transactions', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+
