@@ -82,6 +82,7 @@ export interface AppSettings {
   siteLogoUrl?: string;
   siteLogoConfig?: CustomLogoConfig;
   userKeyStatus?: Record<string, { isValid: boolean; lastTested?: string; warning?: string; modelDetected?: string }>;
+  detectedProviderModels?: Record<string, AIModelOption[]>;
 }
 
 export type CustomerStatus = 'lead' | 'contacted' | 'proposal_sent' | 'client' | 'inactive';

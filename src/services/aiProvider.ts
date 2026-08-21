@@ -11,6 +11,8 @@ export const SUPPORTED_PROVIDERS: AIProviderConfig[] = [
     models: [
       { id: 'llama-3.3-70b-versatile', name: 'Meta Llama 3.3 70B Versatile', description: 'Flagship open model running at 300+ tokens/sec on Groq LPUs (Recommended Default)', badge: 'Ultra Fast Default', isDefault: true },
       { id: 'llama-3.1-8b-instant', name: 'Meta Llama 3.1 8B Instant', description: 'Sub-second lightweight generation ideal for rapid draft summaries and replies', badge: 'Fastest Free' },
+      { id: 'llama-3.2-3b-preview', name: 'Meta Llama 3.2 3B Preview', description: 'Ultra-compact lightweight model with lightning fast latency', badge: 'Ultra Low Latency' },
+      { id: 'llama-3.2-1b-preview', name: 'Meta Llama 3.2 1B Preview', description: 'Smallest footprint instant generation model', badge: 'Lightweight' },
       { id: 'llama3-70b-8192', name: 'Meta Llama 3 70B', description: 'High-capacity 70B parameter model with 8k context', badge: '70B Capacity' },
       { id: 'llama3-8b-8192', name: 'Meta Llama 3 8B', description: 'Instant response model for high-frequency commands', badge: 'Instant 8B' },
       { id: 'mixtral-8x7b-32768', name: 'Mistral Mixtral 8x7B', description: 'High-performance Mixture-of-Experts with 32k context window', badge: 'MoE' },
@@ -22,14 +24,14 @@ export const SUPPORTED_PROVIDERS: AIProviderConfig[] = [
   },
   {
     id: 'gemini',
-    name: 'Google Gemini 2.5 & 3.7',
+    name: 'Google Gemini 3.6 & 3.7',
     description: 'Multimodal AI model optimized for business reasoning, code synthesis & document generation',
     apiKeyEnv: 'GEMINI_API_KEY',
     isCustomKeySet: false,
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3.6-flash',
     models: [
-      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Ultra-fast, low latency, intelligent multimodal reasoning', badge: 'Multimodal Flash', isDefault: true },
-      { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Advanced mathematical, multi-step business logic and deep reasoning', badge: 'Deep Reasoning' },
+      { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash', description: 'Ultra-fast, low latency, intelligent multimodal reasoning', badge: 'Multimodal Flash', isDefault: true },
+      { id: 'gemini-3.6-pro', name: 'Gemini 3.6 Pro', description: 'Advanced mathematical, multi-step business logic and deep reasoning', badge: 'Deep Reasoning' },
       { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash', description: 'Flagship multimodal speed & high-throughput generation', badge: 'Latest Gen' },
       { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', description: 'Next-gen enterprise reasoning and long context capabilities', badge: 'Pro Preview' },
       { id: 'gemini-3.1-flash-lite', name: 'Gemini 3.1 Flash Lite', description: 'Lightweight high-efficiency model for quick utilities', badge: 'Lite' },
@@ -157,4 +159,27 @@ export const UPCOMING_PROVIDERS = SUPPORTED_PROVIDERS.filter((p) => p.isUpcoming
 
 export function getProviderConfig(providerId: AIProviderId): AIProviderConfig {
   return SUPPORTED_PROVIDERS.find((p) => p.id === providerId) || SUPPORTED_PROVIDERS[0];
+}
+
+export function getProviderModelsWithFallback(
+  providerId: string,
+  dynamicModelsMap?: Record<string, Array<{ id: string; name: string; description?: string; badge?: string }>>
+): Array<{ id: string; name: string; description: string; badge?: string; isDefault?: boolean }> {
+  if (dynamicModelsMap && dynamicModelsMap[providerId] && dynamicModelsMap[providerId].length > 0) {
+    return dynamicModelsMap[providerId].map((m) => ({
+      id: m.id,
+      name: m.name,
+      description: m.description || `Discovered model (${m.id})`,
+      badge: m.badge || 'Verified',
+    }));
+  }
+  const config = SUPPORTED_PROVIDERS.find((p) => p.id === providerId);
+  return (config?.models || []) as Array<{ id: string; name: string; description: string; badge?: string; isDefault?: boolean }>;
+}
+
+export function getModelDisplayName(providerId: string, modelId: string, dynamicModelsMap?: Record<string, Array<{ id: string; name: string }>>): string {
+  const models = getProviderModelsWithFallback(providerId, dynamicModelsMap as any);
+  const found = models.find((m) => m.id === modelId);
+  if (found) return found.name;
+  return modelId.replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }

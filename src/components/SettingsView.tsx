@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { ACTIVE_PROVIDERS, UPCOMING_PROVIDERS } from '../services/aiProvider';
+import { ACTIVE_PROVIDERS, UPCOMING_PROVIDERS, getProviderModelsWithFallback, getModelDisplayName } from '../services/aiProvider';
 import { AIProviderId, CustomLogoConfig } from '../types';
 import { TeamManagementSection } from './TeamManagementSection';
 import { LocoraLogo } from './LocoraLogo';
@@ -358,13 +358,19 @@ export const SettingsView: React.FC = () => {
 
   // Provider model selections
   const [providerModels, setProviderModels] = useState<Record<string, string>>(() => ({
-    gemini: settings.providerModels?.gemini || 'gemini-2.5-flash',
+    gemini: settings.providerModels?.gemini || 'gemini-3.6-flash',
     openai: settings.providerModels?.openai || 'gpt-5.6-sol',
     claude: settings.providerModels?.claude || 'claude-3-7-sonnet-20250219',
     perplexity: settings.providerModels?.perplexity || 'sonar-pro',
     deepseek: settings.providerModels?.deepseek || 'deepseek-chat',
     groq: settings.providerModels?.groq || 'llama-3.3-70b-versatile',
   }));
+
+  // Dynamic discovered model variants per provider based on API key capabilities
+  const [discoveredModels, setDiscoveredModels] = useState<Record<string, Array<{ id: string; name: string; description?: string; badge?: string; isAutoSelected?: boolean }>>>(
+    () => settings.detectedProviderModels || {}
+  );
+  const [detectingProvider, setDetectingProvider] = useState<string | null>(null);
 
   // Per-key validation tester state
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
@@ -387,7 +393,69 @@ export const SettingsView: React.FC = () => {
     if (settings?.providerModels) {
       setProviderModels((prev) => ({ ...prev, ...settings.providerModels }));
     }
-  }, [settings.providerKeys, settings.providerModels]);
+    if (settings?.detectedProviderModels) {
+      setDiscoveredModels((prev) => ({ ...prev, ...settings.detectedProviderModels }));
+    }
+  }, [settings.providerKeys, settings.providerModels, settings.detectedProviderModels]);
+
+  // Dynamic AI Model Discovery according to API Key usage
+  const handleDetectModels = async (provider: string, apiKeyOverride?: string) => {
+    setDetectingProvider(provider);
+    try {
+      const keyToUse = apiKeyOverride !== undefined ? apiKeyOverride : (
+        provider === 'gemini' ? geminiKey :
+        provider === 'openai' ? openaiKey :
+        provider === 'claude' ? claudeKey :
+        provider === 'perplexity' ? perplexityKey :
+        provider === 'deepseek' ? deepseekKey :
+        provider === 'groq' ? groqKey : ''
+      );
+      const res = await fetch('/api/ai/detect-models', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider,
+          apiKey: (keyToUse || '').trim(),
+          userEmail: user.email,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.valid && Array.isArray(data.accessibleModels)) {
+        setDiscoveredModels((prev) => ({
+          ...prev,
+          [provider]: data.accessibleModels,
+        }));
+        if (data.detectedModel) {
+          setProviderModels((prev) => ({
+            ...prev,
+            [provider]: data.detectedModel,
+          }));
+          if (settings.activeProvider === provider) {
+            updateSettings({
+              activeModelVersion: data.detectedModel,
+              providerModels: { ...(settings.providerModels || providerModels), [provider]: data.detectedModel },
+              detectedProviderModels: {
+                ...(settings.detectedProviderModels || {}),
+                [provider]: data.accessibleModels,
+              },
+            });
+          }
+        }
+        return data;
+      }
+    } catch (err) {
+      console.warn('Model discovery error:', err);
+    } finally {
+      setDetectingProvider(null);
+    }
+  };
+
+  // Initial automatic scan for the active provider
+  useEffect(() => {
+    if (settings.activeProvider) {
+      handleDetectModels(settings.activeProvider);
+    }
+  }, [settings.activeProvider]);
 
   const handleTestKey = async (provider: string, rawKey: string) => {
     if (!rawKey || !rawKey.trim()) {
@@ -413,9 +481,35 @@ export const SettingsView: React.FC = () => {
       });
       const data = await res.json();
       if (res.ok && data.valid) {
+        if (Array.isArray(data.accessibleModels) && data.accessibleModels.length > 0) {
+          setDiscoveredModels((prev) => ({
+            ...prev,
+            [provider]: data.accessibleModels,
+          }));
+        }
+        if (data.model) {
+          setProviderModels((prev) => ({
+            ...prev,
+            [provider]: data.model,
+          }));
+          if (settings.activeProvider === provider) {
+            updateSettings({
+              activeModelVersion: data.model,
+              providerModels: { ...(settings.providerModels || providerModels), [provider]: data.model },
+              detectedProviderModels: {
+                ...(settings.detectedProviderModels || {}),
+                [provider]: data.accessibleModels || [],
+              },
+            });
+          }
+        }
         setKeyTestResults((prev) => ({
           ...prev,
-          [provider]: { valid: true, message: data.message, warning: data.warning },
+          [provider]: {
+            valid: true,
+            message: data.message || `API key verified! Auto-selected model variant: ${data.model}`,
+            warning: data.warning,
+          },
         }));
       } else {
         setKeyTestResults((prev) => ({
@@ -695,7 +789,8 @@ export const SettingsView: React.FC = () => {
               {ACTIVE_PROVIDERS.map((prov) => {
                 const isSelected = settings.activeProvider === prov.id;
                 const isLockedForFree = user.planTier === 'free' && prov.id !== 'groq';
-                const currentSubModel = providerModels[prov.id] || prov.model || '';
+                const accessibleVariants = getProviderModelsWithFallback(prov.id, discoveredModels);
+                const currentSubModel = providerModels[prov.id] || accessibleVariants[0]?.id || prov.model || '';
 
                 return (
                   <div
@@ -706,7 +801,7 @@ export const SettingsView: React.FC = () => {
                         : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'
                     }`}
                   >
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       <div className="flex items-center justify-between">
                         <div
                           onClick={() => {
@@ -757,33 +852,52 @@ export const SettingsView: React.FC = () => {
                         {prov.description}
                       </p>
 
-                      {/* Model Version Dropdown */}
-                      {prov.models && prov.models.length > 0 && (
-                        <div className="pt-2 border-t border-slate-100/80 space-y-1">
-                          <label className="block text-[11px] font-semibold text-slate-700">
-                            Select Model Version / Engine:
-                          </label>
-                          <select
-                            value={currentSubModel}
-                            disabled={isLockedForFree}
-                            onChange={(e) => {
-                              const newModel = e.target.value;
-                              setProviderModels((prev) => ({ ...prev, [prov.id]: newModel }));
-                              if (isSelected) {
-                                updateSettings({
-                                  activeModelVersion: newModel,
-                                  providerModels: { ...providerModels, [prov.id]: newModel },
-                                });
-                              }
-                            }}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-xs text-slate-900 font-medium focus:outline-none focus:border-[#059669]"
-                          >
-                            {prov.models.map((m) => (
-                              <option key={m.id} value={m.id}>
-                                {m.name} — {m.description}
-                              </option>
-                            ))}
-                          </select>
+                      {/* Dynamic Model Version Dropdown (Auto-Selected & Locked according to API Key) */}
+                      {accessibleVariants && accessibleVariants.length > 0 && (
+                        <div className="pt-2.5 border-t border-slate-100 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                              <span>Model Variant:</span>
+                              <span className="text-[10px] font-mono font-semibold bg-emerald-100/90 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-300/80">
+                                Auto-Selected
+                              </span>
+                            </label>
+                            <span
+                              className="text-[10px] text-slate-500 font-mono flex items-center gap-1"
+                              title="Dynamic model detection automatically discovers and locks the optimal compatible variant for this key."
+                            >
+                              <Lock className="w-3 h-3 text-slate-400" />
+                              <span>Key-Locked</span>
+                            </span>
+                          </div>
+
+                          <div className="relative">
+                            <select
+                              value={currentSubModel}
+                              disabled={true}
+                              title="Model version is dynamically detected & auto-configured based on your API key capabilities. Manual override is locked to prevent incompatibility."
+                              className="w-full bg-slate-100/90 border border-slate-200 rounded-lg p-2 text-xs text-slate-800 font-semibold cursor-not-allowed opacity-90 select-none pr-8"
+                            >
+                              {accessibleVariants.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                  {m.name} {m.badge ? `(${m.badge})` : ''} {m.id === currentSubModel ? '★ Active' : ''}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center gap-1">
+                              <Lock className="w-3.5 h-3.5 text-slate-400" />
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between text-[10px] text-slate-500 pt-0.5">
+                            <span className="flex items-center gap-1 text-slate-600 truncate max-w-[210px]">
+                              <Sparkles className="w-3 h-3 text-emerald-600 shrink-0" />
+                              <span className="truncate">{accessibleVariants.find((m) => m.id === currentSubModel)?.description || 'Dynamically verified for key usage'}</span>
+                            </span>
+                            <span className="font-mono text-slate-400 font-medium shrink-0">
+                              {accessibleVariants.length} variant{accessibleVariants.length > 1 ? 's' : ''}
+                            </span>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -829,12 +943,13 @@ export const SettingsView: React.FC = () => {
             <div className="space-y-4 text-xs font-sans">
               {/* 1. Google Gemini */}
               <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-1">
                   <label className="block text-slate-800 font-bold">
                     Google Gemini API Key
                   </label>
-                  <span className="text-[10px] text-slate-500 font-mono">
-                    Version: {providerModels.gemini || 'gemini-2.5-flash'}
+                  <span className="text-[10px] text-slate-600 font-mono flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    <Sparkles className="w-3 h-3 text-emerald-600" />
+                    <span>Auto-Selected: <strong>{providerModels.gemini || 'gemini-3.6-flash'}</strong></span>
                   </span>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -852,7 +967,7 @@ export const SettingsView: React.FC = () => {
                     className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                   >
                     {testingProvider === 'gemini' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
-                    <span>{testingProvider === 'gemini' ? 'Testing...' : 'Test & Validate Key'}</span>
+                    <span>{testingProvider === 'gemini' ? 'Detecting Models...' : 'Test & Auto-Select Model'}</span>
                   </button>
                 </div>
                 {keyTestResults.gemini && (
@@ -865,12 +980,13 @@ export const SettingsView: React.FC = () => {
 
               {/* 2. OpenAI */}
               <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-1">
                   <label className="block text-slate-800 font-bold">
-                    OpenAI API Key (GPT-5.6 Sol / Terra / Luna & GPT-4o)
+                    OpenAI API Key (GPT-5.6 / GPT-4o)
                   </label>
-                  <span className="text-[10px] text-slate-500 font-mono">
-                    Version: {providerModels.openai || 'gpt-5.6-sol'}
+                  <span className="text-[10px] text-slate-600 font-mono flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    <Sparkles className="w-3 h-3 text-emerald-600" />
+                    <span>Auto-Selected: <strong>{providerModels.openai || 'gpt-4o'}</strong></span>
                   </span>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -888,7 +1004,7 @@ export const SettingsView: React.FC = () => {
                     className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                   >
                     {testingProvider === 'openai' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
-                    <span>{testingProvider === 'openai' ? 'Testing...' : 'Test & Validate Key'}</span>
+                    <span>{testingProvider === 'openai' ? 'Detecting Models...' : 'Test & Auto-Select Model'}</span>
                   </button>
                 </div>
                 {keyTestResults.openai && (
@@ -901,12 +1017,13 @@ export const SettingsView: React.FC = () => {
 
               {/* 3. Anthropic Claude */}
               <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-1">
                   <label className="block text-slate-800 font-bold">
-                    Anthropic Claude API Key (Claude 3.7 Sonnet, Opus 4.8 & Haiku 4.5)
+                    Anthropic Claude API Key (Claude 3.7 Sonnet / Opus / Haiku)
                   </label>
-                  <span className="text-[10px] text-slate-500 font-mono">
-                    Version: {providerModels.claude || 'claude-3-7-sonnet-20250219'}
+                  <span className="text-[10px] text-slate-600 font-mono flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    <Sparkles className="w-3 h-3 text-emerald-600" />
+                    <span>Auto-Selected: <strong>{providerModels.claude || 'claude-3-7-sonnet-20250219'}</strong></span>
                   </span>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -924,7 +1041,7 @@ export const SettingsView: React.FC = () => {
                     className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                   >
                     {testingProvider === 'claude' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
-                    <span>{testingProvider === 'claude' ? 'Testing...' : 'Test & Validate Key'}</span>
+                    <span>{testingProvider === 'claude' ? 'Detecting Models...' : 'Test & Auto-Select Model'}</span>
                   </button>
                 </div>
                 {keyTestResults.claude && (
@@ -937,12 +1054,13 @@ export const SettingsView: React.FC = () => {
 
               {/* 4. Perplexity AI */}
               <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-1">
                   <label className="block text-slate-800 font-bold">
-                    Perplexity API Key (Sonar Pro Web Search)
+                    Perplexity API Key (Sonar Pro Search)
                   </label>
-                  <span className="text-[10px] text-slate-500 font-mono">
-                    Version: {providerModels.perplexity || 'sonar-pro'}
+                  <span className="text-[10px] text-slate-600 font-mono flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    <Sparkles className="w-3 h-3 text-emerald-600" />
+                    <span>Auto-Selected: <strong>{providerModels.perplexity || 'sonar-pro'}</strong></span>
                   </span>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -960,7 +1078,7 @@ export const SettingsView: React.FC = () => {
                     className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                   >
                     {testingProvider === 'perplexity' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
-                    <span>{testingProvider === 'perplexity' ? 'Testing...' : 'Test & Validate Key'}</span>
+                    <span>{testingProvider === 'perplexity' ? 'Detecting Models...' : 'Test & Auto-Select Model'}</span>
                   </button>
                 </div>
                 {keyTestResults.perplexity && (
@@ -973,12 +1091,13 @@ export const SettingsView: React.FC = () => {
 
               {/* 5. DeepSeek */}
               <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-1">
                   <label className="block text-slate-800 font-bold">
-                    DeepSeek API Key (V3 & R1)
+                    DeepSeek API Key (DeepSeek-V3 / R1)
                   </label>
-                  <span className="text-[10px] text-slate-500 font-mono">
-                    Version: {providerModels.deepseek || 'deepseek-chat'}
+                  <span className="text-[10px] text-slate-600 font-mono flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    <Sparkles className="w-3 h-3 text-emerald-600" />
+                    <span>Auto-Selected: <strong>{providerModels.deepseek || 'deepseek-chat'}</strong></span>
                   </span>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -996,7 +1115,7 @@ export const SettingsView: React.FC = () => {
                     className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                   >
                     {testingProvider === 'deepseek' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
-                    <span>{testingProvider === 'deepseek' ? 'Testing...' : 'Test & Validate Key'}</span>
+                    <span>{testingProvider === 'deepseek' ? 'Detecting Models...' : 'Test & Auto-Select Model'}</span>
                   </button>
                 </div>
                 {keyTestResults.deepseek && (
@@ -1009,12 +1128,13 @@ export const SettingsView: React.FC = () => {
 
               {/* 6. Groq */}
               <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-1">
                   <label className="block text-slate-800 font-bold">
-                    Groq API Key (Llama 3.3 70B @ 300+ t/s)
+                    Groq API Key (Meta Llama 3.3 70B & 3.1)
                   </label>
-                  <span className="text-[10px] text-slate-500 font-mono">
-                    Version: {providerModels.groq || 'llama-3.3-70b-versatile'}
+                  <span className="text-[10px] text-slate-600 font-mono flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    <Sparkles className="w-3 h-3 text-emerald-600" />
+                    <span>Auto-Selected: <strong>{providerModels.groq || 'llama-3.3-70b-versatile'}</strong></span>
                   </span>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -1032,7 +1152,7 @@ export const SettingsView: React.FC = () => {
                     className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
                   >
                     {testingProvider === 'groq' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
-                    <span>{testingProvider === 'groq' ? 'Testing...' : 'Test & Validate Key'}</span>
+                    <span>{testingProvider === 'groq' ? 'Detecting Models...' : 'Test & Auto-Select Model'}</span>
                   </button>
                 </div>
                 {keyTestResults.groq && (
