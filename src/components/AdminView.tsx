@@ -744,6 +744,32 @@ export const AdminView: React.FC = () => {
     }
   };
 
+  const handleValidateAllKeys = async () => {
+    setValidatingKeys(true);
+    setActionSuccessMsg(null);
+    setActionErrorMsg(null);
+    try {
+      const res = await fetch('/api/admin/ai-tokens/validate-all', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': user.email || '',
+        },
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setActionSuccessMsg('Completed real-time validation across all AI providers!');
+        fetchAiTokenStats();
+      } else {
+        setActionErrorMsg(data.error || 'Failed to validate API keys.');
+      }
+    } catch (err: any) {
+      setActionErrorMsg(err.message || 'Error validating API keys.');
+    } finally {
+      setValidatingKeys(false);
+    }
+  };
+
   const handleRefillTokens = async (modelId?: string, amount?: number) => {
     try {
       const res = await fetch('/api/admin/ai-tokens/refill', {
@@ -2342,7 +2368,11 @@ export const AdminView: React.FC = () => {
                             )}
                           </div>
 
-                          {isActive ? (
+                          {m.status === 'invalid_key' ? (
+                            <span className="text-[10px] font-bold text-rose-800 bg-rose-50 px-2 py-0.5 rounded border border-rose-300 flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3 text-rose-600" /> INVALID KEY
+                            </span>
+                          ) : isActive ? (
                             isDepleted ? (
                               <span className="text-[10px] font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded border border-rose-300 flex items-center gap-1">
                                 <AlertTriangle className="w-3 h-3 text-rose-600" /> DEPLETED
@@ -2368,6 +2398,12 @@ export const AdminView: React.FC = () => {
                           <span className="text-[10px] font-mono text-slate-400 block mt-0.5">Model ID: {m.id}</span>
                         </div>
 
+                        {m.validationError && (
+                          <div className="p-2 bg-rose-50 border border-rose-200 rounded-lg text-[11px] text-rose-700 leading-tight">
+                            <span className="font-bold">Error:</span> {m.validationError}
+                          </div>
+                        )}
+
                         {/* Token Bar & Stats */}
                         <div className="space-y-1.5 pt-1">
                           <div className="flex items-center justify-between text-[11px] font-mono">
@@ -2379,7 +2415,7 @@ export const AdminView: React.FC = () => {
                           <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all ${
-                                isDepleted
+                                isDepleted || m.status === 'invalid_key'
                                   ? 'bg-rose-500'
                                   : isLow
                                   ? 'bg-amber-500'
@@ -2396,6 +2432,8 @@ export const AdminView: React.FC = () => {
                                 <span>Used: {(m.usedTokens / 1000000).toFixed(2)}M ({usedPct}%)</span>
                                 <span>Quota: {(m.allocatedTokens / 1000000).toFixed(1)}M</span>
                               </>
+                            ) : m.status === 'invalid_key' ? (
+                              <span className="text-rose-700 font-medium">Authentication failed with provider</span>
                             ) : (
                               <span className="text-amber-700 font-medium">Add API key below to activate tokens</span>
                             )}
@@ -2495,7 +2533,16 @@ export const AdminView: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 font-mono">
+                <button
+                  type="button"
+                  onClick={handleValidateAllKeys}
+                  disabled={validatingKeys}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-semibold rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${validatingKeys ? 'animate-spin text-[#059669]' : 'text-slate-600'}`} />
+                  <span>{validatingKeys ? 'Testing Providers...' : 'Test All Live Keys'}</span>
+                </button>
+                <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-200 font-mono">
                   6 Providers Configured
                 </span>
               </div>

@@ -65,11 +65,61 @@ export async function saveBusinessProfile(data: any) {
 // --- App Settings ---
 export async function getSettings() {
   try {
-    const records = await db.select().from(schema.settingsTable).limit(1);
+    const records = await db.select().from(schema.settingsTable).where(eq(schema.settingsTable.id, 'settings_main')).limit(1);
     return records[0] || null;
   } catch (err) {
     console.error('Error fetching settings:', err);
     return null;
+  }
+}
+
+export async function getUserSettings(userEmail: string) {
+  if (!userEmail) return null;
+  try {
+    const cleanId = `settings_${userEmail.toLowerCase().trim()}`;
+    const records = await db.select().from(schema.settingsTable).where(eq(schema.settingsTable.id, cleanId)).limit(1);
+    return records[0] || null;
+  } catch (err) {
+    console.error('Error fetching user settings from SQL:', err);
+    return null;
+  }
+}
+
+export async function saveUserSettings(userEmail: string, data: any) {
+  if (!userEmail) return data;
+  try {
+    const cleanId = `settings_${userEmail.toLowerCase().trim()}`;
+    const existing = await db.select().from(schema.settingsTable).where(eq(schema.settingsTable.id, cleanId));
+    if (existing.length > 0) {
+      const updated = await db
+        .update(schema.settingsTable)
+        .set({
+          ...data,
+          id: cleanId,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.settingsTable.id, cleanId))
+        .returning();
+      return updated[0];
+    } else {
+      const inserted = await db
+        .insert(schema.settingsTable)
+        .values({
+          id: cleanId,
+          activeProvider: data.activeProvider || 'gemini',
+          providerKeys: data.providerKeys || {},
+          theme: data.theme || 'dark',
+          autoSave: data.autoSave !== undefined ? data.autoSave : true,
+          defaultCurrency: data.defaultCurrency || 'USD',
+          defaultTaxRate: data.defaultTaxRate || 0,
+          updatedAt: new Date(),
+        })
+        .returning();
+      return inserted[0];
+    }
+  } catch (err) {
+    console.error('Error saving user settings to SQL:', err);
+    return data;
   }
 }
 

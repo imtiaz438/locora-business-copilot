@@ -12,15 +12,17 @@ import {
   CheckCircle2,
   Trophy,
   ArrowRightLeft,
+  AlertCircle,
 } from 'lucide-react';
 
 export const WebsiteReviewView: React.FC = () => {
-  const { businessProfile, latestWebsiteAudit, setLatestWebsiteAudit, settings, user, updateUser, logActivity, setCheckoutModalPlan } = useApp();
+  const { businessProfile, latestWebsiteAudit, setLatestWebsiteAudit, settings, user, updateUser, logActivity, setCheckoutModalPlan, setActiveTab } = useApp();
 
   const [mode, setMode] = useState<'single' | 'competitor'>('single');
   const [url, setUrl] = useState(businessProfile.website || 'locora.ai');
   const [competitorUrl, setCompetitorUrl] = useState('competitor-example.com');
   const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   // Competitor state
   const [competitorAudit, setCompetitorAudit] = useState<WebsiteAuditResult | null>(null);
@@ -30,6 +32,7 @@ export const WebsiteReviewView: React.FC = () => {
     if (!url || loading) return;
 
     setLoading(true);
+    setApiError(null);
 
     try {
       if (mode === 'single') {
@@ -87,7 +90,7 @@ export const WebsiteReviewView: React.FC = () => {
         logActivity('competitor', 'Ran Competitor Snapshot', `Compared ${url} vs ${competitorUrl}`);
       }
     } catch (err: any) {
-      alert(`Error: ${err.message || 'Audit failed'}`);
+      setApiError(err.message || 'Audit failed');
     } finally {
       setLoading(false);
     }
@@ -149,6 +152,39 @@ export const WebsiteReviewView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* API Error Notification */}
+      {apiError && (
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-start justify-between gap-3 text-rose-900 shadow-sm animate-in fade-in">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+            <div>
+              <div className="font-bold text-sm text-rose-950">AI Model Error / Invalid Key</div>
+              <p className="text-xs text-rose-800 mt-1 leading-relaxed">{apiError}</p>
+              <div className="mt-2 text-[11px] text-rose-600 font-medium">
+                Note: No workspace credits were deducted. Please verify your API key in settings.
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab('settings')}
+              className="text-xs font-semibold px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors shadow-sm"
+            >
+              Open AI Settings
+            </button>
+            <button
+              type="button"
+              onClick={() => setApiError(null)}
+              className="text-rose-400 hover:text-rose-700 p-1 text-xs transition-colors"
+              title="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* URL Input Form */}
       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs">

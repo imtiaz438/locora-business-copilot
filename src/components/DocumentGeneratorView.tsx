@@ -22,6 +22,7 @@ import {
   Globe,
   HelpCircle,
   Languages,
+  AlertCircle,
 } from 'lucide-react';
 
 interface DocTypeConfig {
@@ -50,7 +51,7 @@ const DOC_TYPES: DocTypeConfig[] = [
 ];
 
 export const DocumentGeneratorView: React.FC = () => {
-  const { documents, addDocument, deleteDocument, businessProfile, settings, user, hasEnoughCredits, consumeAiCredit, updateUser } = useApp();
+  const { documents, addDocument, deleteDocument, businessProfile, settings, user, hasEnoughCredits, consumeAiCredit, updateUser, setActiveTab } = useApp();
 
   const [selectedType, setSelectedType] = useState<DocumentType>('email');
   const [prompt, setPrompt] = useState('');
@@ -61,6 +62,7 @@ export const DocumentGeneratorView: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [outputContent, setOutputContent] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const activeDocConfig = DOC_TYPES.find((d) => d.type === selectedType) || DOC_TYPES[0];
 
@@ -71,6 +73,7 @@ export const DocumentGeneratorView: React.FC = () => {
     if (!hasEnoughCredits(2)) return;
 
     setLoading(true);
+    setApiError(null);
 
     try {
       const fullPrompt = `${prompt}\n\nLanguage Instruction: Generate the output strictly in ${language}.`;
@@ -109,7 +112,7 @@ export const DocumentGeneratorView: React.FC = () => {
         tone,
       });
     } catch (err: any) {
-      alert(`Error: ${err.message || 'Generation failed'}`);
+      setApiError(err.message || 'Generation failed');
     } finally {
       setLoading(false);
     }
@@ -134,6 +137,39 @@ export const DocumentGeneratorView: React.FC = () => {
           Instantly generate emails, social media posts, blog articles, meeting summaries, marketing plans, and web copy.
         </p>
       </div>
+
+      {/* API Error Notification */}
+      {apiError && (
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-start justify-between gap-3 text-rose-900 shadow-sm animate-in fade-in">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+            <div>
+              <div className="font-bold text-sm text-rose-950">AI Model Error / Invalid Key</div>
+              <p className="text-xs text-rose-800 mt-1 leading-relaxed">{apiError}</p>
+              <div className="mt-2 text-[11px] text-rose-600 font-medium">
+                Note: No workspace credits were deducted. Please verify your API key in settings.
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab('settings')}
+              className="text-xs font-semibold px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors shadow-sm"
+            >
+              Open AI Settings
+            </button>
+            <button
+              type="button"
+              onClick={() => setApiError(null)}
+              className="text-rose-400 hover:text-rose-700 p-1 text-xs transition-colors"
+              title="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 15 Document Types Selector Bar */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">

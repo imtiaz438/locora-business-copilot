@@ -10,10 +10,11 @@ import {
   DollarSign,
   Copy,
   Check,
+  AlertCircle,
 } from 'lucide-react';
 
 export const MarketingPlannerView: React.FC = () => {
-  const { businessProfile, settings, user, hasEnoughCredits, consumeAiCredit, updateUser } = useApp();
+  const { businessProfile, settings, user, hasEnoughCredits, consumeAiCredit, updateUser, setActiveTab } = useApp();
 
   const [goals, setGoals] = useState('Acquire 10 new local service retainer clients and increase Google Business profile lead calls by 30%');
   const [targetAudience, setTargetAudience] = useState(businessProfile.targetAudience || 'Local business owners in Austin TX');
@@ -23,6 +24,7 @@ export const MarketingPlannerView: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [planContent, setPlanContent] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const handleGeneratePlan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +32,7 @@ export const MarketingPlannerView: React.FC = () => {
     if (!hasEnoughCredits(5)) return;
 
     setLoading(true);
+    setApiError(null);
 
     try {
       const response = await fetch('/api/ai/generate-marketing-plan', {
@@ -57,7 +60,7 @@ export const MarketingPlannerView: React.FC = () => {
 
       setPlanContent(data.content);
     } catch (err: any) {
-      alert(`Error: ${err.message || 'Generation failed'}`);
+      setApiError(err.message || 'Generation failed');
     } finally {
       setLoading(false);
     }
@@ -82,6 +85,39 @@ export const MarketingPlannerView: React.FC = () => {
           Generate customized 30-day action plans, 90-day growth roadmaps, campaign concepts, and seasonal promotion calendars.
         </p>
       </div>
+
+      {/* API Error Notification */}
+      {apiError && (
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-start justify-between gap-3 text-rose-900 shadow-sm animate-in fade-in">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+            <div>
+              <div className="font-bold text-sm text-rose-950">AI Model Error / Invalid Key</div>
+              <p className="text-xs text-rose-800 mt-1 leading-relaxed">{apiError}</p>
+              <div className="mt-2 text-[11px] text-rose-600 font-medium">
+                Note: No workspace credits were deducted. Please verify your API key in settings.
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab('settings')}
+              className="text-xs font-semibold px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors shadow-sm"
+            >
+              Open AI Settings
+            </button>
+            <button
+              type="button"
+              onClick={() => setApiError(null)}
+              className="text-rose-400 hover:text-rose-700 p-1 text-xs transition-colors"
+              title="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       <LockedFeature
         requiredPlan="pro"

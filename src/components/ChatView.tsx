@@ -12,6 +12,9 @@ import {
   ChevronRight,
   BookOpen,
   Cpu,
+  AlertTriangle,
+  Key,
+  ShieldCheck,
 } from 'lucide-react';
 import { getProviderConfig } from '../services/aiProvider';
 
@@ -58,6 +61,7 @@ export const ChatView: React.FC = () => {
     hasEnoughCredits,
     consumeAiCredit,
     updateUser,
+    setActiveTab,
   } = useApp();
 
   const [input, setInput] = useState('');
@@ -316,6 +320,8 @@ export const ChatView: React.FC = () => {
 
           {convMessages.map((msg) => {
             const isUser = msg.sender === 'user';
+            const isError = !isUser && (msg.text.startsWith('⚠️ Error:') || msg.text.includes('API key is invalid') || msg.text.includes('API Key is invalid') || msg.text.includes('API Error:'));
+
             return (
               <div
                 key={msg.id}
@@ -325,16 +331,20 @@ export const ChatView: React.FC = () => {
                   className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-bold text-xs ${
                     isUser
                       ? 'bg-slate-900'
+                      : isError
+                      ? 'bg-rose-600'
                       : 'bg-[#059669]'
                   }`}
                 >
-                  {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                  {isUser ? <User className="w-4 h-4" /> : isError ? <AlertTriangle className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                 </div>
 
                 <div
                   className={`p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap font-sans ${
                     isUser
                       ? 'bg-[#059669] text-white rounded-tr-none shadow-2xs'
+                      : isError
+                      ? 'bg-rose-50 border border-rose-200 text-rose-900 rounded-tl-none shadow-2xs space-y-3'
                       : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none shadow-2xs'
                   }`}
                 >
@@ -344,7 +354,38 @@ export const ChatView: React.FC = () => {
                       <span>{msg.contextAttached.label}</span>
                     </div>
                   )}
-                  {msg.text}
+
+                  {isError ? (
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-2">
+                        <div className="p-1 rounded bg-rose-200/60 text-rose-800 flex-shrink-0 mt-0.5">
+                          <AlertTriangle className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-xs text-rose-950 font-heading">AI Provider Execution Error</p>
+                          <p className="text-xs text-rose-800 mt-0.5 whitespace-pre-wrap">{msg.text.replace('⚠️ Error: ', '')}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-rose-200/80">
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>0 AI Credits Deducted (Balance Protected)</span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('settings')}
+                          className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                        >
+                          <Key className="w-3 h-3" />
+                          <span>Update API Key in Settings</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    msg.text
+                  )}
                 </div>
               </div>
             );

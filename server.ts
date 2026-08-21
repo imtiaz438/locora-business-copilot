@@ -353,6 +353,7 @@ const USER_PROFILES_FILE = path.resolve(process.cwd(), 'data', 'user_profiles.js
 const USER_SETTINGS_FILE = path.resolve(process.cwd(), 'data', 'user_settings.json');
 const USER_WORKSPACE_DATA_FILE = path.resolve(process.cwd(), 'data', 'user_workspace_data.json');
 const SETTINGS_FILE = path.resolve(process.cwd(), 'data', 'settings.json');
+const MODEL_QUOTAS_FILE = path.resolve(process.cwd(), 'data', 'model_quotas.json');
 
 const transactionsDb = new Map<string, any>();
 
@@ -680,7 +681,10 @@ interface AiModelTokenQuota {
   remainingTokens: number;
   apiKeyEnvVar: string;
   hasCustomKey: boolean;
-  status: 'active' | 'warning' | 'exhausted' | 'inactive';
+  status: 'active' | 'warning' | 'exhausted' | 'inactive' | 'invalid_key';
+  validationError?: string;
+  lastValidated?: string;
+  badge?: string;
 }
 
 function hasEnvKeyForModel(envVar: string): boolean {
@@ -723,6 +727,7 @@ const DEFAULT_MODEL_POOLS: Record<string, { name: string; provider: string; envV
 };
 
 const aiModelQuotas = new Map<string, AiModelTokenQuota>();
+const providerKeyValidationStatus = new Map<string, { valid: boolean; error?: string; warning?: string; testedAt: string; modelDetected?: string }>();
 
 async function validateApiKey(provider: string, apiKey: string): Promise<{ valid: boolean; error?: string; warning?: string; model?: string }> {
   if (!apiKey || !apiKey.trim()) {
@@ -745,11 +750,14 @@ async function validateApiKey(provider: string, apiKey: string): Promise<{ valid
       }
       const data = await res.json().catch(() => ({}));
       const errMsg = data?.error?.message || `HTTP ${res.status} ${res.statusText}`;
-      if (errMsg.includes('User location is not supported') || errMsg.includes('FAILED_PRECONDITION') || res.status === 400) {
+      if (errMsg.includes('API_KEY_INVALID') || errMsg.includes('API key not valid') || res.status === 400 || res.status === 401 || res.status === 403) {
+        return { valid: false, error: `Google Gemini API Key is invalid or unauthorized: ${errMsg}` };
+      }
+      if (errMsg.includes('User location is not supported') || errMsg.includes('FAILED_PRECONDITION')) {
         return {
           valid: true,
           model: 'gemini-2.5-flash',
-          warning: 'Google API key verified. Note: Google restricts direct free API calls from your current region/IP. Locora will seamlessly use its intelligent fallback engine or your custom billing key.',
+          warning: 'Google API key verified. Note: Google restricts direct free API calls from your current region/IP.',
         };
       }
       return { valid: false, error: `Google Gemini API key validation failed: ${errMsg}` };
@@ -766,7 +774,7 @@ async function validateApiKey(provider: string, apiKey: string): Promise<{ valid
       }
       const data = await res.json().catch(() => ({}));
       const errMsg = data?.error?.message || `HTTP ${res.status} ${res.statusText}`;
-      return { valid: false, error: `OpenAI API key validation failed: ${errMsg}` };
+      return { valid: false, error: `OpenAI API Key validation failed: ${errMsg}` };
     }
 
     if (prov === 'claude' || prov === 'anthropic') {
@@ -783,7 +791,7 @@ async function validateApiKey(provider: string, apiKey: string): Promise<{ valid
       }
       const data = await res.json().catch(() => ({}));
       const errMsg = data?.error?.message || `HTTP ${res.status} ${res.statusText}`;
-      return { valid: false, error: `Anthropic Claude API key validation failed: ${errMsg}` };
+      return { valid: false, error: `Anthropic Claude API Key validation failed: ${errMsg}` };
     }
 
     if (prov === 'perplexity') {
@@ -797,7 +805,7 @@ async function validateApiKey(provider: string, apiKey: string): Promise<{ valid
       }
       const data = await res.json().catch(() => ({}));
       const errMsg = data?.error?.message || `HTTP ${res.status} ${res.statusText}`;
-      return { valid: false, error: `Perplexity API key validation failed: ${errMsg}` };
+      return { valid: false, error: `Perplexity API Key validation failed: ${errMsg}` };
     }
 
     if (prov === 'deepseek') {
@@ -811,7 +819,7 @@ async function validateApiKey(provider: string, apiKey: string): Promise<{ valid
       }
       const data = await res.json().catch(() => ({}));
       const errMsg = data?.error?.message || `HTTP ${res.status} ${res.statusText}`;
-      return { valid: false, error: `DeepSeek API key validation failed: ${errMsg}` };
+      return { valid: false, error: `DeepSeek API Key validation failed: ${errMsg}` };
     }
 
     if (prov === 'groq') {
@@ -825,7 +833,7 @@ async function validateApiKey(provider: string, apiKey: string): Promise<{ valid
       }
       const data = await res.json().catch(() => ({}));
       const errMsg = data?.error?.message || `HTTP ${res.status} ${res.statusText}`;
-      return { valid: false, error: `Groq API key validation failed: ${errMsg}` };
+      return { valid: false, error: `Groq API Key validation failed: ${errMsg}` };
     }
 
     clearTimeout(timeoutId);
@@ -839,6 +847,105 @@ async function validateApiKey(provider: string, apiKey: string): Promise<{ valid
   }
 }
 
+function updateModelQuotasFromValidation() {
+  Object.entries(DEFAULT_MODEL_POOLS).forEach(([id, meta]) => {
+    const prov = meta.provider.toLowerCase().includes('google') ? 'gemini' :
+      meta.provider.toLowerCase().includes('openai') ? 'openai' :
+      meta.provider.toLowerCase().includes('anthropic') ? 'anthropic' :
+      meta.provider.toLowerCase().includes('perplexity') ? 'perplexity' :
+      meta.provider.toLowerCase().includes('deepseek') ? 'deepseek' :
+      'groq';
+
+    const valStatus = providerKeyValidationStatus.get(prov);
+    const keyExists = hasEnvKeyForModel(meta.envVar);
+
+    const model = aiModelQuotas.get(id) || {
+      id,
+      name: meta.name,
+      provider: meta.provider,
+      allocatedTokens: 0,
+      usedTokens: 0,
+      remainingTokens: 0,
+      apiKeyEnvVar: meta.envVar,
+      hasCustomKey: false,
+      status: 'inactive' as const,
+      badge: meta.badge,
+    };
+
+    if (!keyExists) {
+      model.hasCustomKey = false;
+      model.allocatedTokens = 0;
+      model.remainingTokens = 0;
+      model.status = 'inactive';
+      model.validationError = undefined;
+    } else if (valStatus && !valStatus.valid) {
+      model.hasCustomKey = false;
+      model.allocatedTokens = 0;
+      model.remainingTokens = 0;
+      model.status = 'invalid_key';
+      model.validationError = valStatus.error || 'API Key verification failed with provider.';
+      model.lastValidated = valStatus.testedAt;
+    } else if (valStatus && valStatus.valid) {
+      model.hasCustomKey = true;
+      if (model.allocatedTokens === 0) {
+        model.allocatedTokens = meta.defaultQuota;
+      }
+      model.remainingTokens = Math.max(0, model.allocatedTokens - model.usedTokens);
+      model.status = model.remainingTokens <= 0 ? 'exhausted' : model.remainingTokens < model.allocatedTokens * 0.1 ? 'warning' : 'active';
+      model.validationError = undefined;
+      model.lastValidated = valStatus.testedAt;
+    } else {
+      // Key present, waiting for validation
+      model.hasCustomKey = true;
+      if (model.allocatedTokens === 0) {
+        model.allocatedTokens = meta.defaultQuota;
+      }
+      model.remainingTokens = Math.max(0, model.allocatedTokens - model.usedTokens);
+      model.status = 'active';
+    }
+
+    aiModelQuotas.set(id, model);
+  });
+  saveModelQuotasToDisk();
+}
+
+async function validateAllConfiguredKeys(): Promise<void> {
+  const providersToTest = [
+    { provider: 'gemini', envVar: 'GEMINI_API_KEY', label: 'Google Gemini' },
+    { provider: 'openai', envVar: 'OPENAI_API_KEY', label: 'OpenAI' },
+    { provider: 'anthropic', envVar: 'ANTHROPIC_API_KEY', label: 'Anthropic Claude' },
+    { provider: 'perplexity', envVar: 'PERPLEXITY_API_KEY', label: 'Perplexity AI' },
+    { provider: 'deepseek', envVar: 'DEEPSEEK_API_KEY', label: 'DeepSeek' },
+    { provider: 'groq', envVar: 'GROQ_API_KEY', label: 'Groq LPU' },
+  ];
+
+  for (const item of providersToTest) {
+    const key = process.env[item.envVar];
+    if (key && key.trim()) {
+      try {
+        const res = await validateApiKey(item.provider, key.trim());
+        providerKeyValidationStatus.set(item.provider, {
+          valid: res.valid,
+          error: res.error,
+          warning: res.warning,
+          testedAt: new Date().toISOString(),
+          modelDetected: res.model,
+        });
+      } catch (err: any) {
+        providerKeyValidationStatus.set(item.provider, {
+          valid: false,
+          error: err.message,
+          testedAt: new Date().toISOString(),
+        });
+      }
+    } else {
+      providerKeyValidationStatus.delete(item.provider);
+    }
+  }
+
+  updateModelQuotasFromValidation();
+}
+
 function syncProviderKeysToEnv(keys: any) {
   if (!keys || typeof keys !== 'object') return;
   if (keys.gemini && keys.gemini.trim()) process.env.GEMINI_API_KEY = keys.gemini.trim();
@@ -850,33 +957,38 @@ function syncProviderKeysToEnv(keys: any) {
   if (keys.deepseek && keys.deepseek.trim()) process.env.DEEPSEEK_API_KEY = keys.deepseek.trim();
   if (keys.groq && keys.groq.trim()) process.env.GROQ_API_KEY = keys.groq.trim();
 
-  Object.entries(DEFAULT_MODEL_POOLS).forEach(([id, meta]) => {
-    const model = aiModelQuotas.get(id) || {
-      id,
-      name: meta.name,
-      provider: meta.provider,
-      allocatedTokens: 0,
-      usedTokens: 0,
-      remainingTokens: 0,
-      apiKeyEnvVar: meta.envVar,
-      hasCustomKey: false,
-      status: 'inactive' as const,
-    };
-    const keyPresent = hasEnvKeyForModel(meta.envVar);
-    model.hasCustomKey = keyPresent;
-    if (keyPresent) {
-      if (model.allocatedTokens === 0) {
-        model.allocatedTokens = meta.defaultQuota;
-        model.remainingTokens = meta.defaultQuota - model.usedTokens;
-      }
-      model.status = model.remainingTokens <= 0 ? 'exhausted' : model.remainingTokens < model.allocatedTokens * 0.1 ? 'warning' : 'active';
-    } else {
-      model.allocatedTokens = 0;
-      model.remainingTokens = 0;
-      model.status = 'inactive';
+  updateModelQuotasFromValidation();
+  // Trigger background live validation
+  validateAllConfiguredKeys().catch(() => {});
+}
+
+function saveModelQuotasToDisk() {
+  ensureDataDir();
+  try {
+    const obj: Record<string, any> = {};
+    aiModelQuotas.forEach((val, key) => {
+      obj[key] = val;
+    });
+    fs.writeFileSync(MODEL_QUOTAS_FILE, JSON.stringify(obj, null, 2), 'utf-8');
+  } catch (e: any) {
+    console.error('[Database] Failed to save model quotas to disk:', e.message);
+  }
+}
+
+function loadModelQuotasFromDisk() {
+  ensureDataDir();
+  if (fs.existsSync(MODEL_QUOTAS_FILE)) {
+    try {
+      const content = fs.readFileSync(MODEL_QUOTAS_FILE, 'utf-8');
+      const obj = JSON.parse(content);
+      Object.keys(obj).forEach((key) => {
+        aiModelQuotas.set(key, obj[key]);
+      });
+      console.log(`[Database] Loaded real token quotas for ${aiModelQuotas.size} AI models from disk storage.`);
+    } catch (e: any) {
+      console.error('[Database] Failed to load model quotas from disk:', e.message);
     }
-    aiModelQuotas.set(id, model);
-  });
+  }
 }
 
 function loadWorkspaceStateFromDisk() {
@@ -932,6 +1044,7 @@ const seedDefaultUsers = () => {
   loadUserProfilesFromDisk();
   loadUserSettingsFromDisk();
   loadUserWorkspaceDataFromDisk();
+  loadModelQuotasFromDisk();
 
   const defaultAccounts: UserRecord[] = [
     {
@@ -5027,10 +5140,25 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
   const userSettings = cleanEmail ? getUserSettingsDiskStore(cleanEmail) : null;
 
   const effectiveProvider = (options.provider || userSettings?.activeProvider || 'gemini').toLowerCase();
-  const customKey = options.providerKey || userSettings?.providerKeys?.[effectiveProvider] || '';
+  const adminKey = (storedAppSettings?.providerKeys as any)?.[effectiveProvider] ||
+    (effectiveProvider === 'claude' ? (storedAppSettings?.providerKeys as any)?.anthropic : undefined) ||
+    (effectiveProvider === 'anthropic' ? (storedAppSettings?.providerKeys as any)?.claude : undefined) || '';
+  const customKey = options.providerKey || userSettings?.providerKeys?.[effectiveProvider] || adminKey || '';
   const isCustomKey = !!(customKey && customKey.trim().length > 0);
 
   const selectedModel = options.modelVersion || userSettings?.providerModels?.[effectiveProvider] || userSettings?.activeModelVersion || '';
+
+  const providerDisplayNames: Record<string, string> = {
+    gemini: 'Google Gemini',
+    openai: 'OpenAI (GPT-5.6 / 4o)',
+    claude: 'Anthropic Claude (3.7 / Opus / Haiku)',
+    anthropic: 'Anthropic Claude (3.7 / Opus / Haiku)',
+    perplexity: 'Perplexity AI',
+    deepseek: 'DeepSeek',
+    groq: 'Groq LPU',
+  };
+
+  const providerName = providerDisplayNames[effectiveProvider] || effectiveProvider.toUpperCase();
 
   let text = '';
   let providerUsed = effectiveProvider;
@@ -5042,14 +5170,19 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
     effectiveProvider === 'groq' ? 'llama-3.3-70b-versatile' :
     'sonar-pro'
   );
-  let tokensUsed = 450;
+  let tokensUsed = 0;
   let warning: string | undefined;
 
-  try {
-    if (effectiveProvider === 'gemini') {
-      const targetModel = selectedModel || 'gemini-2.5-flash';
-      modelUsed = targetModel;
-      const ai = getGenAIClient(customKey);
+  if (effectiveProvider === 'gemini') {
+    const targetModel = selectedModel || 'gemini-2.5-flash';
+    modelUsed = targetModel;
+    const apiKey = customKey || process.env.GEMINI_API_KEY;
+    if (!apiKey || !apiKey.trim()) {
+      throw new Error(`No Google Gemini API key configured. Please enter your Gemini API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
+    }
+
+    try {
+      const ai = getGenAIClient(apiKey.trim());
 
       let contents: any[] = [];
       if (options.messages && options.messages.length > 0) {
@@ -5071,196 +5204,225 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
       });
 
       text = response.text || '';
-      const actualTokens = (response as any)?.usageMetadata?.totalTokenCount || 550;
+      if (!text) {
+        throw new Error('Google Gemini returned an empty response. Please verify your prompt or model status.');
+      }
+
+      const meta = (response as any)?.usageMetadata;
+      const actualTokens = meta?.totalTokenCount || ((meta?.promptTokenCount || 0) + (meta?.candidatesTokenCount || 0)) || Math.max(150, Math.ceil(text.length / 3.8));
       tokensUsed = actualTokens;
       recordRealModelTokenUsage(targetModel, actualTokens);
-    } else if (effectiveProvider === 'openai' && (customKey || process.env.OPENAI_API_KEY)) {
-      const apiKey = customKey || process.env.OPENAI_API_KEY!;
-      const targetModel = selectedModel || 'gpt-4o';
-      modelUsed = targetModel;
+    } catch (err: any) {
+      const errMsg = err?.message || err?.toString() || 'Unknown Google Gemini Error';
+      throw new Error(`Google Gemini Error: ${errMsg}`);
+    }
+  } else if (effectiveProvider === 'openai') {
+    const apiKey = customKey || process.env.OPENAI_API_KEY;
+    if (!apiKey || !apiKey.trim()) {
+      throw new Error(`No OpenAI API key configured. Please enter your OpenAI API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
+    }
+    const targetModel = selectedModel || 'gpt-4o';
+    modelUsed = targetModel;
 
-      const msgs: any[] = [];
-      if (options.systemInstruction) {
-        msgs.push({ role: 'system', content: options.systemInstruction });
-      }
-      if (options.messages && options.messages.length > 0) {
-        options.messages.forEach((m: any) => {
-          msgs.push({
-            role: m.sender === 'user' || m.role === 'user' ? 'user' : 'assistant',
-            content: m.text || m.content || '',
-          });
+    const msgs: any[] = [];
+    if (options.systemInstruction) {
+      msgs.push({ role: 'system', content: options.systemInstruction });
+    }
+    if (options.messages && options.messages.length > 0) {
+      options.messages.forEach((m: any) => {
+        msgs.push({
+          role: m.sender === 'user' || m.role === 'user' ? 'user' : 'assistant',
+          content: m.text || m.content || '',
         });
-      } else {
-        msgs.push({ role: 'user', content: options.prompt || 'Hello' });
-      }
-
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({
-          model: targetModel,
-          messages: msgs,
-          temperature: options.temperature ?? 0.7,
-        }),
       });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson?.error?.message || `OpenAI request failed: HTTP ${res.status}`);
-      }
-      const data = await res.json();
-      text = data.choices?.[0]?.message?.content || '';
-      tokensUsed = data.usage?.total_tokens || 450;
-      recordRealModelTokenUsage(targetModel, tokensUsed);
-    } else if ((effectiveProvider === 'claude' || effectiveProvider === 'anthropic') && (customKey || process.env.ANTHROPIC_API_KEY)) {
-      const apiKey = customKey || process.env.ANTHROPIC_API_KEY!;
-      const targetModel = selectedModel || 'claude-3-7-sonnet-20250219';
-      modelUsed = targetModel;
-
-      const msgs: any[] = [];
-      if (options.messages && options.messages.length > 0) {
-        options.messages.forEach((m: any) => {
-          msgs.push({
-            role: m.sender === 'user' || m.role === 'user' ? 'user' : 'assistant',
-            content: m.text || m.content || '',
-          });
-        });
-      } else {
-        msgs.push({ role: 'user', content: options.prompt || 'Hello' });
-      }
-
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: targetModel,
-          max_tokens: 4096,
-          system: options.systemInstruction,
-          messages: msgs,
-          temperature: options.temperature ?? 0.7,
-        }),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson?.error?.message || `Anthropic request failed: HTTP ${res.status}`);
-      }
-      const data = await res.json();
-      text = data.content?.[0]?.text || '';
-      tokensUsed = (data.usage?.input_tokens || 200) + (data.usage?.output_tokens || 250);
-      recordRealModelTokenUsage(targetModel, tokensUsed);
-    } else if (effectiveProvider === 'perplexity' && (customKey || process.env.PERPLEXITY_API_KEY)) {
-      const apiKey = customKey || process.env.PERPLEXITY_API_KEY!;
-      const targetModel = selectedModel || 'sonar-pro';
-      modelUsed = targetModel;
-
-      const msgs: any[] = [];
-      if (options.systemInstruction) msgs.push({ role: 'system', content: options.systemInstruction });
-      if (options.messages && options.messages.length > 0) {
-        options.messages.forEach((m: any) => {
-          msgs.push({ role: m.sender === 'user' || m.role === 'user' ? 'user' : 'assistant', content: m.text || m.content || '' });
-        });
-      } else {
-        msgs.push({ role: 'user', content: options.prompt || 'Hello' });
-      }
-
-      const res = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: targetModel, messages: msgs }),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson?.error?.message || `Perplexity request failed: HTTP ${res.status}`);
-      }
-      const data = await res.json();
-      text = data.choices?.[0]?.message?.content || '';
-      tokensUsed = data.usage?.total_tokens || 400;
-      recordRealModelTokenUsage(targetModel, tokensUsed);
-    } else if (effectiveProvider === 'deepseek' && (customKey || process.env.DEEPSEEK_API_KEY)) {
-      const apiKey = customKey || process.env.DEEPSEEK_API_KEY!;
-      const targetModel = selectedModel || 'deepseek-chat';
-      modelUsed = targetModel;
-
-      const msgs: any[] = [];
-      if (options.systemInstruction) msgs.push({ role: 'system', content: options.systemInstruction });
-      if (options.messages && options.messages.length > 0) {
-        options.messages.forEach((m: any) => {
-          msgs.push({ role: m.sender === 'user' || m.role === 'user' ? 'user' : 'assistant', content: m.text || m.content || '' });
-        });
-      } else {
-        msgs.push({ role: 'user', content: options.prompt || 'Hello' });
-      }
-
-      const res = await fetch('https://api.deepseek.com/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: targetModel, messages: msgs }),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson?.error?.message || `DeepSeek request failed: HTTP ${res.status}`);
-      }
-      const data = await res.json();
-      text = data.choices?.[0]?.message?.content || '';
-      tokensUsed = data.usage?.total_tokens || 400;
-      recordRealModelTokenUsage(targetModel, tokensUsed);
-    } else if (effectiveProvider === 'groq' && (customKey || process.env.GROQ_API_KEY)) {
-      const apiKey = customKey || process.env.GROQ_API_KEY!;
-      const targetModel = selectedModel || 'llama-3.3-70b-versatile';
-      modelUsed = targetModel;
-
-      const msgs: any[] = [];
-      if (options.systemInstruction) msgs.push({ role: 'system', content: options.systemInstruction });
-      if (options.messages && options.messages.length > 0) {
-        options.messages.forEach((m: any) => {
-          msgs.push({ role: m.sender === 'user' || m.role === 'user' ? 'user' : 'assistant', content: m.text || m.content || '' });
-        });
-      } else {
-        msgs.push({ role: 'user', content: options.prompt || 'Hello' });
-      }
-
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model: targetModel, messages: msgs }),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson?.error?.message || `Groq request failed: HTTP ${res.status}`);
-      }
-      const data = await res.json();
-      text = data.choices?.[0]?.message?.content || '';
-      tokensUsed = data.usage?.total_tokens || 400;
-      recordRealModelTokenUsage(targetModel, tokensUsed);
     } else {
-      const targetModel = selectedModel || 'gemini-2.5-flash';
-      modelUsed = targetModel;
-      const ai = getGenAIClient();
-      const response = await ai.models.generateContent({
+      msgs.push({ role: 'user', content: options.prompt || 'Hello' });
+    }
+
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
+      body: JSON.stringify({
         model: targetModel,
-        contents: options.prompt || 'Hello',
-        config: { systemInstruction: options.systemInstruction },
+        messages: msgs,
+        temperature: options.temperature ?? 0.7,
+      }),
+    });
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
+      throw new Error(`OpenAI API Error: ${msg}`);
+    }
+    const data = await res.json();
+    text = data.choices?.[0]?.message?.content || '';
+    if (!text) {
+      throw new Error('OpenAI returned an empty completion.');
+    }
+    tokensUsed = data.usage?.total_tokens || Math.max(150, Math.ceil(text.length / 3.8));
+    recordRealModelTokenUsage(targetModel, tokensUsed);
+  } else if (effectiveProvider === 'claude' || effectiveProvider === 'anthropic') {
+    const apiKey = customKey || process.env.ANTHROPIC_API_KEY;
+    if (!apiKey || !apiKey.trim()) {
+      throw new Error(`No Anthropic Claude API key configured. Please enter your Claude API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
+    }
+    const targetModel = selectedModel || 'claude-3-7-sonnet-20250219';
+    modelUsed = targetModel;
+
+    const msgs: any[] = [];
+    if (options.messages && options.messages.length > 0) {
+      options.messages.forEach((m: any) => {
+        msgs.push({
+          role: m.sender === 'user' || m.role === 'user' ? 'user' : 'assistant',
+          content: m.text || m.content || '',
+        });
       });
-      text = response.text || '';
+    } else {
+      msgs.push({ role: 'user', content: options.prompt || 'Hello' });
     }
-  } catch (err: any) {
-    console.warn(`[AI Completion Fallback for ${effectiveProvider} / ${modelUsed}]:`, err.message);
-    if (err.message?.includes('User location is not supported') || err.message?.includes('FAILED_PRECONDITION')) {
-      warning = 'Regional policy note: Direct cloud API calls to this model are restricted in your current IP region. Locora Resilient Engine synthesized this output instantly.';
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey.trim(),
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: targetModel,
+        max_tokens: 4096,
+        system: options.systemInstruction,
+        messages: msgs,
+        temperature: options.temperature ?? 0.7,
+      }),
+    });
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
+      throw new Error(`Anthropic Claude API Error: ${msg}`);
     }
-    text = generateIntelligentFallback(options.fallbackType || 'general', options.fallbackPayload || {});
+    const data = await res.json();
+    text = data.content?.[0]?.text || '';
+    if (!text) {
+      throw new Error('Anthropic Claude returned an empty response.');
+    }
+    tokensUsed = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0) || Math.max(150, Math.ceil(text.length / 3.8));
+    recordRealModelTokenUsage(targetModel, tokensUsed);
+  } else if (effectiveProvider === 'perplexity') {
+    const apiKey = customKey || process.env.PERPLEXITY_API_KEY;
+    if (!apiKey || !apiKey.trim()) {
+      throw new Error(`No Perplexity API key configured. Please enter your Perplexity API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
+    }
+    const targetModel = selectedModel || 'sonar-pro';
+    modelUsed = targetModel;
+
+    const msgs: any[] = [];
+    if (options.systemInstruction) msgs.push({ role: 'system', content: options.systemInstruction });
+    if (options.messages && options.messages.length > 0) {
+      options.messages.forEach((m: any) => {
+        msgs.push({ role: m.sender === 'user' || m.role === 'user' ? 'user' : 'assistant', content: m.text || m.content || '' });
+      });
+    } else {
+      msgs.push({ role: 'user', content: options.prompt || 'Hello' });
+    }
+
+    const res = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
+      body: JSON.stringify({ model: targetModel, messages: msgs }),
+    });
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
+      throw new Error(`Perplexity API Error: ${msg}`);
+    }
+    const data = await res.json();
+    text = data.choices?.[0]?.message?.content || '';
+    if (!text) {
+      throw new Error('Perplexity returned an empty completion.');
+    }
+    tokensUsed = data.usage?.total_tokens || Math.max(150, Math.ceil(text.length / 3.8));
+    recordRealModelTokenUsage(targetModel, tokensUsed);
+  } else if (effectiveProvider === 'deepseek') {
+    const apiKey = customKey || process.env.DEEPSEEK_API_KEY;
+    if (!apiKey || !apiKey.trim()) {
+      throw new Error(`No DeepSeek API key configured. Please enter your DeepSeek API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
+    }
+    const targetModel = selectedModel || 'deepseek-chat';
+    modelUsed = targetModel;
+
+    const msgs: any[] = [];
+    if (options.systemInstruction) msgs.push({ role: 'system', content: options.systemInstruction });
+    if (options.messages && options.messages.length > 0) {
+      options.messages.forEach((m: any) => {
+        msgs.push({ role: m.sender === 'user' || m.role === 'user' ? 'user' : 'assistant', content: m.text || m.content || '' });
+      });
+    } else {
+      msgs.push({ role: 'user', content: options.prompt || 'Hello' });
+    }
+
+    const res = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
+      body: JSON.stringify({ model: targetModel, messages: msgs }),
+    });
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
+      throw new Error(`DeepSeek API Error: ${msg}`);
+    }
+    const data = await res.json();
+    text = data.choices?.[0]?.message?.content || '';
+    if (!text) {
+      throw new Error('DeepSeek returned an empty completion.');
+    }
+    tokensUsed = data.usage?.total_tokens || Math.max(150, Math.ceil(text.length / 3.8));
+    recordRealModelTokenUsage(targetModel, tokensUsed);
+  } else if (effectiveProvider === 'groq') {
+    const apiKey = customKey || process.env.GROQ_API_KEY;
+    if (!apiKey || !apiKey.trim()) {
+      throw new Error(`No Groq API key configured. Please enter your Groq API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
+    }
+    const targetModel = selectedModel || 'llama-3.3-70b-versatile';
+    modelUsed = targetModel;
+
+    const msgs: any[] = [];
+    if (options.systemInstruction) msgs.push({ role: 'system', content: options.systemInstruction });
+    if (options.messages && options.messages.length > 0) {
+      options.messages.forEach((m: any) => {
+        msgs.push({ role: m.sender === 'user' || m.role === 'user' ? 'user' : 'assistant', content: m.text || m.content || '' });
+      });
+    } else {
+      msgs.push({ role: 'user', content: options.prompt || 'Hello' });
+    }
+
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
+      body: JSON.stringify({ model: targetModel, messages: msgs }),
+    });
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
+      throw new Error(`Groq API Error: ${msg}`);
+    }
+    const data = await res.json();
+    text = data.choices?.[0]?.message?.content || '';
+    if (!text) {
+      throw new Error('Groq returned an empty completion.');
+    }
+    tokensUsed = data.usage?.total_tokens || Math.max(150, Math.ceil(text.length / 3.8));
+    recordRealModelTokenUsage(targetModel, tokensUsed);
+  } else {
+    throw new Error(`Unsupported AI Provider: "${effectiveProvider}". Supported providers are Gemini, OpenAI, Claude, DeepSeek, Groq, and Perplexity.`);
   }
 
   return {
-    text: text || "I've analyzed your business requirements and prepared the recommendations above.",
+    text: text.trim(),
     providerUsed,
     modelUsed,
     isCustomKey,
@@ -5882,44 +6044,42 @@ Provide a JSON response using EXACTLY these calculated benchmark scores, with cu
 
 // One-Click AI Polish Endpoint
 app.post('/api/ai/polish', async (req, res) => {
-  const { text, mode, providerKey, userEmail } = req.body;
+  const { text, mode, providerKey, userEmail, provider, modelVersion } = req.body;
   try {
-    if (!text) return res.status(400).json({ error: 'Text is required' });
+    if (!text || !text.trim()) return res.status(400).json({ error: 'Text is required for AI Polish' });
 
-    let polishedText = text;
-    try {
-      const ai = getGenAIClient(providerKey);
-      let instruction = 'Improve this copy while maintaining core facts.';
-      if (mode === 'shorter') instruction = 'Make this text significantly shorter, punchier, and remove fluff.';
-      if (mode === 'persuasive') instruction = 'Make this text highly persuasive, engaging, and high-converting with strong emotional hooks.';
-      if (mode === 'formal') instruction = 'Rewrite this text in a formal, executive, professional tone suitable for B2B stakeholders.';
-      if (mode === 'cta') instruction = 'Add a strong, persuasive call-to-action (CTA) to the end of this copy.';
-
-      const prompt = `${instruction}\n\nOriginal Text:\n"${text}"\n\nReturn ONLY the polished revised text without meta-commentary or markdown quotes.`;
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-      });
-
-      polishedText = response.text?.trim() || text;
-    } catch (apiErr: any) {
-      console.warn('[Polish API Fallback Activated]:', apiErr.message);
-      if (mode === 'shorter') {
-        polishedText = text.split('. ').slice(0, 2).join('. ') + (text.includes('.') ? '.' : '');
-      } else if (mode === 'cta') {
-        polishedText = `${text}\n\n👉 Contact our team today or book a complimentary consultation to get started!`;
-      } else if (mode === 'formal') {
-        polishedText = `We are pleased to present the following overview: ${text}. Please let us know how we may further assist your strategic initiatives.`;
-      } else {
-        polishedText = `🚀 ${text} - Contact us today to learn more!`;
-      }
+    const creditCheck = checkUserCredits(userEmail, providerKey, 1);
+    if (!creditCheck.allowed) {
+      return res.status(403).json({ error: 'CREDITS_EXHAUSTED', message: creditCheck.error });
     }
 
-    deductUserCredit(userEmail, 1);
-    res.json({ polishedText });
+    let instruction = 'Improve this copy while maintaining core facts.';
+    if (mode === 'shorter') instruction = 'Make this text significantly shorter, punchier, and remove fluff.';
+    if (mode === 'persuasive') instruction = 'Make this text highly persuasive, engaging, and high-converting with strong emotional hooks.';
+    if (mode === 'formal') instruction = 'Rewrite this text in a formal, executive, professional tone suitable for B2B stakeholders.';
+    if (mode === 'cta') instruction = 'Add a strong, persuasive call-to-action (CTA) to the end of this copy.';
+
+    const completion = await executeAICompletion({
+      provider,
+      modelVersion,
+      providerKey,
+      userEmail,
+      systemInstruction: 'You are an expert copy editor. Return ONLY the polished revised text without meta-commentary or markdown backtick wrappers.',
+      prompt: `${instruction}\n\nOriginal Text:\n"${text}"`,
+      temperature: 0.4,
+    });
+
+    const creditStats = deductUserCredit(userEmail, 1);
+    res.json({
+      polishedText: completion.text,
+      providerUsed: completion.providerUsed,
+      modelUsed: completion.modelUsed,
+      creditsUsed: creditStats.used,
+      creditsRemaining: creditStats.remaining,
+    });
   } catch (error: any) {
     console.error('Polish error:', error);
-    res.status(500).json({ error: error.message || 'Failed to polish text' });
+    res.status(400).json({ error: error.message || 'Failed to polish text' });
   }
 });
 
@@ -6542,16 +6702,30 @@ app.post('/api/admin/delete-user', async (req, res) => {
 
 
 function recordRealModelTokenUsage(modelId: string, tokensConsumed: number) {
-  const model = aiModelQuotas.get(modelId);
-  if (model && model.hasCustomKey) {
-    model.usedTokens += tokensConsumed;
-    model.remainingTokens = Math.max(0, model.allocatedTokens - model.usedTokens);
-    if (model.remainingTokens <= 0) {
-      model.status = 'exhausted';
-    } else if (model.remainingTokens < model.allocatedTokens * 0.1) {
-      model.status = 'warning';
+  let target = aiModelQuotas.get(modelId);
+  if (!target) {
+    for (const [id, model] of aiModelQuotas.entries()) {
+      if (modelId.startsWith(id) || id.startsWith(modelId) || model.name.toLowerCase().includes(modelId.toLowerCase())) {
+        target = model;
+        break;
+      }
     }
-    aiModelQuotas.set(modelId, model);
+  }
+
+  if (target) {
+    target.usedTokens += tokensConsumed;
+    target.remainingTokens = Math.max(0, target.allocatedTokens - target.usedTokens);
+    if (target.allocatedTokens > 0) {
+      if (target.remainingTokens <= 0) {
+        target.status = 'exhausted';
+      } else if (target.remainingTokens < target.allocatedTokens * 0.1) {
+        target.status = 'warning';
+      } else if (target.status !== 'invalid_key') {
+        target.status = 'active';
+      }
+    }
+    aiModelQuotas.set(target.id, target);
+    saveModelQuotasToDisk();
   }
 }
 
@@ -6562,17 +6736,13 @@ app.get('/api/admin/ai-tokens/stats', (req, res) => {
       return res.status(403).json({ error: 'Access Denied. Admin key required.' });
     }
 
-    if (storedAppSettings?.providerKeys) {
-      syncProviderKeysToEnv(storedAppSettings.providerKeys);
-    }
-
     const modelsList = Array.from(aiModelQuotas.values());
     let totalAllocated = 0;
     let totalUsed = 0;
     let activeModels = 0;
 
     modelsList.forEach((m) => {
-      if (m.hasCustomKey) {
+      if (m.hasCustomKey && m.status === 'active') {
         totalAllocated += m.allocatedTokens;
         totalUsed += m.usedTokens;
         activeModels++;
@@ -6584,11 +6754,12 @@ app.get('/api/admin/ai-tokens/stats', (req, res) => {
       summary: {
         totalAllocatedTokens: totalAllocated,
         totalUsedTokens: totalUsed,
-        totalRemainingTokens: totalAllocated - totalUsed,
+        totalRemainingTokens: Math.max(0, totalAllocated - totalUsed),
         utilizationPercentage: totalAllocated > 0 ? ((totalUsed / totalAllocated) * 100).toFixed(2) : '0.00',
         activeModelsCount: activeModels,
       },
       models: modelsList,
+      validationStatus: Object.fromEntries(providerKeyValidationStatus.entries()),
       savedKeys: {
         gemini: storedAppSettings?.providerKeys?.gemini || process.env.GEMINI_API_KEY || '',
         openai: storedAppSettings?.providerKeys?.openai || process.env.OPENAI_API_KEY || '',
@@ -6605,6 +6776,25 @@ app.get('/api/admin/ai-tokens/stats', (req, res) => {
         deepseek: hasEnvKeyForModel('DEEPSEEK_API_KEY'),
         groq: hasEnvKeyForModel('GROQ_API_KEY'),
       },
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin API to Validate All Configured AI Keys in Live Runtime
+app.post('/api/admin/ai-tokens/validate-all', async (req, res) => {
+  try {
+    if (!verifyAdminAccess(req)) {
+      return res.status(403).json({ error: 'Access Denied. Admin key required.' });
+    }
+
+    await validateAllConfiguredKeys();
+    res.json({
+      success: true,
+      message: 'Validated all configured model API keys against live provider endpoints.',
+      validationStatus: Object.fromEntries(providerKeyValidationStatus.entries()),
+      models: Array.from(aiModelQuotas.values()),
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -6628,6 +6818,7 @@ app.post('/api/admin/ai-tokens/refill', (req, res) => {
       model.status = 'active';
       model.hasCustomKey = true;
       aiModelQuotas.set(modelId, model);
+      saveModelQuotasToDisk();
       return res.json({ success: true, message: `Refilled +${refillAmount.toLocaleString()} tokens for ${model.name}`, model, models: Array.from(aiModelQuotas.values()) });
     }
 
@@ -6639,6 +6830,7 @@ app.post('/api/admin/ai-tokens/refill', (req, res) => {
       model.hasCustomKey = true;
       aiModelQuotas.set(id, model);
     });
+    saveModelQuotasToDisk();
 
     res.json({ success: true, message: `Refilled +${refillAmount.toLocaleString()} tokens across all AI models!`, models: Array.from(aiModelQuotas.values()) });
   } catch (err: any) {
@@ -6667,6 +6859,7 @@ app.post('/api/admin/ai-tokens/update-quota', (req, res) => {
     model.remainingTokens = Math.max(0, allocatedTokens - model.usedTokens);
     model.status = model.remainingTokens <= 0 ? 'exhausted' : model.remainingTokens < allocatedTokens * 0.1 ? 'warning' : 'active';
     aiModelQuotas.set(modelId, model);
+    saveModelQuotasToDisk();
 
     res.json({
       success: true,

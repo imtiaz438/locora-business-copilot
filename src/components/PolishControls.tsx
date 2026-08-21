@@ -9,7 +9,7 @@ interface Props {
 }
 
 export const PolishControls: React.FC<Props> = ({ text, onPolish, compact = false }) => {
-  const { consumeAiCredit, hasEnoughCredits, settings, logActivity } = useApp();
+  const { consumeAiCredit, hasEnoughCredits, settings, logActivity, user, updateUser } = useApp();
   const [loading, setLoading] = useState(false);
   const [activeAction, setActiveAction] = useState<string | null>(null);
 
@@ -22,41 +22,35 @@ export const PolishControls: React.FC<Props> = ({ text, onPolish, compact = fals
     setActiveAction(mode);
 
     try {
-      consumeAiCredit(1);
-
       const res = await fetch('/api/ai/polish', {
         method: 'POST',
-        headers: { 'Content-[#059669]': 'application/json', 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text,
           mode,
           provider: settings.activeProvider,
           providerKey: settings.providerKeys[settings.activeProvider],
+          userEmail: user.email,
         }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.polishedText) {
-          onPolish(data.polishedText);
-          logActivity('polish', 'Polished AI Output', `Applied mode: ${mode}`);
-        }
-      } else {
-        // Fallback local transformation if offline or api fails
-        let fallback = text;
-        if (mode === 'shorter') {
-          fallback = text.split('. ').slice(0, Math.max(1, Math.floor(text.split('. ').length / 2))).join('. ') + '.';
-        } else if (mode === 'persuasive') {
-          fallback = `🔥 Proven Results: ${text} Act now to secure guaranteed value!`;
-        } else if (mode === 'formal') {
-          fallback = `Re: Formal Proposal & Overview\n\n${text}\n\nSincerely,\nLocora AI Operations`;
-        } else if (mode === 'cta') {
-          fallback = `${text}\n\n👉 Ready to get started? Reply to this message or schedule a call today!`;
-        }
-        onPolish(fallback);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to polish text');
       }
-    } catch (err) {
-      console.error(err);
+
+      if (typeof data.creditsUsed === 'number') {
+        updateUser({ aiCreditsUsed: data.creditsUsed });
+      } else {
+        consumeAiCredit(1);
+      }
+
+      if (data.polishedText) {
+        onPolish(data.polishedText);
+        logActivity('polish', 'Polished AI Output', `Applied mode: ${mode}`);
+      }
+    } catch (err: any) {
+      alert(`AI Polish Error: ${err.message || 'Failed to polish copy'}`);
     } finally {
       setLoading(false);
       setActiveAction(null);
