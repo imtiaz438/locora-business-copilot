@@ -4,5 +4,41 @@ Disallow: /api/
 Disallow: /admin
 Disallow: /auth/callback
 
+# AI & Answer Engine Optimization (AEO / GEO) Directives
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+# LLM Documentation Standards
+# LLMS-TXT: https://locoraai.com/llms.txt
+# LLMS-FULL-TXT: https://locoraai.com/llms-full.txt
+
 Sitemap: https://locoraai.com/sitemap.xml
 Sitemap: https://www.locoraai.com/sitemap.xml
+

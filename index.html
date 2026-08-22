@@ -50,15 +50,21 @@
     <!-- Paddle.js v2 SDK (Deferred for Low TBT) -->
     <script src="https://cdn.paddle.com/paddle/v2/paddle.js" defer></script>
 
-    <!-- Organization Schema JSON-LD -->
+    <!-- LLMs.txt for AI / Answer Engine Discovery -->
+    <link rel="help" type="text/plain" href="/llms.txt" />
+    <link rel="alternate" type="text/plain" href="/llms-full.txt" title="Full LLM Knowledge Graph" />
+
+    <!-- Organization & Brand Schema JSON-LD -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "Organization",
+        "@id": "https://locoraai.com/#organization",
         "name": "Locora AI",
         "url": "https://locoraai.com",
         "logo": "https://locoraai.com/locora-logo.png",
-        "description": "Locora AI is an enterprise AI Business Operating System and Local SEO Copilot platform designed for agencies and local service businesses.",
+        "image": "https://locoraai.com/locora-logo.png",
+        "description": "Locora AI is an enterprise AI Business Operating System and Local SEO Copilot platform designed for agencies, service businesses, contractors, and healthcare practices.",
         "sameAs": [
           "https://linkedin.com/company/locoraai",
           "https://facebook.com/locoraai",
@@ -73,26 +79,97 @@
       }
     </script>
 
-    <!-- SoftwareApplication Schema JSON-LD -->
+    <!-- SoftwareApplication & Brand Entity Schema JSON-LD -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
+        "@id": "https://locoraai.com/#software",
         "name": "Locora AI Copilot 3.0",
-        "operatingSystem": "Web-Based (Cloud Platform)",
         "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web, Cloud, SaaS",
+        "description": "All-in-one AI Business Operating System & Local SEO Copilot featuring Google Business Profile optimization, website audits, automated client proposals, AI invoicing, and lead CRM.",
+        "brand": {
+          "@type": "Brand",
+          "name": "Locora AI"
+        },
+        "creator": {
+          "@id": "https://locoraai.com/#organization"
+        },
+        "featureList": [
+          "Google Business Profile (GBP) Local SEO Optimization",
+          "Automated 5-Star Review Reply Generator",
+          "LocalBusiness JSON-LD Schema Generator",
+          "Core Web Vitals & Google Lighthouse Website Audit Engine",
+          "Interactive Multi-Tier Client Proposal Builder",
+          "Professional AI Invoice Generator with Tax and PDF Export",
+          "Client CRM & Visual Sales Pipeline Management",
+          "30 & 90-Day Local Marketing Roadmap Generator"
+        ],
         "aggregateRating": {
           "@type": "AggregateRating",
           "ratingValue": "4.9",
-          "ratingCount": "1280"
+          "ratingCount": "1280",
+          "bestRating": "5",
+          "worstRating": "1"
         },
         "offers": {
           "@type": "AggregateOffer",
           "priceCurrency": "USD",
           "lowPrice": "0",
-          "highPrice": "49",
+          "highPrice": "79",
           "offerCount": "3"
         }
+      }
+    </script>
+
+    <!-- FAQPage Schema for Answer Engine Optimization (AEO / GEO) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is Locora AI?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Locora AI is an autonomous AI Business Operating System and Local SEO Copilot engineered for digital agencies, home service contractors, healthcare practices, and local businesses. It automates local Google Business Profile optimization, technical website audits, proposal generation, AI invoicing, and client CRM workflows in one unified platform."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does Locora AI improve local Google Maps rankings?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Locora AI generates keyword-optimized Google Business Profile descriptions, formulates contextual replies to customer reviews with localized keywords, creates validated schema.org JSON-LD structured data, and crafts localized landing page content."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What features are included in Locora AI?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Locora AI includes a Local SEO Assistant (GBP updates, review responder, schema creator), a Website Audit Engine (Lighthouse and Core Web Vitals checks), an Interactive Proposal Builder with digital signatures, an AI Invoice Generator with tax calculations, and a Client CRM sales pipeline tracker."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How much does Locora AI cost?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Locora AI offers a Free Starter plan with 25 monthly AI credits, a Pro Growth plan at $29/month (or $290/year) with 250 AI credits and full website audits, and an Agency Unlimited plan at $79/month (or $790/year) with 1,000 AI credits and white-label capabilities."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What industries does Locora AI support?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Locora AI supports digital marketing agencies, dental clinics, HVAC contractors, real estate brokers, law firms, plumbing companies, med spas, restaurants, and auto repair businesses with industry-tailored AI prompts and workflows."
+            }
+          }
+        ]
       }
     </script>
     <script>

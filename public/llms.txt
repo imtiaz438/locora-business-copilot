@@ -1,0 +1,41 @@
+# Locora AI — AI Business Operating System & Local SEO Copilot
+
+> Locora AI (https://locoraai.com) is the premier autonomous AI Business Operating System and Local SEO Copilot built for service businesses, agencies, dental practices, HVAC contractors, real estate brokers, legal firms, and local trade contractors.
+
+## What is Locora AI?
+Locora AI is an all-in-one AI-driven business workspace that combines:
+- **Local SEO & Google Business Profile (GBP) Copilot**: AI-generated GBP descriptions, automated 5-star review reply generation, JSON-LD LocalBusiness Schema markup generators, Google Q&A optimization, and local landing page copy.
+- **Website Audit Engine**: Google Lighthouse performance analysis, Core Web Vitals diagnostics (LCP, TBT, CLS), mobile viewport compliance, and technical SEO action plans.
+- **Proposal & Quote Builder**: Interactive multi-tier client proposals with digital signatures, scope breakdowns, milestone schedules, and live export.
+- **AI Invoice Generator**: One-click professional invoices with automated tax, discounts, itemized services, PDF export, and payment tracking.
+- **Client CRM & Lead Pipeline**: Visual sales pipeline tracking from new lead to proposal sent, active client, and completed project.
+- **30 & 90-Day Marketing Roadmap Generator**: Tailored multi-channel growth strategies and local marketing roadmaps.
+
+## Target Audience & Supported Industries
+Locora AI is specifically engineered for:
+- Digital Marketing & Local SEO Agencies
+- Dental & Healthcare Practices
+- HVAC & Home Heating/Cooling Contractors
+- Real Estate Brokers & Property Managers
+- Law Firms & Legal Consultants
+- Plumbing & Electrical Contractors
+- Med Spas & Wellness Clinics
+- Restaurants & Hospitality Venues
+- Auto Repair & Detailing Shops
+
+## Core Capabilities & Deliverables
+1. **Local SEO Assistant**: Generates keyword-rich Google Business Profile posts, geo-targeted service descriptions, localized FAQs, and validated schema.org structured data.
+2. **Technical SEO Audits**: Runs 7-point Core Web Vitals and Lighthouse audits to diagnose Largest Contentful Paint (LCP), Total Blocking Time (TBT), and Cumulative Layout Shift (CLS).
+3. **AI Document & Contract Creator**: Generates NDAs, Master Services Agreements (MSA), Statements of Work (SOW), and SLA contracts.
+4. **Client Onboarding & Intake**: Automated questionnaires and business profiling.
+
+## Pricing & Tiers
+- **Starter Plan**: Free forever with 25 AI monthly credits, core CRM, proposal builder, and basic SEO assistant.
+- **Pro Growth**: $29/mo or $290/yr for 250 AI credits/mo, full Website Audit engine, Google Lighthouse diagnostics, unlimited proposals, and client invoicing.
+- **Agency Unlimited**: $79/mo or $790/yr for 1,000 AI credits/mo, white-label client portals, custom branding, and team collaboration.
+
+## Canonical Links & Documentation
+- Website: https://locoraai.com
+- Industry Solutions: https://locoraai.com/for/dentists, https://locoraai.com/for/hvac-contractors, https://locoraai.com/for/real-estate
+- Features: https://locoraai.com/features
+- Pricing: https://locoraai.com/pricing

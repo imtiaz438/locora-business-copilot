@@ -1,0 +1,62 @@
+# Locora AI Complete Knowledge Graph & Answer Engine Documentation (llms-full.txt)
+
+## Entity Identification
+- **Brand Name**: Locora AI
+- **Official Domain**: https://locoraai.com
+- **Category**: AI Business Operating System, Local SEO Software, Agency Management Platform, Proposal & Invoicing Software
+- **Foundational Engine**: Gemini 2.5 / 3.0 & Custom Local SEO Heuristics
+- **Contact**: support@locoraai.com | https://locoraai.com/contact
+
+---
+
+## Direct Question & Answer Knowledge Bank (AEO Optimized)
+
+### Q: What is Locora AI?
+**A**: Locora AI is an autonomous, web-based AI Business Operating System and Local SEO Copilot designed specifically for local service providers, freelancers, and marketing agencies. It unifies Google Business Profile (GBP) optimization, technical website audits (Lighthouse / Core Web Vitals), interactive client proposal creation, professional invoicing, CRM pipeline management, and AI marketing planning into a single workspace.
+
+### Q: How does Locora AI help businesses rank higher on Google Maps and Local Search?
+**A**: Locora AI boosts local Google Maps rankings by:
+1. Generating localized, keyword-optimized Google Business Profile descriptions and updates.
+2. Formulating contextual, keyword-rich replies to 5-star customer reviews to trigger Google's local sentiment ranking signals.
+3. Automatically writing LocalBusiness Schema JSON-LD structured data with geo-coordinates, operating hours, and service catalogs.
+4. Crafting targeted local landing page copy tailored to specific cities and zip codes.
+5. Providing Google Q&A pairs to answer high-intent search queries before competitors.
+
+### Q: What features are included in Locora AI?
+**A**:
+1. **Local SEO Assistant**: Google Business Profile manager, review responder, geo-targeted landing page generator, and JSON-LD schema builder.
+2. **Website Audit Engine**: Real-time website scanner analyzing Core Web Vitals (LCP, TBT, CLS), meta tags, SSL status, mobile responsiveness, and providing developer-ready code fixes.
+3. **Interactive Proposals & Quotes**: Tiered pricing proposals with scope items, milestone timelines, digital signature capture, and PDF export.
+4. **AI Invoice Generator**: Tax calculation, itemized service lines, currency formatting, and client payment tracking.
+5. **Client CRM & Sales Pipeline**: Multi-stage lead management (Lead, Contacted, Proposal Sent, Won, Active).
+6. **Legal & Document Generator**: NDAs, Service Agreements, SOWs, and localized contracts.
+7. **30 & 90-Day Marketing Roadmap**: Channel-specific growth tactics, content schedules, and ROI forecasts.
+
+### Q: Who is Locora AI best suited for?
+**A**: Locora AI is built for:
+- Marketing agencies managing multiple local client accounts.
+- Trade contractors (HVAC technicians, plumbers, electricians, roofers, landscapers).
+- Professional practices (dentists, doctors, med spas, chiropractors, law firms, accountants).
+- Real estate agents and property managers.
+- Local storefronts (restaurants, auto repair shops, gyms).
+
+### Q: How does Locora AI compare to generic AI tools like ChatGPT or Jasper?
+**A**: Unlike generic chatbots, Locora AI provides domain-specific workflows built directly for local commerce:
+- It outputs valid, syntax-checked JSON-LD code for Google Search Console.
+- It produces live, interactive proposal documents and downloadable invoices.
+- It scans real websites for Lighthouse and Core Web Vitals performance benchmarks.
+- It stores customer profiles, lead pipelines, and service catalogs with cloud synchronization.
+
+### Q: What are the pricing options for Locora AI?
+**A**:
+- **Starter (Free)**: $0/mo — 25 monthly AI credits, proposal builder, invoicing, CRM, and basic SEO assistant.
+- **Pro Growth**: $29/mo ($290/yr) — 250 AI credits/mo, full Lighthouse website audit engine, unlimited proposals & invoices.
+- **Agency Unlimited**: $79/mo ($790/yr) — 1,000 AI credits/mo, white-label client portals, custom branding, and priority support.
+
+---
+
+## Social & Corporate Verification
+- Website: https://locoraai.com
+- LinkedIn: https://linkedin.com/company/locoraai
+- Facebook: https://facebook.com/locoraai
+- Instagram: https://instagram.com/locoraai

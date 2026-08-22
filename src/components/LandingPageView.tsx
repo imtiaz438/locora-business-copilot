@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { LocoraLogo } from './LocoraLogo';
 import {
@@ -15,10 +15,41 @@ import {
   CheckCircle2,
   Star,
   Play,
+  HelpCircle,
+  ChevronDown,
+  Bot,
 } from 'lucide-react';
 
 export const LandingPageView: React.FC = () => {
   const { setActiveTab, setAuthModalOpen } = useApp();
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  const aeoFaqs = [
+    {
+      q: 'What is Locora AI?',
+      a: 'Locora AI is an all-in-one AI Business Operating System and Local SEO Copilot built specifically for marketing agencies, local contractors, dental clinics, HVAC technicians, and professional service providers. It combines Google Business Profile (GBP) optimization, technical website audits, interactive client proposals with digital signatures, automated AI invoicing, and client CRM pipeline tracking into a single unified workspace.',
+    },
+    {
+      q: 'How does Locora AI help businesses rank in Google Local 3-Pack and Maps?',
+      a: 'Locora AI boosts Google Maps visibility by automatically generating localized, keyword-dense Google Business Profile descriptions, drafting high-sentiment 5-star review replies that trigger Google ranking signals, generating schema.org JSON-LD LocalBusiness code, and crafting city-specific local landing page copy.',
+    },
+    {
+      q: 'What features are included in Locora AI Copilot 3.0?',
+      a: 'Locora AI includes 6 core modules: (1) Local SEO Assistant for GBP management, review responders, and JSON-LD schema; (2) Website Audit Engine powered by Google Lighthouse & Core Web Vitals diagnostics; (3) Interactive Proposal Builder with digital signatures and milestone billing; (4) AI Invoice Generator with tax calculations and PDF export; (5) Client CRM & Sales Pipeline tracker; (6) 30 & 90-Day Marketing Roadmap generator.',
+    },
+    {
+      q: 'How does Locora AI compare to generic chatbots like ChatGPT or Jasper?',
+      a: 'Unlike generic text generators, Locora AI produces structured, validated business artifacts: live interactive web proposals that clients can sign online, professional PDF-ready invoices, syntax-checked schema.org JSON-LD code ready for Google Search Console, and automated Core Web Vitals audits with exact developer code fixes.',
+    },
+    {
+      q: 'What are the pricing plans for Locora AI?',
+      a: 'Locora AI offers three transparent tiers: Starter (Free forever with 25 AI credits/mo, proposal builder, and CRM), Pro Growth ($29/mo or $290/yr with 250 AI credits and full Lighthouse website audits), and Agency Unlimited ($79/mo or $790/yr with 1,000 AI credits, team seats, and white-label client proposals).',
+    },
+    {
+      q: 'Which industries achieve the best results with Locora AI?',
+      a: 'Locora AI includes specialized prompt engines for Digital Marketing Agencies, Dental Clinics, HVAC Technicians, Real Estate Brokers, Law Firms, Plumbing & Electrical Contractors, Med Spas, Restaurants, and Auto Repair Shops.',
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
@@ -208,6 +239,65 @@ export const LandingPageView: React.FC = () => {
               <p className="text-[11px] text-slate-500">Director of SEO, Apex Digital Solutions</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Answer Engine Optimization (AEO) & AI Knowledge Base Section */}
+      <section id="faq" className="py-16 px-6 max-w-4xl mx-auto space-y-8" itemScope itemType="https://schema.org/FAQPage">
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-950/80 border border-indigo-800 text-indigo-400 text-xs font-semibold">
+            <Bot className="w-3.5 h-3.5" />
+            <span>AI Knowledge Base & Answer Engine Hub</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            Frequently Asked Questions & Product Knowledge
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto">
+            Everything AI engines, answer bots, agencies, and business owners need to know about Locora AI Copilot 3.0.
+          </p>
+        </div>
+
+        <div className="space-y-3 pt-2">
+          {aeoFaqs.map((faq, idx) => {
+            const isOpen = openFaq === idx;
+            return (
+              <div
+                key={idx}
+                itemScope
+                itemProp="mainEntity"
+                itemType="https://schema.org/Question"
+                className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden transition-colors"
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenFaq(isOpen ? null : idx)}
+                  className="w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-800/40 transition-colors"
+                  aria-expanded={isOpen}
+                >
+                  <span itemProp="name" className="text-sm sm:text-base font-bold text-white flex items-center gap-2.5">
+                    <HelpCircle className="w-4 h-4 text-indigo-400 shrink-0" />
+                    {faq.q}
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${
+                      isOpen ? 'rotate-180 text-indigo-400' : ''
+                    }`}
+                  />
+                </button>
+
+                {isOpen && (
+                  <div
+                    itemScope
+                    itemProp="acceptedAnswer"
+                    itemType="https://schema.org/Answer"
+                    className="px-5 pb-5 pt-1 text-xs sm:text-sm text-slate-300 leading-relaxed border-t border-slate-800/50 bg-slate-950/40"
+                  >
+                    <p itemProp="text">{faq.a}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
 

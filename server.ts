@@ -7948,6 +7948,28 @@ app.get('/sitemap.xml', (req, res) => {
   }
 });
 
+// AEO / LLM Standards: Serve llms.txt and llms-full.txt
+app.get('/llms.txt', (_req, res) => {
+  const filePath = path.join(process.cwd(), 'public', 'llms.txt');
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.sendFile(filePath);
+});
+
+app.get('/llms-full.txt', (_req, res) => {
+  const filePath = path.join(process.cwd(), 'public', 'llms-full.txt');
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.sendFile(filePath);
+});
+
+app.get('/robots.txt', (_req, res) => {
+  const filePath = path.join(process.cwd(), 'public', 'robots.txt');
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.sendFile(filePath);
+});
+
 // Start Server with Vite / Static middleware
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
