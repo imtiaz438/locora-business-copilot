@@ -197,9 +197,9 @@ export const ContactView: React.FC = () => {
               <div className="flex items-start gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
                 <Phone className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold text-slate-900">Phone Support (US Toll Free)</p>
-                  <a href="tel:+18005555626" className="text-indigo-600 hover:underline text-[11px] font-semibold block">
-                    +1 (800) 555-5626
+                  <p className="font-bold text-slate-900">Online Support Availability </p>
+                  <a href="" className="text-indigo-600 hover:underline text-[11px] font-semibold block">
+                    
                   </a>
                   <p className="text-[10px] text-slate-500 pt-0.5">Mon - Fri • 8am - 8pm EST</p>
                 </div>
@@ -219,7 +219,7 @@ export const ContactView: React.FC = () => {
                 <p className="text-xs font-bold text-slate-900 mb-2">Follow Our Official Channels</p>
                 <div className="flex items-center gap-2">
                   <a
-                    href="https://www.linkedin.com/company/locoraai"
+                    href="https://www.linkedin.com/company/locoracopilot"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:text-[#0077b5] hover:border-[#0077b5]/30 hover:bg-slate-50 transition-all shadow-2xs"
@@ -228,7 +228,7 @@ export const ContactView: React.FC = () => {
                     <span>LinkedIn</span>
                   </a>
                   <a
-                    href="https://www.facebook.com/locoraai"
+                    href="https://www.facebook.com/people/Locora-AI/61593321283379/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:text-[#1877f2] hover:border-[#1877f2]/30 hover:bg-slate-50 transition-all shadow-2xs"
@@ -237,7 +237,7 @@ export const ContactView: React.FC = () => {
                     <span>Facebook</span>
                   </a>
                   <a
-                    href="https://www.instagram.com/locoraai"
+                    href="https://www.instagram.com/su.pport6736/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:text-[#e4405f] hover:border-[#e4405f]/30 hover:bg-slate-50 transition-all shadow-2xs"

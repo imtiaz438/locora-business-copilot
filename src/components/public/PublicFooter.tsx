@@ -133,7 +133,7 @@ export const PublicFooter: React.FC = () => {
               <p className="text-[11px] font-semibold text-slate-700 uppercase tracking-wider mb-2 font-sans">Connect With Us</p>
               <div className="flex items-center gap-2">
                 <a
-                  href="https://www.linkedin.com/company/locoraai"
+                  href="https://www.linkedin.com/company/locoracopilot"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="LinkedIn"
@@ -142,7 +142,7 @@ export const PublicFooter: React.FC = () => {
                   <Linkedin className="w-4 h-4" />
                 </a>
                 <a
-                  href="https://www.facebook.com/locoraai"
+                  href="https://www.facebook.com/people/Locora-AI/61593321283379/-"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"
@@ -151,7 +151,7 @@ export const PublicFooter: React.FC = () => {
                   <Facebook className="w-4 h-4" />
                 </a>
                 <a
-                  href="https://www.instagram.com/locoraai"
+                  href="https://www.instagram.com/su.pport6736/"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
