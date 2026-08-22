@@ -8,16 +8,16 @@ export const AboutView: React.FC = () => {
 
   const team = [
     {
-      name: 'Alex Vance',
-      role: 'Co-Founder & CEO',
-      bio: 'Former founder of Apex Digital Solutions. Scaled local agency to $3M ARR before building Locora AI.',
-      avatar: 'AV',
+      name: 'Bilal Ahsan',
+      role: 'Partner & Security Head',
+      bio: 'Expert in Enterprise Security Cloud Operations with building Locora AI.',
+      avatar: 'BA',
     },
     {
-      name: 'Elena Rostova',
-      role: 'Head of Product & AI',
-      bio: 'Ex-Google Search Engineer specializing in local schema graphs and LLM prompt optimization.',
-      avatar: 'ER',
+      name: 'Imtiaz Baloch',
+      role: 'Head of Product & CEO',
+      bio: ' Data production Engineer specializing in local schema graphs and LLM prompt optimization.',
+      avatar: 'IB',
     },
     {
       name: 'Marcus Sterling',

@@ -364,11 +364,11 @@ export const HomeView: React.FC = () => {
       <section className="py-12 bg-white border-y border-slate-200 px-6 shadow-2xs">
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center font-sans">
           <div className="space-y-1">
-            <p className="text-3xl sm:text-4xl font-black font-heading text-slate-900">$50K+</p>
+            <p className="text-3xl sm:text-4xl font-black font-heading text-slate-900">$20K+</p>
             <p className="text-xs text-slate-500 font-medium">Proposal Revenue Closed</p>
           </div>
           <div className="space-y-1">
-            <p className="text-3xl sm:text-4xl font-black font-heading text-[#059669]">1,200+</p>
+            <p className="text-3xl sm:text-4xl font-black font-heading text-[#059669]">20+</p>
             <p className="text-xs text-slate-500 font-medium">Agencies & Service Businesses</p>
           </div>
           <div className="space-y-1">
@@ -586,7 +586,7 @@ export const HomeView: React.FC = () => {
             ))}
           </div>
           <h2 className="text-2xl sm:text-4xl font-bold font-heading text-slate-900">
-            Loved by 1,200+ Agencies & Local Service Teams
+            Loved by Agencies & Local Service Teams
           </h2>
         </div>
 

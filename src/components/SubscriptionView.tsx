@@ -30,24 +30,26 @@ export const SubscriptionView: React.FC = () => {
   const [portalLoading, setPortalLoading] = useState(false);
   const [portalMsg, setPortalMsg] = useState<string | null>(null);
 
-  const handleOpenPaddlePortal = async () => {
+  const handleOpenWhopPortal = async () => {
     setPortalLoading(true);
     setPortalMsg(null);
     try {
-      const res = await fetch('/api/paddle/customer-portal', {
+      const res = await fetch('/api/whop/customer-portal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: user.email }),
       });
       const data = await res.json();
-      if (data.customerPortalUrl || data.url) {
-        window.open(data.customerPortalUrl || data.url, '_blank');
+      if (data.customerPortalUrl || data.url || data.portalUrl) {
+        window.open(data.customerPortalUrl || data.url || data.portalUrl, '_blank');
       } else {
-        setPortalMsg(data.message || 'Direct settlement active. No hosted Paddle billing portal session found.');
+        setPortalMsg(data.message || 'Direct settlement active. Opening Whop Customer Hub (whop.com/hub).');
+        window.open('https://whop.com/hub', '_blank');
         setTimeout(() => setPortalMsg(null), 5000);
       }
     } catch (err) {
-      setPortalMsg('Unable to connect to Paddle billing portal.');
+      setPortalMsg('Unable to connect to Whop billing portal. Opening whop.com/hub directly.');
+      window.open('https://whop.com/hub', '_blank');
       setTimeout(() => setPortalMsg(null), 5000);
     } finally {
       setPortalLoading(false);
@@ -354,7 +356,7 @@ export const SubscriptionView: React.FC = () => {
                 <span>Payment Credentials</span>
               </h3>
               <p className="text-xs text-slate-500 mb-4">
-                Primary payment method on file processed via Paddle Merchant of Record.
+                Primary payment method on file processed via Whop Merchant of Record & Checkout.
               </p>
 
               {user.paymentMethod && user.paymentMethod.cardLast4 && user.paymentMethod.cardLast4 !== '4242' && user.planTier !== 'free' ? (
@@ -364,7 +366,7 @@ export const SubscriptionView: React.FC = () => {
                       <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold rounded-md uppercase font-heading">
                         {user.paymentMethod.cardBrand || 'Card'}
                       </span>
-                      <span className="text-[11px] text-slate-500 font-medium">Paddle Billing</span>
+                      <span className="text-[11px] text-slate-500 font-medium">Whop Billing</span>
                     </div>
                     <CheckCircle2 className="w-4 h-4 text-[#059669]" />
                   </div>
@@ -383,14 +385,14 @@ export const SubscriptionView: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-extrabold rounded-md uppercase font-heading">
-                        Paddle Billing
+                        Whop Billing
                       </span>
                       <span className="text-[11px] text-emerald-800 font-semibold">Active Plan</span>
                     </div>
                     <CheckCircle2 className="w-4 h-4 text-[#059669]" />
                   </div>
                   <p className="text-xs text-slate-700 leading-relaxed">
-                    Recurring payment method is securely vault-encrypted & tokenized via <strong>Paddle Merchant of Record</strong>.
+                    Recurring payment method is securely vault-encrypted & tokenized via <strong>Whop Merchant of Record</strong>.
                   </p>
                   <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-emerald-200/60">
                     <span className="font-mono text-[10px] text-slate-600 uppercase">
@@ -419,12 +421,12 @@ export const SubscriptionView: React.FC = () => {
             <div className="space-y-2 pt-1">
               {user.planTier !== 'free' ? (
                 <button
-                  onClick={handleOpenPaddlePortal}
+                  onClick={handleOpenWhopPortal}
                   disabled={portalLoading}
                   className="w-full py-2 bg-emerald-50 hover:bg-emerald-100/80 text-xs font-bold text-emerald-800 rounded-xl border border-emerald-300 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   {portalLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ExternalLink className="w-3.5 h-3.5 text-emerald-600" />}
-                  <span>Manage Billing & Invoices via Paddle Portal</span>
+                  <span>Manage Billing & Invoices via Whop Hub</span>
                 </button>
               ) : (
                 <button

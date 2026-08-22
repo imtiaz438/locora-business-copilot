@@ -36,7 +36,7 @@ export const RefundPolicyView: React.FC = () => {
               Cancellation & Refund Policy
             </h1>
             <p className="text-sm text-slate-600 leading-relaxed max-w-2xl">
-              This policy outlines the cancellation structures, subscription adjustments, and refund frameworks for the Locora AI platform operated by Imtiaz Hussain, in alignment with our global Merchant of Record, Paddle.
+              This policy outlines the cancellation structures, subscription adjustments, and refund frameworks for the Locora AI platform operated by Imtiaz Hussain, in alignment with our secure payment processing partner, Whop.
             </p>
           </div>
 
@@ -73,14 +73,14 @@ export const RefundPolicyView: React.FC = () => {
           <section className="space-y-3">
             <h2 className="text-lg font-bold font-heading text-slate-900 flex items-center gap-2">
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">1</span>
-              Merchant of Record Declarations
+              Payment Processing Declarations
             </h2>
             <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
               <p>
-                Locora AI utilizes <strong>Paddle</strong> as our official global Merchant of Record. Paddle executes all secure checkout transactions, handles foreign currency conversion workflows, manages regional compliance configurations, and processes international sales tax calculations. 
+                Locora AI utilizes <strong>Whop</strong> as our official payment processing gateway and digital membership management partner. Whop executes all secure checkout transactions, handles currency conversions, manages regional compliance configurations, and processes sales tax calculations. 
               </p>
               <p>
-                Because Paddle functions as the legal distributor of our software services, your credit card statement or payment history will safely display the indicator <strong>"PADDLE * LOCORA AI"</strong> for all subscription billing activations.
+                Because Whop functions as the payments and membership processor of our software services, your credit card statement or payment receipt will display the indicator <strong>"WHOP * LOCORA AI"</strong> or <strong>"WHOP.COM"</strong> for all subscription billing activations.
               </p>
             </div>
           </section>

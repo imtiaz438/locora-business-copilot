@@ -21,7 +21,7 @@ import {
   Key,
   ShieldAlert,
 } from 'lucide-react';
-import { openPaddleCheckout, getPaddleConfig, PaddleConfig } from '../lib/paddleService';
+import { openWhopCheckout, getWhopConfig, WhopConfig } from '../lib/whopService';
 
 export const CheckoutModal: React.FC = () => {
   const {
@@ -40,7 +40,7 @@ export const CheckoutModal: React.FC = () => {
   const [successData, setSuccessData] = useState<any | null>(null);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
   const [copiedRef, setCopiedRef] = useState(false);
-  const [paddleConfig, setPaddleConfig] = useState<PaddleConfig | null>(null);
+  const [whopConfig, setWhopConfig] = useState<WhopConfig | null>(null);
   const [configLoading, setConfigLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -49,9 +49,9 @@ export const CheckoutModal: React.FC = () => {
       setSuccessData(null);
       setRedirectUrl(null);
       setConfigLoading(true);
-      getPaddleConfig()
+      getWhopConfig()
         .then((cfg) => {
-          setPaddleConfig(cfg);
+          setWhopConfig(cfg);
           setConfigLoading(false);
         })
         .catch(() => {
@@ -79,9 +79,10 @@ export const CheckoutModal: React.FC = () => {
 
   // Check if gateway is activated (Live or Sandbox credentials configured)
   const isGatewayConfigured = !!(
-    paddleConfig?.configured ||
-    (paddleConfig?.clientToken && (paddleConfig?.priceIds?.proMonthly || paddleConfig?.priceIds?.agencyMonthly)) ||
-    paddleConfig?.hasApiKey
+    whopConfig?.configured ||
+    whopConfig?.hasApiKey ||
+    whopConfig?.planIds?.proMonthly ||
+    whopConfig?.planIds?.agencyMonthly
   );
 
   // Unified Checkout Handler requiring verified payment before any upgrade
@@ -93,36 +94,28 @@ export const CheckoutModal: React.FC = () => {
     const customerEmail = user.email || 'customer@example.com';
     const customerName = user.name || user.companyName || customerEmail.split('@')[0];
 
-    // Strict Validation: Block progress if gateway is not activated with live or test keys
-    if (!isGatewayConfigured && !paddleConfig?.hasApiKey && !paddleConfig?.clientToken) {
-      setErrorMessage(
-        'Paddle Payment Gateway is not activated yet. Please configure your Paddle API Key, Client Token, and Price IDs (Live or Sandbox) in your environment variables or Settings before upgrading plans.'
-      );
-      return;
-    }
-
     setIsProcessing(true);
 
     try {
-      // 1. Attempt Paddle Checkout (SDK Overlay or Hosted Session)
-      const paddleResult = await openPaddleCheckout({
+      // 1. Attempt Whop Checkout
+      const whopResult = await openWhopCheckout({
         plan: checkoutModalPlan,
         billingCycle: checkoutModalCycle,
         email: customerEmail,
         name: customerName,
         userId: user.id,
-        onSuccess: (pData) => {
+        onSuccess: (wData) => {
           logActivity(
             'payment',
             `Subscription Activated: ${planName}`,
-            `Payment of $${totalAmount}.00 cleared via Paddle for Locora AI ${planName}. Workspace ready.`
+            `Payment of $${totalAmount}.00 cleared via Whop for Locora AI ${planName}. Workspace ready.`
           );
           setSuccessData({
-            brand: paymentChannel === 'wallets' ? 'Digital Wallet (Apple Pay / Google Pay / PayPal)' : 'Paddle Payment',
-            referenceCode: pData?.id || pData?.transaction_id || `PAD-${Date.now().toString().slice(-6)}`,
+            brand: paymentChannel === 'wallets' ? 'Digital Wallet (Apple Pay / Google Pay / Crypto)' : 'Whop Checkout',
+            referenceCode: wData?.id || wData?.membershipId || `WHOP-${Date.now().toString().slice(-6)}`,
             transaction: {
-              id: pData?.id || `txn_pad_${Date.now()}`,
-              invoiceId: `INV-${Date.now().toString().slice(-6)}-PAD`,
+              id: wData?.id || `txn_whop_${Date.now()}`,
+              invoiceId: `INV-${Date.now().toString().slice(-6)}-WHOP`,
             },
           });
           updateUser({
@@ -141,25 +134,24 @@ export const CheckoutModal: React.FC = () => {
         },
       });
 
-      if (paddleResult.url || paddleResult.checkoutUrl) {
-        const checkoutUrl = paddleResult.url || paddleResult.checkoutUrl;
+      if (whopResult.url || whopResult.checkoutUrl) {
+        const checkoutUrl = whopResult.url || whopResult.checkoutUrl;
         logActivity(
           'payment',
-          `Paddle Checkout Session Created (${planName})`,
+          `Whop Checkout Session Created (${planName})`,
           `Proceeding to secure checkout for Locora AI ${planName} (${checkoutModalCycle}).`
         );
         setRedirectUrl(checkoutUrl);
         return;
       }
 
-      // If Paddle returned no direct URL and overlay was launched
-      if (paddleResult.success && !paddleResult.url) {
+      if (whopResult.success && !whopResult.url) {
         setIsProcessing(false);
         return;
       }
     } catch (err: any) {
       setErrorMessage(
-        err.message || 'Payment gateway validation failed. Please check your Paddle API keys and tokens.'
+        err.message || 'Payment gateway validation failed. Please check your Whop API keys and company configuration.'
       );
     } finally {
       setIsProcessing(false);
@@ -317,7 +309,7 @@ export const CheckoutModal: React.FC = () => {
             </div>
           </div>
         ) : redirectUrl ? (
-          /* State C: Paddle Redirect Ready Screen */
+          /* State C: Whop Redirect Ready Screen */
           <div className="p-8 space-y-6 text-center">
             <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border-4 border-emerald-100 shadow-xs">
               <ExternalLink className="w-8 h-8" />
@@ -328,7 +320,7 @@ export const CheckoutModal: React.FC = () => {
                 Checkout Session Ready!
               </h3>
               <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                Click below to complete your secure payment on <strong>Paddle</strong> for <strong>Locora AI {planName}</strong>.
+                Click below to complete your secure payment on <strong>Whop Checkout</strong> for <strong>Locora AI {planName}</strong>.
               </p>
             </div>
 
@@ -342,20 +334,20 @@ export const CheckoutModal: React.FC = () => {
                 <span className="font-extrabold text-emerald-700 text-sm">${totalAmount}.00 USD</span>
               </div>
               <div className="flex justify-between items-center text-slate-700">
-                <span className="font-semibold text-slate-500">Merchant of Record:</span>
-                <span className="font-medium text-slate-900">Paddle Global Payments</span>
+                <span className="font-semibold text-slate-500">Payment Gateway:</span>
+                <span className="font-medium text-slate-900">Whop Checkout & Memberships</span>
               </div>
             </div>
 
             <div className="pt-2 space-y-3">
               <a
-                id="open_paddle_checkout_btn"
+                id="open_whop_checkout_btn"
                 href={redirectUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full py-3.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer no-underline"
               >
-                <span>OPEN PADDLE CHECKOUT</span>
+                <span>OPEN WHOP CHECKOUT</span>
                 <ArrowUpRight className="w-5 h-5" />
               </a>
 
@@ -504,7 +496,7 @@ export const CheckoutModal: React.FC = () => {
                     )}
                   </div>
                   <div className="text-[11px] text-slate-500">
-                    Visa, MasterCard, American Express, Discover (Paddle)
+                    Visa, MasterCard, American Express, Discover (Whop)
                   </div>
                 </button>
 
@@ -522,49 +514,27 @@ export const CheckoutModal: React.FC = () => {
                   <div className="flex items-center justify-between w-full mb-1">
                     <div className="flex items-center gap-2 font-bold text-xs">
                       <Globe2 className={`w-4 h-4 ${paymentChannel === 'wallets' ? 'text-emerald-600' : 'text-slate-500'}`} />
-                      <span>Digital Wallets</span>
+                      <span>Digital Wallets & Pay</span>
                     </div>
                     {paymentChannel === 'wallets' && (
                       <span className="w-2 h-2 rounded-full bg-emerald-600" />
                     )}
                   </div>
                   <div className="text-[11px] text-slate-500">
-                    PayPal, Apple Pay, Google Pay
+                    Apple Pay, Google Pay, Crypto & More
                   </div>
                 </button>
               </div>
             </div>
 
-            {/* Gateway Configuration & Activation Status Notice */}
-            {!configLoading && !isGatewayConfigured && (
-              <div className="p-4 bg-amber-50/90 border border-amber-200 rounded-xl space-y-2 text-xs text-amber-900">
-                <div className="flex items-start gap-2.5">
-                  <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <h5 className="font-bold text-amber-950">
-                      Payment Gateway Setup Required (Live / Test Activation)
-                    </h5>
-                    <p className="text-[11px] text-amber-800 leading-relaxed">
-                      Paddle payment gateway is not yet activated. To accept live or sandbox checkouts, please add your Paddle credentials in your environment variables or Admin settings:
-                    </p>
-                    <div className="pt-1 font-mono text-[10px] space-y-0.5 text-amber-900 bg-amber-100/60 p-2 rounded-lg border border-amber-200/80">
-                      <div>• PADDLE_API_KEY / PADDLE_CLIENT_TOKEN</div>
-                      <div>• PADDLE_PRICE_ID_PRO_MONTHLY / PADDLE_PRICE_ID_AGENCY_MONTHLY</div>
-                    </div>
-                    <p className="text-[10px] text-amber-700 italic pt-0.5">
-                      ⚠️ Automatic plan upgrades are disabled until verified payment gateway credentials are provided.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Error Notification */}
             {errorMessage && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl space-y-2 text-xs text-red-700">
-                <div className="flex items-start gap-2">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl space-y-2 text-xs text-red-700">
+                <div className="flex items-start gap-2.5">
                   <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-                  <span className="font-semibold">{errorMessage}</span>
+                  <div className="space-y-1.5 flex-1">
+                    <span className="font-bold block text-red-900">{errorMessage}</span>
+                  </div>
                 </div>
               </div>
             )}
@@ -582,7 +552,7 @@ export const CheckoutModal: React.FC = () => {
                 className="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-800 font-mono cursor-not-allowed"
               />
               <p className="text-[11px] text-slate-500">
-                Your recurring subscription and official tax invoice will be securely tied to this account.
+                Your recurring subscription and official receipt will be securely tied to this account.
               </p>
             </div>
 
@@ -596,7 +566,7 @@ export const CheckoutModal: React.FC = () => {
               {isProcessing ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span>Generating Paddle Checkout...</span>
+                  <span>Connecting to Whop Checkout...</span>
                 </>
               ) : (
                 <>
@@ -613,7 +583,7 @@ export const CheckoutModal: React.FC = () => {
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 <span>256-bit Encrypted SSL Checkout</span>
               </div>
-              <span>Merchant of Record • Paddle</span>
+              <span>Powered by Whop Payments</span>
             </div>
           </form>
         )}

@@ -3272,11 +3272,11 @@ export const AdminView: React.FC = () => {
                     <span>Live Payment & Subscription Transaction Monitoring</span>
                   </h3>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                    PADDLE GATEWAY
+                    WHOP GATEWAY
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-1">
-                  Monitor live checkout orders, recurring subscriptions, and payment status updates powered by the Paddle Billing SDK and real-time webhook synchronization.
+                  Monitor live checkout orders, memberships, recurring subscriptions, and payment status updates synchronized via Whop Checkout & Webhooks.
                 </p>
               </div>
 
@@ -3316,9 +3316,9 @@ export const AdminView: React.FC = () => {
               <div className="bg-blue-50/60 border border-blue-200 rounded-xl p-4 space-y-1">
                 <span className="text-[11px] font-semibold text-blue-800 uppercase tracking-wider">Gateway Subs</span>
                 <p className="text-xl font-extrabold text-blue-700 font-mono">
-                  {transactionsTable.filter(t => t.paddleDetails?.subscriptionId || t.lemonSqueezyDetails?.subscriptionId || t.paymentMethod === 'paddle' || t.paymentMethod === 'lemonsqueezy').length}
+                  {transactionsTable.filter(t => t.whopDetails?.membershipId || t.whopDetails?.paymentId || t.paymentMethod === 'whop' || t.paddleDetails?.subscriptionId || t.paymentMethod === 'paddle').length}
                 </p>
-                <p className="text-[10px] text-blue-700">Paddle Billing Sync</p>
+                <p className="text-[10px] text-blue-700">Whop Billing Sync</p>
               </div>
 
               <div className="bg-rose-50/60 border border-rose-200 rounded-xl p-4 space-y-1">
@@ -3345,7 +3345,7 @@ export const AdminView: React.FC = () => {
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                 <input
                   type="text"
-                  placeholder="Search by customer email, name, transaction ID, invoice, Paddle/Gateway ID..."
+                  placeholder="Search by customer email, name, transaction ID, invoice, Whop/Membership ID..."
                   value={transactionSearch}
                   onChange={(e) => setTransactionSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#059669]"
@@ -3390,20 +3390,20 @@ export const AdminView: React.FC = () => {
                       if (transactionFilter !== 'all' && txn.status !== transactionFilter) return false;
                       if (!transactionSearch) return true;
                       const q = transactionSearch.toLowerCase();
+                      const whopPayId = txn.whopDetails?.paymentId?.toString() || '';
+                      const whopMemId = txn.whopDetails?.membershipId?.toString() || '';
                       const paddleTxnId = txn.paddleDetails?.transactionId?.toString() || '';
                       const paddleSubId = txn.paddleDetails?.subscriptionId?.toString() || '';
-                      const lsOrderId = txn.lemonSqueezyDetails?.orderId?.toString() || '';
-                      const lsSubId = txn.lemonSqueezyDetails?.subscriptionId?.toString() || '';
                       const cardLast4 = txn.cardDetails?.cardLast4 || txn.paymentMethod?.cardLast4 || '';
                       return (
                         txn.id?.toLowerCase().includes(q) ||
                         txn.userEmail?.toLowerCase().includes(q) ||
                         txn.userName?.toLowerCase().includes(q) ||
                         txn.invoiceId?.toLowerCase().includes(q) ||
+                        whopPayId.includes(q) ||
+                        whopMemId.includes(q) ||
                         paddleTxnId.includes(q) ||
                         paddleSubId.includes(q) ||
-                        lsOrderId.includes(q) ||
-                        lsSubId.includes(q) ||
                         cardLast4.includes(q)
                       );
                     })
@@ -3414,7 +3414,7 @@ export const AdminView: React.FC = () => {
                       const isCancelled = txn.status === 'cancel' || txn.status === 'cancelled';
                       const isRefunded = txn.status === 'refunded';
                       const isTest = txn.isTestMode === true;
-                      const isPaddle = txn.paymentMethod === 'paddle' || !!txn.paddleDetails;
+                      const isWhop = txn.paymentMethod === 'whop' || !!txn.whopDetails;
 
                       return (
                         <tr key={txn.id} className="hover:bg-slate-50/75 transition-colors">
@@ -3463,21 +3463,21 @@ export const AdminView: React.FC = () => {
                             <div>
                               <div className="flex items-center gap-1.5 text-emerald-800 font-semibold">
                                 <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                                <span className="text-xs">{isPaddle ? 'Paddle Billing' : 'Paddle / Direct'}</span>
+                                <span className="text-xs">{isWhop ? 'Whop Checkout' : 'Whop / Direct'}</span>
                               </div>
+                              {txn.whopDetails?.membershipId && (
+                                <div className="text-[9px] font-mono text-emerald-700 font-bold">
+                                  Member ID: {txn.whopDetails.membershipId}
+                                </div>
+                              )}
+                              {txn.whopDetails?.paymentId && (
+                                <div className="text-[10px] text-slate-500 font-mono">
+                                  Pay ID: {txn.whopDetails.paymentId}
+                                </div>
+                              )}
                               {txn.paddleDetails?.transactionId && (
                                 <div className="text-[10px] text-slate-500 font-mono">
-                                  Txn: {txn.paddleDetails.transactionId}
-                                </div>
-                              )}
-                              {txn.paddleDetails?.subscriptionId && (
-                                <div className="text-[9px] font-mono text-emerald-700 font-bold">
-                                  Sub ID: {txn.paddleDetails.subscriptionId}
-                                </div>
-                              )}
-                              {txn.lemonSqueezyDetails?.orderId && (
-                                <div className="text-[10px] text-slate-500 font-mono">
-                                  Order #{txn.lemonSqueezyDetails.orderId}
+                                  Legacy Txn: {txn.paddleDetails.transactionId}
                                 </div>
                               )}
                               {txn.cardDetails?.last4 && (
@@ -3551,7 +3551,7 @@ export const AdminView: React.FC = () => {
                   {transactionsTable.length === 0 && (
                     <tr>
                       <td colSpan={7} className="py-8 text-center text-slate-400 text-xs">
-                        No transactions registered in payment ledger yet. Real orders via Paddle checkout will automatically appear here.
+                        No transactions registered in payment ledger yet. Real orders via Whop checkout will automatically appear here.
                       </td>
                     </tr>
                   )}

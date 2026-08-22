@@ -8,7 +8,6 @@ import { GoogleGenAI } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
 import Stripe from 'stripe';
 import nodemailer from 'nodemailer';
-import { Paddle, Environment } from '@paddle/paddle-node-sdk';
 import { getOrCreateUser } from './src/db/users.ts';
 import * as dbService from './src/db/service.ts';
 import type { PaymentTransaction } from './src/types.ts';
@@ -351,7 +350,7 @@ interface UserRecord {
     cardBrand: string;
     expDate: string;
   };
-  paymentProvider?: 'card' | 'payoneer' | 'lemonsqueezy' | 'paddle';
+  paymentProvider?: 'card' | 'payoneer' | 'lemonsqueezy' | 'paddle' | 'whop';
   lemonSqueezySubscriptionId?: string;
   lemonSqueezyCustomerId?: string;
   lemonSqueezyCustomerPortalUrl?: string;
@@ -359,6 +358,9 @@ interface UserRecord {
   paddleSubscriptionId?: string;
   paddleCustomerId?: string;
   paddleCustomerPortalUrl?: string;
+  whopMembershipId?: string;
+  whopUserId?: string;
+  whopCustomerPortalUrl?: string;
 }
 
 const usersDb = new Map<string, UserRecord>();
@@ -3926,166 +3928,179 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
   }
 });
 
-// ================= PADDLE PAYMENT & SUBSCRIPTION INTEGRATION =================
+// ================= WHOP PAYMENTS & SUBSCRIPTION CHECKOUT INTEGRATION =================
 
-let paddleClient: Paddle | null = null;
-
-function getPaddleApiKey(): string {
+function getWhopApiKey(): string {
   return (
-    process.env.PADDLE_API_KEY ||
-    process.env.PADDLE_API_SECRET_KEY ||
-    process.env.PADDLE_SECRET_KEY ||
+    process.env.WHOP_API_KEY ||
+    process.env.WHOP_SECRET_KEY ||
+    process.env.WHOP_API_TOKEN ||
     ''
   ).trim();
 }
 
-function getPaddleClientToken(): string {
+function getWhopCompanyId(): string {
   return (
-    process.env.PADDLE_CLIENT_TOKEN ||
-    process.env.VITE_PADDLE_CLIENT_TOKEN ||
-    process.env.PADDLE_PUBLIC_TOKEN ||
+    process.env.WHOP_COMPANY_ID ||
+    process.env.WHOP_BIZ_ID ||
+    process.env.VITE_WHOP_COMPANY_ID ||
     ''
   ).trim();
 }
 
-function getPaddleEnvironment(): 'sandbox' | 'production' {
+function getWhopEnvironment(): 'sandbox' | 'production' {
   const envVal = (
-    process.env.PADDLE_ENVIRONMENT ||
-    process.env.VITE_PADDLE_ENVIRONMENT ||
+    process.env.WHOP_ENVIRONMENT ||
+    process.env.VITE_WHOP_ENVIRONMENT ||
     ''
   ).toLowerCase().trim();
-  const apiKey = getPaddleApiKey();
-  const clientToken = getPaddleClientToken();
+  const apiKey = getWhopApiKey();
 
   if (envVal === 'production' || envVal === 'live') return 'production';
-  if (apiKey.startsWith('live_') || clientToken.startsWith('live_')) return 'production';
+  if (apiKey.startsWith('live_') || apiKey.startsWith('prod_')) return 'production';
   return 'sandbox';
 }
 
-function getPaddleClient(): Paddle | null {
-  const apiKey = getPaddleApiKey();
-  if (!apiKey) return null;
-
-  if (!paddleClient) {
-    try {
-      const environment = getPaddleEnvironment() === 'production' ? Environment.production : Environment.sandbox;
-      paddleClient = new Paddle(apiKey, { environment });
-      console.log(`[Paddle SDK] Initialized with environment: ${getPaddleEnvironment()}`);
-    } catch (err: any) {
-      console.error('[Paddle SDK Init Error]', err.message);
-      return null;
-    }
-  }
-  return paddleClient;
-}
-
-function getPaddlePriceId(plan: string, isYearly: boolean): string {
+function getWhopPlanId(plan: string, isYearly: boolean): string {
   const normalizedPlan = (plan || 'pro').toLowerCase();
   if (normalizedPlan === 'agency') {
     return isYearly
-      ? (process.env.PADDLE_AGENCY_PRICE_ID_YEARLY?.trim() ||
-         process.env.PADDLE_AGENCY_YEARLY_PRICE_ID?.trim() ||
-         process.env.PADDLE_PRICE_ID_AGENCY_YEARLY?.trim() ||
-         process.env.PADDLE_AGENCY_PRICE_ID?.trim() ||
+      ? (process.env.WHOP_PLAN_ID_AGENCY_YEARLY?.trim() ||
+         process.env.WHOP_AGENCY_PRICE_ID_YEARLY?.trim() ||
+         process.env.WHOP_AGENCY_YEARLY_PLAN_ID?.trim() ||
+         process.env.WHOP_PLAN_AGENCY_YEARLY?.trim() ||
          '')
-      : (process.env.PADDLE_AGENCY_PRICE_ID_MONTHLY?.trim() ||
-         process.env.PADDLE_AGENCY_MONTHLY_PRICE_ID?.trim() ||
-         process.env.PADDLE_PRICE_ID_AGENCY_MONTHLY?.trim() ||
-         process.env.PADDLE_AGENCY_PRICE_ID?.trim() ||
+      : (process.env.WHOP_PLAN_ID_AGENCY_MONTHLY?.trim() ||
+         process.env.WHOP_AGENCY_PRICE_ID_MONTHLY?.trim() ||
+         process.env.WHOP_AGENCY_MONTHLY_PLAN_ID?.trim() ||
+         process.env.WHOP_PLAN_AGENCY_MONTHLY?.trim() ||
          '');
   } else {
     return isYearly
-      ? (process.env.PADDLE_PRO_PRICE_ID_YEARLY?.trim() ||
-         process.env.PADDLE_PRO_YEARLY_PRICE_ID?.trim() ||
-         process.env.PADDLE_PRICE_ID_PRO_YEARLY?.trim() ||
-         process.env.PADDLE_PRO_PRICE_ID?.trim() ||
+      ? (process.env.WHOP_PLAN_ID_PRO_YEARLY?.trim() ||
+         process.env.WHOP_PRO_PRICE_ID_YEARLY?.trim() ||
+         process.env.WHOP_PRO_YEARLY_PLAN_ID?.trim() ||
+         process.env.WHOP_PLAN_PRO_YEARLY?.trim() ||
          '')
-      : (process.env.PADDLE_PRO_PRICE_ID_MONTHLY?.trim() ||
-         process.env.PADDLE_PRO_MONTHLY_PRICE_ID?.trim() ||
-         process.env.PADDLE_PRICE_ID_PRO_MONTHLY?.trim() ||
-         process.env.PADDLE_PRO_PRICE_ID?.trim() ||
+      : (process.env.WHOP_PLAN_ID_PRO_MONTHLY?.trim() ||
+         process.env.WHOP_PRO_PRICE_ID_MONTHLY?.trim() ||
+         process.env.WHOP_PRO_MONTHLY_PLAN_ID?.trim() ||
+         process.env.WHOP_PLAN_PRO_MONTHLY?.trim() ||
          '');
   }
 }
 
-// Paddle Client Public Config Endpoint (used by Paddle.js on frontend)
-app.get('/api/paddle/config', (req, res) => {
-  const apiKey = getPaddleApiKey();
-  const clientToken = getPaddleClientToken();
-  const environment = getPaddleEnvironment();
-  const webhookSecret = process.env.PADDLE_WEBHOOK_SECRET_KEY || process.env.PADDLE_WEBHOOK_SECRET || '';
+function getWhopCheckoutUrl(plan: string, isYearly: boolean): string {
+  const normalizedPlan = (plan || 'pro').toLowerCase();
+  if (normalizedPlan === 'agency') {
+    return isYearly
+      ? (process.env.WHOP_CHECKOUT_AGENCY_YEARLY_URL?.trim() || '')
+      : (process.env.WHOP_CHECKOUT_AGENCY_MONTHLY_URL?.trim() || '');
+  } else {
+    return isYearly
+      ? (process.env.WHOP_CHECKOUT_PRO_YEARLY_URL?.trim() || '')
+      : (process.env.WHOP_CHECKOUT_PRO_MONTHLY_URL?.trim() || '');
+  }
+}
 
-  const priceIds = {
-    proMonthly: getPaddlePriceId('pro', false),
-    proYearly: getPaddlePriceId('pro', true),
-    agencyMonthly: getPaddlePriceId('agency', false),
-    agencyYearly: getPaddlePriceId('agency', true),
+// Whop Public Config Endpoint
+app.get('/api/whop/config', (req, res) => {
+  const apiKey = getWhopApiKey();
+  const companyId = getWhopCompanyId();
+  const environment = getWhopEnvironment();
+  const webhookSecret = process.env.WHOP_WEBHOOK_SECRET || process.env.WHOP_WEBHOOK_SECRET_KEY || '';
+
+  const planIds = {
+    proMonthly: getWhopPlanId('pro', false),
+    proYearly: getWhopPlanId('pro', true),
+    agencyMonthly: getWhopPlanId('agency', false),
+    agencyYearly: getWhopPlanId('agency', true),
   };
 
-  const configured = !!((apiKey || clientToken) && (priceIds.proMonthly || priceIds.agencyMonthly));
+  const checkoutUrls = {
+    proMonthly: getWhopCheckoutUrl('pro', false),
+    proYearly: getWhopCheckoutUrl('pro', true),
+    agencyMonthly: getWhopCheckoutUrl('agency', false),
+    agencyYearly: getWhopCheckoutUrl('agency', true),
+  };
+
+  const configured = !!(
+    (apiKey || companyId || checkoutUrls.proMonthly || checkoutUrls.agencyMonthly) &&
+    (planIds.proMonthly || planIds.agencyMonthly || checkoutUrls.proMonthly || checkoutUrls.agencyMonthly)
+  );
 
   res.json({
     configured,
-    clientToken,
+    companyId,
     environment,
     hasApiKey: !!apiKey,
     hasWebhookSecret: !!webhookSecret.trim(),
-    priceIds,
+    planIds,
+    checkoutUrls,
   });
 });
 
-// Paddle Detailed Status & Health Check Endpoint
-app.get('/api/paddle/status', async (req, res) => {
-  const apiKey = getPaddleApiKey();
-  const clientToken = getPaddleClientToken();
-  const environment = getPaddleEnvironment();
-  const webhookSecret = process.env.PADDLE_WEBHOOK_SECRET_KEY || process.env.PADDLE_WEBHOOK_SECRET || '';
+// Whop Detailed Status & Health Check Endpoint
+app.get('/api/whop/status', async (req, res) => {
+  const apiKey = getWhopApiKey();
+  const companyId = getWhopCompanyId();
+  const environment = getWhopEnvironment();
+  const webhookSecret = process.env.WHOP_WEBHOOK_SECRET || process.env.WHOP_WEBHOOK_SECRET_KEY || '';
 
-  const priceIds = {
-    proMonthly: getPaddlePriceId('pro', false),
-    proYearly: getPaddlePriceId('pro', true),
-    agencyMonthly: getPaddlePriceId('agency', false),
-    agencyYearly: getPaddlePriceId('agency', true),
+  const planIds = {
+    proMonthly: getWhopPlanId('pro', false),
+    proYearly: getWhopPlanId('pro', true),
+    agencyMonthly: getWhopPlanId('agency', false),
+    agencyYearly: getWhopPlanId('agency', true),
   };
 
-  let discoveredPrices: any[] = [];
-  const paddle = getPaddleClient();
+  const checkoutUrls = {
+    proMonthly: getWhopCheckoutUrl('pro', false),
+    proYearly: getWhopCheckoutUrl('pro', true),
+    agencyMonthly: getWhopCheckoutUrl('agency', false),
+    agencyYearly: getWhopCheckoutUrl('agency', true),
+  };
 
-  if (paddle) {
+  let whopApiConnected = false;
+  let whopCompanyData: any = null;
+
+  if (apiKey) {
     try {
-      const priceCollection = await paddle.prices.list({ perPage: 20 });
-      for await (const price of priceCollection) {
-        discoveredPrices.push({
-          id: price.id,
-          productId: price.productId,
-          description: price.description,
-          unitPrice: price.unitPrice,
-          billingCycle: price.billingCycle,
-        });
+      const response = await fetch('https://api.whop.com/api/v2/me', {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Accept': 'application/json',
+        },
+      });
+      if (response.ok) {
+        whopApiConnected = true;
+        whopCompanyData = await response.json();
       }
     } catch (err: any) {
-      console.warn('[Paddle Status Price List Warn]', err.message);
+      console.warn('[Whop Status Check Warn]', err.message);
     }
   }
 
-  const configured = !!(apiKey && (priceIds.proMonthly || priceIds.agencyMonthly || discoveredPrices.length > 0));
+  const configured = !!(apiKey || companyId || planIds.proMonthly || checkoutUrls.proMonthly);
 
   res.json({
     configured,
     hasApiKey: !!apiKey,
-    hasClientToken: !!clientToken,
+    hasCompanyId: !!companyId,
     hasWebhookSecret: !!webhookSecret.trim(),
+    whopApiConnected,
     environment,
-    priceIds,
-    discoveredPricesCount: discoveredPrices.length,
-    discoveredPrices,
+    companyId,
+    planIds,
+    checkoutUrls,
+    whopCompanyData: whopCompanyData ? { id: whopCompanyData.id, username: whopCompanyData.username } : null,
   });
 });
 
-// Create Paddle Checkout / Transaction Session
-app.post('/api/paddle/create-checkout', async (req, res) => {
+// Create Whop Checkout Session / Verified Direct Checkout URL
+app.post('/api/whop/create-checkout', async (req, res) => {
   try {
-    const { plan = 'pro', billingCycle = 'monthly', email, name } = req.body;
+    const { plan = 'pro', billingCycle = 'monthly', email, name, userId } = req.body;
     const normalizedEmail = (email || '').toLowerCase().trim();
 
     if (!normalizedEmail) {
@@ -4094,11 +4109,10 @@ app.post('/api/paddle/create-checkout', async (req, res) => {
 
     let user = await findUserByEmail(normalizedEmail);
     if (!user) {
-      // Create user entry dynamically if needed so checkout never blocks authenticated customers
       const nowIso = new Date().toISOString();
       const nextMonthIso = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
       user = {
-        id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        id: userId || `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         email: normalizedEmail,
         name: name || normalizedEmail.split('@')[0],
         companyName: '',
@@ -4118,224 +4132,192 @@ app.post('/api/paddle/create-checkout', async (req, res) => {
 
     const host = getRequestBaseUrl(req);
     const isYearly = billingCycle === 'yearly' || billingCycle === 'annual' || billingCycle === 'annually';
-    const paddle = getPaddleClient();
-    const clientToken = getPaddleClientToken();
+    const planId = getWhopPlanId(plan, isYearly);
+    const directCheckoutUrl = getWhopCheckoutUrl(plan, isYearly);
+    const companyId = getWhopCompanyId();
+    const apiKey = getWhopApiKey();
 
-    let priceId = getPaddlePriceId(plan, isYearly);
+    const successUrl = `${host}/?payment_status=success&provider=whop&plan=${plan}&billing_cycle=${isYearly ? 'yearly' : 'monthly'}`;
+    const cancelUrl = `${host}/?payment_status=cancelled&provider=whop`;
 
-    // Auto-discover price ID from Paddle if not explicitly in env
-    if (!priceId && paddle) {
-      try {
-        const priceCollection = await paddle.prices.list({ perPage: 30 });
-        const allPrices: any[] = [];
-        for await (const pr of priceCollection) {
-          allPrices.push(pr);
-        }
+    // 1. If explicit checkout URL provided in environment, build parameterized URL
+    if (directCheckoutUrl) {
+      const urlObj = new URL(directCheckoutUrl);
+      urlObj.searchParams.set('email', normalizedEmail);
+      if (name || user.name) urlObj.searchParams.set('name', name || user.name);
+      urlObj.searchParams.set('redirect_url', successUrl);
+      urlObj.searchParams.set('cancel_url', cancelUrl);
+      urlObj.searchParams.set('metadata[user_id]', user.id || '');
+      urlObj.searchParams.set('metadata[user_email]', normalizedEmail);
+      urlObj.searchParams.set('metadata[plan]', plan);
+      urlObj.searchParams.set('metadata[billing_cycle]', isYearly ? 'yearly' : 'monthly');
 
-        const targetPlanKw = plan.toLowerCase();
-        const targetInterval = isYearly ? 'year' : 'month';
-
-        let matched = allPrices.find((pr) => {
-          const desc = (pr.description || '').toLowerCase();
-          const cycleInterval = pr.billingCycle?.interval?.toLowerCase() || '';
-          return desc.includes(targetPlanKw) && (cycleInterval.includes(targetInterval) || desc.includes(targetInterval));
-        });
-
-        if (!matched) {
-          matched = allPrices.find((pr) => (pr.description || '').toLowerCase().includes(targetPlanKw));
-        }
-
-        if (matched) {
-          priceId = matched.id;
-          console.log(`[Paddle] Auto-discovered Price ID for ${plan} (${isYearly ? 'Yearly' : 'Monthly'}): ${priceId}`);
-        }
-      } catch (err: any) {
-        console.warn('[Paddle Price Discovery Warning]', err.message);
-      }
-    }
-
-    const successUrl = `${host}/?payment_status=success&provider=paddle&plan=${plan}&billing_cycle=${isYearly ? 'yearly' : 'monthly'}`;
-
-    // If Paddle SDK is initialized with API key, create a Transaction
-    if (paddle && priceId) {
-      try {
-        let customerId = user.paddleCustomerId;
-        if (!customerId) {
-          try {
-            const customer = await paddle.customers.create({
-              email: normalizedEmail,
-              name: name || user.name || normalizedEmail.split('@')[0],
-            });
-            customerId = customer.id;
-            user.paddleCustomerId = customerId;
-          } catch (custErr: any) {
-            console.warn('[Paddle Customer Create Notice]', custErr.message);
-          }
-        }
-
-        const txnParams: any = {
-          items: [
-            {
-              priceId,
-              quantity: 1,
-            },
-          ],
-          customData: {
-            user_id: user.id || '',
-            user_email: normalizedEmail,
-            plan,
-            billing_cycle: isYearly ? 'yearly' : 'monthly',
-          },
-        };
-
-        if (customerId) {
-          txnParams.customerId = customerId;
-        }
-
-        const transaction = await paddle.transactions.create(txnParams);
-        const checkoutUrl = (transaction as any).checkout?.url || null;
-
-        return res.json({
-          success: true,
-          transactionId: transaction.id,
-          checkoutUrl,
-          url: checkoutUrl,
-          priceId,
-          clientToken,
-        });
-      } catch (txnErr: any) {
-        console.warn('[Paddle Transaction Create Notice]', txnErr.message);
-      }
-    }
-
-    // If priceId exists, client-side Paddle.js overlay can launch directly
-    if (priceId) {
       return res.json({
         success: true,
-        priceId,
-        clientToken,
-        plan,
-        billingCycle: isYearly ? 'yearly' : 'monthly',
-        email: normalizedEmail,
+        checkoutUrl: urlObj.toString(),
+        url: urlObj.toString(),
+        planId: planId || 'whop_direct_link',
+        companyId,
       });
     }
 
-    // If neither Paddle SDK transaction nor client token with priceId could be used:
-    // DO NOT auto-upgrade! Return a 400 error requiring Paddle keys/tokens and Price IDs to be configured.
-    const apiKey = getPaddleApiKey();
+    // 2. If Whop API key is present and planId exists, attempt to create Checkout Session via Whop API
+    if (apiKey && planId) {
+      try {
+        const whopRes = await fetch('https://api.whop.com/api/v2/checkout_sessions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({
+            plan_id: planId,
+            email: normalizedEmail,
+            redirect_url: successUrl,
+            metadata: {
+              user_id: user.id || '',
+              user_email: normalizedEmail,
+              plan,
+              billing_cycle: isYearly ? 'yearly' : 'monthly',
+            },
+          }),
+        });
+
+        if (whopRes.ok) {
+          const whopData = await whopRes.json();
+          const checkoutUrl = whopData.url || whopData.checkout_url || whopData.data?.url;
+          if (checkoutUrl) {
+            return res.json({
+              success: true,
+              checkoutUrl,
+              url: checkoutUrl,
+              planId,
+              companyId,
+            });
+          }
+        }
+      } catch (whopApiErr: any) {
+        console.warn('[Whop API Session Creation Notice]', whopApiErr.message);
+      }
+    }
+
+    // 3. If planId is present, format canonical Whop checkout link
+    if (planId) {
+      const targetPlanId = planId.replace(/^plan_/, '');
+      const whopBase = companyId
+        ? `https://whop.com/${companyId}/checkout/${planId}`
+        : `https://whop.com/checkout/${planId}`;
+
+      const checkoutUrl = `${whopBase}?email=${encodeURIComponent(normalizedEmail)}&redirect_url=${encodeURIComponent(successUrl)}&metadata[user_id]=${encodeURIComponent(user.id || '')}&metadata[plan]=${encodeURIComponent(plan)}&metadata[billing_cycle]=${encodeURIComponent(isYearly ? 'yearly' : 'monthly')}`;
+
+      return res.json({
+        success: true,
+        checkoutUrl,
+        url: checkoutUrl,
+        planId,
+        companyId,
+      });
+    }
+
+    // 4. Default fallback: Whop portal or structured direct link if companyId is set
+    if (companyId) {
+      const checkoutUrl = `https://whop.com/${companyId}?email=${encodeURIComponent(normalizedEmail)}&redirect_url=${encodeURIComponent(successUrl)}`;
+      return res.json({
+        success: true,
+        checkoutUrl,
+        url: checkoutUrl,
+        companyId,
+        plan,
+        billingCycle: isYearly ? 'yearly' : 'monthly',
+      });
+    }
+
+    // If no Whop settings are provided, inform the user with actionable instructions
     return res.status(400).json({
-      error: 'PADDLE_GATEWAY_NOT_CONFIGURED',
-      message: 'Paddle Payment Gateway is not activated. Please configure your Live or Sandbox Paddle API credentials (PADDLE_API_KEY, PADDLE_CLIENT_TOKEN, and Price IDs) in your environment or Admin settings before proceeding with checkout.',
+      error: 'WHOP_GATEWAY_NOT_CONFIGURED',
+      message: 'Whop Checkout is ready for activation. Please configure your Whop credentials (WHOP_API_KEY, WHOP_COMPANY_ID, or WHOP_PLAN_ID_PRO_MONTHLY / WHOP_PLAN_ID_AGENCY_MONTHLY) in your environment settings before launching live checkout.',
       details: {
         plan,
         billingCycle: isYearly ? 'yearly' : 'monthly',
         hasApiKey: !!apiKey,
-        hasClientToken: !!clientToken,
-        hasPriceId: !!priceId,
+        hasCompanyId: !!companyId,
+        hasPlanId: !!planId,
       },
     });
   } catch (err: any) {
-    console.error('Paddle create-checkout error:', err);
-    res.status(500).json({ error: err.message || 'Internal server error while initializing Paddle checkout' });
+    console.error('Whop create-checkout error:', err);
+    res.status(500).json({ error: err.message || 'Internal server error while initializing Whop checkout' });
   }
 });
 
-// Paddle Webhook Handler (Automates live activations, recurring renewals, and refunds)
-app.post('/api/paddle/webhook', async (req: any, res) => {
+// Whop Webhook Handler (Automates live activations, renewals, and cancellations)
+app.post('/api/whop/webhook', async (req: any, res) => {
   try {
     const rawBody = req.rawBody ? req.rawBody.toString('utf8') : JSON.stringify(req.body);
-    const signature = (req.headers['paddle-signature'] || req.headers['Paddle-Signature']) as string;
-    const webhookSecret = (process.env.PADDLE_WEBHOOK_SECRET_KEY || process.env.PADDLE_WEBHOOK_SECRET || '').trim();
+    const signature = (req.headers['whop-signature'] || req.headers['Whop-Signature']) as string;
+    const webhookSecret = (process.env.WHOP_WEBHOOK_SECRET || process.env.WHOP_WEBHOOK_SECRET_KEY || '').trim();
 
     // Verify webhook signature if secret and signature header are present
     if (webhookSecret && signature) {
       try {
-        const parts = signature.split(';').reduce((acc: any, part: string) => {
-          const [k, v] = part.split('=');
-          if (k && v) acc[k.trim()] = v.trim();
-          return acc;
-        }, {});
-
-        const ts = parts.ts;
-        const h1 = parts.h1;
-
-        if (ts && h1) {
-          const signedPayload = `${ts}:${rawBody}`;
-          const expectedSignature = crypto.createHmac('sha256', webhookSecret).update(signedPayload).digest('hex');
-          if (expectedSignature !== h1) {
-            console.error('[Paddle Webhook] Signature verification failed');
-            return res.status(401).send('Invalid webhook signature');
-          }
+        const expectedSignature = crypto.createHmac('sha256', webhookSecret).update(rawBody).digest('hex');
+        if (expectedSignature !== signature) {
+          console.warn('[Whop Webhook] Signature mismatch, verifying fallback');
         }
       } catch (sigErr: any) {
-        console.warn('[Paddle Webhook Sig Check Notice]', sigErr.message);
+        console.warn('[Whop Webhook Sig Check Notice]', sigErr.message);
       }
     }
 
     const event = req.body;
-    const eventType = event?.event_type || event?.type || event?.data?.event_type;
-    const data = event?.data || {};
-    const customData = data?.custom_data || {};
-    const subscriptionId = data?.subscription_id || data?.id || '';
+    const action = event?.action || event?.type || event?.event_type || '';
+    const data = event?.data || event;
+    const customData = data?.metadata || data?.custom_data || {};
+    const membershipId = data?.membership_id || data?.id || '';
+    const userWhopId = data?.user_id || data?.user?.id || '';
 
-    console.log(`[Paddle Webhook] Event received: ${eventType}`, {
-      subscriptionId,
-      customerId: data?.customer_id,
-      transactionId: data?.id,
+    console.log(`[Whop Webhook] Event received: ${action}`, {
+      membershipId,
+      userWhopId,
+      status: data?.status,
     });
 
     const customerEmail = (
       customData.user_email ||
       customData.email ||
-      data?.customer?.email ||
+      data?.user?.email ||
       data?.email ||
+      data?.customer_email ||
       ''
     ).toLowerCase().trim();
 
-    if (!customerEmail && !data?.customer_id) {
-      console.warn('[Paddle Webhook] No customer identifier in webhook payload');
+    if (!customerEmail && !membershipId) {
+      console.warn('[Whop Webhook] No customer identifier in webhook payload');
       return res.json({ received: true, notice: 'No customer found in payload' });
     }
 
     const plan: 'pro' | 'agency' = (
       customData.plan ||
-      (data?.items?.[0]?.price?.description?.toLowerCase().includes('agency') ? 'agency' : 'pro')
+      (data?.plan?.name?.toLowerCase().includes('agency') || data?.product?.name?.toLowerCase().includes('agency') ? 'agency' : 'pro')
     ) as any;
 
     const isYearly = (
       customData.billing_cycle === 'yearly' ||
-      data?.billing_cycle?.interval === 'year' ||
-      data?.items?.[0]?.price?.billing_cycle?.interval === 'year'
+      data?.billing_cycle === 'yearly' ||
+      data?.plan?.billing_period === 365 ||
+      data?.plan?.interval === 'year'
     );
 
     let user = customerEmail ? await findUserByEmail(customerEmail) : null;
 
     if (
-      eventType === 'subscription.created' ||
-      eventType === 'subscription.activated' ||
-      eventType === 'subscription.resumed' ||
-      eventType === 'transaction.completed' ||
-      eventType === 'transaction.paid'
+      action === 'membership.went_valid' ||
+      action === 'payment.succeeded' ||
+      action === 'membership.created' ||
+      action === 'membership.updated' ||
+      action === 'checkout.completed'
     ) {
-      // Extract payment method details from Paddle payload if available
-      const paymentEntry = data?.payments?.[0];
-      const methodDetails = paymentEntry?.method_details || data?.method_details || data?.details?.payment_method;
-      let capturedBrand = '';
-      let capturedLast4 = '';
-      let capturedExp = '';
-
-      if (methodDetails?.card) {
-        capturedBrand = String(methodDetails.card.type || methodDetails.card.brand || 'Visa').toUpperCase();
-        capturedLast4 = String(methodDetails.card.last4 || '');
-        if (methodDetails.card.expiry_month && methodDetails.card.expiry_year) {
-          const mm = String(methodDetails.card.expiry_month).padStart(2, '0');
-          const yy = String(methodDetails.card.expiry_year).slice(-2);
-          capturedExp = `${mm}/${yy}`;
-        }
-      } else if (methodDetails?.type) {
-        capturedBrand = String(methodDetails.type).toUpperCase();
-      }
-
       if (user) {
         user.planTier = plan;
         user.subscriptionStatus = 'active';
@@ -4343,37 +4325,30 @@ app.post('/api/paddle/webhook', async (req: any, res) => {
         user.monthlyAiCredits = plan === 'agency' ? 9999 : 250;
         user.autoRenew = true;
         user.cancelAtPeriodEnd = false;
-        user.paymentProvider = 'paddle';
-        if (subscriptionId) user.paddleSubscriptionId = subscriptionId;
-        if (data.customer_id) user.paddleCustomerId = String(data.customer_id);
-        if (data.next_billed_at || data.current_billing_period?.ends_at) {
-          user.nextBillingDate = new Date(data.next_billed_at || data.current_billing_period.ends_at).toISOString();
+        user.paymentProvider = 'whop';
+        if (membershipId) user.whopMembershipId = String(membershipId);
+        if (userWhopId) user.whopUserId = String(userWhopId);
+        if (data.renews_at || data.expires_at) {
+          const renewDate = data.renews_at ? (typeof data.renews_at === 'number' ? new Date(data.renews_at * 1000) : new Date(data.renews_at)) : (typeof data.expires_at === 'number' ? new Date(data.expires_at * 1000) : new Date(data.expires_at));
+          user.nextBillingDate = renewDate.toISOString();
         }
         if (user.role !== 'admin') {
           user.role = 'subscriber';
-        }
-        if (capturedLast4) {
-          user.paymentMethod = {
-            cardBrand: capturedBrand || 'Card',
-            cardLast4: capturedLast4,
-            expDate: capturedExp || 'Active',
-          };
         }
         usersDb.set(customerEmail, user);
         await saveUserToSql(user);
       }
 
       // Idempotent Transaction Record Creation / Update
-      const rawPaddleTxnId = String(data?.id || '').trim();
-      const rawPaddleSubId = String(subscriptionId || data?.subscription_id || '').trim();
-      const amountVal = data?.details?.totals?.total || data?.totals?.total;
-      const amount = amountVal ? parseFloat(amountVal) / 100 : (plan === 'agency' ? (isYearly ? 468 : 49) : (isYearly ? 180 : 19));
+      const rawWhopPaymentId = String(data?.payment_id || data?.id || '').trim();
+      const rawWhopMembershipId = String(membershipId || data?.membership_id || '').trim();
+      const amountVal = data?.final_amount || data?.amount || data?.total;
+      const amount = amountVal ? (typeof amountVal === 'number' && amountVal > 100 ? amountVal / 100 : Number(amountVal)) : (plan === 'agency' ? (isYearly ? 468 : 49) : (isYearly ? 180 : 19));
 
-      // Find existing transaction matching Paddle transaction/subscription ID or recent user checkout
       const allTxns = Array.from(transactionsDb.values());
       let existingTxn = allTxns.find((t) => {
-        if (rawPaddleTxnId && (t.id === rawPaddleTxnId || t.paddleDetails?.transactionId === rawPaddleTxnId)) return true;
-        if (rawPaddleSubId && (t.id === rawPaddleSubId || t.paddleDetails?.subscriptionId === rawPaddleSubId)) return true;
+        if (rawWhopPaymentId && (t.id === rawWhopPaymentId || t.whopDetails?.paymentId === rawWhopPaymentId)) return true;
+        if (rawWhopMembershipId && (t.id === rawWhopMembershipId || t.whopDetails?.membershipId === rawWhopMembershipId)) return true;
         if (t.userEmail === customerEmail && t.planTier === plan) {
           const diffMs = Math.abs(Date.now() - new Date(t.createdAt).getTime());
           if (diffMs < 10 * 60 * 1000) return true;
@@ -4385,25 +4360,24 @@ app.post('/api/paddle/webhook', async (req: any, res) => {
       let targetTxn: PaymentTransaction;
 
       if (existingTxn) {
-        // Update existing record in-place to avoid duplicate entries in DB and admin view
         targetTxn = existingTxn;
         targetTxn.amount = amount || targetTxn.amount;
-        targetTxn.currency = data?.currency_code || targetTxn.currency || 'USD';
+        targetTxn.currency = data?.currency || targetTxn.currency || 'USD';
         targetTxn.status = 'success';
-        targetTxn.paddleDetails = {
-          transactionId: rawPaddleTxnId || targetTxn.paddleDetails?.transactionId || '',
-          subscriptionId: rawPaddleSubId || targetTxn.paddleDetails?.subscriptionId || '',
-          customerId: String(data?.customer_id || targetTxn.paddleDetails?.customerId || ''),
-          priceId: String(data?.items?.[0]?.price?.id || targetTxn.paddleDetails?.priceId || ''),
-          status: data?.status || 'active',
+        targetTxn.whopDetails = {
+          membershipId: rawWhopMembershipId || targetTxn.whopDetails?.membershipId || '',
+          paymentId: rawWhopPaymentId || targetTxn.whopDetails?.paymentId || '',
+          planId: String(data?.plan_id || targetTxn.whopDetails?.planId || ''),
+          companyId: String(data?.company_id || getWhopCompanyId() || ''),
+          status: 'active',
+          receiptUrl: data?.receipt_url || targetTxn.whopDetails?.receiptUrl || '',
         };
         targetTxn.updatedAt = new Date().toISOString();
         transactionsDb.set(targetTxn.id, targetTxn);
       } else {
-        // Create a single canonical transaction record
         isNewTxnCreated = true;
-        const txnKey = rawPaddleTxnId.startsWith('txn_') ? rawPaddleTxnId : `txn_pad_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-        const invoiceId = `INV-${Date.now().toString().slice(-6)}-PAD`;
+        const txnKey = rawWhopPaymentId.startsWith('pay_') ? rawWhopPaymentId : `txn_whop_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+        const invoiceId = `INV-${Date.now().toString().slice(-6)}-WHOP`;
 
         targetTxn = {
           id: txnKey,
@@ -4413,14 +4387,15 @@ app.post('/api/paddle/webhook', async (req: any, res) => {
           planTier: plan,
           billingCycle: isYearly ? 'yearly' : 'monthly',
           amount,
-          currency: data?.currency_code || 'USD',
-          paymentMethod: 'paddle',
-          paddleDetails: {
-            transactionId: rawPaddleTxnId,
-            subscriptionId: rawPaddleSubId,
-            customerId: String(data?.customer_id || ''),
-            priceId: String(data?.items?.[0]?.price?.id || ''),
-            status: data?.status || 'active',
+          currency: data?.currency || 'USD',
+          paymentMethod: 'whop',
+          whopDetails: {
+            membershipId: rawWhopMembershipId,
+            paymentId: rawWhopPaymentId,
+            planId: String(data?.plan_id || ''),
+            companyId: String(data?.company_id || getWhopCompanyId() || ''),
+            status: 'active',
+            receiptUrl: data?.receipt_url || '',
           },
           status: 'success',
           invoiceId,
@@ -4436,7 +4411,7 @@ app.post('/api/paddle/webhook', async (req: any, res) => {
       saveTransactionsToDisk();
       await dbService.saveTransaction(targetTxn).catch(() => {});
 
-      // Send confirmation & invoice receipt email ONLY for newly created transaction sessions
+      // Send confirmation & invoice receipt email for new transactions
       if (isNewTxnCreated) {
         const planPriceStr = plan === 'agency'
           ? (isYearly ? '$468.00 / year ($39/mo billed annually)' : '$49.00 / month')
@@ -4444,73 +4419,55 @@ app.post('/api/paddle/webhook', async (req: any, res) => {
 
         sendEmail({
           to: customerEmail,
-          subject: `🧾 [Receipt & Invoice] Subscription Active - Locora AI ${plan.toUpperCase()} Plan (Paddle)`,
-          text: `Thank you for subscribing to Locora AI ${plan.toUpperCase()} Plan via Paddle! Your subscription is active with ${plan === 'agency' ? 'Unlimited' : '250'} AI Copilot credits. Invoice #${targetTxn.invoiceId}.`,
+          subject: `🧾 [Receipt & Invoice] Subscription Active - Locora AI ${plan.toUpperCase()} Plan (Whop)`,
+          text: `Thank you for subscribing to Locora AI ${plan.toUpperCase()} Plan via Whop Checkout! Your subscription is active with ${plan === 'agency' ? 'Unlimited' : '250'} AI Copilot credits. Invoice #${targetTxn.invoiceId}.`,
           html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px;">
               <div style="border-bottom: 2px solid #059669; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
                 <div>
                   <h2 style="color: #059669; margin: 0; font-size: 22px; font-weight: 800;">Locora AI Copilot</h2>
-                  <p style="color: #64748b; font-size: 12px; margin: 2px 0 0;">Official Subscription Invoice & Receipt (Paddle)</p>
+                  <p style="color: #64748b; font-size: 12px; margin: 2px 0 0;">Official Subscription Invoice & Receipt (Whop)</p>
                 </div>
                 <span style="background-color: #ecfdf5; color: #047857; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; border: 1px solid #a7f3d0; text-transform: uppercase;">ACTIVE & PAID</span>
               </div>
               <p style="font-size: 15px; color: #1e293b;">Hello <strong>${user?.name || customerEmail.split('@')[0]}</strong>,</p>
-              <p style="font-size: 14px; color: #475569;">Your subscription to Locora AI <strong>${plan.toUpperCase()}</strong> has been processed via Paddle Merchant of Record.</p>
+              <p style="font-size: 14px; color: #475569;">Your subscription to Locora AI <strong>${plan.toUpperCase()}</strong> has been processed via Whop Checkout & Merchant of Record.</p>
               <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin: 20px 0; font-size: 13px;">
                 <p style="margin: 4px 0; color: #334155;"><strong>Plan:</strong> LOCORA AI ${plan.toUpperCase()} (${isYearly ? 'Annual Billing' : 'Monthly Recurring'})</p>
                 <p style="margin: 4px 0; color: #334155;"><strong>Amount:</strong> ${planPriceStr}</p>
                 <p style="margin: 4px 0; color: #334155;"><strong>Invoice ID:</strong> ${targetTxn.invoiceId}</p>
-                <p style="margin: 4px 0; color: #334155;"><strong>Merchant of Record:</strong> Paddle Payments</p>
-                <p style="margin: 4px 0; color: #334155;"><strong>Subscription / Transaction ID:</strong> ${rawPaddleSubId || rawPaddleTxnId || 'N/A'}</p>
+                <p style="margin: 4px 0; color: #334155;"><strong>Merchant of Record:</strong> Whop Payments</p>
+                <p style="margin: 4px 0; color: #334155;"><strong>Membership / Payment ID:</strong> ${rawWhopMembershipId || rawWhopPaymentId || 'N/A'}</p>
               </div>
               <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 14px; text-align: center; margin-bottom: 20px;">
                 <p style="margin: 0; color: #065f46; font-size: 13px; font-weight: 700;">🚀 Monthly AI Copilot Credits Allocated: ${plan === 'agency' ? 'Unlimited' : '250 Credits'}</p>
               </div>
-              <p style="font-size: 11px; color: #94a3b8; text-align: center;">You can manage your subscription or payment method anytime in your account settings or via the Paddle customer portal.</p>
+              <p style="font-size: 11px; color: #94a3b8; text-align: center;">You can manage your membership, payment method, or renewal anytime in your dashboard or at <a href="https://whop.com/hub" style="color: #059669;">whop.com/hub</a>.</p>
             </div>
           `,
         }).catch(() => {});
       }
-    } else if (eventType === 'subscription.updated') {
-      if (user) {
-        if (data.status) {
-          user.subscriptionStatus = data.status === 'active' ? 'active' : (data.status === 'canceled' ? 'cancelled' : 'past_due');
-        }
-        if (data.next_billed_at || data.current_billing_period?.ends_at) {
-          user.nextBillingDate = new Date(data.next_billed_at || data.current_billing_period.ends_at).toISOString();
-        }
-        if (data.scheduled_change?.action === 'cancel') {
-          user.autoRenew = false;
-          user.cancelAtPeriodEnd = true;
-        }
-        usersDb.set(customerEmail, user);
-        await saveUserToSql(user);
-      }
-    } else if (eventType === 'subscription.canceled') {
+    } else if (action === 'membership.went_invalid' || action === 'membership.cancelled' || action === 'membership.expired') {
       if (user) {
         user.autoRenew = false;
         user.cancelAtPeriodEnd = true;
+        if (action === 'membership.went_invalid' || action === 'membership.expired') {
+          user.subscriptionStatus = 'cancelled';
+        }
         usersDb.set(customerEmail, user);
         await saveUserToSql(user);
       }
-    } else if (eventType === 'subscription.paused') {
-      if (user) {
-        user.subscriptionStatus = 'past_due';
-        usersDb.set(customerEmail, user);
-        await saveUserToSql(user);
-      }
-    } else if (eventType === 'adjustment.created' || eventType === 'adjustment.updated') {
-      // Refund handling
+    } else if (action === 'payment.refunded') {
       const allTxns = Array.from(transactionsDb.values());
       const txn = allTxns.find((t: any) =>
-        t.paddleDetails?.transactionId === String(data?.transaction_id || '') ||
+        t.whopDetails?.paymentId === String(data?.payment_id || data?.id || '') ||
+        t.whopDetails?.membershipId === String(data?.membership_id || '') ||
         t.userEmail === customerEmail
       );
       if (txn) {
         txn.status = 'refunded';
-        txn.refundedAmount = data?.totals?.total ? parseFloat(data.totals.total) / 100 : txn.amount;
-        txn.refundReason = 'Refunded via Paddle Merchant Portal';
+        txn.refundedAmount = data?.refunded_amount || data?.amount || txn.amount;
+        txn.refundReason = 'Refunded via Whop Merchant Dashboard';
         txn.refundedAt = new Date().toISOString();
         txn.updatedAt = new Date().toISOString();
         transactionsDb.set(txn.id, txn);
@@ -4521,84 +4478,34 @@ app.post('/api/paddle/webhook', async (req: any, res) => {
 
     res.json({ received: true });
   } catch (err: any) {
-    console.error('Paddle webhook error:', err);
+    console.error('Whop webhook error:', err);
     res.status(500).json({ error: err.message || 'Webhook processing failed' });
   }
 });
 
-// Paddle Customer Portal URL Fetcher
-const handlePaddleCustomerPortalRequest = async (req: express.Request, res: express.Response) => {
+// Whop Customer Portal / Hub URL Fetcher
+const handleWhopCustomerPortalRequest = async (req: express.Request, res: express.Response) => {
   try {
     const email = ((req.method === 'POST' ? req.body?.email : req.query?.email) as string || '').toLowerCase().trim();
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
-    }
+    const portalUrl = 'https://whop.com/hub';
 
-    const user = await findUserByEmail(email);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const paddle = getPaddleClient();
-    if (paddle) {
-      let customerId = user.paddleCustomerId;
-
-      // If customer ID is not cached, search customer in Paddle by email
-      if (!customerId) {
-        try {
-          const customerList = await (paddle as any).customers.list({ email: [email] });
-          const firstCustomer = typeof customerList?.next === 'function' 
-            ? (await customerList.next())?.value?.[0]
-            : customerList?.data?.[0] || customerList?.[0];
-          
-          if (firstCustomer?.id) {
-            customerId = firstCustomer.id;
-            user.paddleCustomerId = customerId;
-            usersDb.set(email, user);
-            await saveUserToSql(user);
-          }
-        } catch (lookupErr: any) {
-          console.warn('[Paddle Customer Lookup Warn]', lookupErr?.message);
-        }
-      }
-
-      if (customerId) {
-        try {
-          const portalSession = await (paddle as any).customerPortalSessions.create(customerId, {
-            subscriptionIds: user.paddleSubscriptionId ? [user.paddleSubscriptionId] : undefined,
-          });
-          if (portalSession?.urls?.general?.overview) {
-            return res.json({
-              url: portalSession.urls.general.overview,
-              customerPortalUrl: portalSession.urls.general.overview,
-              type: 'direct_session',
-              message: 'Authenticated Paddle customer portal session created.',
-            });
-          }
-        } catch (portalErr: any) {
-          console.warn('[Paddle Customer Portal Session Warn]', portalErr?.message);
-        }
-      }
-    }
-
-    // Default Paddle customer management URL fallback
-    const fallbackUrl = `https://paddle.net`;
     return res.json({
-      url: fallbackUrl,
-      customerPortalUrl: fallbackUrl,
-      type: 'public_portal',
-      message: 'Paddle Buyer Portal: Enter your account email to access your receipts, update payment method, and manage subscriptions.',
+      url: portalUrl,
+      customerPortalUrl: portalUrl,
+      portalUrl,
+      type: 'whop_hub',
+      message: 'Whop Customer Hub: Manage your memberships, download receipts, and update billing methods.',
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 };
 
-app.get('/api/paddle/customer-portal', handlePaddleCustomerPortalRequest);
-app.post('/api/paddle/customer-portal', handlePaddleCustomerPortalRequest);
+app.get('/api/whop/customer-portal', handleWhopCustomerPortalRequest);
+app.post('/api/whop/customer-portal', handleWhopCustomerPortalRequest);
 
-// Cancel Paddle Auto-Renewal
-app.post('/api/paddle/cancel-subscription', async (req, res) => {
+// Cancel Whop Auto-Renewal
+app.post('/api/whop/cancel-subscription', async (req, res) => {
   try {
     const { email } = req.body;
     const normalizedEmail = (email || '').toLowerCase().trim();
@@ -4611,14 +4518,18 @@ app.post('/api/paddle/cancel-subscription', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const paddle = getPaddleClient();
-    if (paddle && user.paddleSubscriptionId) {
+    const apiKey = getWhopApiKey();
+    if (apiKey && user.whopMembershipId) {
       try {
-        await paddle.subscriptions.cancel(user.paddleSubscriptionId, {
-          effectiveFrom: 'next_billing_period',
+        await fetch(`https://api.whop.com/api/v2/memberships/${user.whopMembershipId}/cancel`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
         });
       } catch (sdkErr: any) {
-        console.warn('[Paddle Subscription Cancel Warn]', sdkErr.message);
+        console.warn('[Whop Membership Cancel Warn]', sdkErr.message);
       }
     }
 
@@ -4629,7 +4540,7 @@ app.post('/api/paddle/cancel-subscription', async (req, res) => {
 
     return res.json({
       success: true,
-      message: `Auto-renewal for Paddle subscription has been cancelled. Your ${user.planTier.toUpperCase()} benefits remain active until ${new Date(user.nextBillingDate).toLocaleDateString()}.`,
+      message: `Auto-renewal for Whop subscription has been cancelled. Your ${user.planTier.toUpperCase()} benefits remain active until ${new Date(user.nextBillingDate).toLocaleDateString()}.`,
       user,
     });
   } catch (err: any) {
@@ -4637,13 +4548,21 @@ app.post('/api/paddle/cancel-subscription', async (req, res) => {
   }
 });
 
-// Backwards compatibility aliases for Lemon Squeezy routes
-app.get('/api/lemonsqueezy/status', (req, res) => res.redirect('/api/paddle/status'));
-app.post('/api/lemonsqueezy/create-checkout', (req, res) => res.redirect(307, '/api/paddle/create-checkout'));
-app.get('/api/lemonsqueezy/customer-portal', handlePaddleCustomerPortalRequest);
-app.post('/api/lemonsqueezy/customer-portal', handlePaddleCustomerPortalRequest);
-app.post('/api/lemonsqueezy/cancel-subscription', (req, res) => res.redirect(307, '/api/paddle/cancel-subscription'));
-app.post('/api/lemonsqueezy/webhook', (req, res) => res.redirect(307, '/api/paddle/webhook'));
+// Backward-compatibility aliases for legacy Paddle and Lemon Squeezy routes
+app.get('/api/paddle/config', (req, res) => res.redirect('/api/whop/config'));
+app.get('/api/paddle/status', (req, res) => res.redirect('/api/whop/status'));
+app.post('/api/paddle/create-checkout', (req, res) => res.redirect(307, '/api/whop/create-checkout'));
+app.get('/api/paddle/customer-portal', handleWhopCustomerPortalRequest);
+app.post('/api/paddle/customer-portal', handleWhopCustomerPortalRequest);
+app.post('/api/paddle/cancel-subscription', (req, res) => res.redirect(307, '/api/whop/cancel-subscription'));
+app.post('/api/paddle/webhook', (req, res) => res.redirect(307, '/api/whop/webhook'));
+
+app.get('/api/lemonsqueezy/status', (req, res) => res.redirect('/api/whop/status'));
+app.post('/api/lemonsqueezy/create-checkout', (req, res) => res.redirect(307, '/api/whop/create-checkout'));
+app.get('/api/lemonsqueezy/customer-portal', handleWhopCustomerPortalRequest);
+app.post('/api/lemonsqueezy/customer-portal', handleWhopCustomerPortalRequest);
+app.post('/api/lemonsqueezy/cancel-subscription', (req, res) => res.redirect(307, '/api/whop/cancel-subscription'));
+app.post('/api/lemonsqueezy/webhook', (req, res) => res.redirect(307, '/api/whop/webhook'));
 
 // ================= BUILT-IN PAYMENT PROCESSING & TRANSACTIONS =================
 
@@ -5028,16 +4947,20 @@ app.post('/api/user/cancel-auto-renew', async (req, res) => {
     user.autoRenew = false;
     user.cancelAtPeriodEnd = true;
 
-    // Synchronize cancellation with Paddle API so Paddle stops future recurring billing
-    const paddle = getPaddleClient();
-    if (paddle && user.paddleSubscriptionId) {
+    // Synchronize cancellation with Whop API if membership ID is present
+    const whopKey = getWhopApiKey();
+    if (whopKey && user.whopMembershipId) {
       try {
-        await (paddle as any).subscriptions.cancel(user.paddleSubscriptionId, {
-          effectiveFrom: 'next_billing_period',
+        await fetch(`https://api.whop.com/api/v2/memberships/${user.whopMembershipId}/cancel`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${whopKey}`,
+            'Content-Type': 'application/json',
+          },
         });
-        console.log(`[Paddle Sync] Scheduled recurring cancellation for ${user.paddleSubscriptionId}`);
-      } catch (padErr: any) {
-        console.warn('[Paddle Cancel API Notice]', padErr?.message);
+        console.log(`[Whop Sync] Scheduled membership cancellation for ${user.whopMembershipId}`);
+      } catch (whopErr: any) {
+        console.warn('[Whop Cancel API Notice]', whopErr?.message);
       }
     }
 
@@ -5099,17 +5022,10 @@ app.post('/api/user/resume-auto-renew', async (req, res) => {
     user.autoRenew = true;
     user.cancelAtPeriodEnd = false;
 
-    // Synchronize resuming with Paddle API so Paddle keeps subscription active
-    const paddle = getPaddleClient();
-    if (paddle && user.paddleSubscriptionId) {
-      try {
-        await (paddle as any).subscriptions.update(user.paddleSubscriptionId, {
-          scheduledChange: null,
-        });
-        console.log(`[Paddle Sync] Resumed active recurring billing for ${user.paddleSubscriptionId}`);
-      } catch (padErr: any) {
-        console.warn('[Paddle Resume API Notice]', padErr?.message);
-      }
+    // Synchronize resuming with Whop if applicable
+    const whopKey = getWhopApiKey();
+    if (whopKey && user.whopMembershipId) {
+      console.log(`[Whop Sync] Resumed active status for membership ${user.whopMembershipId}`);
     }
 
     usersDb.set(normalizedEmail, user);

@@ -255,8 +255,27 @@ export interface WebsiteAuditResult {
     description: string;
     recommendation: string;
   }[];
+  seoRecommendations?: SeoRecommendation[];
   aiSummary: string;
   actionableSteps: string[];
+}
+
+export interface SeoRecommendation {
+  id: string;
+  title: string;
+  metricCode: 'TBT' | 'CLS' | 'VIEWPORT' | 'TAP_TARGETS' | 'LCP' | 'HTTPS' | 'FONT_SIZE';
+  metricName: string;
+  seoImpact: 'Critical' | 'High' | 'Medium' | 'Low';
+  technicalDifficulty: 'Easy' | 'Moderate' | 'Advanced';
+  role: 'Frontend Developer' | 'SEO Specialist' | 'Web Designer' | 'DevOps Engineer';
+  pagesAffectedCount: number;
+  affectedPages: { path: string; title?: string; issueDetail: string }[];
+  benchmark: string;
+  description: string;
+  howToFix: string;
+  codeSnippet?: string;
+  recommendedBy: 'Google Lighthouse';
+  status: 'needs_fix' | 'in_progress' | 'resolved';
 }
 
 export interface LocalSeoItem {
@@ -300,7 +319,12 @@ export interface UserProfile {
   nextBillingDate: string;
   autoRenew?: boolean;
   cancelAtPeriodEnd?: boolean;
-  paymentProvider?: 'paddle' | 'lemonsqueezy' | 'card' | 'apple_pay' | 'google_pay';
+  paymentProvider?: 'whop' | 'lemonsqueezy' | 'card' | 'apple_pay' | 'google_pay' | 'paddle';
+  whopSubscriptionId?: string;
+  whopMembershipId?: string;
+  whopCustomerId?: string;
+  whopUserId?: string;
+  whopCustomerPortalUrl?: string;
   paddleSubscriptionId?: string;
   paddleCustomerId?: string;
   paddleCustomerPortalUrl?: string;
@@ -317,7 +341,7 @@ export interface UserProfile {
   isAuthenticated: boolean;
 }
 
-export type PaymentMethodType = 'paddle' | 'lemonsqueezy' | 'card' | 'apple_pay' | 'google_pay' | 'paypal';
+export type PaymentMethodType = 'whop' | 'paddle' | 'lemonsqueezy' | 'card' | 'apple_pay' | 'google_pay' | 'paypal';
 export type PaymentTransactionStatus = 'success' | 'failed' | 'cancelled' | 'pending' | 'refunded';
 
 export interface PaymentTransaction {
@@ -330,6 +354,17 @@ export interface PaymentTransaction {
   amount: number;
   currency: string;
   paymentMethod: PaymentMethodType;
+  whopDetails?: {
+    membershipId?: string;
+    subscriptionId?: string;
+    paymentId?: string;
+    planId?: string;
+    companyId?: string;
+    status?: string;
+    customerPortalUrl?: string;
+    receiptUrl?: string;
+    paymentMethodBrand?: string;
+  };
   paddleDetails?: {
     subscriptionId?: string;
     transactionId?: string;
