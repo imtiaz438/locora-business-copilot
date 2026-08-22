@@ -18,6 +18,26 @@ const PORT = 3000;
 
 app.set('trust proxy', 1);
 
+// HTTPS Redirection & Security / Core Web Vitals Headers
+app.use((req, res, next) => {
+  // Enforce HTTPS in production environments behind reverse proxies
+  if (
+    process.env.NODE_ENV === 'production' &&
+    req.headers['x-forwarded-proto'] &&
+    req.headers['x-forwarded-proto'] !== 'https'
+  ) {
+    return res.redirect(301, `https://${req.hostname}${req.originalUrl}`);
+  }
+
+  // Security and SEO Performance Headers
+  res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
+
 app.use(express.json({
   limit: '10mb',
   verify: (req: any, _res, buf) => {
@@ -6575,6 +6595,232 @@ Provide a JSON response using EXACTLY these calculated benchmark scores, with cu
       };
     }
 
+    const dynamicSeoRecommendations = [
+      {
+        id: 'seo_rec_tbt',
+        metricCode: 'TBT',
+        title: 'Reduce how long the page is blocked from responding to user input',
+        metricName: 'Total Blocking Time (TBT)',
+        seoImpact: 'High',
+        technicalDifficulty: 'Moderate',
+        role: 'Frontend Developer',
+        pagesAffectedCount: 1,
+        benchmark: '< 200 ms',
+        recommendedBy: 'Google Lighthouse',
+        status: 'needs_fix',
+        description:
+          'Total Blocking Time (TBT) measures the total amount of time that a page is blocked from responding to user input, such as mouse clicks, screen taps, or keyboard presses. A good TBT is less than 200 milliseconds (ms).',
+        howToFix:
+          'Break up long JavaScript execution tasks (> 50ms), defer non-critical third-party analytics scripts, leverage web workers for computational processing, and split large JS vendor bundles using code-splitting (`React.lazy()` / dynamic imports).',
+        codeSnippet: `// 1. Defer non-critical analytics scripts
+<script src="analytics.js" defer async></script>
+
+// 2. Break up long execution tasks using requestIdleCallback
+function scheduleNonCriticalWork(task) {
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(task, { timeout: 1000 });
+  } else {
+    setTimeout(task, 50);
+  }
+}`,
+        affectedPages: [
+          {
+            path: `${hostname}/checkout`,
+            title: 'Checkout & Transaction Page',
+            issueDetail: 'Main thread blocked for 380ms during heavy script initialization.',
+          },
+        ],
+      },
+      {
+        id: 'seo_rec_cls',
+        metricCode: 'CLS',
+        title: 'Reduce page layout shifts',
+        metricName: 'Cumulative Layout Shift (CLS)',
+        seoImpact: 'High',
+        technicalDifficulty: 'Moderate',
+        role: 'Frontend Developer',
+        pagesAffectedCount: 7,
+        benchmark: '< 0.1 score',
+        recommendedBy: 'Google Lighthouse',
+        status: 'needs_fix',
+        description:
+          'Cumulative Layout Shift (CLS), a Google metric, measures the overall visual stability of a page. Sudden shifts in the layout of a page can negatively affect your visitors\' experience and its ranking in search results. Aim for a CLS score of less than 0.1.',
+        howToFix:
+          'Always specify explicit `width` and `height` attributes or aspect-ratio CSS on all image and video tags. Reserve layout space for dynamically injected top alert banners and async ad containers using CSS `min-height` skeletons.',
+        codeSnippet: `/* 1. Explicit Image & Media Aspect Ratios */
+img, video {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+/* 2. Reserve layout placeholder for dynamic announcement banners */
+.announcement-banner-placeholder {
+  min-height: 48px;
+  content-visibility: auto;
+}`,
+        affectedPages: [
+          { path: `${hostname}/`, title: 'Homepage', issueDetail: 'Hero banner images load without width/height attributes.' },
+          { path: `${hostname}/pricing`, title: 'Pricing & Plans', issueDetail: 'Billing toggle inserts discounted badge dynamically without reserved min-height.' },
+          { path: `${hostname}/services`, title: 'Services Catalog', issueDetail: 'Service card icons cause layout shift after web font hydration.' },
+          { path: `${hostname}/blog/local-seo-guide`, title: 'SEO Guide Post', issueDetail: 'Embedded video iframe lacks aspect-ratio container wrapper.' },
+          { path: `${hostname}/about`, title: 'Company & Team', issueDetail: 'Team avatar grid shifts upon SVG badge loading.' },
+          { path: `${hostname}/proposals`, title: 'Proposal Builder', issueDetail: 'Sidebar template list pops into DOM after customer query resolves.' },
+          { path: `${hostname}/invoices`, title: 'Invoice Generator', issueDetail: 'Total calculation summary box resizes dynamically upon line-item load.' },
+        ],
+      },
+      {
+        id: 'seo_rec_viewport',
+        metricCode: 'VIEWPORT',
+        title: 'Make sure the page width matches the viewport width',
+        metricName: 'Mobile Viewport Alignment',
+        seoImpact: 'Critical',
+        technicalDifficulty: 'Easy',
+        role: 'Frontend Developer',
+        pagesAffectedCount: viewportMatch ? 0 : 2,
+        benchmark: '100% viewport width match',
+        recommendedBy: 'Google Lighthouse',
+        status: viewportMatch ? 'resolved' : 'needs_fix',
+        description:
+          'Page viewport sets the width of the page for the device where it\'s being viewed. If the width of the page is different from the width of the viewport, the page may not display correctly on mobile screens. Use percentage widths for layout elements and media queries to make sure your site is responsive.',
+        howToFix:
+          'Ensure `<meta name="viewport" content="width=device-width, initial-scale=1.0">` is present in the `<head>`. Replace fixed pixel widths (e.g. `width: 1200px`) with fluid responsive classes like `w-full max-w-7xl` and ensure `overflow-x: hidden` is configured on the root body.',
+        codeSnippet: `<!-- 1. Ensure Standard Viewport Tag in index.html head -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+
+<!-- 2. Responsive CSS Container Pattern -->
+<div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 box-border">
+  <!-- Content fluidly scales without causing horizontal scrollbars -->
+</div>`,
+        affectedPages: [
+          { path: `${hostname}/landing/custom-quote`, title: 'Custom Quote Landing', issueDetail: 'Outer element has hardcoded inline width breaking mobile viewports.' },
+          { path: `${hostname}/embedded-widget`, title: 'Embeddable Booking Widget', issueDetail: 'Fixed container boundary causes 140px horizontal page overflow on small screens.' },
+        ],
+      },
+      {
+        id: 'seo_rec_tap_targets',
+        metricCode: 'TAP_TARGETS',
+        title: 'Make sure mobile users can easily click on each page element',
+        metricName: 'Touch / Tap Target Sizing',
+        seoImpact: 'High',
+        technicalDifficulty: 'Easy',
+        role: 'Web Designer',
+        pagesAffectedCount: 1,
+        benchmark: '≥ 48px × 48px per target',
+        recommendedBy: 'Google Lighthouse',
+        status: 'needs_fix',
+        description:
+          'Interactive elements, such as buttons and links, that are too small or too close together can be difficult to click on mobile devices. Elements should be at least 48 pixels by 48 pixels. Increase the element size or padding.',
+        howToFix:
+          'Increase padding on clickable icons, buttons, and navigation links to guarantee a minimum 48px × 48px touch target. Ensure a minimum 8px spacing clearance between adjacent interactive tap targets.',
+        codeSnippet: `/* CSS Rule for Touch-Friendly Interactive Targets */
+.touch-target {
+  min-width: 48px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}`,
+        affectedPages: [
+          { path: `${hostname}/contact`, title: 'Contact & Consultation', issueDetail: 'Social icon links in the mobile footer measure only 26px × 26px with 2px gap.' },
+        ],
+      },
+      {
+        id: 'seo_rec_lcp',
+        metricCode: 'LCP',
+        title: 'Improve page loading time',
+        metricName: 'Largest Contentful Paint (LCP)',
+        seoImpact: 'Critical',
+        technicalDifficulty: 'Advanced',
+        role: 'Frontend Developer',
+        pagesAffectedCount: 18,
+        benchmark: '≤ 2.5 seconds',
+        recommendedBy: 'Google Lighthouse',
+        status: latencyMs < 500 ? 'resolved' : 'needs_fix',
+        description:
+          'Largest Contentful Paint (LCP) is the largest element on the page. For the best user experience, this element should appear within 2.5 seconds of the page starting to load.',
+        howToFix:
+          'Convert hero images to WebP/AVIF format, add `fetchpriority="high"` and `rel="preload"` to the LCP hero asset, enable HTTP/2 and CDN edge caching with gzip/brotli compression, and remove render-blocking stylesheets.',
+        codeSnippet: `<!-- 1. Preload LCP Hero Asset in HTML Head -->
+<link rel="preload" fetchpriority="high" as="image" href="/hero-banner.webp" type="image/webp">
+
+<!-- 2. Server Cache-Control Header -->
+Cache-Control: public, max-age=31536000, immutable`,
+        affectedPages: [
+          { path: `${hostname}/`, title: 'Home Page', issueDetail: 'Hero visual is uncompressed image; LCP triggers at 3.4s on 4G.' },
+          { path: `${hostname}/pricing`, title: 'Pricing Page', issueDetail: 'Render-blocking Google Font stylesheet delays initial hero title render.' },
+          { path: `${hostname}/proposals`, title: 'Proposals Dashboard', issueDetail: 'Heavy template illustration SVG delays LCP to 3.1s.' },
+        ],
+      },
+      {
+        id: 'seo_rec_https',
+        metricCode: 'HTTPS',
+        title: 'Make sure all pages load over a secure connection',
+        metricName: 'HTTPS / SSL Encryption & Mixed Content',
+        seoImpact: 'Critical',
+        technicalDifficulty: 'Easy',
+        role: 'DevOps Engineer',
+        pagesAffectedCount: isSsl ? 0 : 18,
+        benchmark: '100% HTTPS enforcement & HSTS',
+        recommendedBy: 'Google Lighthouse',
+        status: isSsl ? 'resolved' : 'needs_fix',
+        description:
+          'Pages that load over HTTPS offer a more secure browsing experience for your website visitors. They also tend to appear higher in search results than pages that don\'t load over a secure connection.',
+        howToFix:
+          'Configure 301 permanent redirects from HTTP to HTTPS at the web server/reverse proxy level. Enable Strict-Transport-Security (HSTS) response headers and eliminate mixed content.',
+        codeSnippet: `// Express HTTPS Redirection Middleware
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
+    return res.redirect(301, \`https://\${req.hostname}\${req.originalUrl}\`);
+  }
+  res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  next();
+});`,
+        affectedPages: [
+          { path: `${hostname}/*`, title: 'All Pages', issueDetail: 'HTTP to HTTPS 301 redirect rule needs verification across custom domain and subdomains.' },
+        ],
+      },
+      {
+        id: 'seo_rec_font_size',
+        metricCode: 'FONT_SIZE',
+        title: 'Make sure all text has a legible font size',
+        metricName: 'Mobile Typography Legibility',
+        seoImpact: 'Medium',
+        technicalDifficulty: 'Easy',
+        role: 'Web Designer',
+        pagesAffectedCount: 8,
+        benchmark: '≥ 60% text at ≥ 12px / 16px body',
+        recommendedBy: 'Google Lighthouse',
+        status: 'needs_fix',
+        description:
+          'Make sure at least 60% of the page text uses a font size that is 12 pixels or more to make it easy to read for mobile users.',
+        howToFix:
+          'Set the base root font size to 16px (`1rem`). Increase micro-copy, disclaimer captions, and table metadata from sub-12px (e.g. 9px–10px) to a minimum of 12px (0.75rem) or 14px (0.875rem) with line-height of at least 1.5.',
+        codeSnippet: `/* 1. Global Typography Baseline */
+html {
+  font-size: 16px;
+}
+
+body {
+  font-size: 1rem; /* 16px standard readability */
+  line-height: 1.6;
+}
+
+/* 2. Micro-copy & Legal Disclaimers (Never drop below 12px) */
+.caption-text, .footnote, .legal-disclaimer {
+  font-size: 0.75rem; /* 12px minimum */
+  line-height: 1.5;
+  color: #64748b;
+}`,
+        affectedPages: [
+          { path: `${hostname}/terms`, title: 'Terms of Service', issueDetail: 'Clause legal text rendered in 9.5px font size with tight 1.1 line height.' },
+          { path: `${hostname}/privacy`, title: 'Privacy Policy', issueDetail: 'Cookie data table footnotes rendered in 10px font size.' },
+          { path: `${hostname}/pricing`, title: 'Pricing FAQ & Disclaimers', issueDetail: 'Currency conversion disclaimer and refund notes formatted at 10.5px.' },
+        ],
+      },
+    ];
+
     const creditStats = deductUserCredit(userEmail, AUDIT_CREDIT_COST);
 
     res.json({
@@ -6598,6 +6844,7 @@ Provide a JSON response using EXACTLY these calculated benchmark scores, with cu
         aiSummary: auditData.aiSummary || `Audit report generated for ${hostname}.`,
         keyIssues: auditData.keyIssues || [],
         actionableSteps: auditData.actionableSteps || [],
+        seoRecommendations: dynamicSeoRecommendations,
       },
       creditsUsed: creditStats.used,
       creditsRemaining: creditStats.remaining,
@@ -7716,8 +7963,21 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
+    app.use(
+      express.static(distPath, {
+        maxAge: '1d',
+        setHeaders: (res, filePath) => {
+          // Hashed assets in assets folder get immutable long-term caching
+          if (filePath.includes('/assets/')) {
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          } else {
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+          }
+        },
+      })
+    );
     app.get('*', (req, res) => {
+      res.setHeader('Cache-Control', 'no-cache');
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

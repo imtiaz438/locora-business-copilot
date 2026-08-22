@@ -447,12 +447,12 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({ slug: initia
               Structured JSON-LD Schema (Auto-Injected for {currentIndustry.name})
             </span>
           </div>
-          <span className="px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 text-[10px] font-mono border border-emerald-800">
+          <span className="px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 text-xs font-mono border border-emerald-800">
             Schema.org / {currentIndustry.schemaType}
           </span>
         </div>
 
-        <pre className="text-[11px] font-mono bg-slate-950 p-4 rounded-xl text-emerald-300 overflow-x-auto leading-relaxed border border-slate-800">
+        <pre className="text-xs font-mono bg-slate-950 p-4 rounded-xl text-emerald-300 overflow-x-auto leading-relaxed border border-slate-800">
 {`{
   "@context": "https://schema.org",
   "@type": "${currentIndustry.schemaType}",

@@ -2,21 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     <title>Locora AI | #1 AI Business Operating System & Local SEO Copilot</title>
     <meta name="description" content="Locora AI is the all-in-one AI Business Operating System & Local SEO Copilot for service businesses, agencies, dentists, HVAC contractors, and real estate professionals." />
     <meta name="keywords" content="Locora AI, Local SEO AI, Business Copilot, Agency Operating System, CRM for service business, Local Google Maps SEO, Proposal Generator, AI Invoicing" />
     <link rel="canonical" href="https://locoraai.com/" />
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JK4D86S70Z"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+    <!-- DNS Prefetch & Preconnect for Fast LCP & Low Latency -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Montserrat:ital,wght@0,300..900;1,300..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
 
-      gtag('config', 'G-JK4D86S70Z');
-    </script>
+    <!-- Preload Hero Brand Asset for Sub-2.5s LCP -->
+    <link rel="preload" as="image" href="/locora-logo-tight.png" fetchpriority="high" type="image/png" />
 
     <!-- Favicon and App Branding -->
     <link rel="icon" type="image/png" sizes="32x32" href="/locora-logo-tight.png" />
@@ -35,16 +35,20 @@
     <meta name="twitter:title" content="Locora AI | #1 Local Business Operating System" />
     <meta name="twitter:description" content="Automate client CRMs, proposal generation, local Google Business SEO, and AI invoicing in one unified workspace." />
 
-    <!-- Google Fonts Preconnect -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Montserrat:ital,wght@0,300..900;1,300..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
+    <!-- Google tag (gtag.js) - Asynchronous for Low TBT -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JK4D86S70Z"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-JK4D86S70Z');
+    </script>
 
-    <!-- Google Identity Services -->
+    <!-- Google Identity Services (Deferred for Fast TBT) -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-    <!-- Paddle.js v2 SDK -->
-    <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+    <!-- Paddle.js v2 SDK (Deferred for Low TBT) -->
+    <script src="https://cdn.paddle.com/paddle/v2/paddle.js" defer></script>
 
     <!-- Organization Schema JSON-LD -->
     <script type="application/ld+json">
@@ -53,11 +57,12 @@
         "@type": "Organization",
         "name": "Locora AI",
         "url": "https://locoraai.com",
-        "logo": "https://locoraai.com/logo.png",
+        "logo": "https://locoraai.com/locora-logo.png",
         "description": "Locora AI is an enterprise AI Business Operating System and Local SEO Copilot platform designed for agencies and local service businesses.",
         "sameAs": [
-          "https://twitter.com/locoraai",
-          "https://linkedin.com/company/locoraai"
+          "https://linkedin.com/company/locoraai",
+          "https://facebook.com/locoraai",
+          "https://instagram.com/locoraai"
         ],
         "contactPoint": {
           "@type": "ContactPoint",
@@ -105,7 +110,7 @@
             enumerable: true
           });
         } catch (e) {
-          console.warn('Fetch property descriptor setup warning:', e);
+          console.warn('Fetch descriptor initialization info:', e);
         }
       })();
     </script>
@@ -115,3 +120,4 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+

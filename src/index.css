@@ -156,10 +156,14 @@
 @layer base {
   html {
     font-size: 17.5px;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    box-sizing: border-box;
   }
 
-  * {
-    @apply border-border outline-ring/50;
+  *, *:before, *:after {
+    box-sizing: border-box;
   }
 
   body {
@@ -167,10 +171,41 @@
     font-family: 'Open Sans', sans-serif;
     font-size: 1rem;
     line-height: 1.6;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Montserrat', sans-serif;
+    line-height: 1.25;
+  }
+
+  /* Cumulative Layout Shift (CLS) Prevention on Media */
+  img, video, iframe {
+    max-width: 100%;
+    height: auto;
+    content-visibility: auto;
+  }
+
+  /* Mobile Touch / Tap Target Optimization (>= 44px - 48px) */
+  @media (pointer: coarse) {
+    button, 
+    a, 
+    input, 
+    select, 
+    textarea, 
+    [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+      touch-action: manipulation;
+    }
   }
 }
 
@@ -189,6 +224,15 @@
   .text-base {
     font-size: 1.05rem !important; /* ~18.4px */
     line-height: 1.6rem !important;
+  }
+
+  /* Explicit aspect ratios to eliminate layout shifts */
+  .aspect-banner {
+    aspect-ratio: 16 / 9;
+  }
+
+  .aspect-card {
+    aspect-ratio: 4 / 3;
   }
 }
 
