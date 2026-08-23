@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { ArrowRight, Menu, X, LayoutDashboard, LogIn, LogOut, UserPlus } from 'lucide-react';
+import { ArrowRight, Menu, X, LayoutDashboard, LogIn, LogOut, UserPlus, ChevronDown } from 'lucide-react';
 import { LocoraLogo } from '../LocoraLogo';
 
 export const PublicNavbar: React.FC = () => {
@@ -8,13 +8,21 @@ export const PublicNavbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { id: 'home', label: 'Home' },
-    { id: 'features', label: 'Features' },
-    { id: 'industry_pseo', label: 'Industries' },
-    { id: 'pricing_public', label: 'Pricing' },
-    { id: 'about', label: 'About Us' },
-    { id: 'contact', label: 'Contact Us' },
+    { id: 'home', label: 'Home', path: '/' },
+    { id: 'features', label: 'Features', path: '/features' },
+    { id: 'use_cases_hub', label: 'Use Cases', path: '/use-cases' },
+    { id: 'industry_pseo', label: 'Industries', path: '/for/dentists' },
+    { id: 'resources_hub', label: 'Resources', path: '/resources' },
+    { id: 'pricing_public', label: 'Pricing', path: '/pricing' },
+    { id: 'about', label: 'About', path: '/about' },
   ];
+
+  const handleNavClick = (link: typeof navLinks[0]) => {
+    window.history.pushState({}, '', link.path);
+    setActiveTab(link.id);
+    setMobileMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 transition-colors shadow-xs font-sans">
@@ -23,7 +31,11 @@ export const PublicNavbar: React.FC = () => {
         <div
           role="button"
           tabIndex={0}
-          onClick={() => setActiveTab('home')}
+          onClick={() => {
+            window.history.pushState({}, '', '/');
+            setActiveTab('home');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
           onKeyDown={(e) => e.key === 'Enter' && setActiveTab('home')}
           className="flex items-center gap-3 text-left group focus:outline-none cursor-pointer"
         >
@@ -35,12 +47,18 @@ export const PublicNavbar: React.FC = () => {
         {/* Desktop Navigation Links */}
         <div className="hidden lg:flex items-center gap-1 bg-slate-100/80 p-1.5 rounded-full border border-slate-200">
           {navLinks.map((link) => {
-            const isActive = activeTab === link.id || (link.id === 'pricing_public' && activeTab === 'pricing');
+            const isActive =
+              activeTab === link.id ||
+              (link.id === 'features' && activeTab.startsWith('feature_')) ||
+              (link.id === 'use_cases_hub' && activeTab.startsWith('usecase_')) ||
+              (link.id === 'resources_hub' && activeTab.startsWith('resource_')) ||
+              (link.id === 'pricing_public' && activeTab === 'pricing');
+
             return (
               <button
                 key={link.id}
-                onClick={() => setActiveTab(link.id)}
-                className={`px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                onClick={() => handleNavClick(link)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer ${
                   isActive
                     ? 'bg-[#059669] text-white shadow-sm font-bold'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
@@ -57,7 +75,11 @@ export const PublicNavbar: React.FC = () => {
           {user.isAuthenticated ? (
             <>
               <button
-                onClick={() => setActiveTab('dashboard')}
+                onClick={() => {
+                  window.history.pushState({}, '', '/dashboard');
+                  setActiveTab('dashboard');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className="px-4 py-2 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer font-sans"
               >
                 <LayoutDashboard className="w-4 h-4" />
@@ -78,7 +100,11 @@ export const PublicNavbar: React.FC = () => {
           ) : (
             <>
               <button
-                onClick={() => setActiveTab('login')}
+                onClick={() => {
+                  window.history.pushState({}, '', '/login');
+                  setActiveTab('login');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className={`px-4 py-2 text-xs font-semibold rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer font-sans ${
                   activeTab === 'login'
                     ? 'bg-slate-900 text-white border-slate-900 font-bold'
@@ -89,7 +115,11 @@ export const PublicNavbar: React.FC = () => {
                 <span>Sign In</span>
               </button>
               <button
-                onClick={() => setActiveTab('signup')}
+                onClick={() => {
+                  window.history.pushState({}, '', '/signup');
+                  setActiveTab('signup');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className="px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer font-sans"
               >
                 <UserPlus className="w-3.5 h-3.5" />
@@ -101,7 +131,7 @@ export const PublicNavbar: React.FC = () => {
         </div>
 
         {/* Mobile Hamburger Toggle */}
-        <div className="flex md:hidden items-center gap-2">
+        <div className="flex lg:hidden items-center gap-2">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 cursor-pointer"
@@ -113,15 +143,12 @@ export const PublicNavbar: React.FC = () => {
 
       {/* Mobile Drawer Navigation */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-slate-200 px-6 py-5 space-y-3 animate-in slide-in-from-top-2 font-sans">
+        <div className="lg:hidden bg-white border-b border-slate-200 px-6 py-5 space-y-3 animate-in slide-in-from-top-2 font-sans">
           <div className="flex flex-col gap-2">
             {navLinks.map((link) => (
               <button
                 key={link.id}
-                onClick={() => {
-                  setActiveTab(link.id);
-                  setMobileMenuOpen(false);
-                }}
+                onClick={() => handleNavClick(link)}
                 className={`text-left px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer ${
                   activeTab === link.id
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold'
@@ -152,33 +179,35 @@ export const PublicNavbar: React.FC = () => {
                     setActiveTab('home');
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-2.5 bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl text-center flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5" />
                   <span>Sign Out</span>
                 </button>
               </>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
+              <>
                 <button
                   onClick={() => {
                     setActiveTab('login');
                     setMobileMenuOpen(false);
                   }}
-                  className="py-2.5 bg-slate-100 text-slate-800 text-xs font-bold rounded-xl text-center border border-slate-200 cursor-pointer"
+                  className="w-full py-2.5 bg-slate-100 text-slate-800 font-semibold text-xs rounded-xl border border-slate-200 text-center flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  Sign In
+                  <LogIn className="w-3.5 h-3.5 text-[#059669]" />
+                  <span>Sign In</span>
                 </button>
                 <button
                   onClick={() => {
                     setActiveTab('signup');
                     setMobileMenuOpen(false);
                   }}
-                  className="py-2.5 bg-[#059669] text-white text-xs font-bold rounded-xl text-center shadow-xs cursor-pointer"
+                  className="w-full py-3 bg-[#059669] text-white font-bold text-xs rounded-xl shadow-md text-center flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  Sign Up Free
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Sign Up Free (25 Credits)</span>
                 </button>
-              </div>
+              </>
             )}
           </div>
         </div>

@@ -4,7 +4,7 @@ import { Sparkles, ShieldCheck, Mail, ArrowRight, CheckCircle2, Heart, Globe, Lo
 import { LocoraLogo } from '../LocoraLogo';
 
 export const PublicFooter: React.FC = () => {
-  const { setActiveTab, setAuthModalOpen } = useApp();
+  const { setActiveTab } = useApp();
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,12 +31,17 @@ export const PublicFooter: React.FC = () => {
       }
     } catch (err) {
       console.error('Newsletter submission error:', err);
-      // Fallback grace
       setSubscribed(true);
       setNewsletterEmail('');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const navigateTo = (path: string, tabId: string) => {
+    window.history.pushState({}, '', path);
+    setActiveTab(tabId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -83,7 +88,7 @@ export const PublicFooter: React.FC = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-5 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer disabled:opacity-70"
+                    className="px-5 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer disabled:opacity-70 font-heading"
                   >
                     {isSubmitting ? (
                       <>
@@ -109,135 +114,165 @@ export const PublicFooter: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Footer Links */}
+        {/* Main Footer Links - 5 Column Semantic Architecture */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 pt-4">
           {/* Brand Info */}
-          <div className="lg:col-span-2 space-y-4">
-            <LocoraLogo
-              className="w-12 h-12 flex-shrink-0"
-            />
-            <p className="text-xs text-slate-600 leading-relaxed max-w-sm font-sans">
-              The unified AI Copilot designed specifically for local service businesses and agencies. Automate proposal drafting, client CRM, local SEO schemas, and PDF invoicing.
+          <div className="lg:col-span-1 space-y-4">
+            <LocoraLogo className="w-12 h-12 flex-shrink-0" />
+            <p className="text-xs text-slate-600 leading-relaxed font-sans">
+              The unified AI Operating System for agencies and local businesses. Automate proposals, local SEO, client CRM, and invoicing.
             </p>
-            <div className="flex items-center gap-3 text-xs text-slate-600 pt-2 font-sans">
-              <span className="flex items-center gap-1 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
+            <div className="flex flex-col gap-2 text-xs text-slate-600 pt-1 font-sans">
+              <span className="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" /> SOC2 Compliant
               </span>
-              <span className="flex items-center gap-1 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
+              <span className="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
                 <Globe className="w-4 h-4 text-indigo-600" /> 99.9% Uptime SLA
               </span>
             </div>
-
-            {/* Social Media Links */}
-            <div className="pt-2">
-              <p className="text-[11px] font-semibold text-slate-700 uppercase tracking-wider mb-2 font-sans">Connect With Us</p>
-              <div className="flex items-center gap-2">
-                <a
-                  href="https://www.linkedin.com/company/locoracopilot"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="LinkedIn"
-                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-[#0077b5] hover:border-[#0077b5]/30 hover:bg-slate-50 transition-all shadow-2xs"
-                >
-                  <Linkedin className="w-4 h-4" />
-                </a>
-                <a
-                  href="https://www.facebook.com/people/Locora-AI/61593321283379/-"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Facebook"
-                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-[#1877f2] hover:border-[#1877f2]/30 hover:bg-slate-50 transition-all shadow-2xs"
-                >
-                  <Facebook className="w-4 h-4" />
-                </a>
-                <a
-                  href="https://www.instagram.com/su.pport6736/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Instagram"
-                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-[#e4405f] hover:border-[#e4405f]/30 hover:bg-slate-50 transition-all shadow-2xs"
-                >
-                  <Instagram className="w-4 h-4" />
-                </a>
-              </div>
-            </div>
           </div>
 
-          {/* Navigation Links */}
+          {/* Layer 1: Product Features */}
           <div className="space-y-3 font-sans">
-            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Product Platform</h4>
+            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Product Features</h4>
             <ul className="space-y-2 text-xs text-slate-600">
               <li>
-                <button onClick={() => setActiveTab('features')} className="hover:text-[#059669] transition-colors cursor-pointer">
-                  AI Proposals & Contracts
+                <button onClick={() => navigateTo('/features/ai-proposal-generator', 'feature_ai-proposal-generator')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  AI Proposal Generator
                 </button>
               </li>
               <li>
-                <button onClick={() => setActiveTab('features')} className="hover:text-[#059669] transition-colors cursor-pointer">
-                  Local SEO & Schema Generator
+                <button onClick={() => navigateTo('/features/seo-audit', 'feature_seo-audit')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  SEO Audit Engine
                 </button>
               </li>
               <li>
-                <button onClick={() => setActiveTab('features')} className="hover:text-[#059669] transition-colors cursor-pointer">
+                <button onClick={() => navigateTo('/features/ai-business-audit', 'feature_ai-business-audit')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  AI Business Audit
+                </button>
+              </li>
+              <li>
+                <button onClick={() => navigateTo('/features/marketing-planner', 'feature_marketing-planner')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  Marketing Planner
+                </button>
+              </li>
+              <li>
+                <button onClick={() => navigateTo('/features/crm', 'feature_crm')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
                   Client CRM & Pipeline
                 </button>
               </li>
               <li>
-                <button onClick={() => setActiveTab('features')} className="hover:text-[#059669] transition-colors cursor-pointer">
-                  One-Click PDF Invoicing
+                <button onClick={() => navigateTo('/features/invoicing', 'feature_invoicing')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  One-Click Invoicing
                 </button>
               </li>
               <li>
-                <button onClick={() => setActiveTab('features')} className="hover:text-[#059669] transition-colors cursor-pointer">
-                  Website SEO Audit Engine
+                <button onClick={() => navigateTo('/features/reputation-management', 'feature_reputation-management')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  Reputation Management
                 </button>
               </li>
               <li>
-                <button onClick={() => setActiveTab('features')} className="hover:text-[#059669] transition-colors cursor-pointer">
-                  30/90-Day Marketing Roadmaps
+                <button onClick={() => navigateTo('/features/document-generator', 'feature_document-generator')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  Document Generator
                 </button>
               </li>
             </ul>
           </div>
 
+          {/* Layer 2: Use Cases */}
           <div className="space-y-3 font-sans">
-            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Company & Resources</h4>
+            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Use Cases</h4>
             <ul className="space-y-2 text-xs text-slate-600">
               <li>
-                <button onClick={() => setActiveTab('about')} className="hover:text-[#059669] transition-colors cursor-pointer">
-                  About Locora AI
+                <button onClick={() => navigateTo('/use-cases/local-seo', 'usecase_local-seo')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  Local SEO & Google Maps
                 </button>
               </li>
               <li>
-                <button onClick={() => setActiveTab('pricing_public')} className="hover:text-[#059669] transition-colors cursor-pointer">
-                  Pricing & Tiers
+                <button onClick={() => navigateTo('/use-cases/lead-generation', 'usecase_lead-generation')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  Lead Gen & Audit Pitches
                 </button>
               </li>
               <li>
-                <button onClick={() => setActiveTab('contact')} className="hover:text-[#059669] transition-colors cursor-pointer">
-                  Contact Support & Sales
+                <button onClick={() => navigateTo('/use-cases/client-management', 'usecase_client-management')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  Client Management & CRM
                 </button>
               </li>
               <li>
-                <button onClick={() => setActiveTab('login')} className="hover:text-[#059669] transition-colors cursor-pointer">
-                  Client Portal Sign In
+                <button onClick={() => navigateTo('/use-cases/marketing-planning', 'usecase_marketing-planning')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  Marketing Planning
                 </button>
               </li>
               <li>
-                <button onClick={() => setActiveTab('dashboard')} className="hover:text-[#059669] transition-colors cursor-pointer">
-                  Launch App Workspace
+                <button onClick={() => navigateTo('/use-cases/agency-operations', 'usecase_agency-operations')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  Agency Operations OS
+                </button>
+              </li>
+              <li>
+                <button onClick={() => navigateTo('/use-cases/business-growth', 'usecase_business-growth')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  Local Business Growth
                 </button>
               </li>
             </ul>
           </div>
 
+          {/* Layer 3 & 4: Industries & Educational Resources */}
           <div className="space-y-3 font-sans">
-            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Locora AI HQ</h4>
-            <div className="text-xs space-y-1 text-slate-600">
-              <p className="font-semibold text-slate-800">Locora AI Headquarters</p>
-              <p>100 Innovation Way, Suite 400</p>
-              <p>San Francisco, CA 94105</p>
-            </div>
+            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Resources & SOPs</h4>
+            <ul className="space-y-2 text-xs text-slate-600">
+              <li>
+                <button onClick={() => navigateTo('/resources/how-to-improve-local-seo', 'resource_how-to-improve-local-seo')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  How to Improve Local SEO
+                </button>
+              </li>
+              <li>
+                <button onClick={() => navigateTo('/resources/how-to-create-seo-proposal', 'resource_how-to-create-seo-proposal')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  Creating Winning Proposals
+                </button>
+              </li>
+              <li>
+                <button onClick={() => navigateTo('/resources/google-business-profile-guide', 'resource_google-business-profile-guide')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  Google Business Profile Guide
+                </button>
+              </li>
+              <li>
+                <button onClick={() => navigateTo('/resources/local-seo-checklist', 'resource_local-seo-checklist')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  45-Point SEO Checklist
+                </button>
+              </li>
+              <li className="pt-2 border-t border-slate-200">
+                <button onClick={() => navigateTo('/for/dentists', 'industry_pseo')} className="font-semibold text-emerald-700 hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  Explore 8+ Industry Solutions →
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          {/* Company & Legal */}
+          <div className="space-y-3 font-sans">
+            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Company</h4>
+            <ul className="space-y-2 text-xs text-slate-600">
+              <li>
+                <button onClick={() => navigateTo('/about', 'about')} className="hover:text-[#059669] transition-colors cursor-pointer">
+                  About Us
+                </button>
+              </li>
+              <li>
+                <button onClick={() => navigateTo('/pricing', 'pricing_public')} className="hover:text-[#059669] transition-colors cursor-pointer">
+                  Pricing Plans
+                </button>
+              </li>
+              <li>
+                <button onClick={() => navigateTo('/contact', 'contact')} className="hover:text-[#059669] transition-colors cursor-pointer">
+                  Contact Support
+                </button>
+              </li>
+              <li>
+                <button onClick={() => navigateTo('/login', 'login')} className="hover:text-[#059669] transition-colors cursor-pointer">
+                  Account Sign In
+                </button>
+              </li>
+            </ul>
           </div>
         </div>
 

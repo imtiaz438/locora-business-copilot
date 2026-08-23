@@ -2,40 +2,39 @@
 
 > Locora AI (https://locoraai.com) is the premier autonomous AI Business Operating System and Local SEO Copilot built for service businesses, agencies, dental practices, HVAC contractors, real estate brokers, legal firms, and local trade contractors.
 
-## What is Locora AI?
-Locora AI is an all-in-one AI-driven business workspace that combines:
-- **Local SEO & Google Business Profile (GBP) Copilot**: AI-generated GBP descriptions, automated 5-star review reply generation, JSON-LD LocalBusiness Schema markup generators, Google Q&A optimization, and local landing page copy.
-- **Website Audit Engine**: Google Lighthouse performance analysis, Core Web Vitals diagnostics (LCP, TBT, CLS), mobile viewport compliance, and technical SEO action plans.
-- **Proposal & Quote Builder**: Interactive multi-tier client proposals with digital signatures, scope breakdowns, milestone schedules, and live export.
-- **AI Invoice Generator**: One-click professional invoices with automated tax, discounts, itemized services, PDF export, and payment tracking.
-- **Client CRM & Lead Pipeline**: Visual sales pipeline tracking from new lead to proposal sent, active client, and completed project.
-- **30 & 90-Day Marketing Roadmap Generator**: Tailored multi-channel growth strategies and local marketing roadmaps.
+## 4-Layer Architecture
 
-## Target Audience & Supported Industries
-Locora AI is specifically engineered for:
-- Digital Marketing & Local SEO Agencies
-- Dental & Healthcare Practices
-- HVAC & Home Heating/Cooling Contractors
-- Real Estate Brokers & Property Managers
-- Law Firms & Legal Consultants
-- Plumbing & Electrical Contractors
-- Med Spas & Wellness Clinics
-- Restaurants & Hospitality Venues
-- Auto Repair & Detailing Shops
+### Layer 1: Product Pages
+- AI Business Audit: https://locoraai.com/features/ai-business-audit
+- Marketing Planner: https://locoraai.com/features/marketing-planner
+- SEO Audit Engine: https://locoraai.com/features/seo-audit
+- AI Proposal Generator: https://locoraai.com/features/ai-proposal-generator
+- Document Generator: https://locoraai.com/features/document-generator
+- AI Business Chat: https://locoraai.com/features/ai-business-chat
+- Client CRM: https://locoraai.com/features/crm
+- Invoice Generator: https://locoraai.com/features/invoicing
+- Reputation Management: https://locoraai.com/features/reputation-management
 
-## Core Capabilities & Deliverables
-1. **Local SEO Assistant**: Generates keyword-rich Google Business Profile posts, geo-targeted service descriptions, localized FAQs, and validated schema.org structured data.
-2. **Technical SEO Audits**: Runs 7-point Core Web Vitals and Lighthouse audits to diagnose Largest Contentful Paint (LCP), Total Blocking Time (TBT), and Cumulative Layout Shift (CLS).
-3. **AI Document & Contract Creator**: Generates NDAs, Master Services Agreements (MSA), Statements of Work (SOW), and SLA contracts.
-4. **Client Onboarding & Intake**: Automated questionnaires and business profiling.
+### Layer 2: Use-Case Solutions
+- Local SEO & Google Maps: https://locoraai.com/use-cases/local-seo
+- Lead Generation & Audit Pitches: https://locoraai.com/use-cases/lead-generation
+- Client Management & CRM: https://locoraai.com/use-cases/client-management
+- Marketing Planning: https://locoraai.com/use-cases/marketing-planning
+- Agency Operations OS: https://locoraai.com/use-cases/agency-operations
+- Local Business Growth: https://locoraai.com/use-cases/business-growth
 
-## Pricing & Tiers
-- **Starter Plan**: Free forever with 25 AI monthly credits, core CRM, proposal builder, and basic SEO assistant.
-- **Pro Growth**: $29/mo or $290/yr for 250 AI credits/mo, full Website Audit engine, Google Lighthouse diagnostics, unlimited proposals, and client invoicing.
-- **Agency Unlimited**: $79/mo or $790/yr for 1,000 AI credits/mo, white-label client portals, custom branding, and team collaboration.
+### Layer 3: Industry Verticals
+- Dental Practices: https://locoraai.com/for/dentists
+- HVAC Contractors: https://locoraai.com/for/hvac-contractors
+- Real Estate Agents: https://locoraai.com/for/real-estate
+- Law Firms & Attorneys: https://locoraai.com/for/law-firms
+- Plumbing Companies: https://locoraai.com/for/plumbers
+- MedSpas & Aesthetic Clinics: https://locoraai.com/for/med-spas
+- Restaurants & Caterers: https://locoraai.com/for/restaurants
+- Auto Repair Centers: https://locoraai.com/for/auto-repair
 
-## Canonical Links & Documentation
-- Website: https://locoraai.com
-- Industry Solutions: https://locoraai.com/for/dentists, https://locoraai.com/for/hvac-contractors, https://locoraai.com/for/real-estate
-- Features: https://locoraai.com/features
-- Pricing: https://locoraai.com/pricing
+### Layer 4: Educational Playbooks & SOPs
+- How to Improve Local SEO: https://locoraai.com/resources/how-to-improve-local-seo
+- How to Create Winning SEO Proposals: https://locoraai.com/resources/how-to-create-seo-proposal
+- Google Business Profile Master Guide: https://locoraai.com/resources/google-business-profile-guide
+- 45-Point Local SEO Checklist: https://locoraai.com/resources/local-seo-checklist

@@ -8189,15 +8189,38 @@ app.get('/sitemap.xml', (req, res) => {
     const pages = [
       { path: '/', priority: '1.0', changefreq: 'daily' },
       { path: '/features', priority: '0.9', changefreq: 'weekly' },
+      { path: '/use-cases', priority: '0.9', changefreq: 'weekly' },
+      { path: '/resources', priority: '0.9', changefreq: 'weekly' },
       { path: '/pricing', priority: '0.9', changefreq: 'weekly' },
       { path: '/about', priority: '0.7', changefreq: 'monthly' },
       { path: '/contact', priority: '0.7', changefreq: 'monthly' },
       { path: '/security', priority: '0.6', changefreq: 'monthly' },
       { path: '/privacy', priority: '0.5', changefreq: 'monthly' },
       { path: '/terms', priority: '0.5', changefreq: 'monthly' },
+      { path: '/refund', priority: '0.5', changefreq: 'monthly' },
       { path: '/login', priority: '0.6', changefreq: 'monthly' },
       { path: '/signup', priority: '0.6', changefreq: 'monthly' },
-      // Programmatic Industry Landing Pages
+
+      // Layer 1: Product Feature Pages
+      { path: '/features/ai-business-audit', priority: '0.85', changefreq: 'weekly' },
+      { path: '/features/marketing-planner', priority: '0.85', changefreq: 'weekly' },
+      { path: '/features/seo-audit', priority: '0.85', changefreq: 'weekly' },
+      { path: '/features/ai-proposal-generator', priority: '0.85', changefreq: 'weekly' },
+      { path: '/features/document-generator', priority: '0.85', changefreq: 'weekly' },
+      { path: '/features/ai-business-chat', priority: '0.85', changefreq: 'weekly' },
+      { path: '/features/crm', priority: '0.85', changefreq: 'weekly' },
+      { path: '/features/invoicing', priority: '0.85', changefreq: 'weekly' },
+      { path: '/features/reputation-management', priority: '0.85', changefreq: 'weekly' },
+
+      // Layer 2: Use Cases Pages
+      { path: '/use-cases/local-seo', priority: '0.85', changefreq: 'weekly' },
+      { path: '/use-cases/lead-generation', priority: '0.85', changefreq: 'weekly' },
+      { path: '/use-cases/client-management', priority: '0.85', changefreq: 'weekly' },
+      { path: '/use-cases/marketing-planning', priority: '0.85', changefreq: 'weekly' },
+      { path: '/use-cases/agency-operations', priority: '0.85', changefreq: 'weekly' },
+      { path: '/use-cases/business-growth', priority: '0.85', changefreq: 'weekly' },
+
+      // Layer 3: Programmatic Industry Landing Pages
       { path: '/for/dentists', priority: '0.85', changefreq: 'weekly' },
       { path: '/for/hvac-contractors', priority: '0.85', changefreq: 'weekly' },
       { path: '/for/real-estate', priority: '0.85', changefreq: 'weekly' },
@@ -8206,6 +8229,12 @@ app.get('/sitemap.xml', (req, res) => {
       { path: '/for/med-spas', priority: '0.85', changefreq: 'weekly' },
       { path: '/for/restaurants', priority: '0.85', changefreq: 'weekly' },
       { path: '/for/auto-repair', priority: '0.85', changefreq: 'weekly' },
+
+      // Layer 4: Educational Content & SOPs
+      { path: '/resources/how-to-improve-local-seo', priority: '0.85', changefreq: 'weekly' },
+      { path: '/resources/how-to-create-seo-proposal', priority: '0.85', changefreq: 'weekly' },
+      { path: '/resources/google-business-profile-guide', priority: '0.85', changefreq: 'weekly' },
+      { path: '/resources/local-seo-checklist', priority: '0.85', changefreq: 'weekly' },
     ];
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;

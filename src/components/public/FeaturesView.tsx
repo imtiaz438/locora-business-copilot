@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { SEO_FEATURES_DATABASE } from '../../data/seoData';
 import {
   FileText,
   MapPin,
@@ -10,16 +11,23 @@ import {
   Sparkles,
   CheckCircle2,
   ArrowRight,
+  MessageSquare,
+  ShieldCheck,
+  Zap,
+  ExternalLink,
 } from 'lucide-react';
 
 export const FeaturesView: React.FC = () => {
   const { setActiveTab } = useApp();
   const [selectedModule, setSelectedModule] = useState<'proposal' | 'seo' | 'crm' | 'invoice' | 'audit' | 'planner'>('proposal');
 
+  const featureList = Object.values(SEO_FEATURES_DATABASE);
+
   const modules = [
     {
       id: 'proposal' as const,
       name: 'AI Proposals & Contracts',
+      slug: 'ai-proposal-generator',
       icon: FileText,
       tagline: 'Scope, Price & Draft High-Winning Business Proposals in 60 Seconds',
       description: 'Generate comprehensive proposals with scope of work, project milestones, deliverable schedules, itemized pricing, and formal client acceptance terms.',
@@ -33,6 +41,7 @@ export const FeaturesView: React.FC = () => {
     {
       id: 'seo' as const,
       name: 'Local SEO & Schema Assistant',
+      slug: 'seo-audit',
       icon: MapPin,
       tagline: 'Dominate Google Business Profile & Local Search Map Packs',
       description: 'Generate localized descriptions, review reply templates, Google Q&As, local landing page copy, and valid JSON-LD schema markup tailored to any local service industry.',
@@ -46,6 +55,7 @@ export const FeaturesView: React.FC = () => {
     {
       id: 'crm' as const,
       name: 'Client CRM & Pipeline Tracker',
+      slug: 'crm',
       icon: Users,
       tagline: 'Never Lose Track of a Lead, Deal, or Retainer Client',
       description: 'A clean, intuitive CRM designed for local service businesses and agencies to organize contacts, track deal stages, record client notes, and monitor total pipeline value.',
@@ -59,6 +69,7 @@ export const FeaturesView: React.FC = () => {
     {
       id: 'invoice' as const,
       name: 'White-Label PDF Invoices',
+      slug: 'invoicing',
       icon: FileSpreadsheet,
       tagline: 'Itemized Invoicing with Automated Tax & Payment Terms',
       description: 'Create professional invoices for one-time projects or recurring monthly retainers. Calculate state/local taxes automatically and download high-resolution PDF invoices.',
@@ -71,9 +82,10 @@ export const FeaturesView: React.FC = () => {
     },
     {
       id: 'audit' as const,
-      name: 'Website SEO Review Engine',
+      name: 'AI Business & Website Audit Engine',
+      slug: 'ai-business-audit',
       icon: Globe,
-      tagline: 'Instant Technical & On-Page SEO Audits for Any Domain',
+      tagline: 'Instant Technical, On-Page & Local Competitive Audits for Any Domain',
       description: 'Audit client websites for title tag optimization, meta description length, mobile viewport readiness, SSL security, and receive prioritized AI recommendations.',
       bullets: [
         'Instant URL health & meta tag analysis',
@@ -85,6 +97,7 @@ export const FeaturesView: React.FC = () => {
     {
       id: 'planner' as const,
       name: '30 & 90-Day Marketing Planner',
+      slug: 'marketing-planner',
       icon: TrendingUp,
       tagline: 'Strategic Local Growth Calendars & Promotional Schedules',
       description: 'Build structured 30, 60, and 90-day growth strategies, campaign schedules, promotional offer calendars, and expected ROI benchmarks for local client niches.',
@@ -99,19 +112,25 @@ export const FeaturesView: React.FC = () => {
 
   const currentModule = modules.find((m) => m.id === selectedModule)!;
 
+  const navigateToFeature = (slug: string) => {
+    window.history.pushState({}, '', `/features/${slug}`);
+    setActiveTab(`feature_${slug}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="space-y-16 py-12 px-6 max-w-7xl mx-auto font-sans bg-slate-50 text-slate-900">
       {/* Header */}
       <div className="text-center space-y-4 max-w-3xl mx-auto">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-semibold font-heading uppercase tracking-wider">
           <Sparkles className="w-4 h-4 text-[#059669]" />
-          <span>Full Feature Capabilities</span>
+          <span>Full Product Suite</span>
         </div>
         <h1 className="text-4xl sm:text-5xl font-extrabold font-heading text-slate-900 tracking-tight">
           An End-to-End Operating System for Local Business Growth
         </h1>
         <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-sans">
-          Locora AI provides 6 specialized modules designed to streamline client intake, proposal writing, Google Business rankings, invoicing, and growth strategy.
+          Locora AI provides specialized modules designed to streamline client intake, proposal writing, Google Business rankings, invoicing, and growth strategy.
         </p>
       </div>
 
@@ -168,17 +187,17 @@ export const FeaturesView: React.FC = () => {
 
           <div className="pt-4 flex flex-wrap gap-3 font-sans">
             <button
-              onClick={() => setActiveTab('dashboard')}
-              className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+              onClick={() => navigateToFeature(currentModule.slug)}
+              className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer font-heading"
             >
-              <span>Try {currentModule.name} in App</span>
+              <span>Explore {currentModule.name} Dedicated Guide</span>
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
-              onClick={() => setActiveTab('signup')}
+              onClick={() => setActiveTab('dashboard')}
               className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-xl border border-slate-200 transition-colors cursor-pointer"
             >
-              Create Free Account
+              Launch in App Workspace
             </button>
           </div>
         </div>
@@ -208,11 +227,69 @@ export const FeaturesView: React.FC = () => {
 
           <div className="pt-2 text-center">
             <p className="text-[11px] text-slate-500 font-sans">
-              Powered by Gemini Pro & Multi-Model Switcher
+              Powered by Groq Ultra-Fast LPU & Multi-Model Switcher
             </p>
           </div>
         </div>
       </div>
+
+      {/* Grid of All 9 Dedicated Product Pages */}
+      <section className="space-y-8 pt-4">
+        <div className="text-center space-y-2 max-w-2xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900">
+            Dedicated Product Deep-Dives
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600 font-sans">
+            Explore detailed feature guides, sample outputs, workflows, and automated deliverables.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {featureList.map((feat) => (
+            <div
+              key={feat.slug}
+              className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs hover:border-[#059669] hover:shadow-md transition-all flex flex-col justify-between space-y-6 group"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                    {feat.badge}
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-bold font-heading text-slate-900 group-hover:text-[#059669] transition-colors leading-snug">
+                  {feat.name}
+                </h3>
+
+                <p className="text-xs text-slate-600 leading-relaxed line-clamp-3 font-sans">
+                  {feat.heroSubheadline}
+                </p>
+              </div>
+
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => navigateToFeature(feat.slug)}
+                  className="text-xs font-bold text-slate-900 hover:text-[#059669] flex items-center gap-1.5 cursor-pointer font-heading"
+                >
+                  <span>Feature Overview</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab(feat.targetTab);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="px-3 py-1.5 bg-emerald-50 hover:bg-[#059669] text-emerald-800 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                >
+                  Open Tool →
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Software Stack Comparison Table */}
       <section className="space-y-8 pt-6">

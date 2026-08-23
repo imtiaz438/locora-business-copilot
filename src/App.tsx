@@ -21,9 +21,15 @@ import { SubscriptionView } from './components/SubscriptionView';
 import { LandingPageView } from './components/LandingPageView';
 import { AdminView } from './components/AdminView';
 
-// Public Marketing Views
+// Public Marketing & SEO Architecture Views
 import { HomeView } from './components/public/HomeView';
 import { FeaturesView } from './components/public/FeaturesView';
+import { FeatureDetailPage } from './components/public/FeatureDetailPage';
+import { UseCaseDetailPage } from './components/public/UseCaseDetailPage';
+import { UseCasesHubView } from './components/public/UseCasesHubView';
+import { ResourceDetailPage } from './components/public/ResourceDetailPage';
+import { ResourcesHubView } from './components/public/ResourcesHubView';
+import { IndustryPseoView } from './components/public/IndustryPseoView';
 import { PricingPublicView } from './components/public/PricingPublicView';
 import { AboutView } from './components/public/AboutView';
 import { ContactView } from './components/public/ContactView';
@@ -32,11 +38,15 @@ import { PrivacyPolicyView } from './components/public/PrivacyPolicyView';
 import { TermsOfServiceView } from './components/public/TermsOfServiceView';
 import { SecurityOverviewView } from './components/public/SecurityOverviewView';
 import { RefundPolicyView } from './components/public/RefundPolicyView';
-import { IndustryPseoView } from './components/public/IndustryPseoView';
 
 const PATH_TO_TAB: Record<string, string> = {
   '': 'home',
   'features': 'features',
+  'use-cases': 'use_cases_hub',
+  'use-cases/': 'use_cases_hub',
+  'resources': 'resources_hub',
+  'resources/': 'resources_hub',
+  'blog': 'resources_hub',
   'pricing': 'pricing_public',
   'about': 'about',
   'contact': 'contact',
@@ -85,7 +95,20 @@ const MainContent: React.FC = () => {
     const syncRouteFromLocation = () => {
       const rawPath = window.location.pathname;
       const path = rawPath.replace(/^\//, '').trim();
-      if (rawPath.startsWith('/for/')) {
+
+      if (rawPath.startsWith('/features/')) {
+        const slug = rawPath.replace(/^\/features\//, '').trim();
+        setActiveTab(`feature_${slug}`);
+      } else if (rawPath.startsWith('/use-cases/')) {
+        const slug = rawPath.replace(/^\/use-cases\//, '').trim();
+        setActiveTab(`usecase_${slug}`);
+      } else if (rawPath.startsWith('/resources/')) {
+        const slug = rawPath.replace(/^\/resources\//, '').trim();
+        setActiveTab(`resource_${slug}`);
+      } else if (rawPath.startsWith('/blog/')) {
+        const slug = rawPath.replace(/^\/blog\//, '').trim();
+        setActiveTab(`resource_${slug}`);
+      } else if (rawPath.startsWith('/for/')) {
         setActiveTab('industry_pseo');
       } else if (PATH_TO_TAB[path]) {
         const targetTab = PATH_TO_TAB[path];
@@ -184,13 +207,32 @@ const MainContent: React.FC = () => {
 
   return (
     <AppShell>
-      {/* Public Routes */}
+      {/* Dynamic Layer 1: Product Pages */}
+      {activeTab.startsWith('feature_') && (
+        <FeatureDetailPage slug={activeTab.replace(/^feature_/, '')} />
+      )}
+
+      {/* Dynamic Layer 2: Use Cases */}
+      {activeTab === 'use_cases_hub' && <UseCasesHubView />}
+      {activeTab.startsWith('usecase_') && (
+        <UseCaseDetailPage slug={activeTab.replace(/^usecase_/, '')} />
+      )}
+
+      {/* Dynamic Layer 3: Industry Pages */}
+      {activeTab === 'industry_pseo' && <IndustryPseoView />}
+
+      {/* Dynamic Layer 4: Educational Content & SOPs */}
+      {activeTab === 'resources_hub' && <ResourcesHubView />}
+      {activeTab.startsWith('resource_') && (
+        <ResourceDetailPage slug={activeTab.replace(/^resource_/, '')} />
+      )}
+
+      {/* Other Public Routes */}
       {activeTab === 'home' && <HomeView />}
       {activeTab === 'features' && <FeaturesView />}
       {activeTab === 'pricing_public' && <PricingPublicView />}
       {activeTab === 'about' && <AboutView />}
       {activeTab === 'contact' && <ContactView />}
-      {activeTab === 'industry_pseo' && <IndustryPseoView />}
       {activeTab === 'landing_page' && <LandingPageView />}
       {activeTab === 'login' && <AuthView initialMode="login" />}
       {activeTab === 'signup' && <AuthView initialMode="signup" />}

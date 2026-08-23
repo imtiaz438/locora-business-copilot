@@ -13,6 +13,14 @@ import {
   Car,
   Briefcase,
   Sparkles,
+  Calculator,
+  CheckCircle2,
+  Copy,
+  Check,
+  Star,
+  DollarSign,
+  Clock,
+  Layers,
 } from 'lucide-react';
 
 export interface IndustryData {
@@ -26,6 +34,9 @@ export interface IndustryData {
   stats: Array<{ label: string; value: string; detail: string }>;
   useCases: Array<{ title: string; desc: string }>;
   schemaType: string;
+  sampleProposalSnippet: string;
+  sampleReviewReply: string;
+  defaultAvgTicket: number;
 }
 
 export const INDUSTRY_DATABASE: Record<string, IndustryData> = {
@@ -58,6 +69,9 @@ export const INDUSTRY_DATABASE: Record<string, IndustryData> = {
       },
     ],
     schemaType: 'Dentist',
+    sampleProposalSnippet: 'Comprehensive Cosmetic Treatment Proposal • Porcelain Veneers (6 Units) + Zoom Whitening • Estimated Timeline: 3 Visits • Digital Signature & Flexible Financing Terms Included.',
+    sampleReviewReply: '"Thank you so much for the 5-star review, Sarah! Our dental team in [City] is delighted that your smile makeover exceeded expectations. We look forward to seeing you at your next routine cleaning!"',
+    defaultAvgTicket: 1200,
   },
   'hvac-contractors': {
     slug: 'hvac-contractors',
@@ -88,6 +102,9 @@ export const INDUSTRY_DATABASE: Record<string, IndustryData> = {
       },
     ],
     schemaType: 'HVACBusiness',
+    sampleProposalSnippet: 'Trane 16 SEER Heat Pump System Installation Proposal • Includes Ductwork Inspection, 10-Yr Warranty & Permit Filing • Fixed Price: $7,850 • Acceptance block ready.',
+    sampleReviewReply: '"Thanks for the review, Mike! Our HVAC technicians were glad to get your AC cooling quickly during the heatwave. Enjoy the new high-efficiency system!"',
+    defaultAvgTicket: 3500,
   },
   'real-estate': {
     slug: 'real-estate',
@@ -118,6 +135,9 @@ export const INDUSTRY_DATABASE: Record<string, IndustryData> = {
       },
     ],
     schemaType: 'RealEstateAgent',
+    sampleProposalSnippet: 'Exclusive Listing Agreement & Marketing Blueprint • Professional Photography, Drone Video, 3D Tour & Social Campaign • Commission Structure: 5% Total.',
+    sampleReviewReply: '"Thank you, David & Lisa! It was an absolute pleasure helping you sell your home for $45,000 over asking price in [Neighborhood]. Best wishes in your new chapter!"',
+    defaultAvgTicket: 8500,
   },
   'law-firms': {
     slug: 'law-firms',
@@ -148,6 +168,9 @@ export const INDUSTRY_DATABASE: Record<string, IndustryData> = {
       },
     ],
     schemaType: 'Attorney',
+    sampleProposalSnippet: 'Legal Representation Agreement • Estate Planning & Living Trust Package • Flat Fee: $2,750 • Includes Pour-Over Will, Healthcare Directive, and Asset Transfer Deed.',
+    sampleReviewReply: '"Thank you for your trust and kind words. Our legal team is dedicated to protecting our clients’ rights and achieving fair outcomes. We appreciate your recommendation."',
+    defaultAvgTicket: 4200,
   },
   plumbers: {
     slug: 'plumbers',
@@ -178,6 +201,9 @@ export const INDUSTRY_DATABASE: Record<string, IndustryData> = {
       },
     ],
     schemaType: 'Plumber',
+    sampleProposalSnippet: 'Tankless Water Heater Conversion & Whole-Home Repipe • Navien NPE-240A2 + Lifetime Warranty • Fixed Scope: $4,650 • Turnaround: 1 Business Day.',
+    sampleReviewReply: '"Thank you for calling us for your emergency pipe repair, Jason! We are always ready 24/7 to keep your home protected from water damage."',
+    defaultAvgTicket: 1850,
   },
   'med-spas': {
     slug: 'med-spas',
@@ -199,102 +225,135 @@ export const INDUSTRY_DATABASE: Record<string, IndustryData> = {
         desc: 'Dominate local rankings for laser resurfacing, body contouring, and facial aesthetics in your affluent suburban markets.',
       },
       {
-        title: 'Custom Treatment Package Proposals',
-        desc: 'Send gorgeous aesthetic treatment plans with before/after expectations and payment schedule breakdowns.',
+        title: 'Multi-Tier Treatment Plans',
+        desc: 'Deliver gorgeous treatment proposal packages that bundle injectables with skin rejuvenation for 3x higher cart sizes.',
       },
       {
-        title: 'Client Retention & VIP Membership CRM',
-        desc: 'Track client treatment cycles and send automated reminders for 3-month touchups.',
+        title: 'Automated Aesthetic Membership Billing',
+        desc: 'Run recurring monthly beauty memberships with automated invoice receipts and milestone reminders.',
       },
     ],
-    schemaType: 'MedicalClinic',
+    schemaType: 'HealthAndBeautyBusiness',
+    sampleProposalSnippet: 'Customized Rejuvenation Plan • 3x Morpheus8 RF Microneedling + Post-Care Peptide Regimen • Investment: $2,400 • Monthly Payment Plan Option Available.',
+    sampleReviewReply: '"Thank you so much, Emily! Our aesthetic team loves helping you achieve that radiant glow. See you at your next facial maintenance session!"',
+    defaultAvgTicket: 1600,
   },
   restaurants: {
     slug: 'restaurants',
     name: 'Restaurants & Hospitality',
     category: 'Food & Dining',
     iconName: 'Utensils',
-    heroHeadline: 'AI Local SEO & Guest Engagement Operating System for Restaurants',
+    heroHeadline: 'AI Business OS & Local SEO Dining Discovery for Restaurants & Caterers',
     heroSubheadline:
-      'Drive foot traffic, rank top for local dining searches, automate review responses, and manage catering event proposals.',
-    targetKeywords: ['Restaurant Local SEO', 'Catering Proposal Software', 'Google Maps Restaurant Ranking', 'Dining CRM'],
+      'Fill your dining room, dominate "best dinner near me" searches, streamline catering event quotes, and turn reviews into repeat guests.',
+    targetKeywords: ['Restaurant Local SEO', 'Catering Proposal Software', 'Google Maps Food Search', 'Restaurant Review AI'],
     stats: [
-      { label: 'Diner Map Searches', value: '+450%', detail: 'Increase in "restaurants near me"' },
-      { label: 'Catering Sales', value: '+65%', detail: 'Higher event catering inquiry conversion' },
-      { label: 'Monthly Reviews', value: '120+', detail: 'Verified diner reviews captured' },
+      { label: 'Table Reservations', value: '+190%', detail: 'From Google Maps discovery' },
+      { label: 'Catering Close Rate', value: '+55%', detail: 'With instant menu estimates' },
+      { label: 'Review Velocity', value: '80+ /mo', detail: 'Fresh verified diner reviews' },
     ],
     useCases: [
       {
-        title: 'Google Maps & Local Dining Search SEO',
-        desc: 'Optimize menu items, dietary keywords (vegan, gluten-free, brunch), and location schema for peak weekend search volumes.',
+        title: 'Google Maps Food Discovery Dominance',
+        desc: 'Optimize your Google Business Profile menu, dietary tags, and cuisine categories to capture nearby hungry diners.',
       },
       {
-        title: 'Event & Corporate Catering Proposals',
-        desc: 'Generate professional catering estimates with itemized menu options and online deposit collection.',
+        title: 'Catering & Event Proposal Generator',
+        desc: 'Create mouthwatering catering proposals with per-head pricing, drink packages, and deposit payment links in seconds.',
       },
       {
-        title: 'Reputation & Review Response AI',
-        desc: 'Respond graciously to all Google and Yelp reviews within seconds using brand-tailored AI tones.',
+        title: 'Diner Sentiment & Review Responder',
+        desc: 'Turn positive feedback into brand loyalty and address guest concerns immediately with thoughtful AI replies.',
       },
     ],
     schemaType: 'Restaurant',
+    sampleProposalSnippet: 'Private Dining & Corporate Banquet Proposal • 45 Guests • 3-Course Artisanal Menu + Wine Pairing • Total Quote: $3,850 + Tax & Gratuity.',
+    sampleReviewReply: '"Thank you for celebrating your anniversary with us, Brandon! Chef Marco was thrilled to hear you loved the dry-aged ribeye. We look forward to welcoming you back soon!"',
+    defaultAvgTicket: 950,
   },
   'auto-repair': {
     slug: 'auto-repair',
-    name: 'Auto Repair Shops',
-    category: 'Automotive',
+    name: 'Auto Repair & Detailing',
+    category: 'Automotive Services',
     iconName: 'Car',
-    heroHeadline: 'AI Business OS & Local SEO Copilot for Auto Repair Shops & Mechanics',
+    heroHeadline: 'AI Business OS & High-Ticket Repair SEO for Auto Service Centers',
     heroSubheadline:
-      'Fill service bays, rank #1 for brake & engine repairs in your city, send mobile digital inspection estimates, and build lifetime customer loyalty.',
-    targetKeywords: ['Auto Repair Local SEO', 'Mechanic CRM', 'Car Repair Quote Generator', 'Auto Shop Google Maps SEO'],
+      'Keep your service bays full, rank #1 for transmission, brake, and engine diagnostics, and send transparent digital estimates.',
+    targetKeywords: ['Auto Repair Local SEO', 'Mechanic CRM', 'Brake Repair Google Maps SEO', 'Auto Service Estimate Software'],
     stats: [
-      { label: 'Service Bay Volume', value: '+320%', detail: 'Higher local search appointments' },
-      { label: 'Estimate Approval', value: '79%', detail: 'Mobile digital repair estimates' },
-      { label: 'Repeat Customer Rate', value: '+35%', detail: 'Automated oil change reminders' },
+      { label: 'Bay Utilization', value: '94%', detail: 'Steady weekly vehicle intake' },
+      { label: 'Estimate Approval', value: '+48%', detail: 'Transparent photo/line-item quotes' },
+      { label: 'Customer Retention', value: '72%', detail: 'Automated maintenance reminders' },
     ],
     useCases: [
       {
-        title: 'Local Mechanics & Diagnostics Ranking',
-        desc: 'Rank for specific vehicle makes and services ("BMW specialist near me", "transmission repair").',
+        title: 'High-Intent Repair Keyword SEO',
+        desc: 'Rank for high-margin repair terms like "transmission rebuild near me" and "European auto repair" across your county.',
       },
       {
-        title: 'Digital Repair Quotes & Invoicing',
-        desc: 'Send clear, line-item repair estimates with parts and labor breakdowns directly to customer smartphones.',
+        title: 'Itemized Digital Repair Estimates',
+        desc: 'Send clear, photo-verified repair estimates to customer smartphones with one-click approval buttons.',
       },
       {
-        title: 'Automated Maintenance Interval Alerts',
-        desc: 'Keep customers coming back with timely AI reminders for state inspections, tire rotations, and brake checks.',
+        title: 'Preventative Service CRM Reminders',
+        desc: 'Automatically notify motorists when mileage thresholds suggest oil changes, brake pads, or timing belts.',
       },
     ],
     schemaType: 'AutoRepair',
+    sampleProposalSnippet: 'Complete Brake System Overhaul & Rotor Replacement • Ceramic Pads, Fluid Flush & 24-Mo Warranty • Estimate: $890 • Digital Approval Ready.',
+    sampleReviewReply: '"Thank you for trusting our mechanic team with your vehicle, Chris! Safe travels on your road trip and let us know if you need anything else."',
+    defaultAvgTicket: 850,
   },
 };
 
 interface IndustryPseoViewProps {
-  slug?: string;
+  industrySlug?: string;
   onNavigateSlug?: (slug: string) => void;
 }
 
-export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({ slug: initialSlug, onNavigateSlug }) => {
-  const { setActiveTab, setCheckoutModalPlan } = useApp();
+export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
+  industrySlug,
+  onNavigateSlug,
+}) => {
+  const { setActiveTab, setCheckoutModalPlan, updateBusinessProfile } = useApp();
 
-  const [activeSlug, setActiveSlug] = useState<string>(() => {
-    if (initialSlug && INDUSTRY_DATABASE[initialSlug]) return initialSlug;
-    const path = window.location.pathname.replace(/^\/for\//, '').replace(/\/$/, '');
-    if (INDUSTRY_DATABASE[path]) return path;
+  const getSlugFromUrl = (): string => {
+    if (typeof window !== 'undefined') {
+      const match = window.location.pathname.match(/\/for\/([a-z0-9-]+)/);
+      if (match && match[1] && INDUSTRY_DATABASE[match[1]]) {
+        return match[1];
+      }
+    }
     return 'dentists';
-  });
+  };
+
+  const [activeSlug, setActiveSlug] = useState<string>(industrySlug || getSlugFromUrl());
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [activePlaygroundTab, setActivePlaygroundTab] = useState<'schema' | 'proposal' | 'review'>('schema');
+
+  // Interactive ROI Calculator State
+  const [monthlyLeads, setMonthlyLeads] = useState<number>(25);
+  const [avgTicket, setAvgTicket] = useState<number>(1200);
 
   const currentIndustry = INDUSTRY_DATABASE[activeSlug] || INDUSTRY_DATABASE['dentists'];
 
   useEffect(() => {
-    if (initialSlug && INDUSTRY_DATABASE[initialSlug]) {
-      setActiveSlug(initialSlug);
-    } else if (!window.location.pathname.startsWith('/for/')) {
-      window.history.pushState({}, '', `/for/${activeSlug}`);
+    setAvgTicket(currentIndustry.defaultAvgTicket);
+  }, [currentIndustry]);
+
+  useEffect(() => {
+    if (industrySlug && INDUSTRY_DATABASE[industrySlug]) {
+      setActiveSlug(industrySlug);
     }
-  }, [initialSlug, activeSlug]);
+  }, [industrySlug]);
+
+  useEffect(() => {
+    document.title = `${currentIndustry.name} Local SEO & AI Operating System | Locora AI`;
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute('content', currentIndustry.heroSubheadline);
+    }
+  }, [currentIndustry]);
 
   const handleSelectIndustry = (newSlug: string) => {
     setActiveSlug(newSlug);
@@ -305,6 +364,26 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({ slug: initia
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const handleLaunchWithIndustryContext = (targetTab: string = 'dashboard') => {
+    updateBusinessProfile({
+      industry: currentIndustry.category,
+      tagline: `Premier ${currentIndustry.name} Provider`,
+    });
+    setActiveTab(targetTab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  // Calculator calculations
+  const projectedExtraLeads = Math.round(monthlyLeads * 0.35);
+  const projectedExtraRevenue = projectedExtraLeads * avgTicket;
+  const hoursSavedPerMonth = 45;
 
   const renderIcon = (iconName: string) => {
     switch (iconName) {
@@ -327,13 +406,27 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({ slug: initia
     }
   };
 
+  const schemaJsonString = JSON.stringify(
+    {
+      '@context': 'https://schema.org',
+      '@type': currentIndustry.schemaType,
+      'name': `${currentIndustry.name} Business`,
+      'url': `https://locoraai.com/for/${currentIndustry.slug}`,
+      'description': currentIndustry.heroSubheadline,
+      'areaServed': 'Local Service Radius',
+      'knowsAbout': currentIndustry.targetKeywords,
+    },
+    null,
+    2
+  );
+
   return (
     <div className="space-y-16 py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto font-sans bg-slate-50 text-slate-900">
       {/* Industry Selector Tabs Bar */}
       <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-center gap-2 max-w-5xl mx-auto text-xs">
         <span className="text-slate-400 font-bold px-2 flex items-center gap-1">
           <Globe className="w-3.5 h-3.5 text-emerald-600" />
-          Select Local Industry:
+          Select Industry:
         </span>
         {Object.values(INDUSTRY_DATABASE).map((ind) => {
           const isSelected = ind.slug === activeSlug;
@@ -370,7 +463,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({ slug: initia
 
         {/* Target Keywords Badges */}
         <div className="flex flex-wrap justify-center items-center gap-2 pt-2">
-          <span className="text-xs text-slate-400 font-medium">Targeted High-Intent SEO Keywords:</span>
+          <span className="text-xs text-slate-400 font-medium">Pre-Tuned Ranking Keywords:</span>
           {currentIndustry.targetKeywords.map((kw, i) => (
             <span
               key={i}
@@ -384,19 +477,95 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({ slug: initia
         {/* Call To Action Buttons */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
           <button
-            onClick={() => setActiveTab('signup')}
+            onClick={() => handleLaunchWithIndustryContext('dashboard')}
             className="w-full sm:w-auto px-8 py-4 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
           >
-            <span>Start Free for {currentIndustry.name}</span>
+            <span>Launch {currentIndustry.name} Copilot Workspace</span>
             <ArrowRight className="w-4 h-4" />
           </button>
           <button
             onClick={() => setCheckoutModalPlan('pro', 'monthly')}
             className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-slate-100 text-slate-800 font-bold text-sm rounded-xl border border-slate-300 transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
           >
-            <span>Upgrade to Pro ($19/mo)</span>
+            <span>Upgrade to Pro ($29/mo)</span>
             <Zap className="w-4 h-4 text-[#059669]" />
           </button>
+        </div>
+      </div>
+
+      {/* ROI & Time Savings Interactive Calculator */}
+      <div className="max-w-5xl mx-auto bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-xs font-bold font-heading uppercase mb-1">
+              <Calculator className="w-3.5 h-3.5 text-[#059669]" />
+              <span>Interactive ROI & Time Savings Calculator</span>
+            </div>
+            <h3 className="text-xl font-bold font-heading text-slate-900">
+              Calculate Projected Revenue Lift for {currentIndustry.name}
+            </h3>
+          </div>
+          <span className="text-xs text-slate-500 font-mono">Based on average client results</span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          {/* Controls */}
+          <div className="lg:col-span-6 space-y-6">
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs font-bold text-slate-700">
+                <span>Current Monthly Leads / Inquiries:</span>
+                <span className="font-mono text-emerald-700">{monthlyLeads} leads/mo</span>
+              </div>
+              <input
+                type="range"
+                min="5"
+                max="150"
+                step="5"
+                value={monthlyLeads}
+                onChange={(e) => setMonthlyLeads(Number(e.target.value))}
+                className="w-full accent-[#059669] cursor-pointer"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs font-bold text-slate-700">
+                <span>Average Value Per Client / Job ($):</span>
+                <span className="font-mono text-emerald-700">${avgTicket.toLocaleString()}</span>
+              </div>
+              <input
+                type="range"
+                min="200"
+                max="10000"
+                step="100"
+                value={avgTicket}
+                onChange={(e) => setAvgTicket(Number(e.target.value))}
+                className="w-full accent-[#059669] cursor-pointer"
+              />
+            </div>
+          </div>
+
+          {/* Results Summary Box */}
+          <div className="lg:col-span-6 p-6 bg-slate-900 text-white rounded-2xl space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <span className="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Projected New Revenue</span>
+                <div className="text-2xl sm:text-3xl font-extrabold font-heading text-emerald-400">
+                  +${projectedExtraRevenue.toLocaleString()}
+                  <span className="text-xs text-slate-300 font-normal"> /mo</span>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Admin Hours Saved</span>
+                <div className="text-2xl sm:text-3xl font-extrabold font-heading text-white">
+                  ~{hoursSavedPerMonth} hrs
+                  <span className="text-xs text-slate-300 font-normal"> /mo</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-slate-300 border-t border-slate-800 pt-3">
+              Automated Local SEO map pack rankings (+35% conversion) combined with rapid proposals and instant PDF invoicing.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -414,55 +583,98 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({ slug: initia
         ))}
       </div>
 
-      {/* Industry Core Use Cases */}
-      <div className="max-w-5xl mx-auto space-y-8 bg-white border border-slate-200 rounded-3xl p-8 shadow-xs">
-        <div className="text-center space-y-2 max-w-2xl mx-auto">
-          <h2 className="text-2xl font-bold font-heading text-slate-900">
-            Tailored Copilot Capabilities for {currentIndustry.name}
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500">
-            Purpose-built workflows engineered to replace fragmented tools with one seamless OS.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-          {currentIndustry.useCases.map((uc, i) => (
-            <div key={i} className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-[#059669] flex items-center justify-center font-bold text-sm font-heading">
-                0{i + 1}
-              </div>
-              <h3 className="font-bold text-sm text-slate-900 font-heading">{uc.title}</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">{uc.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* JSON-LD Schema Code Preview Block for SEO Engineers */}
-      <div className="max-w-4xl mx-auto bg-slate-900 text-slate-100 rounded-3xl p-6 space-y-4 shadow-xl">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-          <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-emerald-400" />
-            <span className="text-xs font-bold text-slate-300 font-heading">
-              Structured JSON-LD Schema (Auto-Injected for {currentIndustry.name})
-            </span>
+      {/* Interactive Live Deliverables Playground */}
+      <div className="max-w-5xl mx-auto bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div>
+            <h2 className="text-xl font-bold font-heading text-slate-900">
+              Interactive Deliverables Playground for {currentIndustry.name}
+            </h2>
+            <p className="text-xs text-slate-500">
+              Preview the real deliverables Locora AI creates for this trade in seconds.
+            </p>
           </div>
-          <span className="px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 text-xs font-mono border border-emerald-800">
-            Schema.org / {currentIndustry.schemaType}
-          </span>
+
+          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+            <button
+              onClick={() => setActivePlaygroundTab('schema')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activePlaygroundTab === 'schema' ? 'bg-[#059669] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              JSON-LD Schema
+            </button>
+            <button
+              onClick={() => setActivePlaygroundTab('proposal')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activePlaygroundTab === 'proposal' ? 'bg-[#059669] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Proposal Scope
+            </button>
+            <button
+              onClick={() => setActivePlaygroundTab('review')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activePlaygroundTab === 'review' ? 'bg-[#059669] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Review Reply
+            </button>
+          </div>
         </div>
 
-        <pre className="text-xs font-mono bg-slate-950 p-4 rounded-xl text-emerald-300 overflow-x-auto leading-relaxed border border-slate-800">
-{`{
-  "@context": "https://schema.org",
-  "@type": "${currentIndustry.schemaType}",
-  "name": "${currentIndustry.name} Local Business",
-  "url": "https://locoraai.com/for/${currentIndustry.slug}",
-  "description": "${currentIndustry.heroSubheadline.replace(/"/g, '\\"')}",
-  "areaServed": "Global & Local Service Radius",
-  "knowsAbout": ${JSON.stringify(currentIndustry.targetKeywords)}
-}`}
-        </pre>
+        {/* Playground Content Display */}
+        {activePlaygroundTab === 'schema' && (
+          <div className="bg-slate-950 text-slate-100 rounded-2xl p-4 space-y-3 font-mono text-xs border border-slate-800">
+            <div className="flex items-center justify-between text-slate-400 text-[11px] pb-2 border-b border-slate-800">
+              <span>Schema.org / {currentIndustry.schemaType} Code</span>
+              <button
+                onClick={() => handleCopy(schemaJsonString)}
+                className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 cursor-pointer"
+              >
+                {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedCode ? 'Copied!' : 'Copy Code'}</span>
+              </button>
+            </div>
+            <pre className="text-emerald-300 overflow-x-auto leading-relaxed max-h-60">
+              {schemaJsonString}
+            </pre>
+          </div>
+        )}
+
+        {activePlaygroundTab === 'proposal' && (
+          <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-4 text-xs font-sans">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+              <span className="font-bold text-slate-900 font-heading">Auto-Generated Proposal Deliverable</span>
+              <button
+                onClick={() => handleLaunchWithIndustryContext('proposals')}
+                className="text-[#059669] font-bold hover:underline cursor-pointer"
+              >
+                Open in Proposal Builder →
+              </button>
+            </div>
+            <p className="text-slate-800 leading-relaxed font-medium bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+              {currentIndustry.sampleProposalSnippet}
+            </p>
+          </div>
+        )}
+
+        {activePlaygroundTab === 'review' && (
+          <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-4 text-xs font-sans">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+              <span className="font-bold text-slate-900 font-heading">AI 5-Star Reputation Reply</span>
+              <button
+                onClick={() => handleLaunchWithIndustryContext('local_seo')}
+                className="text-[#059669] font-bold hover:underline cursor-pointer"
+              >
+                Open in Local SEO Copilot →
+              </button>
+            </div>
+            <p className="text-slate-800 leading-relaxed font-medium bg-white p-4 rounded-xl border border-slate-200 shadow-2xs italic">
+              {currentIndustry.sampleReviewReply}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Footer Industry Interlinking Directory */}
