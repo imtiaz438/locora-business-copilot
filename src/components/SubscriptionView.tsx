@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import {
   CreditCard,
@@ -19,14 +19,40 @@ import {
   Info,
   XCircle,
   Repeat,
+  Receipt,
+  ExternalLink,
+  Eye,
 } from 'lucide-react';
-import { BillingCycle } from '../types';
+import { BillingCycle, SubscriptionInvoice } from '../types';
+import { SubscriptionInvoiceModal } from './SubscriptionInvoiceModal';
 
 export const SubscriptionView: React.FC = () => {
   const { user, subscriptionInvoices, setCheckoutModalPlan, setActiveTab, updateUser, logActivity } = useApp();
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [toggleLoading, setToggleLoading] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<SubscriptionInvoice | null>(null);
+  const [fetchedInvoices, setFetchedInvoices] = useState<SubscriptionInvoice[]>([]);
+
+  // Fetch real-time official invoices from database
+  useEffect(() => {
+    if (!user.email) return;
+    fetch(`/api/user/invoices?email=${encodeURIComponent(user.email)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.invoices && data.invoices.length > 0) {
+          setFetchedInvoices(data.invoices);
+        }
+      })
+      .catch(() => {});
+  }, [user.email, user.planTier, user.subscriptionStatus]);
+
+  const displayInvoices = fetchedInvoices.length > 0 ? fetchedInvoices : subscriptionInvoices;
+
+  const whopMembershipId = user.whopMembershipId || (displayInvoices[0]?.whopMembershipId) || '';
+  const whopManageUrl = whopMembershipId
+    ? `https://whop.com/billing/manage/${encodeURIComponent(whopMembershipId)}/?callback=%2Flocoraai-com%2F%3FaccountSettings%3Dorders`
+    : 'https://whop.com/hub/orders';
 
   const isAutoRenewOn = user.autoRenew !== false && !user.cancelAtPeriodEnd;
   const creditsUsedPct = Math.min(100, Math.round((user.aiCreditsUsed / user.monthlyAiCredits) * 100));
@@ -355,28 +381,58 @@ export const SubscriptionView: React.FC = () => {
                       <ShieldCheck className="w-3 h-3" /> PCI-DSS Level 1 Secure
                     </span>
                   </div>
+                  <div className="pt-2">
+                    <a
+                      href={whopManageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer font-heading"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Manage Subscription & Orders on Whop</span>
+                    </a>
+                  </div>
                 </div>
               ) : user.planTier !== 'free' ? (
-                <div className="p-4 bg-emerald-50/60 border border-emerald-200/80 rounded-xl space-y-2.5">
+                <div className="p-4 bg-emerald-50/60 border border-emerald-200/80 rounded-xl space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-extrabold rounded-md uppercase font-heading">
-                        Whop Billing
+                        Whop Merchant of Record
                       </span>
                       <span className="text-[11px] text-emerald-800 font-semibold">Active Plan</span>
                     </div>
                     <CheckCircle2 className="w-4 h-4 text-[#059669]" />
                   </div>
                   <p className="text-xs text-slate-700 leading-relaxed">
-                    Recurring payment method is securely vault-encrypted & tokenized via <strong>Whop Merchant of Record</strong>.
+                    Recurring payment is vault-encrypted & managed via <strong>Whop Payments Inc.</strong> PCI-DSS Level 1 compliant infrastructure.
                   </p>
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-emerald-200/60">
-                    <span className="font-mono text-[10px] text-slate-600 uppercase">
-                      {user.billingCycle || 'monthly'} Billing
-                    </span>
-                    <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1">
-                      <ShieldCheck className="w-3.5 h-3.5" /> PCI-DSS Level 1 Encrypted
-                    </span>
+                  {whopMembershipId && (
+                    <div className="p-2.5 bg-white/80 border border-emerald-200 rounded-lg flex items-center justify-between text-[11px]">
+                      <span className="text-slate-500 font-semibold">Whop Member ID:</span>
+                      <span className="font-mono font-bold text-slate-900">{whopMembershipId}</span>
+                    </div>
+                  )}
+                  <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
+                    <a
+                      href={whopManageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 w-full py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer font-heading"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Manage on Whop Hub</span>
+                    </a>
+                    {displayInvoices.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedInvoice(displayInvoices[0])}
+                        className="w-full sm:w-auto px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Receipt className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>View Receipt</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -449,8 +505,19 @@ export const SubscriptionView: React.FC = () => {
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
             <h3 className="text-sm font-bold font-heading text-slate-900">Billing & Invoice History</h3>
-            <p className="text-xs text-slate-500">Download past subscription tax invoices and receipts.</p>
+            <p className="text-xs text-slate-500">Official printable tax invoices and Whop transaction receipts.</p>
           </div>
+          {whopMembershipId && (
+            <a
+              href={whopManageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900 font-semibold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span>Whop Orders Hub</span>
+            </a>
+          )}
         </div>
 
         <div className="overflow-x-auto">
@@ -462,13 +529,21 @@ export const SubscriptionView: React.FC = () => {
                 <th className="py-2.5 px-3">Subscription Plan</th>
                 <th className="py-2.5 px-3">Amount</th>
                 <th className="py-2.5 px-3">Status</th>
-                <th className="py-2.5 px-3 text-right">Receipt</th>
+                <th className="py-2.5 px-3 text-right">Official Receipt</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700 font-sans">
-              {subscriptionInvoices.map((inv) => (
+              {displayInvoices.map((inv) => (
                 <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3 px-3 font-mono font-bold text-slate-900">{inv.id}</td>
+                  <td className="py-3 px-3 font-mono font-bold text-slate-900">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedInvoice(inv)}
+                      className="hover:underline text-slate-900 cursor-pointer font-bold"
+                    >
+                      {inv.id}
+                    </button>
+                  </td>
                   <td className="py-3 px-3">{new Date(inv.date).toLocaleDateString()}</td>
                   <td className="py-3 px-3 font-semibold text-slate-900">{inv.planName}</td>
                   <td className="py-3 px-3 font-bold text-slate-900">${inv.amount.toFixed(2)}</td>
@@ -479,12 +554,12 @@ export const SubscriptionView: React.FC = () => {
                   </td>
                   <td className="py-3 px-3 text-right">
                     <button
-                      onClick={() => alert(`Downloading PDF Invoice Receipt for ${inv.id}...`)}
-                      className="p-1.5 hover:bg-slate-100 rounded-lg text-[#059669] hover:text-[#047857] transition-colors inline-flex items-center gap-1 cursor-pointer"
-                      title="Download PDF Receipt"
+                      onClick={() => setSelectedInvoice(inv)}
+                      className="p-1.5 hover:bg-slate-100 rounded-lg text-[#059669] hover:text-[#047857] transition-colors inline-flex items-center gap-1 cursor-pointer font-bold text-[11px]"
+                      title="View & Download PDF Invoice"
                     >
-                      <Download className="w-4 h-4" />
-                      <span className="hidden sm:inline text-[11px] font-semibold">PDF Receipt</span>
+                      <Receipt className="w-4 h-4" />
+                      <span>View Tax Invoice</span>
                     </button>
                   </td>
                 </tr>
@@ -493,6 +568,15 @@ export const SubscriptionView: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Official Tax Invoice Modal */}
+      {selectedInvoice && (
+        <SubscriptionInvoiceModal
+          invoice={selectedInvoice}
+          user={user}
+          onClose={() => setSelectedInvoice(null)}
+        />
+      )}
 
       {/* Cancellation Modal */}
       {showCancelModal && (

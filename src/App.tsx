@@ -1,6 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { AppShell } from './components/AppShell';
+import { PaymentSuccessModal } from './components/PaymentSuccessModal';
+import { SubscriptionInvoiceModal } from './components/SubscriptionInvoiceModal';
+import { SubscriptionInvoice } from './types';
 
 // View Modules
 import { DashboardView } from './components/DashboardView';
@@ -69,7 +72,10 @@ const PATH_TO_TAB: Record<string, string> = {
 };
 
 const MainContent: React.FC = () => {
-  const { activeTab, setActiveTab, subscribePlan, user } = useApp();
+  const { activeTab, setActiveTab, subscribePlan, user, updateUser } = useApp();
+  const [successInvoice, setSuccessInvoice] = useState<SubscriptionInvoice | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showFullInvoiceModal, setShowFullInvoiceModal] = useState(false);
 
   // Handle initial URL path routing and popstate events
   useEffect(() => {
@@ -113,15 +119,43 @@ const MainContent: React.FC = () => {
       const stateId = query.get('state_id') || '';
       const plan = (query.get('plan') || 'pro').toLowerCase();
       const billingCycle = (query.get('billing_cycle') || 'monthly').toLowerCase();
+      const userEmail = user.email || localStorage.getItem('locora_user_email') || '';
 
       // Verify and sync Whop checkout immediately with backend
-      fetch(`/api/whop/verify-session?payment_id=${encodeURIComponent(paymentId)}&state_id=${encodeURIComponent(stateId)}&plan=${encodeURIComponent(plan)}&billing_cycle=${encodeURIComponent(billingCycle)}`)
+      fetch(`/api/whop/verify-session?payment_id=${encodeURIComponent(paymentId)}&state_id=${encodeURIComponent(stateId)}&plan=${encodeURIComponent(plan)}&billing_cycle=${encodeURIComponent(billingCycle)}&email=${encodeURIComponent(userEmail)}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.user) {
             subscribePlan(data.user.planTier || (plan as any), (data.user.billingCycle || billingCycle) as any);
+            updateUser({
+              ...data.user,
+              isAuthenticated: true,
+            });
           } else {
             subscribePlan(plan as any, billingCycle as any);
+          }
+
+          if (data.invoice) {
+            setSuccessInvoice(data.invoice);
+            setShowSuccessModal(true);
+          } else {
+            const fallbackInv: SubscriptionInvoice = {
+              id: `INV-${new Date().getFullYear()}-WHOP`,
+              amount: plan === 'agency' ? (billingCycle === 'yearly' ? 468 : 49) : (billingCycle === 'yearly' ? 180 : 19),
+              date: new Date().toISOString(),
+              status: 'paid',
+              planName: `LOCORA AI ${plan.toUpperCase()} PLAN (${billingCycle.toUpperCase()})`,
+              planTier: plan as any,
+              billingCycle: billingCycle as any,
+              paymentMethod: 'Whop Merchant of Record',
+              whopMembershipId: data.user?.whopMembershipId || paymentId,
+              whopPaymentId: paymentId,
+              whopReceiptId: paymentId,
+              userEmail: user.email || userEmail,
+              userName: user.name,
+            };
+            setSuccessInvoice(fallbackInv);
+            setShowSuccessModal(true);
           }
         })
         .catch(() => {
@@ -134,7 +168,7 @@ const MainContent: React.FC = () => {
     }
 
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [setActiveTab, subscribePlan, user.isAuthenticated]);
+  }, [setActiveTab, subscribePlan, updateUser, user.email, user.isAuthenticated, user.name]);
 
   return (
     <AppShell>
@@ -169,6 +203,28 @@ const MainContent: React.FC = () => {
       {activeTab === 'subscription' && <SubscriptionView />}
       {activeTab === 'settings' && <SettingsView />}
       {activeTab === 'admin' && (user.isAuthenticated && (user.role === 'admin' || user.role === 'owner' || user.email === 'imtiazbaloch3322@gmail.com' || user.email === 'support@locoraai.com') ? <AdminView /> : <DashboardView />)}
+
+      {/* Payment Success Instant Celebration & Activation Modal */}
+      {showSuccessModal && (
+        <PaymentSuccessModal
+          invoice={successInvoice}
+          user={user}
+          onClose={() => setShowSuccessModal(false)}
+          onViewInvoice={() => {
+            setShowSuccessModal(false);
+            setShowFullInvoiceModal(true);
+          }}
+        />
+      )}
+
+      {/* Official Tax Invoice & Order Management Modal */}
+      {showFullInvoiceModal && successInvoice && (
+        <SubscriptionInvoiceModal
+          invoice={successInvoice}
+          user={user}
+          onClose={() => setShowFullInvoiceModal(false)}
+        />
+      )}
     </AppShell>
   );
 };

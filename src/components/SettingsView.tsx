@@ -4,6 +4,7 @@ import { ACTIVE_PROVIDERS, UPCOMING_PROVIDERS, getProviderModelsWithFallback, ge
 import { AIProviderId, CustomLogoConfig } from '../types';
 import { TeamManagementSection } from './TeamManagementSection';
 import { LocoraLogo } from './LocoraLogo';
+import { SubscriptionInvoiceModal } from './SubscriptionInvoiceModal';
 import {
   Settings,
   Cpu,
@@ -1993,70 +1994,13 @@ export const SettingsView: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL: INVOICE RECEIPT VIEWER */}
+      {/* MODAL: OFFICIAL SUBSCRIPTION INVOICE & RECEIPT VIEWER */}
       {selectedInvoiceForView && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl animate-fade-in">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <Receipt className="w-5 h-5 text-[#059669]" />
-                <h3 className="font-extrabold text-slate-900 font-heading text-base">
-                  Official Subscription Invoice Receipt
-                </h3>
-              </div>
-              <button
-                onClick={() => setSelectedInvoiceForView(null)}
-                className="text-slate-400 hover:text-slate-700 font-bold text-sm cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 font-sans text-xs">
-              <div className="flex justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-500 font-semibold">Invoice Number:</span>
-                <span className="font-mono font-bold text-slate-900">{selectedInvoiceForView.id}</span>
-              </div>
-              <div className="flex justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-500 font-semibold">Date Issued:</span>
-                <span className="text-slate-900">{new Date(selectedInvoiceForView.createdAt).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-500 font-semibold">Account Email:</span>
-                <span className="font-mono text-slate-900">{selectedInvoiceForView.userEmail || user.email}</span>
-              </div>
-              <div className="flex justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-500 font-semibold">Plan Description:</span>
-                <span className="font-bold text-slate-900 uppercase">
-                  LOCORA AI {selectedInvoiceForView.planTier} PLAN
-                </span>
-              </div>
-              <div className="flex justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-500 font-semibold">Amount Paid:</span>
-                <span className="font-mono font-extrabold text-emerald-700 text-sm">
-                  ${selectedInvoiceForView.amount.toFixed(2)} USD
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 font-semibold">Payment Status:</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 uppercase">
-                  CLEARED & PAID
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <p className="text-[11px] text-slate-400 font-mono">Locora AI Global Billing System</p>
-              <button
-                onClick={() => window.print()}
-                className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Print / Save PDF</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        <SubscriptionInvoiceModal
+          invoice={selectedInvoiceForView}
+          user={user}
+          onClose={() => setSelectedInvoiceForView(null)}
+        />
       )}
     </div>
   );

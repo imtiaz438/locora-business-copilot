@@ -4229,7 +4229,12 @@ app.post('/api/whop/create-checkout', async (req, res) => {
       urlObj.searchParams.set('success_url', successUrl);
       urlObj.searchParams.set('redirect_uri', successUrl);
       urlObj.searchParams.set('continue_url', successUrl);
+      urlObj.searchParams.set('destination', successUrl);
+      urlObj.searchParams.set('callback_url', successUrl);
       urlObj.searchParams.set('cancel_url', cancelUrl);
+      urlObj.searchParams.set('direct', 'true');
+      urlObj.searchParams.set('skip_hub', 'true');
+      urlObj.searchParams.set('auto_redirect', 'true');
       urlObj.searchParams.set('metadata[user_id]', user.id || '');
       urlObj.searchParams.set('metadata[user_email]', normalizedEmail);
       urlObj.searchParams.set('metadata[plan]', plan);
@@ -4260,6 +4265,8 @@ app.post('/api/whop/create-checkout', async (req, res) => {
             redirect_url: successUrl,
             return_url: successUrl,
             success_url: successUrl,
+            destination: successUrl,
+            skip_hub: true,
             metadata: {
               user_id: user.id || '',
               user_email: normalizedEmail,
@@ -4294,7 +4301,7 @@ app.post('/api/whop/create-checkout', async (req, res) => {
         ? `https://whop.com/${companyId}/checkout/${planId}`
         : `https://whop.com/checkout/${planId}`;
 
-      const checkoutUrl = `${whopBase}?email=${encodeURIComponent(normalizedEmail)}&redirect_url=${encodeURIComponent(successUrl)}&return_url=${encodeURIComponent(successUrl)}&success_url=${encodeURIComponent(successUrl)}&redirect_uri=${encodeURIComponent(successUrl)}&metadata[user_id]=${encodeURIComponent(user.id || '')}&metadata[plan]=${encodeURIComponent(plan)}&metadata[billing_cycle]=${encodeURIComponent(isYearly ? 'yearly' : 'monthly')}`;
+      const checkoutUrl = `${whopBase}?email=${encodeURIComponent(normalizedEmail)}&redirect_url=${encodeURIComponent(successUrl)}&return_url=${encodeURIComponent(successUrl)}&success_url=${encodeURIComponent(successUrl)}&redirect_uri=${encodeURIComponent(successUrl)}&destination=${encodeURIComponent(successUrl)}&callback_url=${encodeURIComponent(successUrl)}&direct=true&skip_hub=true&auto_redirect=true&metadata[user_id]=${encodeURIComponent(user.id || '')}&metadata[plan]=${encodeURIComponent(plan)}&metadata[billing_cycle]=${encodeURIComponent(isYearly ? 'yearly' : 'monthly')}`;
 
       return res.json({
         success: true,
@@ -4307,7 +4314,7 @@ app.post('/api/whop/create-checkout', async (req, res) => {
 
     // 4. Default fallback: Whop portal or structured direct link if companyId is set
     if (companyId) {
-      const checkoutUrl = `https://whop.com/${companyId}?email=${encodeURIComponent(normalizedEmail)}&redirect_url=${encodeURIComponent(successUrl)}&return_url=${encodeURIComponent(successUrl)}&success_url=${encodeURIComponent(successUrl)}`;
+      const checkoutUrl = `https://whop.com/${companyId}?email=${encodeURIComponent(normalizedEmail)}&redirect_url=${encodeURIComponent(successUrl)}&return_url=${encodeURIComponent(successUrl)}&success_url=${encodeURIComponent(successUrl)}&destination=${encodeURIComponent(successUrl)}&direct=true&skip_hub=true`;
       return res.json({
         success: true,
         checkoutUrl,
@@ -4359,17 +4366,58 @@ app.get(['/api/whop/verify-session', '/api/whop/sync-payment'], async (req: any,
       user = allUsers.find((u) => u.email && u.role === 'admin') || allUsers[0] || null;
     }
 
+    let detectedMembershipId = '';
+    let detectedReceiptUrl = '';
+    let resolvedAmount: number | null = null;
+
+    // Check if paymentId is a membership ID directly
+    if (paymentId.startsWith('mber_')) {
+      detectedMembershipId = paymentId;
+    }
+
+    // Try fetching rich details from Whop API if key is available
+    const whopKey = getWhopApiKey();
+    if (whopKey && (paymentId || stateId)) {
+      const isSandbox = getWhopEnvironment() === 'sandbox';
+      const baseUrls = isSandbox
+        ? ['https://sandbox-api.whop.com/api/v2', 'https://api.whop.com/api/v2']
+        : ['https://api.whop.com/api/v2', 'https://sandbox-api.whop.com/api/v2'];
+
+      for (const baseUrl of baseUrls) {
+        try {
+          if (paymentId && !detectedMembershipId) {
+            const payRes = await fetch(`${baseUrl}/payments/${encodeURIComponent(paymentId)}`, {
+              headers: { 'Authorization': `Bearer ${whopKey}` },
+            });
+            if (payRes.ok) {
+              const payData: any = await payRes.json();
+              detectedMembershipId = payData.membership_id || payData.membership?.id || detectedMembershipId;
+              detectedReceiptUrl = payData.receipt_url || detectedReceiptUrl;
+              if (payData.final_amount) resolvedAmount = payData.final_amount > 100 ? payData.final_amount / 100 : payData.final_amount;
+              break;
+            }
+          }
+        } catch (e) {
+          // ignore error and proceed
+        }
+      }
+    }
+
     if (user) {
       const planTier = planParam === 'agency' ? 'agency' : 'pro';
-      const creditAllowance = planTier === 'agency' ? 999999 : 250;
+      const creditAllowance = planTier === 'agency' ? 9999 : 250;
 
       user.planTier = planTier;
       user.subscriptionStatus = 'active';
       user.monthlyAiCredits = creditAllowance;
       user.aiCreditsUsed = 0;
       user.paymentProvider = 'whop';
-      if (paymentId) {
+      if (detectedMembershipId) {
+        user.whopMembershipId = detectedMembershipId;
+      } else if (paymentId && !user.whopMembershipId) {
         user.whopMembershipId = paymentId;
+      }
+      if (paymentId) {
         user.whopUserId = user.whopUserId || paymentId;
       }
       user.cancelAtPeriodEnd = false;
@@ -4381,10 +4429,10 @@ app.get(['/api/whop/verify-session', '/api/whop/sync-payment'], async (req: any,
 
       // Create transaction record in database
       const txnId = paymentId || `whop_${Date.now()}`;
-      const amount = planTier === 'agency' ? (isYearly ? 468 : 49) : (isYearly ? 180 : 19);
+      const amount = resolvedAmount || (planTier === 'agency' ? (isYearly ? 468 : 49) : (isYearly ? 180 : 19));
       const invoiceId = `INV-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}-WHOP`;
 
-      const existingTxn = Array.from(transactionsDb.values()).find(
+      let existingTxn = Array.from(transactionsDb.values()).find(
         (t: any) => t.id === txnId || (paymentId && t.whopDetails?.paymentId === paymentId)
       );
 
@@ -4401,9 +4449,10 @@ app.get(['/api/whop/verify-session', '/api/whop/sync-payment'], async (req: any,
           paymentMethod: 'whop',
           whopDetails: {
             paymentId: paymentId || txnId,
-            membershipId: user.whopMembershipId || paymentId || txnId,
+            membershipId: user.whopMembershipId || detectedMembershipId || paymentId || txnId,
             status: 'completed',
             paymentMethodBrand: 'whop_checkout',
+            receiptUrl: detectedReceiptUrl || `https://whop.com/billing/manage/${user.whopMembershipId || paymentId}/`,
           },
           status: 'success',
           invoiceId,
@@ -4413,11 +4462,37 @@ app.get(['/api/whop/verify-session', '/api/whop/sync-payment'], async (req: any,
         transactionsDb.set(txnId, txnRecord);
         saveTransactionsToDisk();
         await dbService.saveTransaction(txnRecord).catch(() => {});
+        existingTxn = txnRecord;
       }
+
+      const invoiceReceipt = {
+        id: existingTxn.invoiceId || invoiceId,
+        transactionId: existingTxn.id,
+        amount,
+        subtotal: amount,
+        taxAmount: 0,
+        date: existingTxn.createdAt || new Date().toISOString(),
+        status: 'paid' as const,
+        planName: `LOCORA AI ${planTier.toUpperCase()} PLAN (${billingCycle.toUpperCase()})`,
+        planTier,
+        billingCycle,
+        paymentMethod: 'Whop Merchant of Record',
+        whopReceiptId: paymentId || existingTxn.id,
+        whopMembershipId: user.whopMembershipId || detectedMembershipId || '',
+        whopPaymentId: paymentId || '',
+        userEmail: user.email,
+        userName: user.name,
+        receiptUrl: detectedReceiptUrl || (user.whopMembershipId ? `https://whop.com/billing/manage/${user.whopMembershipId}/?callback=%2Flocoraai-com%2F%3FaccountSettings%3Dorders` : 'https://whop.com/hub/orders'),
+      };
+
+      const whopManageUrl = user.whopMembershipId
+        ? `https://whop.com/billing/manage/${user.whopMembershipId}/?callback=%2Flocoraai-com%2F%3FaccountSettings%3Dorders`
+        : 'https://whop.com/hub/orders';
 
       return res.json({
         success: true,
         message: 'Whop subscription verified & activated successfully',
+        whopManageUrl,
         user: {
           id: user.id,
           email: user.email,
@@ -4426,9 +4501,14 @@ app.get(['/api/whop/verify-session', '/api/whop/sync-payment'], async (req: any,
           monthlyAiCredits: user.monthlyAiCredits,
           aiCreditsUsed: user.aiCreditsUsed,
           paymentProvider: user.paymentProvider,
+          whopMembershipId: user.whopMembershipId,
           subscriptionStatus: user.subscriptionStatus,
           nextBillingDate: user.nextBillingDate,
+          autoRenew: user.autoRenew,
+          cancelAtPeriodEnd: user.cancelAtPeriodEnd,
         },
+        invoice: invoiceReceipt,
+        transaction: existingTxn,
       });
     }
 
@@ -4436,6 +4516,81 @@ app.get(['/api/whop/verify-session', '/api/whop/sync-payment'], async (req: any,
   } catch (err: any) {
     console.error('Error verifying Whop session:', err);
     return res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint to retrieve all subscription invoices and receipts for a user
+app.get('/api/user/invoices', async (req: any, res) => {
+  try {
+    const email = (req.query.email || req.user?.email || '').toString().toLowerCase().trim();
+    if (!email) {
+      return res.json({ invoices: [] });
+    }
+
+    const user = await findUserByEmail(email);
+    const userTxns = Array.from(transactionsDb.values()).filter(
+      (t: any) => t.userEmail && t.userEmail.toLowerCase() === email && !deletedTransactionIds.has(t.id)
+    );
+
+    // Transform transactions into standard subscription invoices
+    const invoices = userTxns.map((t: any) => {
+      const isYearly = t.billingCycle === 'yearly' || t.billingCycle === 'annual';
+      const mId = t.whopDetails?.membershipId || (user ? user.whopMembershipId : '');
+      const pId = t.whopDetails?.paymentId || t.id;
+      return {
+        id: t.invoiceId || `INV-${new Date(t.createdAt).getFullYear()}-${t.id.slice(-6).toUpperCase()}`,
+        transactionId: t.id,
+        amount: Number(t.amount) || 0,
+        subtotal: Number(t.amount) || 0,
+        taxAmount: 0,
+        date: t.createdAt,
+        status: t.status === 'success' ? 'paid' : (t.status || 'paid'),
+        planName: `LOCORA AI ${(t.planTier || 'PRO').toUpperCase()} PLAN (${isYearly ? 'YEARLY' : 'MONTHLY'})`,
+        planTier: t.planTier || 'pro',
+        billingCycle: isYearly ? 'yearly' : 'monthly',
+        paymentMethod: t.paymentMethod === 'whop' ? 'Whop Merchant of Record' : (t.paymentMethod || 'Credit Card'),
+        whopReceiptId: pId,
+        whopMembershipId: mId,
+        whopPaymentId: pId,
+        userEmail: t.userEmail || email,
+        userName: t.userName || (user ? user.name : email.split('@')[0]),
+        receiptUrl: mId ? `https://whop.com/billing/manage/${mId}/?callback=%2Flocoraai-com%2F%3FaccountSettings%3Dorders` : 'https://whop.com/hub/orders',
+      };
+    });
+
+    // If user is on a paid plan but no transaction was recorded yet, provide the active plan invoice
+    if (invoices.length === 0 && user && user.planTier !== 'free') {
+      const isYearly = user.billingCycle === 'yearly';
+      const amount = user.planTier === 'agency' ? (isYearly ? 468 : 49) : (isYearly ? 180 : 19);
+      const mId = user.whopMembershipId || '';
+      invoices.push({
+        id: `INV-${new Date().getFullYear()}-001-WHOP`,
+        transactionId: `tx_${user.id || 'whop'}`,
+        amount,
+        subtotal: amount,
+        taxAmount: 0,
+        date: user.memberSince || new Date().toISOString(),
+        status: 'paid',
+        planName: `LOCORA AI ${user.planTier.toUpperCase()} PLAN (${isYearly ? 'YEARLY' : 'MONTHLY'})`,
+        planTier: user.planTier,
+        billingCycle: isYearly ? 'yearly' : 'monthly',
+        paymentMethod: 'Whop Merchant of Record',
+        whopReceiptId: mId || 'whop_order',
+        whopMembershipId: mId,
+        whopPaymentId: mId,
+        userEmail: user.email,
+        userName: user.name,
+        receiptUrl: mId ? `https://whop.com/billing/manage/${mId}/?callback=%2Flocoraai-com%2F%3FaccountSettings%3Dorders` : 'https://whop.com/hub/orders',
+      });
+    }
+
+    // Sort newest first
+    invoices.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    res.json({ invoices });
+  } catch (err: any) {
+    console.error('Failed to get user invoices:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 

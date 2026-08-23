@@ -401,8 +401,19 @@ export interface SubscriptionInvoice {
   date: string;
   status: 'paid' | 'pending' | 'failed' | 'refunded';
   planName: string;
+  planTier?: UserPlan;
   transactionId?: string;
   paymentMethod?: string;
+  whopMembershipId?: string;
+  whopPaymentId?: string;
+  whopReceiptId?: string;
+  billingCycle?: BillingCycle;
+  userEmail?: string;
+  userName?: string;
+  subtotal?: number;
+  taxAmount?: number;
+  receiptUrl?: string;
+  createdAt?: string;
 }
 
 export interface ActivityLogItem {
