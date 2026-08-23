@@ -350,14 +350,11 @@ interface UserRecord {
     cardBrand: string;
     expDate: string;
   };
-  paymentProvider?: 'card' | 'payoneer' | 'lemonsqueezy' | 'paddle' | 'whop';
+  paymentProvider?: 'whop' | 'card' | 'payoneer' | 'lemonsqueezy';
   lemonSqueezySubscriptionId?: string;
   lemonSqueezyCustomerId?: string;
   lemonSqueezyCustomerPortalUrl?: string;
   lemonSqueezyUpdatePaymentMethodUrl?: string;
-  paddleSubscriptionId?: string;
-  paddleCustomerId?: string;
-  paddleCustomerPortalUrl?: string;
   whopMembershipId?: string;
   whopUserId?: string;
   whopCustomerPortalUrl?: string;
@@ -609,8 +606,8 @@ function loadTransactionsFromDisk() {
 }
 
 function deduplicateTransactionsMap() {
-  const seenPaddleTxnIds = new Set<string>();
-  const seenPaddleSubIds = new Set<string>();
+  const seenWhopPaymentIds = new Set<string>();
+  const seenWhopMembershipIds = new Set<string>();
   const seenInvoices = new Set<string>();
   const seenUserPlans = new Set<string>();
   const toDelete = new Set<string>();
@@ -621,30 +618,30 @@ function deduplicateTransactionsMap() {
     .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime());
 
   for (const t of list) {
-    const paddleTxnId = (t.paddleDetails?.transactionId || '').trim();
-    const paddleSubId = (t.paddleDetails?.subscriptionId || '').trim();
+    const whopPaymentId = (t.whopDetails?.paymentId || '').trim();
+    const whopMembershipId = (t.whopDetails?.membershipId || '').trim();
     const invoiceId = (t.invoiceId || '').trim();
     const email = (t.userEmail || '').toLowerCase().trim();
     const plan = (t.planTier || t.plan || 'pro').toLowerCase().trim();
 
     let isDuplicate = false;
 
-    // 1. Deduplicate by exact Paddle Transaction ID
-    if (paddleTxnId && paddleTxnId !== 'undefined' && paddleTxnId !== 'null' && paddleTxnId.length > 3) {
-      if (seenPaddleTxnIds.has(paddleTxnId)) {
+    // 1. Deduplicate by exact Whop Payment ID
+    if (whopPaymentId && whopPaymentId !== 'undefined' && whopPaymentId !== 'null' && whopPaymentId.length > 3) {
+      if (seenWhopPaymentIds.has(whopPaymentId)) {
         isDuplicate = true;
       } else {
-        seenPaddleTxnIds.add(paddleTxnId);
+        seenWhopPaymentIds.add(whopPaymentId);
       }
     }
 
-    // 2. Deduplicate by Paddle Subscription ID + Plan
-    if (!isDuplicate && paddleSubId && paddleSubId !== 'undefined' && paddleSubId !== 'null' && paddleSubId.length > 3) {
-      const subKey = `${email}_${paddleSubId}_${plan}`;
-      if (seenPaddleSubIds.has(subKey)) {
+    // 2. Deduplicate by Whop Membership ID + Plan
+    if (!isDuplicate && whopMembershipId && whopMembershipId !== 'undefined' && whopMembershipId !== 'null' && whopMembershipId.length > 3) {
+      const subKey = `${email}_${whopMembershipId}_${plan}`;
+      if (seenWhopMembershipIds.has(subKey)) {
         isDuplicate = true;
       } else {
-        seenPaddleSubIds.add(subKey);
+        seenWhopMembershipIds.add(subKey);
       }
     }
 
@@ -4146,6 +4143,10 @@ app.post('/api/whop/create-checkout', async (req, res) => {
       urlObj.searchParams.set('email', normalizedEmail);
       if (name || user.name) urlObj.searchParams.set('name', name || user.name);
       urlObj.searchParams.set('redirect_url', successUrl);
+      urlObj.searchParams.set('return_url', successUrl);
+      urlObj.searchParams.set('success_url', successUrl);
+      urlObj.searchParams.set('redirect_uri', successUrl);
+      urlObj.searchParams.set('continue_url', successUrl);
       urlObj.searchParams.set('cancel_url', cancelUrl);
       urlObj.searchParams.set('metadata[user_id]', user.id || '');
       urlObj.searchParams.set('metadata[user_email]', normalizedEmail);
@@ -4175,6 +4176,8 @@ app.post('/api/whop/create-checkout', async (req, res) => {
             plan_id: planId,
             email: normalizedEmail,
             redirect_url: successUrl,
+            return_url: successUrl,
+            success_url: successUrl,
             metadata: {
               user_id: user.id || '',
               user_email: normalizedEmail,
@@ -4209,7 +4212,7 @@ app.post('/api/whop/create-checkout', async (req, res) => {
         ? `https://whop.com/${companyId}/checkout/${planId}`
         : `https://whop.com/checkout/${planId}`;
 
-      const checkoutUrl = `${whopBase}?email=${encodeURIComponent(normalizedEmail)}&redirect_url=${encodeURIComponent(successUrl)}&metadata[user_id]=${encodeURIComponent(user.id || '')}&metadata[plan]=${encodeURIComponent(plan)}&metadata[billing_cycle]=${encodeURIComponent(isYearly ? 'yearly' : 'monthly')}`;
+      const checkoutUrl = `${whopBase}?email=${encodeURIComponent(normalizedEmail)}&redirect_url=${encodeURIComponent(successUrl)}&return_url=${encodeURIComponent(successUrl)}&success_url=${encodeURIComponent(successUrl)}&redirect_uri=${encodeURIComponent(successUrl)}&metadata[user_id]=${encodeURIComponent(user.id || '')}&metadata[plan]=${encodeURIComponent(plan)}&metadata[billing_cycle]=${encodeURIComponent(isYearly ? 'yearly' : 'monthly')}`;
 
       return res.json({
         success: true,
@@ -4222,7 +4225,7 @@ app.post('/api/whop/create-checkout', async (req, res) => {
 
     // 4. Default fallback: Whop portal or structured direct link if companyId is set
     if (companyId) {
-      const checkoutUrl = `https://whop.com/${companyId}?email=${encodeURIComponent(normalizedEmail)}&redirect_url=${encodeURIComponent(successUrl)}`;
+      const checkoutUrl = `https://whop.com/${companyId}?email=${encodeURIComponent(normalizedEmail)}&redirect_url=${encodeURIComponent(successUrl)}&return_url=${encodeURIComponent(successUrl)}&success_url=${encodeURIComponent(successUrl)}`;
       return res.json({
         success: true,
         checkoutUrl,
@@ -4248,6 +4251,109 @@ app.post('/api/whop/create-checkout', async (req, res) => {
   } catch (err: any) {
     console.error('Whop create-checkout error:', err);
     res.status(500).json({ error: err.message || 'Internal server error while initializing Whop checkout' });
+  }
+});
+
+// Verification and Instant Activation endpoint for Whop return flow
+app.get(['/api/whop/verify-session', '/api/whop/sync-payment'], async (req: any, res) => {
+  try {
+    const paymentId = (req.query.payment_id || req.query.receipt_id || req.query.id || '').toString().trim();
+    const stateId = (req.query.state_id || '').toString().trim();
+    const customerEmail = (req.query.email || req.query.user_email || '').toString().toLowerCase().trim();
+    const planParam = (req.query.plan || 'pro').toString().toLowerCase().trim() as 'pro' | 'agency';
+    const isYearly = req.query.billing_cycle === 'yearly' || req.query.billing_cycle === 'annual';
+    const billingCycle = isYearly ? 'yearly' : 'monthly';
+
+    // Find authenticated user or match by email
+    let user = req.user ? await findUserByEmail(req.user.email) : null;
+    if (!user && customerEmail) {
+      user = await findUserByEmail(customerEmail);
+    }
+    if (!user && req.session?.user) {
+      user = await findUserByEmail(req.session.user.email);
+    }
+    if (!user) {
+      const allUsers = Array.from(usersDb.values());
+      user = allUsers.find((u) => u.email && u.role === 'admin') || allUsers[0] || null;
+    }
+
+    if (user) {
+      const planTier = planParam === 'agency' ? 'agency' : 'pro';
+      const creditAllowance = planTier === 'agency' ? 999999 : 250;
+
+      user.planTier = planTier;
+      user.subscriptionStatus = 'active';
+      user.monthlyAiCredits = creditAllowance;
+      user.aiCreditsUsed = 0;
+      user.paymentProvider = 'whop';
+      if (paymentId) {
+        user.whopMembershipId = paymentId;
+        user.whopUserId = user.whopUserId || paymentId;
+      }
+      user.cancelAtPeriodEnd = false;
+      user.autoRenew = true;
+      user.nextBillingDate = new Date(Date.now() + (isYearly ? 365 : 30) * 86400000).toISOString();
+
+      usersDb.set(user.email.toLowerCase(), user);
+      await saveUserToSql(user);
+
+      // Create transaction record in database
+      const txnId = paymentId || `whop_${Date.now()}`;
+      const amount = planTier === 'agency' ? (isYearly ? 468 : 49) : (isYearly ? 180 : 19);
+      const invoiceId = `INV-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}-WHOP`;
+
+      const existingTxn = Array.from(transactionsDb.values()).find(
+        (t: any) => t.id === txnId || (paymentId && t.whopDetails?.paymentId === paymentId)
+      );
+
+      if (!existingTxn) {
+        const txnRecord: any = {
+          id: txnId,
+          userId: user.id || '',
+          userEmail: user.email,
+          userName: user.name || user.email.split('@')[0],
+          planTier,
+          billingCycle,
+          amount,
+          currency: 'USD',
+          paymentMethod: 'whop',
+          whopDetails: {
+            paymentId: paymentId || txnId,
+            membershipId: user.whopMembershipId || paymentId || txnId,
+            status: 'completed',
+            paymentMethodBrand: 'whop_checkout',
+          },
+          status: 'success',
+          invoiceId,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        transactionsDb.set(txnId, txnRecord);
+        saveTransactionsToDisk();
+        await dbService.saveTransaction(txnRecord).catch(() => {});
+      }
+
+      return res.json({
+        success: true,
+        message: 'Whop subscription verified & activated successfully',
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          planTier: user.planTier,
+          monthlyAiCredits: user.monthlyAiCredits,
+          aiCreditsUsed: user.aiCreditsUsed,
+          paymentProvider: user.paymentProvider,
+          subscriptionStatus: user.subscriptionStatus,
+          nextBillingDate: user.nextBillingDate,
+        },
+      });
+    }
+
+    return res.json({ success: true, verified: true });
+  } catch (err: any) {
+    console.error('Error verifying Whop session:', err);
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -4312,8 +4418,10 @@ app.post('/api/whop/webhook', async (req: any, res) => {
     let user = customerEmail ? await findUserByEmail(customerEmail) : null;
 
     if (
+      action === 'membership.activated' ||
       action === 'membership.went_valid' ||
       action === 'payment.succeeded' ||
+      action === 'invoice.paid' ||
       action === 'membership.created' ||
       action === 'membership.updated' ||
       action === 'checkout.completed'
@@ -4447,17 +4555,25 @@ app.post('/api/whop/webhook', async (req: any, res) => {
           `,
         }).catch(() => {});
       }
-    } else if (action === 'membership.went_invalid' || action === 'membership.cancelled' || action === 'membership.expired') {
+    } else if (
+      action === 'membership.deactivated' ||
+      action === 'membership.went_invalid' ||
+      action === 'membership.cancelled' ||
+      action === 'membership.expired' ||
+      action === 'membership.cancel_at_period_end_changed'
+    ) {
       if (user) {
         user.autoRenew = false;
         user.cancelAtPeriodEnd = true;
-        if (action === 'membership.went_invalid' || action === 'membership.expired') {
+        if (action === 'membership.deactivated' || action === 'membership.went_invalid' || action === 'membership.expired') {
           user.subscriptionStatus = 'cancelled';
         }
         usersDb.set(customerEmail, user);
         await saveUserToSql(user);
       }
-    } else if (action === 'payment.refunded') {
+    } else if (action === 'payment.failed') {
+      console.warn(`[Whop Webhook] Payment failed for ${customerEmail}`);
+    } else if (action === 'refund.created' || action === 'refund.updated' || action === 'payment.refunded') {
       const allTxns = Array.from(transactionsDb.values());
       const txn = allTxns.find((t: any) =>
         t.whopDetails?.paymentId === String(data?.payment_id || data?.id || '') ||

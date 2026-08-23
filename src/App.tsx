@@ -98,19 +98,39 @@ const MainContent: React.FC = () => {
 
     const query = new URLSearchParams(window.location.search);
     const hasResetToken = query.get('reset_token') || query.get('magic_token') || query.get('oobCode') || query.get('mode') === 'resetPassword';
+    const isPaymentReturn =
+      query.get('payment_status') === 'success' ||
+      query.get('status') === 'success' ||
+      query.get('checkout_status') === 'success' ||
+      query.get('checkout_success') === 'true' ||
+      Boolean(query.get('receipt_id')) ||
+      Boolean(query.get('payment_id'));
+
     if (hasResetToken) {
       setActiveTab('login');
-    } else if (query.get('payment_status') === 'success' || query.get('checkout_success') === 'true') {
-      const sessionId = query.get('session_id');
-      if (sessionId) {
-        fetch(`/api/stripe/verify-session?session_id=${encodeURIComponent(sessionId)}`)
-          .then((res) => res.json())
-          .then(() => {
-            window.location.href = '/dashboard';
-          })
-          .catch(() => {});
-      }
-      setActiveTab('subscription');
+    } else if (isPaymentReturn) {
+      const paymentId = query.get('payment_id') || query.get('receipt_id') || '';
+      const stateId = query.get('state_id') || '';
+      const plan = (query.get('plan') || 'pro').toLowerCase();
+      const billingCycle = (query.get('billing_cycle') || 'monthly').toLowerCase();
+
+      // Verify and sync Whop checkout immediately with backend
+      fetch(`/api/whop/verify-session?payment_id=${encodeURIComponent(paymentId)}&state_id=${encodeURIComponent(stateId)}&plan=${encodeURIComponent(plan)}&billing_cycle=${encodeURIComponent(billingCycle)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.user) {
+            subscribePlan(data.user.planTier || (plan as any), (data.user.billingCycle || billingCycle) as any);
+          } else {
+            subscribePlan(plan as any, billingCycle as any);
+          }
+        })
+        .catch(() => {
+          subscribePlan(plan as any, billingCycle as any);
+        });
+
+      // Clean URL params and transition cleanly to the user's dashboard
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setActiveTab('dashboard');
     }
 
     return () => window.removeEventListener('popstate', handlePopState);

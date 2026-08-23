@@ -319,16 +319,12 @@ export interface UserProfile {
   nextBillingDate: string;
   autoRenew?: boolean;
   cancelAtPeriodEnd?: boolean;
-  paymentProvider?: 'whop' | 'lemonsqueezy' | 'card' | 'apple_pay' | 'google_pay' | 'paddle';
+  paymentProvider?: 'whop' | 'card' | 'apple_pay' | 'google_pay';
   whopSubscriptionId?: string;
   whopMembershipId?: string;
   whopCustomerId?: string;
   whopUserId?: string;
   whopCustomerPortalUrl?: string;
-  paddleSubscriptionId?: string;
-  paddleCustomerId?: string;
-  paddleCustomerPortalUrl?: string;
-  paddleUpdatePaymentMethodUrl?: string;
   lemonSqueezySubscriptionId?: string;
   lemonSqueezyCustomerId?: string;
   lemonSqueezyCustomerPortalUrl?: string;
@@ -341,7 +337,7 @@ export interface UserProfile {
   isAuthenticated: boolean;
 }
 
-export type PaymentMethodType = 'whop' | 'paddle' | 'lemonsqueezy' | 'card' | 'apple_pay' | 'google_pay' | 'paypal';
+export type PaymentMethodType = 'whop' | 'card' | 'apple_pay' | 'google_pay' | 'paypal';
 export type PaymentTransactionStatus = 'success' | 'failed' | 'cancelled' | 'pending' | 'refunded';
 
 export interface PaymentTransaction {
@@ -362,17 +358,6 @@ export interface PaymentTransaction {
     companyId?: string;
     status?: string;
     customerPortalUrl?: string;
-    receiptUrl?: string;
-    paymentMethodBrand?: string;
-  };
-  paddleDetails?: {
-    subscriptionId?: string;
-    transactionId?: string;
-    customerId?: string;
-    priceId?: string;
-    status?: string;
-    customerPortalUrl?: string;
-    updatePaymentMethodUrl?: string;
     receiptUrl?: string;
     paymentMethodBrand?: string;
   };

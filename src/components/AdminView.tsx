@@ -3222,7 +3222,7 @@ export const AdminView: React.FC = () => {
                 { name: 'Contact Us Form', desc: 'Alerts support@locoraai.com & sends instant auto-reply ticket to user', status: 'Active' },
                 { name: 'Sign-up Verification', desc: 'Dispatches welcome & account registration verification with workspace credentials', status: 'Active' },
                 { name: 'Magic Link & Password Reset', desc: 'Sends 1-click magic access links and 6-digit security codes', status: 'Active' },
-                { name: 'Paddle Invoices & Receipts', desc: 'Issues real-time payment receipts, invoice PDFs, and plan upgrade confirmations', status: 'Active' },
+                { name: 'Whop Invoices & Receipts', desc: 'Issues real-time payment receipts, invoice PDFs, and plan upgrade confirmations', status: 'Active' },
                 { name: 'Client Invoices Dispatch', desc: 'Allows workspace users to dispatch client invoices & retainers via Brevo', status: 'Active' },
                 { name: 'Weekly Newsletter Pack', desc: 'Delivers weekly AI prompt packs to subscribers table automatically', status: 'Active' },
               ].map((trigger, idx) => (
@@ -3316,7 +3316,7 @@ export const AdminView: React.FC = () => {
               <div className="bg-blue-50/60 border border-blue-200 rounded-xl p-4 space-y-1">
                 <span className="text-[11px] font-semibold text-blue-800 uppercase tracking-wider">Gateway Subs</span>
                 <p className="text-xl font-extrabold text-blue-700 font-mono">
-                  {transactionsTable.filter(t => t.whopDetails?.membershipId || t.whopDetails?.paymentId || t.paymentMethod === 'whop' || t.paddleDetails?.subscriptionId || t.paymentMethod === 'paddle').length}
+                  {transactionsTable.filter(t => t.whopDetails?.membershipId || t.whopDetails?.paymentId || t.paymentMethod === 'whop').length}
                 </p>
                 <p className="text-[10px] text-blue-700">Whop Billing Sync</p>
               </div>
@@ -3392,8 +3392,6 @@ export const AdminView: React.FC = () => {
                       const q = transactionSearch.toLowerCase();
                       const whopPayId = txn.whopDetails?.paymentId?.toString() || '';
                       const whopMemId = txn.whopDetails?.membershipId?.toString() || '';
-                      const paddleTxnId = txn.paddleDetails?.transactionId?.toString() || '';
-                      const paddleSubId = txn.paddleDetails?.subscriptionId?.toString() || '';
                       const cardLast4 = txn.cardDetails?.cardLast4 || txn.paymentMethod?.cardLast4 || '';
                       return (
                         txn.id?.toLowerCase().includes(q) ||
@@ -3402,8 +3400,6 @@ export const AdminView: React.FC = () => {
                         txn.invoiceId?.toLowerCase().includes(q) ||
                         whopPayId.includes(q) ||
                         whopMemId.includes(q) ||
-                        paddleTxnId.includes(q) ||
-                        paddleSubId.includes(q) ||
                         cardLast4.includes(q)
                       );
                     })
@@ -3463,7 +3459,7 @@ export const AdminView: React.FC = () => {
                             <div>
                               <div className="flex items-center gap-1.5 text-emerald-800 font-semibold">
                                 <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                                <span className="text-xs">{isWhop ? 'Whop Checkout' : 'Whop / Direct'}</span>
+                                <span className="text-xs">{isWhop ? 'Whop Checkout' : 'Whop Payments'}</span>
                               </div>
                               {txn.whopDetails?.membershipId && (
                                 <div className="text-[9px] font-mono text-emerald-700 font-bold">
@@ -3473,11 +3469,6 @@ export const AdminView: React.FC = () => {
                               {txn.whopDetails?.paymentId && (
                                 <div className="text-[10px] text-slate-500 font-mono">
                                   Pay ID: {txn.whopDetails.paymentId}
-                                </div>
-                              )}
-                              {txn.paddleDetails?.transactionId && (
-                                <div className="text-[10px] text-slate-500 font-mono">
-                                  Legacy Txn: {txn.paddleDetails.transactionId}
                                 </div>
                               )}
                               {txn.cardDetails?.last4 && (

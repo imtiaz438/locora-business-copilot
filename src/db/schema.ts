@@ -199,7 +199,7 @@ export const transactionsTable = pgTable('payment_transactions', {
   billingCycle: text('billing_cycle').notNull(),
   amount: doublePrecision('amount').notNull(),
   currency: text('currency').default('USD').notNull(),
-  paymentMethod: text('payment_method').notNull(), // 'whop' | 'paddle' | 'lemonsqueezy' | 'card' | 'apple_pay' | 'google_pay' | 'paypal'
+  paymentMethod: text('payment_method').notNull(), // 'whop' | 'card' | 'apple_pay' | 'google_pay' | 'paypal'
   whopDetails: jsonb('whop_details').$type<{
     membershipId?: string;
     subscriptionId?: string;
@@ -208,17 +208,6 @@ export const transactionsTable = pgTable('payment_transactions', {
     companyId?: string;
     status?: string;
     customerPortalUrl?: string;
-    receiptUrl?: string;
-    paymentMethodBrand?: string;
-  }>(),
-  paddleDetails: jsonb('paddle_details').$type<{
-    subscriptionId?: string;
-    transactionId?: string;
-    customerId?: string;
-    priceId?: string;
-    status?: string;
-    customerPortalUrl?: string;
-    updatePaymentMethodUrl?: string;
     receiptUrl?: string;
     paymentMethodBrand?: string;
   }>(),
@@ -255,3 +244,5 @@ export const transactionsTable = pgTable('payment_transactions', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+
