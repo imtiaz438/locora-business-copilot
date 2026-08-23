@@ -85,7 +85,7 @@ export const CheckoutModal: React.FC = () => {
     whopConfig?.planIds?.agencyMonthly
   );
 
-  // Unified Checkout Handler requiring verified payment before any upgrade
+  // Unified Checkout Handler requiring verified payment on Whop before any upgrade
   const handleProceedToCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -97,38 +97,13 @@ export const CheckoutModal: React.FC = () => {
     setIsProcessing(true);
 
     try {
-      // 1. Attempt Whop Checkout
+      // 1. Request verified Whop Checkout Session / Direct Link
       const whopResult = await openWhopCheckout({
         plan: checkoutModalPlan,
         billingCycle: checkoutModalCycle,
         email: customerEmail,
         name: customerName,
         userId: user.id,
-        onSuccess: (wData) => {
-          logActivity(
-            'payment',
-            `Subscription Activated: ${planName}`,
-            `Payment of $${totalAmount}.00 cleared via Whop for Locora AI ${planName}. Workspace ready.`
-          );
-          setSuccessData({
-            brand: paymentChannel === 'wallets' ? 'Digital Wallet (Apple Pay / Google Pay / Crypto)' : 'Whop Checkout',
-            referenceCode: wData?.id || wData?.membershipId || `WHOP-${Date.now().toString().slice(-6)}`,
-            transaction: {
-              id: wData?.id || `txn_whop_${Date.now()}`,
-              invoiceId: `INV-${Date.now().toString().slice(-6)}-WHOP`,
-            },
-          });
-          updateUser({
-            planTier: checkoutModalPlan,
-            subscriptionStatus: 'active',
-            billingCycle: checkoutModalCycle,
-            monthlyAiCredits: checkoutModalPlan === 'agency' ? 9999 : 250,
-            aiCreditsUsed: 0,
-            autoRenew: true,
-            cancelAtPeriodEnd: false,
-          });
-          setIsProcessing(false);
-        },
         onError: (errMsg) => {
           setErrorMessage(errMsg);
         },
@@ -138,20 +113,15 @@ export const CheckoutModal: React.FC = () => {
         const checkoutUrl = whopResult.url || whopResult.checkoutUrl;
         logActivity(
           'payment',
-          `Whop Checkout Session Created (${planName})`,
-          `Proceeding to secure checkout for Locora AI ${planName} (${checkoutModalCycle}).`
+          `Whop Checkout Session Opened (${planName})`,
+          `Directed customer to secure Whop Checkout (${checkoutModalCycle}). Awaiting card purchase & verification.`
         );
         setRedirectUrl(checkoutUrl);
         return;
       }
-
-      if (whopResult.success && !whopResult.url) {
-        setIsProcessing(false);
-        return;
-      }
     } catch (err: any) {
       setErrorMessage(
-        err.message || 'Payment gateway validation failed. Please check your Whop API keys and company configuration.'
+        err.message || 'Payment gateway validation failed. Please verify your Whop checkout configuration.'
       );
     } finally {
       setIsProcessing(false);
@@ -317,10 +287,10 @@ export const CheckoutModal: React.FC = () => {
 
             <div className="space-y-2">
               <h3 className="text-2xl font-extrabold text-slate-900">
-                Checkout Session Ready!
+                Secure Whop Checkout Ready
               </h3>
               <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                Click below to complete your secure payment on <strong>Whop Checkout</strong> for <strong>Locora AI {planName}</strong>.
+                Click below to complete your order on <strong>Whop Checkout</strong> for <strong>Locora AI {planName}</strong>.
               </p>
             </div>
 
@@ -335,8 +305,15 @@ export const CheckoutModal: React.FC = () => {
               </div>
               <div className="flex justify-between items-center text-slate-700">
                 <span className="font-semibold text-slate-500">Payment Gateway:</span>
-                <span className="font-medium text-slate-900">Whop Checkout & Memberships</span>
+                <span className="font-medium text-slate-900">Whop Checkout (Cards, Apple Pay, Google Pay)</span>
               </div>
+            </div>
+
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs text-left flex items-start gap-2.5">
+              <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <span>
+                Enter your card details and any promo code on Whop. Once your payment clears, you will be redirected back and your workspace will activate automatically.
+              </span>
             </div>
 
             <div className="pt-2 space-y-3">
@@ -347,7 +324,7 @@ export const CheckoutModal: React.FC = () => {
                 rel="noopener noreferrer"
                 className="w-full py-3.5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer no-underline"
               >
-                <span>OPEN WHOP CHECKOUT</span>
+                <span>ORDER NOW ON WHOP CHECKOUT (${totalAmount}.00)</span>
                 <ArrowUpRight className="w-5 h-5" />
               </a>
 
@@ -571,7 +548,7 @@ export const CheckoutModal: React.FC = () => {
               ) : (
                 <>
                   <Lock className="w-4 h-4" />
-                  <span>PROCEED TO SECURE CHECKOUT (${totalAmount}.00)</span>
+                  <span>ORDER NOW ON WHOP CHECKOUT (${totalAmount}.00)</span>
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </>
               )}

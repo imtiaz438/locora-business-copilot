@@ -19,7 +19,6 @@ import {
   Info,
   XCircle,
   Repeat,
-  ExternalLink,
 } from 'lucide-react';
 import { BillingCycle } from '../types';
 
@@ -27,39 +26,14 @@ export const SubscriptionView: React.FC = () => {
   const { user, subscriptionInvoices, setCheckoutModalPlan, setActiveTab, updateUser, logActivity } = useApp();
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [portalLoading, setPortalLoading] = useState(false);
-  const [portalMsg, setPortalMsg] = useState<string | null>(null);
-
-  const handleOpenWhopPortal = async () => {
-    setPortalLoading(true);
-    setPortalMsg(null);
-    try {
-      const res = await fetch('/api/whop/customer-portal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user.email }),
-      });
-      const data = await res.json();
-      if (data.customerPortalUrl || data.url || data.portalUrl) {
-        window.open(data.customerPortalUrl || data.url || data.portalUrl, '_blank');
-      } else {
-        setPortalMsg(data.message || 'Direct settlement active. Opening Whop Customer Hub (whop.com/hub).');
-        window.open('https://whop.com/hub', '_blank');
-        setTimeout(() => setPortalMsg(null), 5000);
-      }
-    } catch (err) {
-      setPortalMsg('Unable to connect to Whop billing portal. Opening whop.com/hub directly.');
-      window.open('https://whop.com/hub', '_blank');
-      setTimeout(() => setPortalMsg(null), 5000);
-    } finally {
-      setPortalLoading(false);
-    }
-  };
+  const [toggleLoading, setToggleLoading] = useState(false);
 
   const isAutoRenewOn = user.autoRenew !== false && !user.cancelAtPeriodEnd;
   const creditsUsedPct = Math.min(100, Math.round((user.aiCreditsUsed / user.monthlyAiCredits) * 100));
 
   const handleToggleAutoRenew = async () => {
+    if (toggleLoading) return;
+    setToggleLoading(true);
     const turningOff = isAutoRenewOn;
     const endpoint = turningOff ? '/api/user/cancel-auto-renew' : '/api/user/resume-auto-renew';
 
@@ -94,6 +68,8 @@ export const SubscriptionView: React.FC = () => {
         autoRenew: !turningOff,
         cancelAtPeriodEnd: turningOff,
       });
+    } finally {
+      setToggleLoading(false);
     }
   };
 
@@ -418,17 +394,8 @@ export const SubscriptionView: React.FC = () => {
               )}
             </div>
 
-            <div className="space-y-2 pt-1">
-              {user.planTier !== 'free' ? (
-                <button
-                  onClick={handleOpenWhopPortal}
-                  disabled={portalLoading}
-                  className="w-full py-2 bg-emerald-50 hover:bg-emerald-100/80 text-xs font-bold text-emerald-800 rounded-xl border border-emerald-300 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  {portalLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ExternalLink className="w-3.5 h-3.5 text-emerald-600" />}
-                  <span>Manage Billing & Invoices via Whop Hub</span>
-                </button>
-              ) : (
+            {user.planTier === 'free' && (
+              <div className="pt-1">
                 <button
                   onClick={() => setCheckoutModalPlan('pro', user.billingCycle || 'monthly')}
                   className="w-full py-2 bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold rounded-xl shadow-2xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
@@ -436,14 +403,8 @@ export const SubscriptionView: React.FC = () => {
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Upgrade Plan to Add Payment Method</span>
                 </button>
-              )}
-
-              {portalMsg && (
-                <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 p-2 rounded-lg text-center">
-                  {portalMsg}
-                </p>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Cancellation & Refund Support Instructions Card */}

@@ -123,15 +123,9 @@ export async function openWhopCheckout(options: OpenWhopCheckoutOptions): Promis
       const win = window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
       if (win) {
         win.focus();
-      } else {
-        window.location.href = checkoutUrl;
       }
     } catch {
-      window.location.href = checkoutUrl;
-    }
-
-    if (onSuccess) {
-      onSuccess({ checkoutUrl, planId, companyId, plan, billingCycle });
+      // ignore popup blocker error if any
     }
 
     return {

@@ -1660,10 +1660,19 @@ const checkUserCredits = (userEmail?: string, overrideKey?: string, amount: numb
     usersDb.set(lookupKey, user);
   }
 
-  // Monthly Credit Reset Lifecycle Check for registered accounts
+  // Monthly / Period Credit Reset & Expiration Lifecycle Check for registered accounts
   if (user.nextBillingDate && new Date() > new Date(user.nextBillingDate)) {
-    user.aiCreditsUsed = 0;
-    user.nextBillingDate = new Date(Date.now() + 30 * 86400000).toISOString();
+    if (user.planTier !== 'free' && (user.autoRenew === false || user.cancelAtPeriodEnd === true)) {
+      user.planTier = 'free';
+      user.subscriptionStatus = 'cancelled';
+      user.monthlyAiCredits = 25;
+      user.aiCreditsUsed = 0;
+      user.nextBillingDate = new Date(Date.now() + 30 * 86400000).toISOString();
+    } else {
+      user.aiCreditsUsed = 0;
+      const intervalDays = user.billingCycle === 'yearly' ? 365 : 30;
+      user.nextBillingDate = new Date(Date.now() + intervalDays * 86400000).toISOString();
+    }
     usersDb.set(lookupKey, user);
     saveUserToSql(user).catch(() => {});
   }
@@ -1709,10 +1718,19 @@ const deductUserCredit = (userEmail?: string, amount: number = 1) => {
     saveUserToSql(user).catch(() => {});
   }
 
-  // Check monthly reset lifecycle
+  // Check monthly/period reset lifecycle
   if (user.nextBillingDate && new Date() > new Date(user.nextBillingDate)) {
-    user.aiCreditsUsed = 0;
-    user.nextBillingDate = new Date(Date.now() + 30 * 86400000).toISOString();
+    if (user.planTier !== 'free' && (user.autoRenew === false || user.cancelAtPeriodEnd === true)) {
+      user.planTier = 'free';
+      user.subscriptionStatus = 'cancelled';
+      user.monthlyAiCredits = 25;
+      user.aiCreditsUsed = 0;
+      user.nextBillingDate = new Date(Date.now() + 30 * 86400000).toISOString();
+    } else {
+      user.aiCreditsUsed = 0;
+      const intervalDays = user.billingCycle === 'yearly' ? 365 : 30;
+      user.nextBillingDate = new Date(Date.now() + intervalDays * 86400000).toISOString();
+    }
   }
 
   if (user.planTier !== 'agency') {
@@ -3983,7 +4001,7 @@ function getWhopPlanId(plan: string, isYearly: boolean): string {
          process.env.WHOP_PRO_PRICE_ID_MONTHLY?.trim() ||
          process.env.WHOP_PRO_MONTHLY_PLAN_ID?.trim() ||
          process.env.WHOP_PLAN_PRO_MONTHLY?.trim() ||
-         '');
+         'plan_YnyK5b0EghXB1');
   }
 }
 
@@ -3996,8 +4014,72 @@ function getWhopCheckoutUrl(plan: string, isYearly: boolean): string {
   } else {
     return isYearly
       ? (process.env.WHOP_CHECKOUT_PRO_YEARLY_URL?.trim() || '')
-      : (process.env.WHOP_CHECKOUT_PRO_MONTHLY_URL?.trim() || '');
+      : (process.env.WHOP_CHECKOUT_PRO_MONTHLY_URL?.trim() || 'https://whop.com/checkout/plan_YnyK5b0EghXB1');
   }
+}
+
+// Synchronize auto-renewal cancellation with Whop API
+async function syncWhopAutoRenewalCancellation(membershipId?: string): Promise<boolean> {
+  if (!membershipId) return false;
+  const apiKey = getWhopApiKey();
+  if (!apiKey) return false;
+
+  const isSandbox = getWhopEnvironment() === 'sandbox';
+  const baseUrls = isSandbox
+    ? ['https://sandbox-api.whop.com/api/v2', 'https://api.whop.com/api/v2']
+    : ['https://api.whop.com/api/v2', 'https://sandbox-api.whop.com/api/v2'];
+
+  for (const baseUrl of baseUrls) {
+    try {
+      const response = await fetch(`${baseUrl}/memberships/${encodeURIComponent(membershipId)}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.ok) {
+        console.log(`[Whop Auto-Renew Sync] Successfully canceled recurring renewal for Whop membership ${membershipId}`);
+        return true;
+      }
+    } catch (e: any) {
+      console.warn(`[Whop Auto-Renew Cancel API Notice]`, e.message);
+    }
+  }
+  return false;
+}
+
+// Synchronize auto-renewal resumption with Whop API
+async function syncWhopAutoRenewalResumption(membershipId?: string): Promise<boolean> {
+  if (!membershipId) return false;
+  const apiKey = getWhopApiKey();
+  if (!apiKey) return false;
+
+  const isSandbox = getWhopEnvironment() === 'sandbox';
+  const baseUrls = isSandbox
+    ? ['https://sandbox-api.whop.com/api/v2', 'https://api.whop.com/api/v2']
+    : ['https://api.whop.com/api/v2', 'https://sandbox-api.whop.com/api/v2'];
+
+  for (const baseUrl of baseUrls) {
+    for (const action of ['reactivate', 'resume']) {
+      try {
+        const response = await fetch(`${baseUrl}/memberships/${encodeURIComponent(membershipId)}/${action}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (response.ok) {
+          console.log(`[Whop Auto-Renew Sync] Successfully resumed recurring renewal for Whop membership ${membershipId}`);
+          return true;
+        }
+      } catch (e: any) {
+        // silent fallback
+      }
+    }
+  }
+  return false;
 }
 
 // Whop Public Config Endpoint
@@ -4634,19 +4716,8 @@ app.post('/api/whop/cancel-subscription', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const apiKey = getWhopApiKey();
-    if (apiKey && user.whopMembershipId) {
-      try {
-        await fetch(`https://api.whop.com/api/v2/memberships/${user.whopMembershipId}/cancel`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-        });
-      } catch (sdkErr: any) {
-        console.warn('[Whop Membership Cancel Warn]', sdkErr.message);
-      }
+    if (user.whopMembershipId) {
+      await syncWhopAutoRenewalCancellation(user.whopMembershipId);
     }
 
     user.autoRenew = false;
@@ -5064,20 +5135,8 @@ app.post('/api/user/cancel-auto-renew', async (req, res) => {
     user.cancelAtPeriodEnd = true;
 
     // Synchronize cancellation with Whop API if membership ID is present
-    const whopKey = getWhopApiKey();
-    if (whopKey && user.whopMembershipId) {
-      try {
-        await fetch(`https://api.whop.com/api/v2/memberships/${user.whopMembershipId}/cancel`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${whopKey}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        console.log(`[Whop Sync] Scheduled membership cancellation for ${user.whopMembershipId}`);
-      } catch (whopErr: any) {
-        console.warn('[Whop Cancel API Notice]', whopErr?.message);
-      }
+    if (user.whopMembershipId) {
+      await syncWhopAutoRenewalCancellation(user.whopMembershipId);
     }
 
     usersDb.set(normalizedEmail, user);
@@ -5139,9 +5198,8 @@ app.post('/api/user/resume-auto-renew', async (req, res) => {
     user.cancelAtPeriodEnd = false;
 
     // Synchronize resuming with Whop if applicable
-    const whopKey = getWhopApiKey();
-    if (whopKey && user.whopMembershipId) {
-      console.log(`[Whop Sync] Resumed active status for membership ${user.whopMembershipId}`);
+    if (user.whopMembershipId) {
+      await syncWhopAutoRenewalResumption(user.whopMembershipId);
     }
 
     usersDb.set(normalizedEmail, user);
@@ -5391,9 +5449,19 @@ app.post('/api/admin/update-user-autorenew', async (req, res) => {
     if (typeof autoRenew === 'boolean') {
       user.autoRenew = autoRenew;
       user.cancelAtPeriodEnd = !autoRenew;
+      if (user.whopMembershipId) {
+        if (!autoRenew) {
+          await syncWhopAutoRenewalCancellation(user.whopMembershipId);
+        } else {
+          await syncWhopAutoRenewalResumption(user.whopMembershipId);
+        }
+      }
     }
     if (typeof cancelAtPeriodEnd === 'boolean') {
       user.cancelAtPeriodEnd = cancelAtPeriodEnd;
+      if (cancelAtPeriodEnd && user.whopMembershipId) {
+        await syncWhopAutoRenewalCancellation(user.whopMembershipId);
+      }
     }
     if (nextBillingDate) {
       user.nextBillingDate = nextBillingDate;
@@ -5405,7 +5473,7 @@ app.post('/api/admin/update-user-autorenew', async (req, res) => {
 
     res.json({
       success: true,
-      message: `Updated auto-renewal policy for ${normalizedEmail}.`,
+      message: `Updated auto-renewal policy for ${normalizedEmail} (Auto-Renew: ${user.autoRenew ? 'ON' : 'OFF'}).`,
       user,
     });
   } catch (err: any) {
@@ -7509,7 +7577,17 @@ app.post('/api/admin/update-user-plan', async (req, res) => {
     if (typeof monthlyAiCredits === 'number') user.monthlyAiCredits = monthlyAiCredits;
     if (role) user.role = role;
     if (typeof setCreditsUsed === 'number') user.aiCreditsUsed = setCreditsUsed;
-    if (typeof autoRenew === 'boolean') user.autoRenew = autoRenew;
+    if (typeof autoRenew === 'boolean') {
+      user.autoRenew = autoRenew;
+      user.cancelAtPeriodEnd = !autoRenew;
+      if (user.whopMembershipId) {
+        if (!autoRenew) {
+          await syncWhopAutoRenewalCancellation(user.whopMembershipId);
+        } else {
+          await syncWhopAutoRenewalResumption(user.whopMembershipId);
+        }
+      }
+    }
     if (billingCycle) user.billingCycle = billingCycle;
     if (subscriptionStatus) user.subscriptionStatus = subscriptionStatus;
 
