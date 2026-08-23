@@ -214,8 +214,8 @@ const MainContent: React.FC = () => {
 
       {/* Dynamic Layer 2: Use Cases */}
       {activeTab === 'use_cases_hub' && <UseCasesHubView />}
-      {activeTab.startsWith('usecase_') && (
-        <UseCaseDetailPage slug={activeTab.replace(/^usecase_/, '')} />
+      {(activeTab.startsWith('usecase_') || activeTab.startsWith('use_case_')) && (
+        <UseCaseDetailPage slug={activeTab.replace(/^usecase_/, '').replace(/^use_case_/, '')} />
       )}
 
       {/* Dynamic Layer 3: Industry Pages */}
