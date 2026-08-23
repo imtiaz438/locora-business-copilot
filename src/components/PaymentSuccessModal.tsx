@@ -27,9 +27,7 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
 }) => {
   const membershipId = invoice?.whopMembershipId || user.whopMembershipId || '';
   const paymentId = invoice?.whopPaymentId || invoice?.whopReceiptId || invoice?.transactionId || '';
-  const whopManageUrl = membershipId
-    ? `https://whop.com/billing/manage/${encodeURIComponent(membershipId)}/?callback=%2Flocoraai-com%2F%3FaccountSettings%3Dorders`
-    : (invoice?.receiptUrl || 'https://whop.com/hub/orders');
+  const whopCustomerLoginUrl = 'https://whop.com/login?redirect_to=%2Fhub%2Forders';
 
   const planName = user.planTier === 'agency' ? 'Agency Unlimited' : 'Pro Growth';
   const creditsAmount = user.planTier === 'agency' ? 'Unlimited' : (user.monthlyAiCredits || 250);
@@ -118,13 +116,13 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
           </button>
 
           <a
-            href={whopManageUrl}
+            href={whopCustomerLoginUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer font-heading"
           >
             <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
-            <span>Manage Orders & Invoices on Whop Hub</span>
+            <span>Sign in to Whop Customer Hub</span>
           </a>
 
           <button

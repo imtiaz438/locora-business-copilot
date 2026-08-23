@@ -30,9 +30,7 @@ export const SubscriptionInvoiceModal: React.FC<SubscriptionInvoiceModalProps> =
 
   const membershipId = invoice.whopMembershipId || user.whopMembershipId || '';
   const paymentId = invoice.whopPaymentId || invoice.whopReceiptId || invoice.transactionId || '';
-  const whopManageUrl = membershipId
-    ? `https://whop.com/billing/manage/${encodeURIComponent(membershipId)}/?callback=%2Flocoraai-com%2F%3FaccountSettings%3Dorders`
-    : (invoice.receiptUrl || 'https://whop.com/hub/orders');
+  const whopCustomerLoginUrl = 'https://whop.com/login?redirect_to=%2Fhub%2Forders';
 
   const handlePrint = () => {
     window.print();
@@ -225,13 +223,13 @@ export const SubscriptionInvoiceModal: React.FC<SubscriptionInvoiceModalProps> =
         {/* Footer Actions */}
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 print:hidden">
           <a
-            href={whopManageUrl}
+            href={whopCustomerLoginUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full sm:w-auto px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer font-heading"
           >
             <ExternalLink className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Manage Orders & Invoices on Whop</span>
+            <span>Sign in to Whop Customer Hub</span>
           </a>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">

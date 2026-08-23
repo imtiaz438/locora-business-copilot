@@ -69,6 +69,9 @@ const PATH_TO_TAB: Record<string, string> = {
   'subscription': 'subscription',
   'settings': 'settings',
   'admin': 'admin',
+  'checkout/success': 'dashboard',
+  'billing/success': 'dashboard',
+  'payment/success': 'dashboard',
 };
 
 const MainContent: React.FC = () => {
@@ -104,25 +107,31 @@ const MainContent: React.FC = () => {
 
     const query = new URLSearchParams(window.location.search);
     const hasResetToken = query.get('reset_token') || query.get('magic_token') || query.get('oobCode') || query.get('mode') === 'resetPassword';
+    
+    // Check for any Whop return parameter or success path
+    const sessionId = query.get('session') || query.get('session_id') || query.get('checkout_session') || '';
     const isPaymentReturn =
       query.get('payment_status') === 'success' ||
       query.get('status') === 'success' ||
       query.get('checkout_status') === 'success' ||
       query.get('checkout_success') === 'true' ||
+      Boolean(sessionId) ||
       Boolean(query.get('receipt_id')) ||
-      Boolean(query.get('payment_id'));
+      Boolean(query.get('payment_id')) ||
+      window.location.pathname.includes('/checkout/success') ||
+      window.location.pathname.includes('/billing/success');
 
     if (hasResetToken) {
       setActiveTab('login');
     } else if (isPaymentReturn) {
-      const paymentId = query.get('payment_id') || query.get('receipt_id') || '';
+      const paymentId = query.get('payment_id') || query.get('receipt_id') || (sessionId.startsWith('chs_') ? sessionId : '');
       const stateId = query.get('state_id') || '';
-      const plan = (query.get('plan') || 'pro').toLowerCase();
+      const plan = (query.get('plan') || (sessionId.includes('agency') ? 'agency' : 'pro')).toLowerCase();
       const billingCycle = (query.get('billing_cycle') || 'monthly').toLowerCase();
       const userEmail = user.email || localStorage.getItem('locora_user_email') || '';
 
-      // Verify and sync Whop checkout immediately with backend
-      fetch(`/api/whop/verify-session?payment_id=${encodeURIComponent(paymentId)}&state_id=${encodeURIComponent(stateId)}&plan=${encodeURIComponent(plan)}&billing_cycle=${encodeURIComponent(billingCycle)}&email=${encodeURIComponent(userEmail)}`)
+      // Verify and sync Whop checkout session immediately with backend
+      fetch(`/api/whop/verify-session?session=${encodeURIComponent(sessionId)}&payment_id=${encodeURIComponent(paymentId)}&state_id=${encodeURIComponent(stateId)}&plan=${encodeURIComponent(plan)}&billing_cycle=${encodeURIComponent(billingCycle)}&email=${encodeURIComponent(userEmail)}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.user) {
@@ -148,9 +157,9 @@ const MainContent: React.FC = () => {
               planTier: plan as any,
               billingCycle: billingCycle as any,
               paymentMethod: 'Whop Merchant of Record',
-              whopMembershipId: data.user?.whopMembershipId || paymentId,
-              whopPaymentId: paymentId,
-              whopReceiptId: paymentId,
+              whopMembershipId: data.user?.whopMembershipId || sessionId || paymentId,
+              whopPaymentId: paymentId || sessionId,
+              whopReceiptId: paymentId || sessionId,
               userEmail: user.email || userEmail,
               userName: user.name,
             };
@@ -163,7 +172,10 @@ const MainContent: React.FC = () => {
         });
 
       // Clean URL params and transition cleanly to the user's dashboard
-      window.history.replaceState({}, document.title, window.location.pathname);
+      try {
+        const cleanPath = window.location.pathname.replace(/\/checkout\/success|\/billing\/success|\/payment\/success/, '') || '/';
+        window.history.replaceState({}, document.title, cleanPath);
+      } catch (e) {}
       setActiveTab('dashboard');
     }
 

@@ -44,7 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
     { id: 'invoices', label: 'Invoices', icon: FileSpreadsheet },
     { id: 'proposals', label: 'Proposals & Quotes', icon: FileText },
     { id: 'documents', label: 'Document Generator', icon: FileEdit },
-    { id: 'website_review', label: 'Website Audit', icon: Globe },
+    { id: 'website_review', label: 'Website Audit', icon: Globe, badge: 'Lighthouse' },
     { id: 'local_seo', label: 'Local SEO Assistant', icon: MapPin },
     { id: 'marketing_planner', label: 'Marketing Planner', icon: TrendingUp, requiredPlan: 'pro' },
   ];
@@ -209,6 +209,32 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
               </button>
             );
           })()}
+
+          {/* Plan & Credits Summary Widget */}
+          <div className="pt-2">
+            <div
+              onClick={() => handleNavClick('subscription')}
+              className="p-3 bg-slate-50 hover:bg-emerald-50/50 border border-slate-200 hover:border-emerald-200 rounded-xl transition-all cursor-pointer space-y-1.5"
+            >
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="font-extrabold font-heading text-slate-800 uppercase flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-[#059669]" />
+                  <span>{user.planTier} Plan</span>
+                </span>
+                <span className="font-mono text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded">
+                  {user.planTier === 'agency' ? 'Unlimited' : `${Math.max(0, (user.monthlyAiCredits || 250) - (user.aiCreditsUsed || 0))} cr`}
+                </span>
+              </div>
+              <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#059669] rounded-full transition-all duration-300"
+                  style={{
+                    width: `${user.planTier === 'agency' ? 100 : Math.min(100, Math.round(((user.aiCreditsUsed || 0) / (user.monthlyAiCredits || 250)) * 100))}%`,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </nav>
 

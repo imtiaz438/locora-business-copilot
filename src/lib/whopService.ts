@@ -142,6 +142,8 @@ export async function openWhopCheckout(options: OpenWhopCheckoutOptions): Promis
   }
 }
 
+export const WHOP_CUSTOMER_LOGIN_URL = 'https://whop.com/login?redirect_to=%2Fhub%2Forders';
+
 /**
  * Fetches user billing portal / customer hub URL from Whop
  */
@@ -161,5 +163,5 @@ export async function getWhopCustomerPortalUrl(email?: string): Promise<string> 
   } catch (err) {
     console.warn('[Whop Service] Could not fetch portal URL:', err);
   }
-  return 'https://whop.com/hub';
+  return WHOP_CUSTOMER_LOGIN_URL;
 }

@@ -4346,11 +4346,12 @@ app.post('/api/whop/create-checkout', async (req, res) => {
 // Verification and Instant Activation endpoint for Whop return flow
 app.get(['/api/whop/verify-session', '/api/whop/sync-payment'], async (req: any, res) => {
   try {
-    const paymentId = (req.query.payment_id || req.query.receipt_id || req.query.id || '').toString().trim();
+    const sessionId = (req.query.session || req.query.session_id || req.query.checkout_session || '').toString().trim();
+    const paymentId = (req.query.payment_id || req.query.receipt_id || req.query.id || (sessionId.startsWith('chs_') ? sessionId : '')).toString().trim();
     const stateId = (req.query.state_id || '').toString().trim();
     const customerEmail = (req.query.email || req.query.user_email || '').toString().toLowerCase().trim();
-    const planParam = (req.query.plan || 'pro').toString().toLowerCase().trim() as 'pro' | 'agency';
-    const isYearly = req.query.billing_cycle === 'yearly' || req.query.billing_cycle === 'annual';
+    const planParam = (req.query.plan || (sessionId.includes('agency') ? 'agency' : 'pro')).toString().toLowerCase().trim() as 'pro' | 'agency';
+    const isYearly = req.query.billing_cycle === 'yearly' || req.query.billing_cycle === 'annual' || req.query.billingCycle === 'yearly';
     const billingCycle = isYearly ? 'yearly' : 'monthly';
 
     // Find authenticated user or match by email
@@ -4377,7 +4378,7 @@ app.get(['/api/whop/verify-session', '/api/whop/sync-payment'], async (req: any,
 
     // Try fetching rich details from Whop API if key is available
     const whopKey = getWhopApiKey();
-    if (whopKey && (paymentId || stateId)) {
+    if (whopKey && (paymentId || stateId || sessionId)) {
       const isSandbox = getWhopEnvironment() === 'sandbox';
       const baseUrls = isSandbox
         ? ['https://sandbox-api.whop.com/api/v2', 'https://api.whop.com/api/v2']
@@ -4385,6 +4386,23 @@ app.get(['/api/whop/verify-session', '/api/whop/sync-payment'], async (req: any,
 
       for (const baseUrl of baseUrls) {
         try {
+          // If sessionId is present (chs_...), try fetching checkout session
+          if (sessionId && !detectedMembershipId) {
+            const sessRes = await fetch(`${baseUrl}/checkout_sessions/${encodeURIComponent(sessionId)}`, {
+              headers: { 'Authorization': `Bearer ${whopKey}` },
+            });
+            if (sessRes.ok) {
+              const sessData: any = await sessRes.json();
+              detectedMembershipId = sessData.membership_id || sessData.membership?.id || detectedMembershipId;
+              detectedReceiptUrl = sessData.receipt_url || detectedReceiptUrl;
+              if (sessData.customer_email && !user) {
+                user = await findUserByEmail(sessData.customer_email.toLowerCase());
+              }
+              if (sessData.final_amount) resolvedAmount = sessData.final_amount > 100 ? sessData.final_amount / 100 : sessData.final_amount;
+              break;
+            }
+          }
+
           if (paymentId && !detectedMembershipId) {
             const payRes = await fetch(`${baseUrl}/payments/${encodeURIComponent(paymentId)}`, {
               headers: { 'Authorization': `Bearer ${whopKey}` },
