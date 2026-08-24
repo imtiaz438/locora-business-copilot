@@ -36,7 +36,7 @@ export const RefundPolicyView: React.FC = () => {
               Cancellation & Refund Policy
             </h1>
             <p className="text-sm text-slate-600 leading-relaxed max-w-2xl">
-              This policy outlines the cancellation structures, subscription adjustments, and refund frameworks for the Locora AI platform operated by Imtiaz Hussain, in alignment with our secure payment processing partner, Whop.
+              This policy outlines the cancellation structures, subscription adjustments, and refund frameworks for the Locora AI platform operated by Locora AI, inc platform, in alignment with our secure payment processing partner, Whop.
             </p>
           </div>
 
@@ -161,7 +161,7 @@ export const RefundPolicyView: React.FC = () => {
                 If you encounter a payment problem, duplicate billing notification, or want to verify an active adjustment evaluation, do not hesitate to contact our desk directly:
               </p>
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 text-xs text-slate-700">
-                <p><strong>Primary Administrator:</strong> Imtiaz Hussain</p>
+                <p><strong>Primary Administrator:</strong> Locora AI, Inc</p>
                 <p className="flex items-center gap-1.5">
                   <Mail className="w-3.5 h-3.5 text-emerald-600" />
                   <strong>Support Email:</strong> <a href="mailto:support@locoraai.com" className="text-emerald-700 hover:underline">support@locoraai.com</a>

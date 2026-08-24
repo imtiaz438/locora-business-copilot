@@ -36,7 +36,7 @@ export const PrivacyPolicyView: React.FC = () => {
               Locora AI Privacy Policy
             </h1>
             <p className="text-sm text-slate-600 leading-relaxed max-w-2xl">
-              Your privacy and the security of your local business data are our highest priorities. This policy outlines how Locora AI, owned and operated by Imtiaz Hussain, an individual developer based in Pakistan, collects, protects, uses, and respects your personal and business information.
+              Your privacy and the security of your local business data are our highest priorities. This policy outlines how Locora AI, owned and operated by Locora AI, Inc platform, collects, protects, uses, and respects your personal and business information.
             </p>
           </div>
 
