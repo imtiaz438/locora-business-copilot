@@ -46,7 +46,14 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const isPublicRoute =
     activeTab === 'home' ||
     activeTab === 'features' ||
+    activeTab.startsWith('feature_') ||
+    activeTab === 'use_cases_hub' ||
+    activeTab.startsWith('usecase_') ||
+    activeTab.startsWith('use_case_') ||
+    activeTab === 'resources_hub' ||
+    activeTab.startsWith('resource_') ||
     activeTab === 'industry_pseo' ||
+    activeTab.startsWith('industry_') ||
     activeTab === 'pricing_public' ||
     activeTab === 'about' ||
     activeTab === 'contact' ||

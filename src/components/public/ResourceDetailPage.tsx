@@ -29,14 +29,21 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [copiedCodeSnippet, setCopiedCodeSnippet] = useState<string | null>(null);
 
-  const currentSlug =
+  const rawSlug =
     slug ||
     (typeof window !== 'undefined'
-      ? window.location.pathname.replace(/^\/resources\//, '').trim()
+      ? window.location.pathname.replace(/^\/resources\//, '').replace(/^\/blog\//, '').trim()
       : 'how-to-improve-local-seo');
 
+  const currentSlug =
+    rawSlug === 'local-seo-checklist' || rawSlug === 'local-seo-audit-checklist'
+      ? 'local-business-audit-checklist'
+      : rawSlug;
+
   const article: SeoResourceArticle =
-    SEO_RESOURCES_DATABASE[currentSlug] || SEO_RESOURCES_DATABASE['how-to-improve-local-seo'];
+    SEO_RESOURCES_DATABASE[currentSlug] ||
+    SEO_RESOURCES_DATABASE[rawSlug] ||
+    SEO_RESOURCES_DATABASE['how-to-improve-local-seo'];
 
   const toggleCheck = (id: string) => {
     setCheckedItems((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -102,10 +109,10 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
   }, [article]);
 
   const handleLaunchTool = () => {
-    if (user) {
+    if (user?.isAuthenticated) {
       setActiveTab(article.targetTab);
     } else {
-      setActiveTab('auth');
+      setActiveTab('signup');
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

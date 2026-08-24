@@ -85,10 +85,10 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
   }, [useCase]);
 
   const handleLaunchTool = () => {
-    if (user) {
+    if (user?.isAuthenticated) {
       setActiveTab(useCase.targetTab);
     } else {
-      setActiveTab('auth');
+      setActiveTab('signup');
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

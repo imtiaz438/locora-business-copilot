@@ -1,6 +1,22 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Sparkles, ShieldCheck, Mail, ArrowRight, CheckCircle2, Heart, Globe, Lock, Loader2, Linkedin, Facebook, Instagram } from 'lucide-react';
+import {
+  Sparkles,
+  ShieldCheck,
+  Mail,
+  ArrowRight,
+  CheckCircle2,
+  Heart,
+  Globe,
+  Lock,
+  Loader2,
+  Linkedin,
+  Facebook,
+  Instagram,
+  Twitter,
+  Youtube,
+  Github,
+} from 'lucide-react';
 import { LocoraLogo } from '../LocoraLogo';
 
 export const PublicFooter: React.FC = () => {
@@ -116,12 +132,76 @@ export const PublicFooter: React.FC = () => {
 
         {/* Main Footer Links - 5 Column Semantic Architecture */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 pt-4">
-          {/* Brand Info */}
+          {/* Brand Info & Social Media */}
           <div className="lg:col-span-1 space-y-4">
             <LocoraLogo className="w-12 h-12 flex-shrink-0" />
             <p className="text-xs text-slate-600 leading-relaxed font-sans">
               The unified AI Operating System for agencies and local businesses. Automate proposals, local SEO, client CRM, and invoicing.
             </p>
+
+            {/* Social Links */}
+            <div className="pt-2 space-y-2">
+              <p className="text-[11px] font-bold text-slate-800 uppercase tracking-wider font-heading">
+                Follow Locora AI
+              </p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <a
+                  href="https://linkedin.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-[#059669] hover:border-[#059669] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+                >
+                  <Linkedin className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://twitter.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Twitter / X"
+                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-[#059669] hover:border-[#059669] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+                >
+                  <Twitter className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://facebook.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Facebook"
+                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-[#059669] hover:border-[#059669] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+                >
+                  <Facebook className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://instagram.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
+                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-[#059669] hover:border-[#059669] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://youtube.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="YouTube"
+                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-[#059669] hover:border-[#059669] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+                >
+                  <Youtube className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://github.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="GitHub"
+                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-[#059669] hover:border-[#059669] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+                >
+                  <Github className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+
             <div className="flex flex-col gap-2 text-xs text-slate-600 pt-1 font-sans">
               <span className="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" /> SOC2 Compliant
@@ -236,8 +316,8 @@ export const PublicFooter: React.FC = () => {
                 </button>
               </li>
               <li>
-                <button onClick={() => navigateTo('/resources/local-seo-checklist', 'resource_local-seo-checklist')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
-                  45-Point SEO Checklist
+                <button onClick={() => navigateTo('/resources/local-business-audit-checklist', 'resource_local-business-audit-checklist')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  40-Point Local Audit Checklist
                 </button>
               </li>
               <li className="pt-2 border-t border-slate-200">
@@ -280,7 +360,7 @@ export const PublicFooter: React.FC = () => {
         <div className="pt-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4 font-sans">
           <p>© {new Date().getFullYear()} Locora AI Platform, Inc. All rights reserved.</p>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-6 flex-wrap">
             <button
               onClick={() => {
                 setActiveTab('privacy');

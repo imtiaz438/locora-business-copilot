@@ -146,10 +146,10 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
   }, [feature]);
 
   const handleLaunchTool = () => {
-    if (user) {
+    if (user?.isAuthenticated) {
       setActiveTab(feature.targetTab);
     } else {
-      setActiveTab('auth');
+      setActiveTab('signup');
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
