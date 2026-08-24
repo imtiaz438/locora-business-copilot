@@ -146,7 +146,7 @@ export const PublicFooter: React.FC = () => {
               </p>
               <div className="flex items-center gap-2 flex-wrap">
                 <a
-                  href="https://linkedin.com"
+                  href="https://www.linkedin.com/company/locoracopilot"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="LinkedIn"
@@ -154,17 +154,9 @@ export const PublicFooter: React.FC = () => {
                 >
                   <Linkedin className="w-4 h-4" />
                 </a>
+      
                 <a
-                  href="https://twitter.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Twitter / X"
-                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-[#059669] hover:border-[#059669] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
-                >
-                  <Twitter className="w-4 h-4" />
-                </a>
-                <a
-                  href="https://facebook.com"
+                  href="https://www.facebook.com/people/Locora-AI/61593321283379/"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"
@@ -172,33 +164,7 @@ export const PublicFooter: React.FC = () => {
                 >
                   <Facebook className="w-4 h-4" />
                 </a>
-                <a
-                  href="https://instagram.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Instagram"
-                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-[#059669] hover:border-[#059669] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
-                >
-                  <Instagram className="w-4 h-4" />
-                </a>
-                <a
-                  href="https://youtube.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="YouTube"
-                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-[#059669] hover:border-[#059669] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
-                >
-                  <Youtube className="w-4 h-4" />
-                </a>
-                <a
-                  href="https://github.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="GitHub"
-                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-[#059669] hover:border-[#059669] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
-                >
-                  <Github className="w-4 h-4" />
-                </a>
+                
               </div>
             </div>
 

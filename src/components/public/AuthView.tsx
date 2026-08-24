@@ -525,13 +525,13 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
 
             {/* Form Title */}
             <div className="space-y-1">
-              <h2 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900 tracking-tight">
                 {isForgotPassword
                   ? 'Reset your password'
                   : isSignUp
                   ? 'Create your account'
                   : 'Welcome back to Locora AI'}
-              </h2>
+              </h1>
               <p className="text-xs sm:text-sm text-slate-500 font-sans">
                 {isForgotPassword
                   ? 'Recover access to your Locora business workspace'

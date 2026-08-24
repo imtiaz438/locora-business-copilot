@@ -501,9 +501,9 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
               <Calculator className="w-3.5 h-3.5 text-[#059669]" />
               <span>Interactive ROI & Time Savings Calculator</span>
             </div>
-            <h3 className="text-xl font-bold font-heading text-slate-900">
+            <h2 className="text-xl font-bold font-heading text-slate-900">
               Calculate Projected Revenue Lift for {currentIndustry.name}
-            </h3>
+            </h2>
           </div>
           <span className="text-xs text-slate-500 font-mono">Based on average client results</span>
         </div>
