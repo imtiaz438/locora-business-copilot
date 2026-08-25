@@ -973,16 +973,13 @@ async function discoverProviderModels(provider: string, apiKey: string): Promise
         const errMsg = data?.error?.message || `HTTP ${res.status}`;
         if (errMsg.includes('User location is not supported') || errMsg.includes('FAILED_PRECONDITION')) {
           return {
-            valid: true,
+            valid: false,
             provider: 'gemini',
-            detectedModel: 'gemini-3.6-flash',
-            accessibleModels: [
-              { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash', description: 'Ultra-fast multimodal reasoning', badge: 'Optimal Active', isAutoSelected: true },
-              { id: 'gemini-3.6-pro', name: 'Gemini 3.6 Pro', description: 'Advanced mathematical logic', badge: 'Deep Reasoning' },
-            ],
-            isAutoDetected: true,
-            isManaged: true,
-            warning: 'Google API key verified. Note: Direct regional restrictions apply for your current IP.',
+            detectedModel: '',
+            accessibleModels: [],
+            isAutoDetected: false,
+            isManaged: false,
+            error: 'Google Gemini API is not supported in this region/location (FAILED_PRECONDITION). Please select Groq (Default) or another provider in Settings.',
           };
         }
         return {
@@ -5910,8 +5907,6 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
     groq: 'Groq LPU',
   };
 
-  const providerName = providerDisplayNames[effectiveProvider] || effectiveProvider.toUpperCase();
-
   let text = '';
   let providerUsed = effectiveProvider;
   let modelUsed = selectedModel || (
@@ -5926,9 +5921,7 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
   let warning: string | undefined;
 
   if (effectiveProvider === 'gemini') {
-    let targetModel = selectedModel || 'gemini-3.6-flash';
-    if (targetModel === 'gemini-2.5-flash' || targetModel === 'gemini-1.5-flash') targetModel = 'gemini-3.6-flash';
-    if (targetModel === 'gemini-2.5-pro' || targetModel === 'gemini-1.5-pro') targetModel = 'gemini-3.6-pro';
+    let targetModel = selectedModel || 'gemini-2.5-flash';
     modelUsed = targetModel;
     const apiKey = customKey || process.env.GEMINI_API_KEY;
     if (!apiKey || !apiKey.trim()) {
@@ -5959,12 +5952,12 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
           },
         });
       } catch (genErr: any) {
-        // If specific Gemini model ID failed, fallback to gemini-3.6-flash
-        if (targetModel !== 'gemini-3.6-flash') {
-          targetModel = 'gemini-3.6-flash';
+        // If specific model ID failed, try gemini-2.5-flash
+        if (targetModel !== 'gemini-2.5-flash') {
+          targetModel = 'gemini-2.5-flash';
           modelUsed = targetModel;
           response = await ai.models.generateContent({
-            model: 'gemini-3.6-flash',
+            model: 'gemini-2.5-flash',
             contents: contents.length > 0 ? contents : [{ role: 'user', parts: [{ text: 'Hello' }] }],
             config: {
               systemInstruction: options.systemInstruction,
@@ -5982,7 +5975,7 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
       }
 
       const meta = (response as any)?.usageMetadata;
-      const actualTokens = meta?.totalTokenCount || ((meta?.promptTokenCount || 0) + (meta?.candidatesTokenCount || 0)) || Math.max(150, Math.ceil(text.length / 3.8));
+      const actualTokens = meta?.totalTokenCount || ((meta?.promptTokenCount || 0) + (meta?.candidatesTokenCount || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
       tokensUsed = actualTokens;
       recordRealModelTokenUsage(targetModel, actualTokens);
     } catch (err: any) {
@@ -6025,15 +6018,23 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
     if (!res.ok) {
       const errJson = await res.json().catch(() => ({}));
       const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
-      throw new Error(`OpenAI API Error: ${msg}`);
+      if (options.fallbackType) {
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {});
+        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+        providerUsed = 'openai (offline-resilient)';
+        warning = `OpenAI notice: ${msg}. Generated output with local resilient business engine.`;
+      } else {
+        throw new Error(`OpenAI API Error: ${msg}`);
+      }
+    } else {
+      const data = await res.json();
+      text = data.choices?.[0]?.message?.content || '';
+      if (!text) {
+        throw new Error('OpenAI returned an empty completion.');
+      }
+      tokensUsed = data.usage?.total_tokens || ((data.usage?.prompt_tokens || 0) + (data.usage?.completion_tokens || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
+      recordRealModelTokenUsage(targetModel, tokensUsed);
     }
-    const data = await res.json();
-    text = data.choices?.[0]?.message?.content || '';
-    if (!text) {
-      throw new Error('OpenAI returned an empty completion.');
-    }
-    tokensUsed = data.usage?.total_tokens || Math.max(150, Math.ceil(text.length / 3.8));
-    recordRealModelTokenUsage(targetModel, tokensUsed);
   } else if (effectiveProvider === 'claude' || effectiveProvider === 'anthropic') {
     const apiKey = customKey || process.env.ANTHROPIC_API_KEY;
     if (!apiKey || !apiKey.trim()) {
@@ -6073,15 +6074,23 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
     if (!res.ok) {
       const errJson = await res.json().catch(() => ({}));
       const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
-      throw new Error(`Anthropic Claude API Error: ${msg}`);
+      if (options.fallbackType) {
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {});
+        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+        providerUsed = 'claude (offline-resilient)';
+        warning = `Claude notice: ${msg}. Generated output with local resilient business engine.`;
+      } else {
+        throw new Error(`Anthropic Claude API Error: ${msg}`);
+      }
+    } else {
+      const data = await res.json();
+      text = data.content?.[0]?.text || '';
+      if (!text) {
+        throw new Error('Anthropic Claude returned an empty response.');
+      }
+      tokensUsed = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0) || Math.max(1, Math.ceil(text.length / 3.8));
+      recordRealModelTokenUsage(targetModel, tokensUsed);
     }
-    const data = await res.json();
-    text = data.content?.[0]?.text || '';
-    if (!text) {
-      throw new Error('Anthropic Claude returned an empty response.');
-    }
-    tokensUsed = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0) || Math.max(150, Math.ceil(text.length / 3.8));
-    recordRealModelTokenUsage(targetModel, tokensUsed);
   } else if (effectiveProvider === 'perplexity') {
     const apiKey = customKey || process.env.PERPLEXITY_API_KEY;
     if (!apiKey || !apiKey.trim()) {
@@ -6109,15 +6118,23 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
     if (!res.ok) {
       const errJson = await res.json().catch(() => ({}));
       const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
-      throw new Error(`Perplexity API Error: ${msg}`);
+      if (options.fallbackType) {
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {});
+        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+        providerUsed = 'perplexity (offline-resilient)';
+        warning = `Perplexity notice: ${msg}. Generated output with local resilient business engine.`;
+      } else {
+        throw new Error(`Perplexity API Error: ${msg}`);
+      }
+    } else {
+      const data = await res.json();
+      text = data.choices?.[0]?.message?.content || '';
+      if (!text) {
+        throw new Error('Perplexity returned an empty completion.');
+      }
+      tokensUsed = data.usage?.total_tokens || ((data.usage?.prompt_tokens || 0) + (data.usage?.completion_tokens || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
+      recordRealModelTokenUsage(targetModel, tokensUsed);
     }
-    const data = await res.json();
-    text = data.choices?.[0]?.message?.content || '';
-    if (!text) {
-      throw new Error('Perplexity returned an empty completion.');
-    }
-    tokensUsed = data.usage?.total_tokens || Math.max(150, Math.ceil(text.length / 3.8));
-    recordRealModelTokenUsage(targetModel, tokensUsed);
   } else if (effectiveProvider === 'deepseek') {
     const apiKey = customKey || process.env.DEEPSEEK_API_KEY;
     if (!apiKey || !apiKey.trim()) {
@@ -6145,29 +6162,38 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
     if (!res.ok) {
       const errJson = await res.json().catch(() => ({}));
       const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
-      throw new Error(`DeepSeek API Error: ${msg}`);
+      if (options.fallbackType) {
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {});
+        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+        providerUsed = 'deepseek (offline-resilient)';
+        warning = `DeepSeek notice: ${msg}. Generated output with local resilient business engine.`;
+      } else {
+        throw new Error(`DeepSeek API Error: ${msg}`);
+      }
+    } else {
+      const data = await res.json();
+      text = data.choices?.[0]?.message?.content || '';
+      if (!text) {
+        throw new Error('DeepSeek returned an empty completion.');
+      }
+      tokensUsed = data.usage?.total_tokens || ((data.usage?.prompt_tokens || 0) + (data.usage?.completion_tokens || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
+      recordRealModelTokenUsage(targetModel, tokensUsed);
     }
-    const data = await res.json();
-    text = data.choices?.[0]?.message?.content || '';
-    if (!text) {
-      throw new Error('DeepSeek returned an empty completion.');
-    }
-    tokensUsed = data.usage?.total_tokens || Math.max(150, Math.ceil(text.length / 3.8));
-    recordRealModelTokenUsage(targetModel, tokensUsed);
   } else if (effectiveProvider === 'groq') {
     const apiKey = customKey || process.env.GROQ_API_KEY;
     if (!apiKey || !apiKey.trim()) {
-      if (process.env.GEMINI_API_KEY) {
-        // Fall back to built-in Gemini engine if no Groq key is configured
-        const geminiRes = await executeAICompletion({
-          ...options,
-          provider: 'gemini',
-          modelVersion: 'gemini-3.6-flash',
-        });
+      if (options.fallbackType) {
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {});
+        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+        providerUsed = 'groq (offline-resilient)';
+        warning = 'No custom Groq API key is configured. Output generated seamlessly via offline intelligence engine. Add your Groq key in Settings for live cloud LPU inference.';
         return {
-          ...geminiRes,
-          providerUsed: 'groq (gemini-fallback)',
-          warning: 'No custom Groq key is configured yet. Generated seamlessly via Google Gemini 3.6 Flash.',
+          text: text.trim(),
+          providerUsed,
+          modelUsed: selectedModel || 'llama-3.3-70b-versatile',
+          isCustomKey: false,
+          tokensUsed,
+          warning,
         };
       }
       throw new Error(`No Groq API key configured. Please enter your Groq API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
@@ -6240,7 +6266,7 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
           text = data.choices?.[0]?.message?.content || '';
           if (text) {
             successfulModel = modelToTry;
-            tokensUsed = data.usage?.total_tokens || Math.max(150, Math.ceil(text.length / 3.8));
+            tokensUsed = data.usage?.total_tokens || ((data.usage?.prompt_tokens || 0) + (data.usage?.completion_tokens || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
             recordRealModelTokenUsage(successfulModel, tokensUsed);
             success = true;
             break;
@@ -6248,7 +6274,6 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
         } else {
           const errJson = await res.json().catch(() => ({}));
           lastGroqError = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
-          // If unauthorized / invalid key, don't waste time trying 10 models on a bad key
           if (res.status === 401 || lastGroqError.includes('Invalid API Key') || lastGroqError.includes('Incorrect API key')) {
             break;
           }
@@ -6259,20 +6284,14 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
     }
 
     if (!success) {
-      // If Groq models are inaccessible (e.g. decommissioned model or restricted key) but Gemini is available:
-      if (process.env.GEMINI_API_KEY) {
-        const fallbackRes = await executeAICompletion({
-          ...options,
-          provider: 'gemini',
-          modelVersion: 'gemini-3.6-flash',
-        });
-        return {
-          ...fallbackRes,
-          providerUsed: 'groq (gemini-fallback)',
-          warning: `Groq notice: ${lastGroqError || 'Model unavailable on Groq key'}. Request was safely completed via Google Gemini.`,
-        };
+      if (options.fallbackType) {
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {});
+        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+        providerUsed = 'groq (offline-resilient)';
+        warning = `Groq service notice: ${lastGroqError || 'Model unavailable on key'}. Generated output with local resilient business engine.`;
+      } else {
+        throw new Error(`Groq API Error: ${lastGroqError || 'Failed to complete request on Groq models.'}`);
       }
-      throw new Error(`Groq API Error: ${lastGroqError || 'Failed to complete request on Groq models.'}`);
     }
 
     modelUsed = successfulModel || selectedModel || 'llama-3.3-70b-versatile';
@@ -6578,7 +6597,7 @@ Format response with clear markdown headings for:
 // Website Audit Endpoint
 app.post('/api/ai/audit-website', async (req, res) => {
   try {
-    const { url, businessProfile, providerKey, userEmail } = req.body;
+    const { url, businessProfile, provider, modelVersion, providerKey, userEmail } = req.body;
 
     if (!url) {
       return res.status(400).json({ error: 'URL is required' });
@@ -6589,8 +6608,6 @@ app.post('/api/ai/audit-website', async (req, res) => {
     if (!creditCheck.allowed) {
       return res.status(403).json({ error: 'CREDITS_EXHAUSTED', message: creditCheck.error });
     }
-
-    const ai = getGenAIClient(providerKey);
 
     // Clean and normalize URL
     let rawUrl = url.trim();
@@ -6802,18 +6819,33 @@ Provide a JSON response using EXACTLY these calculated benchmark scores, with cu
 }`;
 
     let auditData: any = {};
+    let providerUsed = provider || 'groq';
+    let modelUsed = modelVersion || 'llama-3.3-70b-versatile';
+    let tokensUsed = 0;
+
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: auditPrompt,
-        config: {
-          responseMimeType: 'application/json',
-          temperature: 0.3,
-        },
+      const completion = await executeAICompletion({
+        provider,
+        modelVersion,
+        providerKey,
+        userEmail,
+        prompt: auditPrompt,
+        temperature: 0.3,
       });
 
-      auditData = JSON.parse(response.text || '{}');
-    } catch (pErr) {
+      providerUsed = completion.providerUsed;
+      modelUsed = completion.modelUsed;
+      tokensUsed = completion.tokensUsed;
+
+      const cleanText = completion.text.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim();
+      const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        auditData = JSON.parse(jsonMatch[0]);
+      } else {
+        auditData = JSON.parse(cleanText);
+      }
+    } catch (pErr: any) {
+      console.warn('[Website Audit] AI Notice:', pErr?.message || pErr);
       // Dynamic Fallback populated with REAL extracted data
       const defaultIssues = [];
       if (!pageDesc) {
@@ -7119,6 +7151,9 @@ body {
         actionableSteps: auditData.actionableSteps || [],
         seoRecommendations: dynamicSeoRecommendations,
       },
+      providerUsed,
+      modelUsed,
+      tokensUsed,
       creditsUsed: creditStats.used,
       creditsRemaining: creditStats.remaining,
     });

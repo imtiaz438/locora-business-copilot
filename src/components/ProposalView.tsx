@@ -45,6 +45,7 @@ export const ProposalView: React.FC = () => {
     const clientObj = customers.find((c) => c.id === selectedCustomerId);
 
     try {
+      const activeModel = (settings.providerModels && settings.providerModels[settings.activeProvider]) || settings.activeModelVersion;
       const response = await fetch('/api/ai/generate-proposal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -55,6 +56,8 @@ export const ProposalView: React.FC = () => {
           estimatedBudget: budget,
           requirements,
           businessProfile,
+          provider: settings.activeProvider,
+          modelVersion: activeModel,
           providerKey: settings.providerKeys[settings.activeProvider],
           userEmail: user.email,
         }),

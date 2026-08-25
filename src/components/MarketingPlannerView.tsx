@@ -35,6 +35,7 @@ export const MarketingPlannerView: React.FC = () => {
     setApiError(null);
 
     try {
+      const activeModel = (settings.providerModels && settings.providerModels[settings.activeProvider]) || settings.activeModelVersion;
       const response = await fetch('/api/ai/generate-marketing-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,6 +45,8 @@ export const MarketingPlannerView: React.FC = () => {
           budget,
           timeframe,
           businessProfile,
+          provider: settings.activeProvider,
+          modelVersion: activeModel,
           providerKey: settings.providerKeys[settings.activeProvider],
           userEmail: user.email,
         }),

@@ -110,6 +110,7 @@ export const ChatView: React.FC = () => {
         : [{ sender: 'user', text: textToSend }];
 
       // Fetch AI response from Express server endpoint
+      const activeModel = (settings.providerModels && settings.providerModels[settings.activeProvider]) || settings.activeModelVersion;
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -118,6 +119,7 @@ export const ChatView: React.FC = () => {
           businessProfile,
           context: selectedContext,
           provider: settings.activeProvider,
+          modelVersion: activeModel,
           providerKey: settings.providerKeys[settings.activeProvider],
           userEmail: user.email,
         }),

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { WebsiteAuditResult } from '../types';
 import { BrandedFooter } from './BrandedFooter';
+import { SeoRecommendationsPanel } from './SeoRecommendationsPanel';
 import {
   Globe,
   Search,
@@ -13,12 +14,14 @@ import {
   Trophy,
   ArrowRightLeft,
   AlertCircle,
+  FileCheck2,
 } from 'lucide-react';
 
 export const WebsiteReviewView: React.FC = () => {
   const { businessProfile, latestWebsiteAudit, setLatestWebsiteAudit, settings, user, updateUser, logActivity, setCheckoutModalPlan, setActiveTab } = useApp();
 
   const [mode, setMode] = useState<'single' | 'competitor'>('single');
+  const [activeSubTab, setActiveSubTab] = useState<'overview' | 'recommendations'>('overview');
   const [url, setUrl] = useState(businessProfile.website || 'locora.ai');
   const [competitorUrl, setCompetitorUrl] = useState('competitor-example.com');
   const [loading, setLoading] = useState(false);
@@ -35,6 +38,8 @@ export const WebsiteReviewView: React.FC = () => {
     setApiError(null);
 
     try {
+      const activeModel = (settings.providerModels && settings.providerModels[settings.activeProvider]) || settings.activeModelVersion;
+
       if (mode === 'single') {
         const response = await fetch('/api/ai/audit-website', {
           method: 'POST',
@@ -42,6 +47,8 @@ export const WebsiteReviewView: React.FC = () => {
           body: JSON.stringify({
             url,
             businessProfile,
+            provider: settings.activeProvider,
+            modelVersion: activeModel,
             providerKey: settings.providerKeys[settings.activeProvider],
             userEmail: user.email,
           }),
@@ -65,6 +72,8 @@ export const WebsiteReviewView: React.FC = () => {
             body: JSON.stringify({
               url,
               businessProfile,
+              provider: settings.activeProvider,
+              modelVersion: activeModel,
               providerKey: settings.providerKeys[settings.activeProvider],
               userEmail: user.email,
             }),
@@ -75,6 +84,8 @@ export const WebsiteReviewView: React.FC = () => {
             body: JSON.stringify({
               url: competitorUrl,
               businessProfile,
+              provider: settings.activeProvider,
+              modelVersion: activeModel,
               providerKey: settings.providerKeys[settings.activeProvider],
               userEmail: user.email,
             }),
@@ -116,40 +127,74 @@ export const WebsiteReviewView: React.FC = () => {
           </p>
         </div>
 
-        {/* Mode Selector */}
-        <div className="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200">
-          <button
-            onClick={() => setMode('single')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              mode === 'single' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <span>Single Site Audit</span>
-            <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">
-              FREE
-            </span>
-          </button>
-          <button
-            onClick={() => {
-              if (user.planTier === 'free') {
-                alert('Competitor Snapshot is included on Pro Growth ($19/mo) and Agency Elite plans.');
-                setCheckoutModalPlan('pro');
-                return;
-              }
-              setMode('competitor');
-            }}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-              mode === 'competitor' ? 'bg-[#059669] text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <Trophy className="w-3.5 h-3.5" />
-            <span>Competitor Snapshot</span>
-            {user.planTier === 'free' && (
-              <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded ml-1">
-                PRO
+        {/* Mode & Sub-tab Selector */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Sub-tab Navigation */}
+          <div className="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+            <button
+              onClick={() => setActiveSubTab('overview')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeSubTab === 'overview' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>Audit Overview</span>
+            </button>
+            <button
+              onClick={() => setActiveSubTab('recommendations')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeSubTab === 'recommendations' ? 'bg-[#059669] text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Google Lighthouse Recs</span>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                activeSubTab === 'recommendations' ? 'bg-emerald-800 text-emerald-100' : 'bg-emerald-100 text-emerald-800'
+              }`}>
+                7
               </span>
-            )}
-          </button>
+            </button>
+          </div>
+
+          {/* Audit Mode Selector (Single vs Competitor) */}
+          <div className="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+            <button
+              onClick={() => {
+                setMode('single');
+                setActiveSubTab('overview');
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                mode === 'single' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <span>Single Site</span>
+              <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">
+                FREE
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                if (user.planTier === 'free') {
+                  alert('Competitor Snapshot is included on Pro Growth ($19/mo) and Agency Elite plans.');
+                  setCheckoutModalPlan('pro');
+                  return;
+                }
+                setMode('competitor');
+                setActiveSubTab('overview');
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                mode === 'competitor' ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <Trophy className="w-3.5 h-3.5" />
+              <span>Competitor</span>
+              {user.planTier === 'free' && (
+                <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded ml-1">
+                  PRO
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -258,205 +303,259 @@ export const WebsiteReviewView: React.FC = () => {
         </form>
       </div>
 
-      {/* Competitor Side-By-Side Comparison Grid */}
-      {mode === 'competitor' && compDetails && auditDetails && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-2xs font-sans">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-2 text-slate-900 font-bold font-heading text-lg">
-              <Trophy className="w-5 h-5 text-amber-500" />
-              <span>Side-by-Side Competitor Matrix</span>
-            </div>
-            <span className="text-xs text-slate-500">Evaluated using identical audit criteria</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Your Website Card */}
-            <div className="p-5 rounded-2xl border-2 border-[#059669]/30 bg-emerald-50/20 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#059669] bg-emerald-100 px-2 py-0.5 rounded font-heading">
-                    Your Site
-                  </span>
-                  <h3 className="text-lg font-black text-slate-900 font-heading mt-1 truncate max-w-[200px]">{url}</h3>
-                </div>
-                <div className="text-right">
-                  <span className="text-3xl font-black text-[#059669] font-heading">{auditDetails.overallScore}</span>
-                  <p className="text-[10px] text-slate-500">Overall Score</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-2.5 bg-white rounded-xl border border-slate-200">
-                  <span className="text-slate-400 text-[10px]">SEO Score</span>
-                  <p className="font-bold text-slate-900 text-sm">{auditDetails.scores?.seo ?? 80}</p>
-                </div>
-                <div className="p-2.5 bg-white rounded-xl border border-slate-200">
-                  <span className="text-slate-400 text-[10px]">Speed & Performance</span>
-                  <p className="font-bold text-slate-900 text-sm">{auditDetails.scores?.performance ?? 80}</p>
-                </div>
-                <div className="p-2.5 bg-white rounded-xl border border-slate-200">
-                  <span className="text-slate-400 text-[10px]">Accessibility</span>
-                  <p className="font-bold text-slate-900 text-sm">{auditDetails.scores?.accessibility ?? 80}</p>
-                </div>
-                <div className="p-2.5 bg-white rounded-xl border border-slate-200">
-                  <span className="text-slate-400 text-[10px]">SSL Security</span>
-                  <p className="font-bold text-[#059669] text-sm">Active</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Competitor Website Card */}
-            <div className="p-5 rounded-2xl border-2 border-rose-200 bg-rose-50/20 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 bg-rose-100 px-2 py-0.5 rounded font-heading">
-                    Competitor
-                  </span>
-                  <h3 className="text-lg font-black text-slate-900 font-heading mt-1 truncate max-w-[200px]">{competitorUrl}</h3>
-                </div>
-                <div className="text-right">
-                  <span className="text-3xl font-black text-rose-600 font-heading">{compDetails.overallScore}</span>
-                  <p className="text-[10px] text-slate-500">Overall Score</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-2.5 bg-white rounded-xl border border-slate-200">
-                  <span className="text-slate-400 text-[10px]">SEO Score</span>
-                  <p className="font-bold text-slate-900 text-sm">{compDetails.scores?.seo ?? 75}</p>
-                </div>
-                <div className="p-2.5 bg-white rounded-xl border border-slate-200">
-                  <span className="text-slate-400 text-[10px]">Speed & Performance</span>
-                  <p className="font-bold text-slate-900 text-sm">{compDetails.scores?.performance ?? 70}</p>
-                </div>
-                <div className="p-2.5 bg-white rounded-xl border border-slate-200">
-                  <span className="text-slate-400 text-[10px]">Accessibility</span>
-                  <p className="font-bold text-slate-900 text-sm">{compDetails.scores?.accessibility ?? 75}</p>
-                </div>
-                <div className="p-2.5 bg-white rounded-xl border border-slate-200">
-                  <span className="text-slate-400 text-[10px]">SSL Security</span>
-                  <p className="font-bold text-slate-900 text-sm">Active</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Outcome Banner */}
-          <div className="p-4 bg-slate-900 text-white rounded-xl flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-amber-400" />
-              <span>
-                {auditDetails.overallScore >= compDetails.overallScore
-                  ? `Your website scores ${auditDetails.overallScore - compDetails.overallScore} points higher overall than ${competitorUrl}!`
-                  : `${competitorUrl} is currently ${compDetails.overallScore - auditDetails.overallScore} points ahead. Follow the action items below to overtake them.`}
-              </span>
-            </div>
-          </div>
+      {/* SubTab View: Google Lighthouse Recommendations */}
+      {activeSubTab === 'recommendations' && (
+        <div className="space-y-6">
+          <SeoRecommendationsPanel
+            targetUrl={url || businessProfile.website || 'locora.ai'}
+            customRecommendations={auditDetails?.seoRecommendations}
+          />
+          <BrandedFooter className="pt-4 border-t border-slate-200" />
         </div>
       )}
 
-      {/* Results View for single audit */}
-      {loading ? (
-        <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center space-y-3 font-sans shadow-2xs">
-          <Sparkles className="w-8 h-8 text-[#059669] animate-spin mx-auto" />
-          <p className="text-sm font-bold font-heading text-slate-900">Crawling live website and auditing technical SEO...</p>
-          <p className="text-xs text-slate-500">Extracting real meta titles, descriptions, headings, load speed, and JSON-LD schema.</p>
-        </div>
-      ) : auditDetails && (auditDetails.overallScore !== undefined || auditDetails.scores) && mode === 'single' && (
-        <div className="space-y-6">
-          {/* Top Score Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2 text-center shadow-2xs">
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans">Overall Score</p>
-              <p className="text-4xl font-black font-heading text-[#059669]">{auditDetails.overallScore}</p>
-              <p className="text-[11px] text-slate-500 font-sans">Weighted Health</p>
-            </div>
+      {/* SubTab View: Single or Competitor Audit Overview */}
+      {activeSubTab === 'overview' && (
+        <>
+          {/* Competitor Side-By-Side Comparison Grid */}
+          {mode === 'competitor' && compDetails && auditDetails && (
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-2xs font-sans">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-2 text-slate-900 font-bold font-heading text-lg">
+                  <Trophy className="w-5 h-5 text-amber-500" />
+                  <span>Side-by-Side Competitor Matrix</span>
+                </div>
+                <span className="text-xs text-slate-500">Evaluated using identical audit criteria</span>
+              </div>
 
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2 text-center shadow-2xs">
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans">SEO Score</p>
-              <p className="text-3xl font-black font-heading text-emerald-600">{auditDetails.scores?.seo ?? 80}</p>
-              <p className="text-[11px] text-slate-500 font-sans">Meta & On-Page</p>
-            </div>
-
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2 text-center shadow-2xs">
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans">Performance</p>
-              <p className="text-3xl font-black font-heading text-blue-600">{auditDetails.scores?.performance ?? 80}</p>
-              <p className="text-[11px] text-slate-500 font-sans">Speed & Assets</p>
-            </div>
-
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2 text-center shadow-2xs">
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans">Accessibility</p>
-              <p className="text-3xl font-black font-heading text-purple-600">{auditDetails.scores?.accessibility ?? 80}</p>
-              <p className="text-[11px] text-slate-500 font-sans">Tags & Contrast</p>
-            </div>
-
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2 text-center shadow-2xs">
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans">Best Practices</p>
-              <p className="text-3xl font-black font-heading text-amber-600">{auditDetails.scores?.bestPractices ?? 80}</p>
-              <p className="text-[11px] text-slate-500 font-sans">SSL & Security</p>
-            </div>
-          </div>
-
-          {/* AI Executive Summary */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xs">
-              <h3 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#059669]" />
-                <span>AI Strategic Website Assessment</span>
-              </h3>
-              <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-200 font-sans">
-                {auditDetails.aiSummary}
-              </p>
-
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider font-sans">Top Actionable Recommendations</h4>
-                <div className="space-y-1.5">
-                  {auditDetails.actionableSteps?.map((step: string, idx: number) => (
-                    <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-800 flex items-start gap-2.5 font-sans">
-                      <CheckCircle2 className="w-4 h-4 text-[#059669] mt-0.5 flex-shrink-0" />
-                      <span>{step}</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Your Website Card */}
+                <div className="p-5 rounded-2xl border-2 border-[#059669]/30 bg-emerald-50/20 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#059669] bg-emerald-100 px-2 py-0.5 rounded font-heading">
+                        Your Site
+                      </span>
+                      <h3 className="text-lg font-black text-slate-900 font-heading mt-1 truncate max-w-[200px]">{url}</h3>
                     </div>
-                  ))}
+                    <div className="text-right">
+                      <span className="text-3xl font-black text-[#059669] font-heading">{auditDetails.overallScore}</span>
+                      <p className="text-[10px] text-slate-500">Overall Score</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2.5 bg-white rounded-xl border border-slate-200">
+                      <span className="text-slate-400 text-[10px]">SEO Score</span>
+                      <p className="font-bold text-slate-900 text-sm">{auditDetails.scores?.seo ?? 80}</p>
+                    </div>
+                    <div className="p-2.5 bg-white rounded-xl border border-slate-200">
+                      <span className="text-slate-400 text-[10px]">Speed & Performance</span>
+                      <p className="font-bold text-slate-900 text-sm">{auditDetails.scores?.performance ?? 80}</p>
+                    </div>
+                    <div className="p-2.5 bg-white rounded-xl border border-slate-200">
+                      <span className="text-slate-400 text-[10px]">Accessibility</span>
+                      <p className="font-bold text-slate-900 text-sm">{auditDetails.scores?.accessibility ?? 80}</p>
+                    </div>
+                    <div className="p-2.5 bg-white rounded-xl border border-slate-200">
+                      <span className="text-slate-400 text-[10px]">SSL Security</span>
+                      <p className="font-bold text-[#059669] text-sm">Active</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Competitor Website Card */}
+                <div className="p-5 rounded-2xl border-2 border-rose-200 bg-rose-50/20 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 bg-rose-100 px-2 py-0.5 rounded font-heading">
+                        Competitor
+                      </span>
+                      <h3 className="text-lg font-black text-slate-900 font-heading mt-1 truncate max-w-[200px]">{competitorUrl}</h3>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-3xl font-black text-rose-600 font-heading">{compDetails.overallScore}</span>
+                      <p className="text-[10px] text-slate-500">Overall Score</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2.5 bg-white rounded-xl border border-slate-200">
+                      <span className="text-slate-400 text-[10px]">SEO Score</span>
+                      <p className="font-bold text-slate-900 text-sm">{compDetails.scores?.seo ?? 75}</p>
+                    </div>
+                    <div className="p-2.5 bg-white rounded-xl border border-slate-200">
+                      <span className="text-slate-400 text-[10px]">Speed & Performance</span>
+                      <p className="font-bold text-slate-900 text-sm">{compDetails.scores?.performance ?? 70}</p>
+                    </div>
+                    <div className="p-2.5 bg-white rounded-xl border border-slate-200">
+                      <span className="text-slate-400 text-[10px]">Accessibility</span>
+                      <p className="font-bold text-slate-900 text-sm">{compDetails.scores?.accessibility ?? 75}</p>
+                    </div>
+                    <div className="p-2.5 bg-white rounded-xl border border-slate-200">
+                      <span className="text-slate-400 text-[10px]">SSL Security</span>
+                      <p className="font-bold text-slate-900 text-sm">Active</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Outcome Banner */}
+              <div className="p-4 bg-slate-900 text-white rounded-xl flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-amber-400" />
+                  <span>
+                    {auditDetails.overallScore >= compDetails.overallScore
+                      ? `Your website scores ${auditDetails.overallScore - compDetails.overallScore} points higher overall than ${competitorUrl}!`
+                      : `${competitorUrl} is currently ${compDetails.overallScore - auditDetails.overallScore} points ahead. Follow the action items below to overtake them.`}
+                  </span>
                 </div>
               </div>
             </div>
+          )}
 
-            {/* Extracted Metadata Panel */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xs">
-              <h3 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
-                <Search className="w-4 h-4 text-[#059669]" />
-                <span>Extracted On-Page Tags</span>
-              </h3>
-
-              <div className="space-y-3 text-xs text-slate-700 font-sans">
-                <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-                  <span className="text-[10px] text-slate-500 uppercase font-bold">Meta Title</span>
-                  <p className="font-semibold text-slate-900 break-words">{metadata?.title || 'Not Detected'}</p>
+          {/* Results View for single audit */}
+          {loading ? (
+            <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center space-y-3 font-sans shadow-2xs">
+              <Sparkles className="w-8 h-8 text-[#059669] animate-spin mx-auto" />
+              <p className="text-sm font-bold font-heading text-slate-900">Crawling live website and auditing technical SEO...</p>
+              <p className="text-xs text-slate-500">Extracting real meta titles, descriptions, headings, load speed, and JSON-LD schema.</p>
+            </div>
+          ) : auditDetails && (auditDetails.overallScore !== undefined || auditDetails.scores) && mode === 'single' ? (
+            <div className="space-y-6">
+              {/* Top Score Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2 text-center shadow-2xs">
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans">Overall Score</p>
+                  <p className="text-4xl font-black font-heading text-[#059669]">{auditDetails.overallScore}</p>
+                  <p className="text-[11px] text-slate-500 font-sans">Weighted Health</p>
                 </div>
 
-                <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-                  <span className="text-[10px] text-slate-500 uppercase font-bold">Meta Description</span>
-                  <p className="text-slate-700 break-words">{metadata?.description || 'No Meta Description Found'}</p>
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2 text-center shadow-2xs">
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans">SEO Score</p>
+                  <p className="text-3xl font-black font-heading text-emerald-600">{auditDetails.scores?.seo ?? 80}</p>
+                  <p className="text-[11px] text-slate-500 font-sans">Meta & On-Page</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-[11px]">
-                  <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
-                    <span>SSL HTTPS:</span>
-                    <strong className={metadata?.sslActive ? 'text-[#059669]' : 'text-rose-600'}>
-                      {metadata?.sslActive ? 'Active' : 'Missing'}
-                    </strong>
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2 text-center shadow-2xs">
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans">Performance</p>
+                  <p className="text-3xl font-black font-heading text-blue-600">{auditDetails.scores?.performance ?? 80}</p>
+                  <p className="text-[11px] text-slate-500 font-sans">Speed & Assets</p>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2 text-center shadow-2xs">
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans">Accessibility</p>
+                  <p className="text-3xl font-black font-heading text-purple-600">{auditDetails.scores?.accessibility ?? 80}</p>
+                  <p className="text-[11px] text-slate-500 font-sans">Tags & Contrast</p>
+                </div>
+
+                <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-2 text-center shadow-2xs">
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans">Best Practices</p>
+                  <p className="text-3xl font-black font-heading text-amber-600">{auditDetails.scores?.bestPractices ?? 80}</p>
+                  <p className="text-[11px] text-slate-500 font-sans">SSL & Security</p>
+                </div>
+              </div>
+
+              {/* AI Executive Summary & Metadata */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xs">
+                  <h3 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#059669]" />
+                    <span>AI Strategic Website Assessment</span>
+                  </h3>
+                  <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-200 font-sans">
+                    {auditDetails.aiSummary}
+                  </p>
+
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider font-sans">Top Actionable Recommendations</h4>
+                    <div className="space-y-1.5">
+                      {auditDetails.actionableSteps?.map((step: string, idx: number) => (
+                        <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-800 flex items-start gap-2.5 font-sans">
+                          <CheckCircle2 className="w-4 h-4 text-[#059669] mt-0.5 flex-shrink-0" />
+                          <span>{step}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
-                    <span>H1 Count:</span>
-                    <strong className="text-slate-900 font-bold">{metadata?.h1Count ?? 0}</strong>
+                </div>
+
+                {/* Extracted Metadata Panel */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xs">
+                  <h3 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
+                    <Search className="w-4 h-4 text-[#059669]" />
+                    <span>Extracted On-Page Tags</span>
+                  </h3>
+
+                  <div className="space-y-3 text-xs text-slate-700 font-sans">
+                    <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                      <span className="text-[10px] text-slate-500 uppercase font-bold">Meta Title</span>
+                      <p className="font-semibold text-slate-900 break-words">{metadata?.title || 'Not Detected'}</p>
+                    </div>
+
+                    <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                      <span className="text-[10px] text-slate-500 uppercase font-bold">Meta Description</span>
+                      <p className="text-slate-700 break-words">{metadata?.description || 'No Meta Description Found'}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                      <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                        <span>SSL HTTPS:</span>
+                        <strong className={metadata?.sslActive ? 'text-[#059669]' : 'text-rose-600'}>
+                          {metadata?.sslActive ? 'Active' : 'Missing'}
+                        </strong>
+                      </div>
+                      <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                        <span>H1 Count:</span>
+                        <strong className="text-slate-900 font-bold">{metadata?.h1Count ?? 0}</strong>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <BrandedFooter className="pt-4 border-t border-slate-200" />
-        </div>
+              {/* Embedded Google Lighthouse Recommendations Section */}
+              <div className="pt-2">
+                <SeoRecommendationsPanel
+                  targetUrl={url || businessProfile.website || 'locora.ai'}
+                  customRecommendations={auditDetails?.seoRecommendations}
+                />
+              </div>
+
+              <BrandedFooter className="pt-4 border-t border-slate-200" />
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {/* Default Preview with Google Lighthouse Recommendations Ready to Inspect */}
+              <div className="p-4 bg-emerald-50/60 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-emerald-600 text-white rounded-xl">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-emerald-950 font-heading">
+                      Google Lighthouse & Core Web Vitals Recommendations Ready
+                    </h4>
+                    <p className="text-xs text-emerald-800">
+                      7 technical SEO recommendations available for evaluation. Run a live crawl above or inspect the checklist below.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveSubTab('recommendations')}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shrink-0 transition-colors shadow-2xs cursor-pointer"
+                >
+                  View Full Recs (7)
+                </button>
+              </div>
+
+              <SeoRecommendationsPanel
+                targetUrl={url || businessProfile.website || 'locora.ai'}
+                customRecommendations={auditDetails?.seoRecommendations}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );

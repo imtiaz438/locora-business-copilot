@@ -22,6 +22,7 @@ export const PolishControls: React.FC<Props> = ({ text, onPolish, compact = fals
     setActiveAction(mode);
 
     try {
+      const activeModel = (settings.providerModels && settings.providerModels[settings.activeProvider]) || settings.activeModelVersion;
       const res = await fetch('/api/ai/polish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -29,6 +30,7 @@ export const PolishControls: React.FC<Props> = ({ text, onPolish, compact = fals
           text,
           mode,
           provider: settings.activeProvider,
+          modelVersion: activeModel,
           providerKey: settings.providerKeys[settings.activeProvider],
           userEmail: user.email,
         }),

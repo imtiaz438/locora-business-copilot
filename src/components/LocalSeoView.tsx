@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { LocalSeoItem } from '../types';
 import { LockedFeature } from './LockedFeature';
+import { SeoRecommendationsPanel } from './SeoRecommendationsPanel';
 import {
   MapPin,
   Sparkles,
@@ -16,13 +17,14 @@ import {
   HelpCircle,
   Tag,
   AlertCircle,
+  Zap,
 } from 'lucide-react';
 
 export const LocalSeoView: React.FC = () => {
   const { localSeoItems, addLocalSeoItem, deleteLocalSeoItem, businessProfile, settings, user, hasEnoughCredits, consumeAiCredit, updateUser, setActiveTab } = useApp();
 
   const [activeTask, setActiveTask] = useState<
-    'gbp_description' | 'review_reply' | 'local_landing' | 'schema' | 'qa'
+    'gbp_description' | 'review_reply' | 'local_landing' | 'schema' | 'qa' | 'lighthouse_recs'
   >('gbp_description');
 
   const [promptInput, setPromptInput] = useState('');
@@ -48,6 +50,7 @@ export const LocalSeoView: React.FC = () => {
     setApiError(null);
 
     try {
+      const activeModel = (settings.providerModels && settings.providerModels[settings.activeProvider]) || settings.activeModelVersion;
       const response = await fetch('/api/ai/generate-local-seo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -57,6 +60,8 @@ export const LocalSeoView: React.FC = () => {
           reviewText,
           starRating,
           businessProfile,
+          provider: settings.activeProvider,
+          modelVersion: activeModel,
           providerKey: settings.providerKeys[settings.activeProvider],
           userEmail: user.email,
         }),
@@ -145,34 +150,40 @@ export const LocalSeoView: React.FC = () => {
       >
         <div className="space-y-6">
           {/* Task Selector Tabs */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {[
-          { id: 'gbp_description', label: 'GBP Description', icon: Building },
-          { id: 'review_reply', label: 'Review Responder', icon: Star },
-          { id: 'local_landing', label: 'Local Landing Page', icon: Globe },
-          { id: 'schema', label: 'Schema JSON-LD', icon: FileCode },
-          { id: 'qa', label: 'Google Q&A', icon: HelpCircle },
-        ].map((t) => {
-          const Icon = t.icon;
-          const isSelected = activeTask === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setActiveTask(t.id as any)}
-              className={`p-3 rounded-xl text-xs font-bold flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
-                isSelected
-                  ? 'bg-[#059669] text-white shadow-2xs font-heading'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-sans'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{t.label}</span>
-            </button>
-          );
-        })}
-      </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              { id: 'gbp_description', label: 'GBP Description', icon: Building },
+              { id: 'review_reply', label: 'Review Responder', icon: Star },
+              { id: 'local_landing', label: 'Local Landing Page', icon: Globe },
+              { id: 'schema', label: 'Schema JSON-LD', icon: FileCode },
+              { id: 'qa', label: 'Google Q&A', icon: HelpCircle },
+              { id: 'lighthouse_recs', label: 'Lighthouse SEO Recs', icon: Zap },
+            ].map((t) => {
+              const Icon = t.icon;
+              const isSelected = activeTask === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setActiveTask(t.id as any)}
+                  className={`p-3 rounded-xl text-xs font-bold flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#059669] text-white shadow-2xs font-heading'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-sans'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{t.label}</span>
+                </button>
+              );
+            })}
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {activeTask === 'lighthouse_recs' ? (
+            <SeoRecommendationsPanel
+              targetUrl={businessProfile.website || 'your-business.com'}
+            />
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Form Controls */}
         <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xs">
           <form onSubmit={handleGenerate} className="space-y-4 text-xs font-sans">
@@ -290,8 +301,9 @@ export const LocalSeoView: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
-  </LockedFeature>
+    )}
+  </div>
+</LockedFeature>
 </div>
 );
 };

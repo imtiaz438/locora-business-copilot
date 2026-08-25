@@ -76,6 +76,7 @@ export const DocumentGeneratorView: React.FC = () => {
     setApiError(null);
 
     try {
+      const activeModel = (settings.providerModels && settings.providerModels[settings.activeProvider]) || settings.activeModelVersion;
       const fullPrompt = `${prompt}\n\nLanguage Instruction: Generate the output strictly in ${language}.`;
       const response = await fetch('/api/ai/generate-document', {
         method: 'POST',
@@ -86,6 +87,8 @@ export const DocumentGeneratorView: React.FC = () => {
           targetAudience,
           tone,
           businessProfile,
+          provider: settings.activeProvider,
+          modelVersion: activeModel,
           providerKey: settings.providerKeys[settings.activeProvider],
           userEmail: user.email,
         }),
