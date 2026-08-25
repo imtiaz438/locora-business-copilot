@@ -1738,6 +1738,50 @@ const deductUserCredit = (userEmail?: string, amount: number = 1) => {
   return { used: user.aiCreditsUsed, remaining: user.planTier === 'agency' ? 9999 : Math.max(0, user.monthlyAiCredits - user.aiCreditsUsed) };
 };
 
+const getUserCreditStats = (userEmail?: string) => {
+  const normalizedEmail = (userEmail || '').toLowerCase().trim();
+  const lookupKey = normalizedEmail || 'usr_guest';
+
+  let user = usersDb.get(lookupKey);
+  if (!user) {
+    const isDemoAccount = normalizedEmail === 'free.user@starterbiz.com' || normalizedEmail === 'usr_guest' || !normalizedEmail;
+    const namePart = normalizedEmail ? normalizedEmail.split('@')[0] : 'Guest';
+    user = {
+      id: `usr_${Date.now()}`,
+      name: namePart,
+      email: normalizedEmail,
+      companyName: `${namePart}'s Business`,
+      role: 'owner',
+      planTier: 'free',
+      subscriptionStatus: 'active',
+      billingCycle: 'monthly',
+      monthlyAiCredits: isDemoAccount ? 15 : 25,
+      aiCreditsUsed: 0,
+      memberSince: new Date().toISOString(),
+      nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
+    };
+    usersDb.set(lookupKey, user);
+    saveUserToSql(user).catch(() => {});
+  }
+
+  // Check monthly/period reset lifecycle
+  if (user.nextBillingDate && new Date() > new Date(user.nextBillingDate)) {
+    if (user.planTier !== 'free' && (user.autoRenew === false || user.cancelAtPeriodEnd === true)) {
+      user.planTier = 'free';
+      user.subscriptionStatus = 'cancelled';
+      user.monthlyAiCredits = 25;
+      user.aiCreditsUsed = 0;
+      user.nextBillingDate = new Date(Date.now() + 30 * 86400000).toISOString();
+    } else {
+      user.aiCreditsUsed = 0;
+      const intervalDays = user.billingCycle === 'yearly' ? 365 : 30;
+      user.nextBillingDate = new Date(Date.now() + intervalDays * 86400000).toISOString();
+    }
+  }
+
+  return { used: user.aiCreditsUsed, remaining: user.planTier === 'agency' ? 9999 : Math.max(0, user.monthlyAiCredits - user.aiCreditsUsed) };
+};
+
 // Initialize GoogleGenAI Client
 const getGenAIClient = (overrideApiKey?: string) => {
   const apiKey = overrideApiKey || process.env.GEMINI_API_KEY;
@@ -5654,91 +5698,144 @@ app.post('/api/admin/update-user-autorenew', async (req, res) => {
 
 // ================= AI MODEL SERVICES WITH CREDITS ENFORCEMENT =================
 
-// Resilient Business Intelligence Engine (Acts as seamless fallback if external AI provider encounters geo-blocking or rate limits)
-function generateIntelligentFallback(type: string, payload: any): string {
+// Resilient Business Intelligence Engine (Acts as seamless fallback if external AI provider encounters geo-blocking, missing key, or rate limits)
+function generateIntelligentFallback(type: string, payload: any, providerDisplayName = 'AI Model'): string {
   const bp = payload.businessProfile || {};
   const bizName = bp.name || 'Your Business';
   const industry = bp.industry || 'Local Services';
-  const city = bp.city || 'your area';
+  const city = bp.city || bp.location || 'your area';
+  const targetAudience = payload.targetAudience || bp.targetAudience || 'Valued Clients';
+  const tone = payload.tone || bp.toneOfVoice || 'Professional & Engaging';
+  const prompt = (payload.prompt || payload.lastMessage || payload.requirements || payload.goals || '').trim();
+
+  const fallbackNotice = `\n\n---\n> ℹ️ **Notice:** *Offline resilient fallback generated because no live API key was provided or the cloud provider was offline. **0 credits consumed.***`;
 
   switch (type) {
     case 'chat': {
-      const userQuery = payload.lastMessage || 'business strategy';
-      return `### 💡 Strategic Recommendation for ${bizName}\n\n` +
-        `Here is a tailored operational and marketing action plan regarding **"${userQuery}"**:\n\n` +
-        `1. **Immediate Execution Step**: Implement a targeted local outreach sequence focused on ${industry} clients in ${city}. Focus on addressing primary customer pain points and highlighting your unique value proposition.\n` +
-        `2. **Conversion & Retention Optimization**: Ensure your response times are under 15 minutes for new inquiries, and follow up within 24 hours with an itemized estimate or service breakdown.\n` +
-        `3. **Local Authority Building**: Request reviews from your last 5 satisfied customers on Google Business Profile to boost your local Map Pack rankings.\n\n` +
-        `*Need further custom tailoring? Ask me to generate specific copy, proposals, or email campaigns!*`;
+      const userQuery = prompt || 'business strategy and growth';
+      return `### 💡 Strategic Response for ${bizName}\n\n` +
+        `Regarding your inquiry on **"${userQuery}"**:\n\n` +
+        `1. **Immediate Execution Step**: Formulate a targeted outreach strategy tailored for ${industry} clients in ${city}. Focus on clear value communication, addressing high-priority customer pain points directly.\n` +
+        `2. **Operational Optimization**: Maintain sub-15-minute response times on incoming customer inquiries and follow up within 24 hours with an itemized breakdown or clear next steps.\n` +
+        `3. **Local Authority & Growth**: Solicit authentic reviews on Google Business Profile and local directories to boost local search rankings and build consumer trust.\n\n` +
+        `*Would you like a customized proposal, marketing campaign, or detailed client email drafted for this?*` +
+        fallbackNotice;
     }
 
     case 'email':
     case 'cold_email': {
-      return `**Subject:** Quick question regarding ${industry} services for {{ClientName}}\n\n` +
+      const subjectTopic = prompt ? prompt.slice(0, 50) : `${industry} Solutions`;
+      return `**Subject:** ${subjectTopic} — Question for {{ClientName}}\n\n` +
         `Hi {{ClientName}},\n\n` +
         `I hope your week is going well.\n\n` +
-        `I’m reaching out from **${bizName}**. We help local clients in ${city} streamline their ${industry} needs with guaranteed quality, transparent pricing, and fast turnaround times.\n\n` +
-        `I noticed your current setup and wanted to share a few actionable ways we could help you save time and improve outcomes this month.\n\n` +
-        `Would you be open to a brief 10-minute discovery chat this Thursday or Friday?\n\n` +
+        `I'm reaching out from **${bizName}**. We specialize in high-quality ${industry} solutions in ${city} designed to save you time and maximize measurable results.\n\n` +
+        (prompt ? `In regards to your request: *${prompt}*, our approach focuses on customized delivery, transparent timelines, and guaranteed satisfaction.\n\n` : '') +
+        `Here is how we can assist you right away:\n` +
+        `• Direct, transparent pricing with zero surprise fees\n` +
+        `• Expedited project turnaround and dedicated support\n` +
+        `• Tailored solutions mapped specifically to your operational goals\n\n` +
+        `Would you be open to a brief 10-minute discovery conversation this week?\n\n` +
         `Best regards,\n\n` +
         `**${bp.ownerName || 'The Team'}**\n` +
         `${bizName} | ${bp.phone || 'Contact Support'}\n` +
-        `${bp.website || ''}`;
+        `${bp.website || ''}` +
+        fallbackNotice;
     }
 
     case 'linkedin_post': {
-      return `🚀 **How to scale your ${industry} results in 2026:**\n\n` +
-        `Most businesses focus on working harder, but the real lever is streamlining your workflow and delighting your clients.\n\n` +
-        `Here are 3 core principles we follow at **${bizName}**:\n\n` +
-        `1️⃣ **Consistency over intensity**: Deliver reliable quality every single time.\n` +
-        `2️⃣ **Clear communication**: Keep clients informed at every stage of the project.\n` +
-        `3️⃣ **Continuous feedback loops**: Turn every client insight into a process upgrade.\n\n` +
-        `What’s your #1 growth priority this quarter? Let’s discuss in the comments below! 👇\n\n` +
-        `#${industry.replace(/\s+/g, '')} #BusinessGrowth #LocalBusiness #ClientSuccess #${bizName.replace(/\s+/g, '')}`;
+      return `🚀 **Mastering ${industry} in 2026: Key Strategic Insights**\n\n` +
+        (prompt ? `Reflecting on: *${prompt}*\n\n` : '') +
+        `Most businesses focus solely on output volume, but the true competitive differentiator is client experience, precision execution, and reliable communication.\n\n` +
+        `Here are 3 core pillars we prioritize at **${bizName}**:\n\n` +
+        `1️⃣ **Reliability over speed**: Deliver flawless quality and consistency on every milestone.\n` +
+        `2️⃣ **Transparent collaboration**: Keep stakeholders actively informed and aligned throughout.\n` +
+        `3️⃣ **Actionable feedback loops**: Leverage every client insight to continually elevate your service standards.\n\n` +
+        `What is your top business priority this quarter? Let's discuss in the comments below! 👇\n\n` +
+        `#${industry.replace(/\s+/g, '')} #BusinessGrowth #LocalBusiness #ClientSuccess #${bizName.replace(/\s+/g, '')}` +
+        fallbackNotice;
     }
 
     case 'facebook_post':
     case 'instagram_caption': {
-      return `✨ Quality you can count on in ${city}! ✨\n\n` +
-        `At **${bizName}**, our team is dedicated to providing top-tier ${industry} solutions tailored specifically to your needs.\n\n` +
-        `✅ Professional & punctual service\n` +
+      return `✨ Quality & Trust you can count on in ${city}! ✨\n\n` +
+        `At **${bizName}**, our team is dedicated to providing premium ${industry} services tailored specifically to your needs.\n\n` +
+        (prompt ? `📌 *${prompt}*\n\n` : '') +
+        `✅ Professional & dedicated service\n` +
         `✅ Transparent, upfront estimates\n` +
         `✅ 100% satisfaction commitment\n\n` +
-        `💬 Send us a DM or visit our website at ${bp.website || 'the link in bio'} to book your consultation today!\n\n` +
-        `#${bizName.replace(/\s+/g, '')} #${industry.replace(/\s+/g, '')} #${city.replace(/\s+/g, '')}Business #SupportLocal #FiveStarService`;
+        `💬 Send us a direct message or visit our website at ${bp.website || 'the link in bio'} to schedule your consultation today!\n\n` +
+        `#${bizName.replace(/\s+/g, '')} #${industry.replace(/\s+/g, '')} #${city.replace(/\s+/g, '')}Business #SupportLocal #FiveStarService` +
+        fallbackNotice;
     }
 
     case 'google_business_post': {
-      return `🌟 **Special Update from ${bizName}**\n\n` +
-        `Looking for reliable ${industry} services in ${city}? Our dedicated team is currently accepting new clients with priority scheduling.\n\n` +
+      const isReviewRequest = /review/i.test(prompt);
+      const isOffer = /offer|discount|deal|special|save/i.test(prompt);
+
+      if (isReviewRequest) {
+        return `🌟 **Comprehensive Review of Google Business Profile Posting Strategy for ${bizName}**\n\n` +
+          `### 🎯 Executive Review & Optimization Breakdown\n` +
+          `Google Business Profile (GBP) posts are a powerful local SEO and conversion driver. Here is an actionable breakdown for **${bizName}** (${industry}):\n\n` +
+          `1. **Post Frequency & Longevity**: Posts remain prominent for 7 days. Aim for 2–3 high-value updates weekly (e.g., Offers, Product/Service Highlights, Customer Reviews).\n` +
+          `2. **Key Conversion Triggers**: Always include a localized Call to Action (CTA) such as "Call Now", "Book Online", or "Learn More". Direct links should point to high-converting landing pages.\n` +
+          `3. **Visual Guidelines**: Use clear 4:3 or 16:9 images featuring real team members or completed jobs rather than generic stock photos.\n` +
+          `4. **Keyword Relevance**: Naturally incorporate local intent keywords (e.g. *"${industry} in ${city}"*) within the first 100 characters to maximize Google Map Pack visibility.\n\n` +
+          `### 📝 Recommended Ready-to-Publish GBP Post:\n` +
+          `> "Looking for top-rated ${industry} services in ${city}? **${bizName}** offers priority scheduling and comprehensive consultations. Call today or visit our profile to get started!"\n` +
+          `> **CTA Button:** Call Now\n` +
+          `> 📍 *Serving ${city} and surrounding areas.*` +
+          fallbackNotice;
+      }
+
+      if (isOffer) {
+        return `🎉 **Special Promotion from ${bizName}**\n\n` +
+          (prompt ? `✨ **Offer Details:** ${prompt}\n\n` : `✨ **Limited-Time Offer:** Complimentary consultation on all ${industry} services in ${city}!\n\n`) +
+          `Our licensed and experienced team is dedicated to delivering exceptional service and results you can depend on.\n\n` +
+          `📍 **Location:** Serving ${city} and surrounding areas\n` +
+          `📞 **Call Today:** ${bp.phone || 'Visit profile to contact'}\n` +
+          `🌐 **Book Online:** ${bp.website || 'Visit website'}\n\n` +
+          `*Terms and conditions apply. Mention this Google update when scheduling.*` +
+          fallbackNotice;
+      }
+
+      return `🌟 **Update from ${bizName}**\n\n` +
+        (prompt ? `📢 **${prompt}**\n\n` : `Looking for reliable ${industry} services in ${city}? Our dedicated team is currently accepting new clients with priority scheduling.\n\n`) +
         `Call us today or visit our website to get a complimentary consultation.\n\n` +
-        `📍 Serving ${city} and surrounding areas.\n` +
-        `📞 Call now: ${bp.phone || 'Visit profile'}`;
+        `📍 **Location:** Serving ${city} and surrounding areas\n` +
+        `📞 **Call now:** ${bp.phone || 'Visit profile'}\n` +
+        `🌐 **Website:** ${bp.website || 'Visit profile link'}` +
+        fallbackNotice;
     }
 
     case 'review_reply': {
-      return `Thank you so much for the fantastic 5-star review! Our team at **${bizName}** truly appreciates your support and trust in our ${industry} services. We look forward to serving you again soon!`;
+      const starRating = payload.starRating || 5;
+      if (starRating >= 4) {
+        return `Thank you so much for the fantastic ${starRating}-star review! Our team at **${bizName}** truly appreciates your support and trust in our ${industry} services. We look forward to serving you again in ${city}!`;
+      }
+      return `Dear Customer, thank you for sharing your feedback. At **${bizName}**, we strive for 100% customer satisfaction, and we regret that your experience did not meet expectations. Please reach out to our management team directly at ${bp.phone || bp.email || 'our office'} so we can make this right immediately.`;
     }
 
     case 'proposal': {
       const client = payload.clientName || 'Valued Client';
       const project = payload.projectTitle || 'Professional Services Agreement';
       const budget = payload.estimatedBudget || '1,500';
+      const reqs = prompt || 'Comprehensive delivery of project requirements.';
       return `# Business Services Proposal\n\n` +
         `**Prepared For:** ${client}\n` +
         `**Prepared By:** ${bizName}\n` +
         `**Date:** ${new Date().toLocaleDateString()}\n\n` +
         `---\n\n` +
         `## 1. Executive Summary\n` +
-        `**${bizName}** is pleased to submit this proposal for **${project}**. Our objective is to deliver comprehensive, high-quality ${industry} solutions that drive measurable value and long-term success for ${client}.\n\n` +
+        `**${bizName}** is pleased to submit this formal proposal for **${project}**. Our objective is to deliver comprehensive, high-quality ${industry} solutions tailored for ${client}.\n\n` +
+        `**Project Scope & Context:**\n${reqs}\n\n` +
         `## 2. Scope of Work & Deliverables\n` +
-        `1. **Phase 1: Initial Discovery & Strategy Audit** - Deep dive into project goals, assets, and milestones.\n` +
-        `2. **Phase 2: Execution & Implementation** - Production and delivery of agreed ${industry} deliverables with regular checkpoint reviews.\n` +
-        `3. **Phase 3: Final Review & Handover** - Quality assurance, testing, and client sign-off.\n\n` +
+        `1. **Phase 1: Discovery & Strategy Alignment** - Deep dive into project goals, assets, and schedule.\n` +
+        `2. **Phase 2: Execution & Implementation** - Systematic delivery of agreed ${industry} deliverables with periodic milestone reviews.\n` +
+        `3. **Phase 3: Final Quality Assurance & Handover** - Full verification, testing, and client sign-off.\n\n` +
         `## 3. Timeline & Key Milestones\n` +
-        `- **Week 1-2:** Project Kickoff & Requirements Finalization\n` +
+        `- **Week 1-2:** Project Kickoff & Detailed Specifications\n` +
         `- **Week 3-4:** Core Implementation & Deliverable Staging\n` +
-        `- **Week 5:** Final Review, Revisions & Project Launch\n\n` +
+        `- **Week 5:** Review, Revisions & Final Handover\n\n` +
         `## 4. Investment Breakdown\n` +
         `| Deliverable Description | Amount |\n` +
         `| :--- | :--- |\n` +
@@ -5748,38 +5845,73 @@ function generateIntelligentFallback(type: string, payload: any): string {
         `## 5. Acceptance & Authorization\n` +
         `To approve this proposal, please sign and return below:\n\n` +
         `**Client Signature:** ___________________________  **Date:** ____________\n` +
-        `**Provider Signature:** _________________________  **Date:** ____________`;
+        `**Provider Signature:** _________________________  **Date:** ____________` +
+        fallbackNotice;
     }
 
     case 'marketing_plan': {
-      return `# 📈 30-Day & 90-Day Strategic Growth Plan for ${bizName}\n\n` +
-        `**Target Market:** ${bp.targetAudience || 'Local Businesses and Consumers'}\n` +
-        `**Primary Channel:** Local Search, Social Outreach, and Referral Loops\n\n` +
+      return `# 📈 Strategic Growth & Marketing Plan for ${bizName}\n\n` +
+        `**Target Market:** ${targetAudience}\n` +
+        `**Industry Focus:** ${industry} in ${city}\n` +
+        (prompt ? `**Primary Objectives:** ${prompt}\n\n` : '') +
         `## Phase 1: 30-Day Foundation (Immediate Wins)\n` +
-        `- **Week 1:** Complete Google Business Profile audit; upload 10 new high-resolution photos and update operating hours.\n` +
-        `- **Week 2:** Launch an automated SMS/email review campaign targeting past clients.\n` +
-        `- **Week 3:** Publish 3 localized educational posts on LinkedIn and Facebook.\n` +
-        `- **Week 4:** Partner with 2 adjacent non-competing local businesses for cross-referrals.\n\n` +
-        `## Phase 2: 90-Day Scaling & Optimization\n` +
-        `- **Month 2:** Launch targeted local search ads with a focused $10/day budget.\n` +
-        `- **Month 3:** Implement a VIP customer loyalty incentive program to increase repeat retention.\n\n` +
-        `## Key Performance Metrics (KPIs)\n` +
-        `- Increase monthly organic inbound inquiries by **35%**.\n` +
-        `- Maintain customer review rating at **4.8+ Stars**.`;
+        `- **Week 1:** Complete Google Business Profile audit; upload 10 high-resolution photos and optimize service categories.\n` +
+        `- **Week 2:** Launch an automated SMS/email review collection campaign targeting past satisfied clients.\n` +
+        `- **Week 3:** Publish 3 localized educational posts on LinkedIn and Facebook highlighting customer success.\n` +
+        `- **Week 4:** Establish cross-referral partnerships with 2 adjacent, non-competing local service providers.\n\n` +
+        `## Phase 2: 90-Day Scaling & Expansion\n` +
+        `- **Month 2:** Launch hyper-local search marketing campaigns focusing on high-intent search terms in ${city}.\n` +
+        `- **Month 3:** Implement a customer loyalty and VIP referral incentive program to increase repeat retention.\n\n` +
+        `## Key Performance Indicators (KPIs)\n` +
+        `- Increase monthly organic inbound inquiries by **30-40%**.\n` +
+        `- Maintain customer review rating at **4.8+ Stars** across all local directories.` +
+        fallbackNotice;
     }
 
     case 'local_seo': {
-      return `### 📍 Local Search Optimization Plan for ${bizName}\n\n` +
+      return `### 📍 Local Search Optimization Guide for ${bizName}\n\n` +
+        (prompt ? `**Request Focus:** ${prompt}\n\n` : '') +
         `**Google Business Profile Description (750 chars):**\n` +
-        `Welcome to ${bizName}, your premier destination for ${industry} services in ${city} and surrounding communities. We specialize in providing reliable, customer-first solutions designed to exceed expectations. Whether you need expert consultation, fast repairs, or ongoing maintenance, our licensed team is here to assist. Call us today or visit our website to schedule your consultation!\n\n` +
-        `**Primary Keywords:** ${industry} ${city}, best ${industry} near me, affordable ${industry} in ${city}.`;
+        `Welcome to ${bizName}, your premier destination for ${industry} in ${city} and surrounding communities. We specialize in providing reliable, customer-first solutions designed to exceed expectations. Whether you need expert consultation, prompt service, or ongoing support, our experienced team is here to assist. Call us today or visit our website to schedule your consultation!\n\n` +
+        `**Primary Local Keywords:** ${industry} ${city}, best ${industry} near me, affordable ${industry} in ${city}.` +
+        fallbackNotice;
+    }
+
+    case 'blog_post': {
+      return `# The Complete Guide to ${industry} in ${city}\n\n` +
+        (prompt ? `*Addressing: ${prompt}*\n\n` : '') +
+        `## Introduction\n` +
+        `Navigating your ${industry} options can be daunting. At **${bizName}**, we believe in empowering our clients with clear, transparent, and actionable advice.\n\n` +
+        `## Key Considerations\n` +
+        `1. **Experience and Reliability**: Look for licensed, verified professionals with proven track records in ${city}.\n` +
+        `2. **Clear Upfront Communication**: Avoid hidden fees and ambiguous timelines.\n` +
+        `3. **Long-Term Value**: High-quality craftsmanship and dedicated post-project support ensure maximum peace of mind.\n\n` +
+        `## Conclusion\n` +
+        `Ready to get started? Contact the team at **${bizName}** today for your complimentary consultation.` +
+        fallbackNotice;
+    }
+
+    case 'business_plan': {
+      return `# Executive Business Summary: ${bizName}\n\n` +
+        `**Industry:** ${industry} | **Location:** ${city}\n\n` +
+        `## 1. Executive Summary\n` +
+        `${bizName} is a local provider of ${industry} services, delivering customer-centric solutions across ${city}.\n\n` +
+        `## 2. Market Analysis & Target Audience\n` +
+        `Serving ${targetAudience} with high-touch, dependable solutions.\n\n` +
+        `## 3. Operational Strategy & Financial Outlook\n` +
+        `- Focus on high-margin, high-retention service contracts.\n` +
+        `- Streamlined digital operations and automated customer follow-ups.` +
+        fallbackNotice;
     }
 
     default:
       return `### ✨ ${bizName} Content Output\n\n` +
-        `Here is your requested content optimized for ${industry}:\n\n` +
-        `${payload.prompt || 'Content drafted successfully for your business.'}\n\n` +
-        `*Optimized for clarity, professional tone, and maximum customer engagement.*`;
+        (prompt ? `**Generated for:** "${prompt}"\n\n` : '') +
+        `Here is your tailored ${type ? type.replace(/_/g, ' ') : 'business'} draft designed for ${industry} in ${city}.\n\n` +
+        `• Tailored for: ${targetAudience}\n` +
+        `• Brand Tone: ${tone}\n\n` +
+        `*Optimized for clarity, professional tone, and maximum customer engagement.*` +
+        fallbackNotice;
   }
 }
 
@@ -5883,6 +6015,8 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
   modelUsed: string;
   isCustomKey: boolean;
   tokensUsed: number;
+  isFallback: boolean;
+  realApiExecuted: boolean;
   warning?: string;
 }> {
   const cleanEmail = (options.userEmail || '').toLowerCase().trim();
@@ -5919,12 +6053,28 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
   );
   let tokensUsed = 0;
   let warning: string | undefined;
+  let isFallback = false;
+  let realApiExecuted = false;
 
   if (effectiveProvider === 'gemini') {
     let targetModel = selectedModel || 'gemini-2.5-flash';
     modelUsed = targetModel;
     const apiKey = customKey || process.env.GEMINI_API_KEY;
     if (!apiKey || !apiKey.trim()) {
+      if (options.fallbackType) {
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Google Gemini');
+        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+        return {
+          text: text.trim(),
+          providerUsed: 'gemini (offline-resilient)',
+          modelUsed: targetModel,
+          isCustomKey: false,
+          tokensUsed,
+          isFallback: true,
+          realApiExecuted: false,
+          warning: 'No custom Gemini API key configured. Output generated with offline resilient engine (0 credits deducted).',
+        };
+      }
       throw new Error(`No Google Gemini API key configured. Please enter your Gemini API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
     }
 
@@ -5978,13 +6128,43 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
       const actualTokens = meta?.totalTokenCount || ((meta?.promptTokenCount || 0) + (meta?.candidatesTokenCount || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
       tokensUsed = actualTokens;
       recordRealModelTokenUsage(targetModel, actualTokens);
+      isFallback = false;
+      realApiExecuted = true;
     } catch (err: any) {
       const errMsg = err?.message || err?.toString() || 'Unknown Google Gemini Error';
+      if (options.fallbackType) {
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Google Gemini');
+        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+        return {
+          text: text.trim(),
+          providerUsed: 'gemini (offline-resilient)',
+          modelUsed: targetModel,
+          isCustomKey,
+          tokensUsed,
+          isFallback: true,
+          realApiExecuted: false,
+          warning: `Google Gemini notice: ${errMsg}. Generated output with local resilient engine (0 credits deducted).`,
+        };
+      }
       throw new Error(`Google Gemini Error: ${errMsg}`);
     }
   } else if (effectiveProvider === 'openai') {
     const apiKey = customKey || process.env.OPENAI_API_KEY;
     if (!apiKey || !apiKey.trim()) {
+      if (options.fallbackType) {
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'OpenAI');
+        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+        return {
+          text: text.trim(),
+          providerUsed: 'openai (offline-resilient)',
+          modelUsed: selectedModel || 'gpt-4o',
+          isCustomKey: false,
+          tokensUsed,
+          isFallback: true,
+          realApiExecuted: false,
+          warning: 'No custom OpenAI API key configured. Output generated with offline resilient engine (0 credits deducted).',
+        };
+      }
       throw new Error(`No OpenAI API key configured. Please enter your OpenAI API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
     }
     const targetModel = selectedModel || 'gpt-4o';
@@ -6005,39 +6185,75 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
       msgs.push({ role: 'user', content: options.prompt || 'Hello' });
     }
 
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
-      body: JSON.stringify({
-        model: targetModel,
-        messages: msgs,
-        temperature: options.temperature ?? 0.7,
-      }),
-    });
+    try {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
+        body: JSON.stringify({
+          model: targetModel,
+          messages: msgs,
+          temperature: options.temperature ?? 0.7,
+        }),
+      });
 
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
-      if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {});
-        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-        providerUsed = 'openai (offline-resilient)';
-        warning = `OpenAI notice: ${msg}. Generated output with local resilient business engine.`;
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
+        if (options.fallbackType) {
+          text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'OpenAI');
+          tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+          providerUsed = 'openai (offline-resilient)';
+          warning = `OpenAI notice: ${msg}. Generated output with local resilient business engine.`;
+          isFallback = true;
+          realApiExecuted = false;
+        } else {
+          throw new Error(`OpenAI API Error: ${msg}`);
+        }
       } else {
-        throw new Error(`OpenAI API Error: ${msg}`);
+        const data = await res.json();
+        text = data.choices?.[0]?.message?.content || '';
+        if (!text) {
+          throw new Error('OpenAI returned an empty completion.');
+        }
+        tokensUsed = data.usage?.total_tokens || ((data.usage?.prompt_tokens || 0) + (data.usage?.completion_tokens || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
+        recordRealModelTokenUsage(targetModel, tokensUsed);
+        isFallback = false;
+        realApiExecuted = true;
       }
-    } else {
-      const data = await res.json();
-      text = data.choices?.[0]?.message?.content || '';
-      if (!text) {
-        throw new Error('OpenAI returned an empty completion.');
+    } catch (err: any) {
+      if (options.fallbackType) {
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'OpenAI');
+        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+        return {
+          text: text.trim(),
+          providerUsed: 'openai (offline-resilient)',
+          modelUsed: targetModel,
+          isCustomKey,
+          tokensUsed,
+          isFallback: true,
+          realApiExecuted: false,
+          warning: `OpenAI connection notice: ${err?.message || err}. Generated output with local resilient engine (0 credits deducted).`,
+        };
       }
-      tokensUsed = data.usage?.total_tokens || ((data.usage?.prompt_tokens || 0) + (data.usage?.completion_tokens || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
-      recordRealModelTokenUsage(targetModel, tokensUsed);
+      throw err;
     }
   } else if (effectiveProvider === 'claude' || effectiveProvider === 'anthropic') {
     const apiKey = customKey || process.env.ANTHROPIC_API_KEY;
     if (!apiKey || !apiKey.trim()) {
+      if (options.fallbackType) {
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Anthropic Claude');
+        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+        return {
+          text: text.trim(),
+          providerUsed: 'claude (offline-resilient)',
+          modelUsed: selectedModel || 'claude-3-7-sonnet-20250219',
+          isCustomKey: false,
+          tokensUsed,
+          isFallback: true,
+          realApiExecuted: false,
+          warning: 'No custom Claude API key configured. Output generated with offline resilient engine (0 credits deducted).',
+        };
+      }
       throw new Error(`No Anthropic Claude API key configured. Please enter your Claude API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
     }
     const targetModel = selectedModel || 'claude-3-7-sonnet-20250219';
@@ -6055,45 +6271,81 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
       msgs.push({ role: 'user', content: options.prompt || 'Hello' });
     }
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey.trim(),
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: targetModel,
-        max_tokens: 4096,
-        system: options.systemInstruction,
-        messages: msgs,
-        temperature: options.temperature ?? 0.7,
-      }),
-    });
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey.trim(),
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: targetModel,
+          max_tokens: 4096,
+          system: options.systemInstruction,
+          messages: msgs,
+          temperature: options.temperature ?? 0.7,
+        }),
+      });
 
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
-      if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {});
-        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-        providerUsed = 'claude (offline-resilient)';
-        warning = `Claude notice: ${msg}. Generated output with local resilient business engine.`;
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
+        if (options.fallbackType) {
+          text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Anthropic Claude');
+          tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+          providerUsed = 'claude (offline-resilient)';
+          warning = `Claude notice: ${msg}. Generated output with local resilient business engine.`;
+          isFallback = true;
+          realApiExecuted = false;
+        } else {
+          throw new Error(`Anthropic Claude API Error: ${msg}`);
+        }
       } else {
-        throw new Error(`Anthropic Claude API Error: ${msg}`);
+        const data = await res.json();
+        text = data.content?.[0]?.text || '';
+        if (!text) {
+          throw new Error('Anthropic Claude returned an empty response.');
+        }
+        tokensUsed = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0) || Math.max(1, Math.ceil(text.length / 3.8));
+        recordRealModelTokenUsage(targetModel, tokensUsed);
+        isFallback = false;
+        realApiExecuted = true;
       }
-    } else {
-      const data = await res.json();
-      text = data.content?.[0]?.text || '';
-      if (!text) {
-        throw new Error('Anthropic Claude returned an empty response.');
+    } catch (err: any) {
+      if (options.fallbackType) {
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Anthropic Claude');
+        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+        return {
+          text: text.trim(),
+          providerUsed: 'claude (offline-resilient)',
+          modelUsed: targetModel,
+          isCustomKey,
+          tokensUsed,
+          isFallback: true,
+          realApiExecuted: false,
+          warning: `Claude connection notice: ${err?.message || err}. Generated output with local resilient engine (0 credits deducted).`,
+        };
       }
-      tokensUsed = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0) || Math.max(1, Math.ceil(text.length / 3.8));
-      recordRealModelTokenUsage(targetModel, tokensUsed);
+      throw err;
     }
   } else if (effectiveProvider === 'perplexity') {
     const apiKey = customKey || process.env.PERPLEXITY_API_KEY;
     if (!apiKey || !apiKey.trim()) {
+      if (options.fallbackType) {
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Perplexity');
+        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+        return {
+          text: text.trim(),
+          providerUsed: 'perplexity (offline-resilient)',
+          modelUsed: selectedModel || 'sonar-pro',
+          isCustomKey: false,
+          tokensUsed,
+          isFallback: true,
+          realApiExecuted: false,
+          warning: 'No custom Perplexity API key configured. Output generated with offline resilient engine (0 credits deducted).',
+        };
+      }
       throw new Error(`No Perplexity API key configured. Please enter your Perplexity API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
     }
     const targetModel = selectedModel || 'sonar-pro';
@@ -6109,35 +6361,71 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
       msgs.push({ role: 'user', content: options.prompt || 'Hello' });
     }
 
-    const res = await fetch('https://api.perplexity.ai/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
-      body: JSON.stringify({ model: targetModel, messages: msgs }),
-    });
+    try {
+      const res = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
+        body: JSON.stringify({ model: targetModel, messages: msgs }),
+      });
 
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
-      if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {});
-        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-        providerUsed = 'perplexity (offline-resilient)';
-        warning = `Perplexity notice: ${msg}. Generated output with local resilient business engine.`;
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
+        if (options.fallbackType) {
+          text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Perplexity');
+          tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+          providerUsed = 'perplexity (offline-resilient)';
+          warning = `Perplexity notice: ${msg}. Generated output with local resilient business engine.`;
+          isFallback = true;
+          realApiExecuted = false;
+        } else {
+          throw new Error(`Perplexity API Error: ${msg}`);
+        }
       } else {
-        throw new Error(`Perplexity API Error: ${msg}`);
+        const data = await res.json();
+        text = data.choices?.[0]?.message?.content || '';
+        if (!text) {
+          throw new Error('Perplexity returned an empty completion.');
+        }
+        tokensUsed = data.usage?.total_tokens || ((data.usage?.prompt_tokens || 0) + (data.usage?.completion_tokens || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
+        recordRealModelTokenUsage(targetModel, tokensUsed);
+        isFallback = false;
+        realApiExecuted = true;
       }
-    } else {
-      const data = await res.json();
-      text = data.choices?.[0]?.message?.content || '';
-      if (!text) {
-        throw new Error('Perplexity returned an empty completion.');
+    } catch (err: any) {
+      if (options.fallbackType) {
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Perplexity');
+        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+        return {
+          text: text.trim(),
+          providerUsed: 'perplexity (offline-resilient)',
+          modelUsed: targetModel,
+          isCustomKey,
+          tokensUsed,
+          isFallback: true,
+          realApiExecuted: false,
+          warning: `Perplexity connection notice: ${err?.message || err}. Generated output with local resilient engine (0 credits deducted).`,
+        };
       }
-      tokensUsed = data.usage?.total_tokens || ((data.usage?.prompt_tokens || 0) + (data.usage?.completion_tokens || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
-      recordRealModelTokenUsage(targetModel, tokensUsed);
+      throw err;
     }
   } else if (effectiveProvider === 'deepseek') {
     const apiKey = customKey || process.env.DEEPSEEK_API_KEY;
     if (!apiKey || !apiKey.trim()) {
+      if (options.fallbackType) {
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'DeepSeek');
+        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+        return {
+          text: text.trim(),
+          providerUsed: 'deepseek (offline-resilient)',
+          modelUsed: selectedModel || 'deepseek-chat',
+          isCustomKey: false,
+          tokensUsed,
+          isFallback: true,
+          realApiExecuted: false,
+          warning: 'No custom DeepSeek API key configured. Output generated with offline resilient engine (0 credits deducted).',
+        };
+      }
       throw new Error(`No DeepSeek API key configured. Please enter your DeepSeek API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
     }
     const targetModel = selectedModel || 'deepseek-chat';
@@ -6153,46 +6441,70 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
       msgs.push({ role: 'user', content: options.prompt || 'Hello' });
     }
 
-    const res = await fetch('https://api.deepseek.com/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
-      body: JSON.stringify({ model: targetModel, messages: msgs }),
-    });
+    try {
+      const res = await fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
+        body: JSON.stringify({ model: targetModel, messages: msgs }),
+      });
 
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
-      if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {});
-        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-        providerUsed = 'deepseek (offline-resilient)';
-        warning = `DeepSeek notice: ${msg}. Generated output with local resilient business engine.`;
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
+        if (options.fallbackType) {
+          text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'DeepSeek');
+          tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+          providerUsed = 'deepseek (offline-resilient)';
+          warning = `DeepSeek notice: ${msg}. Generated output with local resilient business engine.`;
+          isFallback = true;
+          realApiExecuted = false;
+        } else {
+          throw new Error(`DeepSeek API Error: ${msg}`);
+        }
       } else {
-        throw new Error(`DeepSeek API Error: ${msg}`);
+        const data = await res.json();
+        text = data.choices?.[0]?.message?.content || '';
+        if (!text) {
+          throw new Error('DeepSeek returned an empty completion.');
+        }
+        tokensUsed = data.usage?.total_tokens || ((data.usage?.prompt_tokens || 0) + (data.usage?.completion_tokens || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
+        recordRealModelTokenUsage(targetModel, tokensUsed);
+        isFallback = false;
+        realApiExecuted = true;
       }
-    } else {
-      const data = await res.json();
-      text = data.choices?.[0]?.message?.content || '';
-      if (!text) {
-        throw new Error('DeepSeek returned an empty completion.');
+    } catch (err: any) {
+      if (options.fallbackType) {
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'DeepSeek');
+        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
+        return {
+          text: text.trim(),
+          providerUsed: 'deepseek (offline-resilient)',
+          modelUsed: targetModel,
+          isCustomKey,
+          tokensUsed,
+          isFallback: true,
+          realApiExecuted: false,
+          warning: `DeepSeek connection notice: ${err?.message || err}. Generated output with local resilient engine (0 credits deducted).`,
+        };
       }
-      tokensUsed = data.usage?.total_tokens || ((data.usage?.prompt_tokens || 0) + (data.usage?.completion_tokens || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
-      recordRealModelTokenUsage(targetModel, tokensUsed);
+      throw err;
     }
   } else if (effectiveProvider === 'groq') {
     const apiKey = customKey || process.env.GROQ_API_KEY;
     if (!apiKey || !apiKey.trim()) {
       if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {});
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Groq');
         tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
         providerUsed = 'groq (offline-resilient)';
-        warning = 'No custom Groq API key is configured. Output generated seamlessly via offline intelligence engine. Add your Groq key in Settings for live cloud LPU inference.';
+        warning = 'No custom Groq API key is configured. Output generated seamlessly via offline intelligence engine (0 credits deducted). Add your Groq key in Settings for live cloud LPU inference.';
         return {
           text: text.trim(),
           providerUsed,
           modelUsed: selectedModel || 'llama-3.3-70b-versatile',
           isCustomKey: false,
           tokensUsed,
+          isFallback: true,
+          realApiExecuted: false,
           warning,
         };
       }
@@ -6285,13 +6597,18 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
 
     if (!success) {
       if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {});
+        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Groq');
         tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
         providerUsed = 'groq (offline-resilient)';
-        warning = `Groq service notice: ${lastGroqError || 'Model unavailable on key'}. Generated output with local resilient business engine.`;
+        warning = `Groq service notice: ${lastGroqError || 'Model unavailable on key'}. Generated output with local resilient business engine (0 credits deducted).`;
+        isFallback = true;
+        realApiExecuted = false;
       } else {
         throw new Error(`Groq API Error: ${lastGroqError || 'Failed to complete request on Groq models.'}`);
       }
+    } else {
+      isFallback = false;
+      realApiExecuted = true;
     }
 
     modelUsed = successfulModel || selectedModel || 'llama-3.3-70b-versatile';
@@ -6305,6 +6622,8 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
     modelUsed,
     isCustomKey,
     tokensUsed,
+    isFallback,
+    realApiExecuted,
     warning,
   };
 }
@@ -6348,16 +6667,27 @@ Instructions:
       messages,
       temperature: 0.7,
       fallbackType: 'chat',
-      fallbackPayload: { businessProfile, lastMessage: lastUserMsg, context },
+      fallbackPayload: { businessProfile, lastMessage: lastUserMsg, prompt: lastUserMsg, context },
     });
 
-    const creditStats = deductUserCredit(userEmail, 1);
+    let creditStats;
+    let creditsDeducted = 0;
+    if (completion.realApiExecuted && !completion.isFallback && !completion.isCustomKey) {
+      creditStats = deductUserCredit(userEmail, 1);
+      creditsDeducted = 1;
+    } else {
+      creditStats = getUserCreditStats(userEmail);
+      creditsDeducted = 0;
+    }
 
     res.json({
       text: completion.text,
       providerUsed: completion.providerUsed,
       modelUsed: completion.modelUsed,
       warning: completion.warning,
+      isFallback: completion.isFallback,
+      realApiExecuted: completion.realApiExecuted,
+      creditsDeducted,
       creditsUsed: creditStats.used,
       creditsRemaining: creditStats.remaining,
     });
@@ -6417,13 +6747,24 @@ User Requirements: ${prompt}`;
       fallbackPayload: { businessProfile, prompt, tone, targetAudience },
     });
 
-    const creditStats = deductUserCredit(userEmail, 2);
+    let creditStats;
+    let creditsDeducted = 0;
+    if (completion.realApiExecuted && !completion.isFallback && !completion.isCustomKey) {
+      creditStats = deductUserCredit(userEmail, 2);
+      creditsDeducted = 2;
+    } else {
+      creditStats = getUserCreditStats(userEmail);
+      creditsDeducted = 0;
+    }
 
     res.json({
       content: completion.text,
       providerUsed: completion.providerUsed,
       modelUsed: completion.modelUsed,
       warning: completion.warning,
+      isFallback: completion.isFallback,
+      realApiExecuted: completion.realApiExecuted,
+      creditsDeducted,
       creditsUsed: creditStats.used,
       creditsRemaining: creditStats.remaining,
     });
@@ -6465,16 +6806,27 @@ Requirements:
       prompt: `Generate a full professional ${type} for client "${clientName}" regarding project "${projectTitle}". User prompt details: ${requirements}`,
       temperature: 0.6,
       fallbackType: 'proposal',
-      fallbackPayload: { clientName, projectTitle, estimatedBudget, businessProfile },
+      fallbackPayload: { clientName, projectTitle, estimatedBudget, businessProfile, requirements, prompt: requirements },
     });
 
-    const creditStats = deductUserCredit(userEmail, 5);
+    let creditStats;
+    let creditsDeducted = 0;
+    if (completion.realApiExecuted && !completion.isFallback && !completion.isCustomKey) {
+      creditStats = deductUserCredit(userEmail, 5);
+      creditsDeducted = 5;
+    } else {
+      creditStats = getUserCreditStats(userEmail);
+      creditsDeducted = 0;
+    }
 
     res.json({
       content: completion.text,
       providerUsed: completion.providerUsed,
       modelUsed: completion.modelUsed,
       warning: completion.warning,
+      isFallback: completion.isFallback,
+      realApiExecuted: completion.realApiExecuted,
+      creditsDeducted,
       creditsUsed: creditStats.used,
       creditsRemaining: creditStats.remaining,
     });
@@ -6524,16 +6876,27 @@ Business Profile:
       prompt: `${specificPrompt}\nAdditional instructions: ${prompt || 'Make it high converting and local keyword rich.'}`,
       temperature: 0.7,
       fallbackType: taskType === 'review_reply' ? 'review_reply' : 'local_seo',
-      fallbackPayload: { businessProfile, prompt },
+      fallbackPayload: { businessProfile, prompt: prompt || specificPrompt, starRating, reviewText },
     });
 
-    const creditStats = deductUserCredit(userEmail, 2);
+    let creditStats;
+    let creditsDeducted = 0;
+    if (completion.realApiExecuted && !completion.isFallback && !completion.isCustomKey) {
+      creditStats = deductUserCredit(userEmail, 2);
+      creditsDeducted = 2;
+    } else {
+      creditStats = getUserCreditStats(userEmail);
+      creditsDeducted = 0;
+    }
 
     res.json({
       content: completion.text,
       providerUsed: completion.providerUsed,
       modelUsed: completion.modelUsed,
       warning: completion.warning,
+      isFallback: completion.isFallback,
+      realApiExecuted: completion.realApiExecuted,
+      creditsDeducted,
       creditsUsed: creditStats.used,
       creditsRemaining: creditStats.remaining,
     });
@@ -6575,16 +6938,27 @@ Format response with clear markdown headings for:
       prompt: `Generate a comprehensive Marketing Plan for ${businessProfile?.name || 'our business'}.`,
       temperature: 0.7,
       fallbackType: 'marketing_plan',
-      fallbackPayload: { businessProfile, goals, budget, targetAudience },
+      fallbackPayload: { businessProfile, goals, prompt: goals, budget, targetAudience },
     });
 
-    const creditStats = deductUserCredit(userEmail, 5);
+    let creditStats;
+    let creditsDeducted = 0;
+    if (completion.realApiExecuted && !completion.isFallback && !completion.isCustomKey) {
+      creditStats = deductUserCredit(userEmail, 5);
+      creditsDeducted = 5;
+    } else {
+      creditStats = getUserCreditStats(userEmail);
+      creditsDeducted = 0;
+    }
 
     res.json({
       content: completion.text,
       providerUsed: completion.providerUsed,
       modelUsed: completion.modelUsed,
       warning: completion.warning,
+      isFallback: completion.isFallback,
+      realApiExecuted: completion.realApiExecuted,
+      creditsDeducted,
       creditsUsed: creditStats.used,
       creditsRemaining: creditStats.remaining,
     });
@@ -7188,13 +7562,28 @@ app.post('/api/ai/polish', async (req, res) => {
       systemInstruction: 'You are an expert copy editor. Return ONLY the polished revised text without meta-commentary or markdown backtick wrappers.',
       prompt: `${instruction}\n\nOriginal Text:\n"${text}"`,
       temperature: 0.4,
+      fallbackType: 'polish',
+      fallbackPayload: { prompt: text, tone: mode },
     });
 
-    const creditStats = deductUserCredit(userEmail, 1);
+    let creditStats;
+    let creditsDeducted = 0;
+    if (completion.realApiExecuted && !completion.isFallback && !completion.isCustomKey) {
+      creditStats = deductUserCredit(userEmail, 1);
+      creditsDeducted = 1;
+    } else {
+      creditStats = getUserCreditStats(userEmail);
+      creditsDeducted = 0;
+    }
+
     res.json({
       polishedText: completion.text,
       providerUsed: completion.providerUsed,
       modelUsed: completion.modelUsed,
+      warning: completion.warning,
+      isFallback: completion.isFallback,
+      realApiExecuted: completion.realApiExecuted,
+      creditsDeducted,
       creditsUsed: creditStats.used,
       creditsRemaining: creditStats.remaining,
     });
