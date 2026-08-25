@@ -6672,7 +6672,7 @@ Instructions:
 
     let creditStats;
     let creditsDeducted = 0;
-    if (completion.realApiExecuted && !completion.isFallback && !completion.isCustomKey) {
+    if (completion.realApiExecuted && !completion.isFallback) {
       creditStats = deductUserCredit(userEmail, 1);
       creditsDeducted = 1;
     } else {
@@ -6749,7 +6749,7 @@ User Requirements: ${prompt}`;
 
     let creditStats;
     let creditsDeducted = 0;
-    if (completion.realApiExecuted && !completion.isFallback && !completion.isCustomKey) {
+    if (completion.realApiExecuted && !completion.isFallback) {
       creditStats = deductUserCredit(userEmail, 2);
       creditsDeducted = 2;
     } else {
@@ -6811,7 +6811,7 @@ Requirements:
 
     let creditStats;
     let creditsDeducted = 0;
-    if (completion.realApiExecuted && !completion.isFallback && !completion.isCustomKey) {
+    if (completion.realApiExecuted && !completion.isFallback) {
       creditStats = deductUserCredit(userEmail, 5);
       creditsDeducted = 5;
     } else {
@@ -6881,7 +6881,7 @@ Business Profile:
 
     let creditStats;
     let creditsDeducted = 0;
-    if (completion.realApiExecuted && !completion.isFallback && !completion.isCustomKey) {
+    if (completion.realApiExecuted && !completion.isFallback) {
       creditStats = deductUserCredit(userEmail, 2);
       creditsDeducted = 2;
     } else {
@@ -6943,7 +6943,7 @@ Format response with clear markdown headings for:
 
     let creditStats;
     let creditsDeducted = 0;
-    if (completion.realApiExecuted && !completion.isFallback && !completion.isCustomKey) {
+    if (completion.realApiExecuted && !completion.isFallback) {
       creditStats = deductUserCredit(userEmail, 5);
       creditsDeducted = 5;
     } else {
@@ -7568,7 +7568,7 @@ app.post('/api/ai/polish', async (req, res) => {
 
     let creditStats;
     let creditsDeducted = 0;
-    if (completion.realApiExecuted && !completion.isFallback && !completion.isCustomKey) {
+    if (completion.realApiExecuted && !completion.isFallback) {
       creditStats = deductUserCredit(userEmail, 1);
       creditsDeducted = 1;
     } else {
