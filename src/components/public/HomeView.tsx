@@ -587,7 +587,7 @@ export const HomeView: React.FC = () => {
             ))}
           </div>
           <h2 className="text-2xl sm:text-4xl font-bold font-heading text-slate-900">
-            Loved by 1,200+ Agencies & Local Service Teams
+            Loved by Agencies & Local Service Teams
           </h2>
         </div>
 
