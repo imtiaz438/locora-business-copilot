@@ -17,18 +17,25 @@ import {
   Award,
   Layers,
   ChevronRight,
+  ChevronDown,
   CheckCircle2,
   DollarSign,
   TrendingUp,
   FileCheck2,
+  FolderDown,
+  HelpCircle,
+  PhoneCall,
+  BarChart3,
+  Briefcase,
 } from 'lucide-react';
 
 export const MasterclassKitView: React.FC = () => {
   const { user, logActivity } = useApp();
-  const [activeTab, setActiveTabLocal] = useState<'contracts' | 'scripts' | 'calculator' | 'curriculum'>('contracts');
+  const [activeTab, setActiveTabLocal] = useState<'contracts' | 'scripts' | 'calculator' | 'curriculum' | 'resources'>('contracts');
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [isKitUnlocked, setIsKitUnlocked] = useState(user.planTier === 'agency'); // Agency tier gets it or purchased
+  const [isKitUnlocked, setIsKitUnlocked] = useState(user.planTier === 'agency' || user.planTier === 'pro');
   const [purchasing, setPurchasing] = useState(false);
+  const [expandedModule, setExpandedModule] = useState<string | null>('mod_1');
 
   // SOW Contract State
   const [agencyName, setAgencyName] = useState('Apex Digital Growth');
@@ -54,6 +61,18 @@ export const MasterclassKitView: React.FC = () => {
     setTimeout(() => setCopiedId(null), 2500);
   };
 
+  const handleDownloadText = (filename: string, content: string) => {
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handlePurchaseKit = async () => {
     setPurchasing(true);
     try {
@@ -67,7 +86,6 @@ export const MasterclassKitView: React.FC = () => {
           setIsKitUnlocked(true);
         },
       });
-      // Unlock on success
       setIsKitUnlocked(true);
     } catch (e) {
       console.error('Masterclass checkout notice:', e);
@@ -105,7 +123,7 @@ Best,
 
 Hey [First Name],
 
-I noticed [Client Company] has stellar reviews on Google (${4.6} stars), but your top 2 competitors in [City] have 3x more recent reviews, which is why Google is ranking them in the 3-Pack map view above you for "[Industry] near me".
+I noticed [Client Company] has stellar reviews on Google (4.6 stars), but your top 2 competitors in [City] have 3x more recent reviews, which is why Google is ranking them in the 3-Pack map view above you for "[Industry] near me".
 
 We built an automated SMS & QR review acceleration engine that helps local businesses add 15-20 verified 5-star reviews every month without bothering staff.
 
@@ -127,6 +145,190 @@ Would you be open to checking out a 1-page PDF audit report with our recommendat
 
 Best,
 [Your Name]`,
+    },
+    {
+      id: 'script_speed_gap',
+      title: 'Core Web Vitals & Mobile Speed Penalty Hook',
+      target: 'E-commerce, High-Ticket Home Improvement, Cosmetic Clinics',
+      body: `Subject: [Client Company] mobile load time test results in [City]
+
+Hi [First Name],
+
+Ran [Client Company]'s homepage through Google PageSpeed Insights this morning. While your desktop layout looks great, the mobile version scored 38/100 due to uncompressed script bloat (taking over 4.8 seconds on 4G).
+
+Google now calculates local search rank based on mobile-first index, meaning you are currently being outranked by [Competitor Name] whose mobile page loads in under 1.2 seconds.
+
+I mapped out the 3 specific scripts causing the delay. Mind if I email over the audit screenshot?
+
+Regards,
+[Your Name]
+[Your Agency Name]`,
+    },
+  ];
+
+  const curriculumModules = [
+    {
+      id: 'mod_1',
+      step: '01',
+      title: 'Niche Selection & Digital Gap Prospecting',
+      desc: 'How to filter high-ticket local niches (Dentists, Med Spas, Emergency Contractors) with $500k+ revenue and $1,500+ customer lifetime values.',
+      duration: '18 min video + Action SOP',
+      topics: [
+        'Top 10 highest-converting local niches with zero price resistance',
+        'How to identify businesses with $3,000+/yr revenue leakages in 30 seconds',
+        'Filtering out bad prospects before sending a single message',
+        'Using Locora B2B Lead Generator to export enriched decision-maker direct emails',
+      ],
+      actionChecklist: [
+        'Pick 2 primary verticals from the recommended High-LTV list',
+        'Run query in Lead Prospector for top 3 neighboring metropolitan areas',
+        'Export first batch of 50 leads with identified technical flaw tags',
+      ],
+    },
+    {
+      id: 'mod_2',
+      step: '02',
+      title: 'The 40-Point Technical SEO Closing Audit',
+      desc: 'How to use Locora’s White-Label Audit exporter to generate executive-ready PDF pitch proposals in under 60 seconds.',
+      duration: '22 min video + PDF Template',
+      topics: [
+        'The 5 critical audit metrics that business owners care about (Revenue loss, Mobile speed, Security, Schema, Google Map pack)',
+        'Transforming technical jargon into direct business revenue metrics',
+        'Adding your agency branding, logo, and custom color scheme to Locora audits',
+      ],
+      actionChecklist: [
+        'Configure your White-Label agency branding in Locora Settings',
+        'Run 5 sample domain audits to verify automated PDF export',
+        'Save audit links into CRM lead notes ready for outbound pitch hooks',
+      ],
+    },
+    {
+      id: 'mod_3',
+      step: '03',
+      title: 'Cold Outbound Funnel: 15-25% Reply Strategy',
+      desc: 'Email and LinkedIn messaging architecture that focuses on revenue loss gaps instead of generic marketing pitches.',
+      duration: '25 min video + 12 Copy Scripts',
+      topics: [
+        'Why generic "We do SEO/Marketing" emails have a 0.2% response rate',
+        'The Flaw-First subject line formulas that achieve 65%+ open rates',
+        'How to record 90-second personalized Loom audit walkthroughs',
+        'Handling common objections: "We already have an agency" and "How much does it cost?"',
+      ],
+      actionChecklist: [
+        'Copy the Flaw-Based Outreach script into your email client',
+        'Customize placeholder brackets with verified company & city details',
+        'Send 15 personalized audits per day to achieve 3-5 positive weekly sales conversations',
+      ],
+    },
+    {
+      id: 'mod_4',
+      step: '04',
+      title: 'Retainer SOW Contracting & Value-Based Pricing',
+      desc: 'Protecting your margins, enforcing 30-day notice terms, and avoiding client scope creep with 3-tier agreements.',
+      duration: '15 min video + Legal Docs',
+      topics: [
+        'The 3 Retainer Pricing Tiers: $1,500/mo (Local SEO), $3,000/mo (SEO + Review Engine), $5,000/mo (Full Growth Engine)',
+        'Structuring initial 90-day minimum agreements before transitioning to month-to-month',
+        'Setting up automated recurring billing with zero chase invoices',
+      ],
+      actionChecklist: [
+        'Generate customized SOW agreement using the tab generator',
+        'Review payment terms and deliverable boundaries',
+        'Export as signed contract template ready for prospective clients',
+      ],
+    },
+    {
+      id: 'mod_5',
+      step: '05',
+      title: 'Locora AI Automation & Hands-Off Fulfillment',
+      desc: 'Automating monthly reporting, review collection funnels, and schema validation with zero extra staff.',
+      duration: '30 min video + Full Checklist',
+      topics: [
+        'How 1 person can fulfill 15+ clients using Locora AI Copilot & automated reporting',
+        'Automating monthly executive reports with 1-click PDF exports',
+        'Retaining clients for 18+ months through visible month-over-month Google Maps ranking progress',
+      ],
+      actionChecklist: [
+        'Set up first test client inside Locora CRM & Document Generator',
+        'Schedule automated monthly health audits',
+        'Deploy the Locora Review Acceleration funnel for your client',
+      ],
+    },
+  ];
+
+  const resourceAssets = [
+    {
+      id: 'res_onboarding',
+      title: 'Client Onboarding Discovery Questionnaire',
+      desc: '15 questions to extract target keywords, top competitors, service margins, and CRM access credentials on day 1.',
+      tag: 'Onboarding & Ops',
+      content: `# LOCORA AGENCY CLIENT ONBOARDING QUESTIONNAIRE
+
+1. Business Legal Name & DBA:
+2. Primary Physical Address (as verified on Google Maps):
+3. Primary Contact Name, Direct Cell & Billing Email:
+4. Website URL & Hosting Provider Login (WordPress / Webflow / Shopify / Custom):
+5. Google Business Profile Primary Owner Email:
+6. Top 3 Most Profitable Services / Procedures:
+7. Average Customer Lifetime Value ($USD):
+8. Target Geographic Radius / Cities Served:
+9. Top 3 Direct Competitors Outranking You Locally:
+10. Existing Tracking Tools Installed (Google Analytics 4 / Google Search Console):
+11. Current Monthly New Patient / Client Goal:
+12. Do you have existing customer phone/email lists for review acceleration campaigns?
+13. Any past Google manual actions or domain penalties?
+14. Preferred Communication Channel (Slack / Email / Bi-weekly Zoom):
+15. Key Performance Target for the first 90 days:`,
+    },
+    {
+      id: 'res_objection_battlecard',
+      title: 'Sales Objection Handling Battlecard',
+      desc: 'Word-for-word responses to "We already have an SEO guy", "Send me pricing first", and "We tried marketing before".',
+      tag: 'Sales & Closing',
+      content: `# AGENCY SALES OBJECTION HANDLING BATTLECARD
+
+## Objection 1: "We already have someone handling our SEO / Website."
+Response:
+"That’s totally fair [Name], and we work alongside internal teams all the time. The reason I reached out specifically is because your site is currently failing Google's Mobile Core Web Vitals test, which was updated recently. Your current team might not have run the latest audit yet. Would you like me to send over the 1-page report so you can forward it to them to fix?"
+(Result: 40% will review it, see their agency dropped the ball, and ask you to fix it).
+
+## Objection 2: "How much does your service cost?"
+Response:
+"Our local growth partnerships range from $1,500 to $5,000/mo depending on whether we're fixing local map pack visibility or running full review acceleration and technical schema management. But before discussing numbers, I want to make sure your market actually has enough search volume to yield a 4x+ ROI on that spend. Can we look at the live audit data together for 5 minutes?"
+
+## Objection 3: "We were burned by an agency in the past."
+Response:
+"I hear that every week, and frankly, 80% of agencies sell vanity metrics like impressions instead of qualified phone calls and patient bookings. That's why we structure our work with transparent 40-point technical audits, live rank trackers, and straightforward 90-day review cycles with no locked multi-year contracts."`,
+    },
+    {
+      id: 'res_rate_card',
+      title: 'White-Label Retainer Pricing Rate Cards',
+      desc: 'Standardized 3-tier pricing structure proven across 500+ local agency implementations.',
+      tag: 'Pricing Strategy',
+      content: `# LOCORA AGENCY 3-TIER RETAINER PRICING MATRIX
+
+### TIER 1: Local Foundation ($1,500 / month)
+- 40-Point Technical SEO Maintenance
+- Monthly Google Business Profile Optimization
+- Local Schema JSON-LD Synchronization
+- Monthly Performance & Ranking Report
+- Target: Solo practitioners & single-location service businesses.
+
+### TIER 2: Growth Accelerator ($3,000 / month) [MOST POPULAR]
+- Everything in Tier 1 PLUS:
+- Automated Review Acceleration System (SMS + QR)
+- Competitor Citation Gap Closure (25 new local directories/mo)
+- Mobile Core Web Vitals & Speed Optimization
+- Bi-Weekly Strategy Check-in & Priority Support
+- Target: Established practices, HVAC, Roofing, Med Spas seeking top 3 Map rankings.
+
+### TIER 3: Local Market Dominator ($5,000 / month)
+- Everything in Tier 2 PLUS:
+- Multi-Location / Multi-City Schema Coverage
+- Custom High-Converting Landing Page Optimization
+- Monthly Video Audit Presentations for Executive Board
+- Dedicated Account Lead & Emergency Response SLA (<2 hours)
+- Target: Multi-location clinics, law firms, and high-ticket service operations.`,
     },
   ];
 
@@ -171,26 +373,15 @@ Client:   _______________________      Date: _______________
             $5k/mo Local Retainer Blueprint & Agency Vault
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 font-sans mt-1">
-            Everything you need to close and fulfill $1,500 – $5,000/mo local business clients using Locora AI.
+            Everything you need to close, contract, and fulfill $1,500 – $5,000/mo local business retainer clients using Locora AI.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          {!isKitUnlocked ? (
-            <button
-              onClick={handlePurchaseKit}
-              disabled={purchasing}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4 text-amber-300" />
-              <span>{purchasing ? 'Opening Whop...' : 'Unlock Lifetime Access ($97)'}</span>
-            </button>
-          ) : (
-            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold font-heading">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Full Vault Unlocked & Active</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold font-heading">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>Full Growth Vault Active</span>
+          </div>
         </div>
       </div>
 
@@ -201,6 +392,7 @@ Client:   _______________________      Date: _______________
           { id: 'scripts', label: 'Cold Outbound Scripts (15-25% Reply)', icon: Mail },
           { id: 'calculator', label: 'Retainer Profit Margin Calculator', icon: Calculator },
           { id: 'curriculum', label: 'Masterclass SOP Curriculum', icon: BookOpen },
+          { id: 'resources', label: 'Agency Resource Library & SOPs', icon: Briefcase },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -263,9 +455,16 @@ Client:   _______________________      Date: _______________
               </div>
             </div>
 
-            <div className="pt-2 border-t border-slate-100">
+            <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+              <button
+                onClick={() => handleDownloadText(`SOW_Agreement_${clientName.replace(/\s+/g, '_')}.txt`, sowAgreement)}
+                className="w-full py-2.5 px-3 bg-purple-50 hover:bg-purple-100 text-purple-800 text-xs font-bold rounded-xl border border-purple-200 flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                <Download className="w-3.5 h-3.5 text-purple-700" />
+                <span>Download SOW Contract (.txt)</span>
+              </button>
               <p className="text-[11px] text-slate-500 leading-relaxed">
-                Legally formatted with standard intellectual property protections, confidentiality clauses, and clear cancellation notices.
+                Standard legal agreement with IP ownership clauses, net-30 terms, and structured recurring deliverables.
               </p>
             </div>
           </div>
@@ -293,7 +492,7 @@ Client:   _______________________      Date: _______________
 
       {/* Tab 2: Cold Outbound Scripts */}
       {activeTab === 'scripts' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {coldScripts.map((script) => (
             <div
               key={script.id}
@@ -309,13 +508,22 @@ Client:   _______________________      Date: _______________
                 </pre>
               </div>
 
-              <button
-                onClick={() => handleCopy(script.id, script.body)}
-                className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
-              >
-                {copiedId === script.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedId === script.id ? 'Copied Script!' : 'Copy Outbound Script'}</span>
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleCopy(script.id, script.body)}
+                  className="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                >
+                  {copiedId === script.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedId === script.id ? 'Copied Script!' : 'Copy Script'}</span>
+                </button>
+                <button
+                  onClick={() => handleDownloadText(`${script.id}.txt`, script.body)}
+                  className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl cursor-pointer transition-colors"
+                  title="Download Script as Text"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -411,59 +619,144 @@ Client:   _______________________      Date: _______________
         </div>
       )}
 
-      {/* Tab 4: Masterclass Curriculum */}
+      {/* Tab 4: Masterclass Curriculum (Expandable Action SOPs) */}
       {activeTab === 'curriculum' && (
         <div className="space-y-4">
-          {[
-            {
-              step: '01',
-              title: 'Niche Selection & Digital Gap Targeting',
-              desc: 'How to select dentists, med spas, and emergency contractors with minimum $500k annual revenue and high customer lifetime values.',
-              duration: '18 min video + SOP Guide',
-            },
-            {
-              step: '02',
-              title: 'The 40-Point Technical SEO Closing Audit',
-              desc: 'How to use Locora’s White-Label Audit exporter to generate executive-ready PDF pitch proposals in under 60 seconds.',
-              duration: '22 min video + PDF Template',
-            },
-            {
-              step: '03',
-              title: 'Cold Outbound Funnel: 15-25% Reply Strategy',
-              desc: 'Email and LinkedIn messaging architecture that focuses on revenue loss gaps instead of generic marketing pitches.',
-              duration: '25 min video + 12 Copy Scripts',
-            },
-            {
-              step: '04',
-              title: 'Retainer SOW Contracting & Value-Based Pricing',
-              desc: 'Protecting your margins, enforcing 30-day notice terms, and avoiding client scope creep with 3-tier agreements.',
-              duration: '15 min video + Legal Docs',
-            },
-            {
-              step: '05',
-              title: 'Locora AI Automation & Hands-Off Fulfillment',
-              desc: 'Automating monthly reporting, review collection funnels, and schema validation with zero extra staff.',
-              duration: '30 min video + Full Checklist',
-            },
-          ].map((mod) => (
-            <div
-              key={mod.step}
-              className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs flex items-center justify-between gap-4 hover:border-purple-300 transition-all"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-800 font-black font-heading flex items-center justify-center text-sm shrink-0">
-                  {mod.step}
+          <div className="bg-purple-50 border border-purple-200 rounded-2xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <BookOpen className="w-5 h-5 text-purple-700" />
+              <div>
+                <h4 className="text-xs font-extrabold font-heading text-purple-900">5-Module Agency Launchpad</h4>
+                <p className="text-[11px] text-purple-700">Click any module below to expand the full step-by-step SOP, key takeaways, and action checklist.</p>
+              </div>
+            </div>
+          </div>
+
+          {curriculumModules.map((mod) => {
+            const isExpanded = expandedModule === mod.id;
+            return (
+              <div
+                key={mod.step}
+                className={`bg-white border rounded-2xl p-5 shadow-2xs transition-all ${
+                  isExpanded ? 'border-purple-400 ring-2 ring-purple-100' : 'border-slate-200 hover:border-purple-300'
+                }`}
+              >
+                <div
+                  onClick={() => setExpandedModule(isExpanded ? null : mod.id)}
+                  className="flex items-center justify-between gap-4 cursor-pointer select-none"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-800 font-black font-heading flex items-center justify-center text-sm shrink-0">
+                      {mod.step}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-extrabold font-heading text-slate-900">{mod.title}</h4>
+                      <p className="text-xs text-slate-500 font-sans mt-0.5">{mod.desc}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg hidden sm:inline-block">
+                      {mod.duration}
+                    </span>
+                    {isExpanded ? (
+                      <ChevronDown className="w-5 h-5 text-purple-600" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-slate-400" />
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <h4 className="text-sm font-extrabold font-heading text-slate-900">{mod.title}</h4>
-                  <p className="text-xs text-slate-500 font-sans mt-0.5">{mod.desc}</p>
+
+                {/* Expanded Action SOP Details */}
+                {isExpanded && (
+                  <div className="mt-5 pt-5 border-t border-slate-100 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                      <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2">
+                        <h5 className="font-bold text-slate-900 uppercase font-heading tracking-wider flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Core Execution Topics</span>
+                        </h5>
+                        <ul className="space-y-1.5 text-slate-600 list-disc list-inside">
+                          {mod.topics.map((t, idx) => (
+                            <li key={idx}>{t}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="bg-purple-50/60 rounded-xl p-4 border border-purple-200 space-y-2">
+                        <h5 className="font-bold text-purple-900 uppercase font-heading tracking-wider flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                          <span>Actionable Checklist</span>
+                        </h5>
+                        <ul className="space-y-1.5 text-purple-800">
+                          {mod.actionChecklist.map((c, idx) => (
+                            <li key={idx} className="flex items-start gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-purple-600 mt-1.5 shrink-0" />
+                              <span>{c}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2">
+                      <button
+                        onClick={() =>
+                          handleCopy(
+                            `mod_copy_${mod.id}`,
+                            `MODULE ${mod.step}: ${mod.title}\n\nTopics:\n${mod.topics.map((t) => '- ' + t).join('\n')}\n\nChecklist:\n${mod.actionChecklist.map((c) => '[ ] ' + c).join('\n')}`
+                          )
+                        }
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-lg flex items-center gap-1.5 cursor-pointer transition-colors"
+                      >
+                        {copiedId === `mod_copy_${mod.id}` ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedId === `mod_copy_${mod.id}` ? 'Copied SOP!' : 'Copy Module SOP'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Tab 5: Resource Library & Deliverables */}
+      {activeTab === 'resources' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {resourceAssets.map((asset) => (
+              <div
+                key={asset.id}
+                className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs flex flex-col justify-between space-y-4 hover:border-purple-300 transition-all"
+              >
+                <div className="space-y-2">
+                  <span className="inline-block px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 text-[10px] font-bold uppercase font-heading">
+                    {asset.tag}
+                  </span>
+                  <h3 className="text-sm font-extrabold font-heading text-slate-900">{asset.title}</h3>
+                  <p className="text-xs text-slate-500 font-sans">{asset.desc}</p>
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  <button
+                    onClick={() => handleCopy(asset.id, asset.content)}
+                    className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                  >
+                    {copiedId === asset.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedId === asset.id ? 'Copied Resource!' : 'Copy to Clipboard'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleDownloadText(`${asset.id}.md`, asset.content)}
+                    className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download Markdown (.md)</span>
+                  </button>
                 </div>
               </div>
-              <span className="text-[11px] font-bold text-slate-500 shrink-0 bg-slate-100 px-2.5 py-1 rounded-lg">
-                {mod.duration}
-              </span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>

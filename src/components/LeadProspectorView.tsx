@@ -28,6 +28,7 @@ import {
   ShieldCheck,
   Activity,
   Award,
+  Copy,
 } from 'lucide-react';
 
 interface DecisionMakerContact {
@@ -80,6 +81,7 @@ export const LeadProspectorView: React.FC = () => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [crmAddedIds, setCrmAddedIds] = useState<Set<string>>(new Set());
   const [crmSuccessMsg, setCrmSuccessMsg] = useState<string | null>(null);
+  const [copiedPitch, setCopiedPitch] = useState(false);
 
   // Real-time Live Domain Audit & Contact Enrichment State
   const [auditingDomain, setAuditingDomain] = useState(false);
@@ -308,25 +310,25 @@ export const LeadProspectorView: React.FC = () => {
     ];
 
     const rows = leadsToExport.map((lead) => [
-      `"${lead.companyName.replace(/"/g, '""')}"`,
-      `"${lead.industry}"`,
-      `"${lead.address.replace(/"/g, '""')}"`,
-      `"${lead.city}"`,
-      `"${lead.phone}"`,
-      `"${lead.website}"`,
-      `"${lead.email}"`,
-      lead.rating,
-      lead.reviewsCount,
-      lead.seoScore,
-      lead.estAnnualRevenue,
-      lead.estRevenueGap,
-      `"${lead.primaryIssue}"`,
+      `"${(lead.companyName || '').replace(/"/g, '""')}"`,
+      `"${lead.industry || industry}"`,
+      `"${(lead.address || '').replace(/"/g, '""')}"`,
+      `"${lead.city || city}"`,
+      `"${lead.phone || ''}"`,
+      `"${lead.website || ''}"`,
+      `"${lead.email || ''}"`,
+      lead.rating || 4.0,
+      lead.reviewsCount || 0,
+      lead.seoScore || 70,
+      lead.estAnnualRevenue || 500000,
+      lead.estRevenueGap || 3500,
+      `"${lead.primaryIssue || 'Technical SEO Flaw'}"`,
       `"${enrichedExecutive?.name || 'Managing Director'}"`,
       `"${enrichedExecutive?.title || 'Owner'}"`,
-      `"${enrichedExecutive?.email || lead.email}"`,
+      `"${enrichedExecutive?.email || lead.email || ''}"`,
       `"${lead.verificationSource || 'Google Places & Locora Live Audit'}"`,
-      `"${lead.coldPitchHook.replace(/"/g, '""')}"`,
-      `"${lead.recommendedService.replace(/"/g, '""')}"`,
+      `"${(lead.coldPitchHook || '').replace(/"/g, '""')}"`,
+      `"${(lead.recommendedService || '').replace(/"/g, '""')}"`,
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
@@ -343,26 +345,27 @@ export const LeadProspectorView: React.FC = () => {
   };
 
   const handleAddToCrm = (lead: ProspectLead) => {
-    const contactName = (enrichedExecutive && selectedLead?.id === lead.id ? enrichedExecutive.name : '') || lead.companyName;
-    const contactEmail = (enrichedExecutive && selectedLead?.id === lead.id ? enrichedExecutive.email : '') || lead.email || `contact@${lead.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`;
+    const safeCompanyName = lead.companyName || 'Local Business Prospect';
+    const contactName = (enrichedExecutive && selectedLead?.id === lead.id ? enrichedExecutive.name : '') || safeCompanyName;
+    const contactEmail = (enrichedExecutive && selectedLead?.id === lead.id ? enrichedExecutive.email : '') || lead.email || `contact@${safeCompanyName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'business'}.com`;
 
     addCustomer({
       name: contactName,
-      company: lead.companyName,
+      company: safeCompanyName,
       email: contactEmail,
       phone: lead.phone || '(555) 000-0000',
-      address: lead.address || `${lead.city}`,
+      address: lead.address || `${lead.city || city}`,
       status: 'lead',
       value: lead.estRevenueGap || 3500,
-      tags: [lead.industry, 'B2B Prospect', lead.primaryIssue],
-      notes: `Identified Audit Flaw: ${lead.primaryIssue}\nEst. Revenue Gap: $${lead.estRevenueGap?.toLocaleString() || '0'}/yr\nPitch Hook: ${lead.coldPitchHook}\nRecommended Solution: ${lead.recommendedService}`,
+      tags: [lead.industry || industry, 'B2B Prospect', lead.primaryIssue || 'SEO Gap'],
+      notes: `Identified Audit Flaw: ${lead.primaryIssue || 'Digital Opportunity'}\nEst. Revenue Gap: $${(lead.estRevenueGap || 3500).toLocaleString()}/yr\nPitch Hook: ${lead.coldPitchHook || ''}\nRecommended Solution: ${lead.recommendedService || ''}`,
     });
 
     setCrmAddedIds((prev) => new Set([...prev, lead.id]));
     if (logActivity) {
-      logActivity('customer', `Added ${lead.companyName} to CRM Leads`, `Imported from B2B Lead Generator with audit findings for ${lead.primaryIssue}.`);
+      logActivity('customer', `Added ${safeCompanyName} to CRM Leads`, `Imported from B2B Lead Generator with audit findings for ${lead.primaryIssue || 'SEO Gap'}.`);
     }
-    setCrmSuccessMsg(`Saved "${lead.companyName}" directly to your CRM pipeline!`);
+    setCrmSuccessMsg(`Saved "${safeCompanyName}" directly to your CRM pipeline!`);
     setTimeout(() => setCrmSuccessMsg(null), 4500);
   };
 
@@ -559,41 +562,41 @@ export const LeadProspectorView: React.FC = () => {
                             )}
                           </div>
                           <div className="text-[10px] text-slate-500 flex items-center gap-1">
-                            <span>{lead.address.split(',')[0]}</span>
+                            <span>{(lead.address || lead.city || '').split(',')[0]}</span>
                           </div>
                         </td>
 
                         <td className="py-3 px-3">
                           <div className="flex items-center gap-1">
                             <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                            <span className="font-bold text-slate-800">{lead.rating}</span>
-                            <span className="text-[10px] text-slate-400">({lead.reviewsCount})</span>
+                            <span className="font-bold text-slate-800">{lead.rating || 4.0}</span>
+                            <span className="text-[10px] text-slate-400">({lead.reviewsCount || 0})</span>
                           </div>
                         </td>
 
                         <td className="py-3 px-3">
                           <span
                             className={`px-2 py-0.5 rounded-full font-bold text-[10px] font-mono ${
-                              lead.seoScore > 75
+                              (lead.seoScore || 70) > 75
                                 ? 'bg-emerald-100 text-emerald-800'
-                                : lead.seoScore > 55
+                                : (lead.seoScore || 70) > 55
                                 ? 'bg-amber-100 text-amber-800'
                                 : 'bg-rose-100 text-rose-800'
                             }`}
                           >
-                            {lead.seoScore}/100
+                            {lead.seoScore || 70}/100
                           </span>
                         </td>
 
                         <td className="py-3 px-3">
-                          <span className="text-[11px] text-slate-700 block truncate max-w-[160px]" title={lead.primaryIssue}>
-                            {lead.primaryIssue}
+                          <span className="text-[11px] text-slate-700 block truncate max-w-[160px]" title={lead.primaryIssue || 'Technical Flaw'}>
+                            {lead.primaryIssue || 'Technical Flaw'}
                           </span>
                         </td>
 
                         <td className="py-3 px-3">
                           <span className="font-bold text-rose-600 font-mono">
-                            -${(lead.estRevenueGap / 1000).toFixed(0)}k/yr
+                            -${(((lead.estRevenueGap || 3500)) / 1000).toFixed(0)}k/yr
                           </span>
                         </td>
 
@@ -870,15 +873,28 @@ export const LeadProspectorView: React.FC = () => {
                   <span>Tailored Pitch Hook (Ready-to-Send)</span>
                 </h4>
                 <div className="bg-slate-900 text-slate-100 p-3.5 rounded-xl text-xs font-sans leading-relaxed relative">
-                  <p>"{selectedLead.coldPitchHook} We built a custom 1-page roadmap to fix {selectedLead.primaryIssue} and reclaim estimated lost traffic."</p>
+                  <p>"{selectedLead.coldPitchHook || `Noticed ${selectedLead.companyName} has an optimization opportunity for ${selectedLead.primaryIssue}.`} We built a custom 1-page roadmap to fix {selectedLead.primaryIssue} and reclaim estimated lost traffic."</p>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(selectedLead.coldPitchHook);
-                      alert('Copied pitch hook to clipboard!');
+                      if (selectedLead.coldPitchHook) {
+                        navigator.clipboard.writeText(selectedLead.coldPitchHook);
+                        setCopiedPitch(true);
+                        setTimeout(() => setCopiedPitch(false), 3000);
+                      }
                     }}
-                    className="mt-2 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2 py-1 rounded cursor-pointer transition-colors"
+                    className="mt-2 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-2.5 py-1 rounded cursor-pointer transition-colors inline-flex items-center gap-1"
                   >
-                    Copy Hook to Clipboard
+                    {copiedPitch ? (
+                      <>
+                        <CheckCircle2 className="w-3 h-3 text-emerald-200" />
+                        <span>Copied to Clipboard!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3" />
+                        <span>Copy Hook to Clipboard</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </div>

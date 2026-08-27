@@ -5,6 +5,7 @@ import { Header } from './Header';
 import { CommandPalette } from './CommandPalette';
 import { AuthModal } from './AuthModal';
 import { CheckoutModal } from './CheckoutModal';
+import { FuelPackModal } from './FuelPackModal';
 import { Lock, Sparkles, ArrowRight } from 'lucide-react';
 import { LocoraLogo } from './LocoraLogo';
 import { PublicNavbar } from './public/PublicNavbar';
@@ -16,7 +17,7 @@ interface AppShellProps {
 }
 
 export const AppShell: React.FC<AppShellProps> = ({ children }) => {
-  const { activeTab, setActiveTab, user } = useApp();
+  const { activeTab, setActiveTab, user, fuelPackModalOpen, setFuelPackModalOpen, fuelPackReason } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const mainRef = useRef<HTMLDivElement>(null);
@@ -119,6 +120,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
         <PublicFooter />
         <AuthModal />
         <CheckoutModal />
+        <FuelPackModal
+          isOpen={fuelPackModalOpen}
+          onClose={() => setFuelPackModalOpen(false)}
+          initialReason={fuelPackReason}
+        />
         <CookieConsentBanner />
       </div>
     );
@@ -150,6 +156,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
       <AuthModal />
       <CheckoutModal />
+      <FuelPackModal
+        isOpen={fuelPackModalOpen}
+        onClose={() => setFuelPackModalOpen(false)}
+        initialReason={fuelPackReason}
+      />
       <CookieConsentBanner />
     </div>
   );
