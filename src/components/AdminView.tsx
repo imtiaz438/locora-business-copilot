@@ -315,6 +315,11 @@ export const AdminView: React.FC = () => {
   const [perplexityKeyInput, setPerplexityKeyInput] = useState('');
   const [deepseekKeyInput, setDeepseekKeyInput] = useState('');
   const [groqKeyInput, setGroqKeyInput] = useState('');
+  const [googleMapsKeyInput, setGoogleMapsKeyInput] = useState('');
+  const [pageSpeedKeyInput, setPageSpeedKeyInput] = useState('');
+  const [hunterKeyInput, setHunterKeyInput] = useState('');
+  const [apolloKeyInput, setApolloKeyInput] = useState('');
+  const [millionVerifierKeyInput, setMillionVerifierKeyInput] = useState('');
   const [aiModelSearch, setAiModelSearch] = useState('');
   const [aiProviderFilter, setAiProviderFilter] = useState<'all' | 'openai' | 'anthropic' | 'gemini' | 'deepseek' | 'perplexity' | 'groq'>('all');
   const [editingQuotaModelId, setEditingQuotaModelId] = useState<string | null>(null);
@@ -528,6 +533,11 @@ export const AdminView: React.FC = () => {
           setPerplexityKeyInput(data.savedKeys.perplexity || '');
           setDeepseekKeyInput(data.savedKeys.deepseek || '');
           setGroqKeyInput(data.savedKeys.groq || '');
+          setGoogleMapsKeyInput(data.savedKeys.googleMaps || '');
+          setPageSpeedKeyInput(data.savedKeys.pageSpeed || '');
+          setHunterKeyInput(data.savedKeys.hunter || '');
+          setApolloKeyInput(data.savedKeys.apollo || '');
+          setMillionVerifierKeyInput(data.savedKeys.millionverifier || data.savedKeys.millionVerifier || '');
         }
       }
     } catch (err) {
@@ -728,11 +738,16 @@ export const AdminView: React.FC = () => {
           perplexityKey: perplexityKeyInput,
           deepseekKey: deepseekKeyInput,
           groqKey: groqKeyInput,
+          googleMapsKey: googleMapsKeyInput,
+          pageSpeedKey: pageSpeedKeyInput,
+          hunterKey: hunterKeyInput,
+          apolloKey: apolloKeyInput,
+          millionverifierKey: millionVerifierKeyInput,
         }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setActionSuccessMsg('Validated & updated Live AI Model API Keys in database & server configuration!');
+        setActionSuccessMsg('Validated & updated Live AI Model & B2B Prospecting API Keys in database & server configuration!');
         if (data.savedKeys) {
           setGeminiKeyInput(data.savedKeys.gemini || '');
           setOpenaiKeyInput(data.savedKeys.openai || '');
@@ -740,6 +755,11 @@ export const AdminView: React.FC = () => {
           setPerplexityKeyInput(data.savedKeys.perplexity || '');
           setDeepseekKeyInput(data.savedKeys.deepseek || '');
           setGroqKeyInput(data.savedKeys.groq || '');
+          setGoogleMapsKeyInput(data.savedKeys.googleMaps || '');
+          setPageSpeedKeyInput(data.savedKeys.pageSpeed || '');
+          setHunterKeyInput(data.savedKeys.hunter || '');
+          setApolloKeyInput(data.savedKeys.apollo || '');
+          setMillionVerifierKeyInput(data.savedKeys.millionverifier || data.savedKeys.millionVerifier || '');
         }
         fetchAiTokenStats();
       } else {
@@ -2688,6 +2708,161 @@ export const AdminView: React.FC = () => {
                   <p className="text-[10px] text-slate-400">
                     Powers Perplexity Sonar Pro & Sonar Fast search-grounded models.
                   </p>
+                </div>
+              </div>
+
+              {/* B2B Live Prospecting & Real-Time Data Integrations Section */}
+              <div className="pt-4 border-t border-slate-200 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                  <div>
+                    <h4 className="text-xs font-extrabold font-heading text-slate-900 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                      <span>Live B2B Prospector & Data Integrations</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      Required for live business discovery, place details, Lighthouse speed audits, and decision-maker contact intelligence.
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0 self-start sm:self-auto">
+                    Live Data Feeds Only
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Google Maps / Places API */}
+                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${googleMapsKeyInput || aiStats?.apiKeysConfigured?.googleMaps ? 'bg-emerald-50/50 border-emerald-300' : 'bg-slate-50/70 border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>Google Places API</span>
+                        {googleMapsKeyInput || aiStats?.apiKeysConfigured?.googleMaps ? (
+                          <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">ACTIVE</span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">INACTIVE</span>
+                        )}
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500 font-bold">
+                        GOOGLE_MAPS_API_KEY
+                      </span>
+                    </div>
+                    <input
+                      type="password"
+                      value={googleMapsKeyInput}
+                      onChange={(e) => setGoogleMapsKeyInput(e.target.value)}
+                      placeholder="AIzaSy... (Real-time live Google Places feed)"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                    />
+                    <p className="text-[10px] text-slate-500">
+                      Streams real-time live local businesses, addresses, verified phone numbers, websites, and review counts.
+                    </p>
+                  </div>
+
+                  {/* Google PageSpeed Insights API */}
+                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${pageSpeedKeyInput || aiStats?.apiKeysConfigured?.pageSpeed ? 'bg-emerald-50/50 border-emerald-300' : 'bg-slate-50/70 border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>PageSpeed Insights API</span>
+                        {pageSpeedKeyInput || aiStats?.apiKeysConfigured?.pageSpeed ? (
+                          <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">ACTIVE</span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">INACTIVE</span>
+                        )}
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500 font-bold">
+                        PAGESPEED_API_KEY
+                      </span>
+                    </div>
+                    <input
+                      type="password"
+                      value={pageSpeedKeyInput}
+                      onChange={(e) => setPageSpeedKeyInput(e.target.value)}
+                      placeholder="AIzaSy... (Free Google Lighthouse API Key)"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                    />
+                    <p className="text-[10px] text-slate-500">
+                      Powers live Lighthouse technical performance, SEO, mobile responsiveness, and Core Web Vitals audit.
+                    </p>
+                  </div>
+
+                  {/* Apollo.io API (Single Source of Truth) */}
+                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${apolloKeyInput || aiStats?.apiKeysConfigured?.apollo ? 'bg-emerald-50/50 border-emerald-300' : 'bg-slate-50/70 border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>Apollo.io B2B Intelligence</span>
+                        {apolloKeyInput || aiStats?.apiKeysConfigured?.apollo ? (
+                          <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">ACTIVE (Single Source)</span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">INACTIVE</span>
+                        )}
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500 font-bold">
+                        APOLLO_API_KEY
+                      </span>
+                    </div>
+                    <input
+                      type="password"
+                      value={apolloKeyInput}
+                      onChange={(e) => setApolloKeyInput(e.target.value)}
+                      placeholder="apollo_... (Verified Decision-Maker, LinkedIn & Email)"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                    />
+                    <p className="text-[10px] text-slate-500">
+                      <strong>Single Source of Truth:</strong> Automatically provides verified Owner/Executive identities, verified business emails, LinkedIn profile URLs, and direct phone numbers in one call.
+                    </p>
+                  </div>
+
+                  {/* MillionVerifier Email Deliverability API */}
+                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${millionVerifierKeyInput || aiStats?.apiKeysConfigured?.millionverifier ? 'bg-emerald-50/50 border-emerald-300' : 'bg-slate-50/70 border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>MillionVerifier API</span>
+                        {millionVerifierKeyInput || aiStats?.apiKeysConfigured?.millionverifier ? (
+                          <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">ACTIVE</span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">INACTIVE</span>
+                        )}
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500 font-bold">
+                        MILLIONVERIFIER_API_KEY
+                      </span>
+                    </div>
+                    <input
+                      type="password"
+                      value={millionVerifierKeyInput}
+                      onChange={(e) => setMillionVerifierKeyInput(e.target.value)}
+                      placeholder="mv_... (MillionVerifier API Key)"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                    />
+                    <p className="text-[10px] text-slate-500">
+                      Performs deep live SMTP deliverability tests, MX checks, and catch-all filtering to ensure 100% verified non-fake emails.
+                    </p>
+                  </div>
+
+                  {/* Hunter.io API */}
+                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${hunterKeyInput || aiStats?.apiKeysConfigured?.hunter ? 'bg-emerald-50/50 border-emerald-300' : 'bg-slate-50/70 border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>Hunter.io API</span>
+                        {hunterKeyInput || aiStats?.apiKeysConfigured?.hunter ? (
+                          <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">ACTIVE</span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">INACTIVE</span>
+                        )}
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500 font-bold">
+                        HUNTER_API_KEY
+                      </span>
+                    </div>
+                    <input
+                      type="password"
+                      value={hunterKeyInput}
+                      onChange={(e) => setHunterKeyInput(e.target.value)}
+                      placeholder="hunter_... (Domain email search)"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                    />
+                    <p className="text-[10px] text-slate-500">
+                      Enriches domain leads with verified decision-maker email addresses and deliverability confidence scores.
+                    </p>
+                  </div>
                 </div>
               </div>
 

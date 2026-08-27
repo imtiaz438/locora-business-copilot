@@ -35,6 +35,7 @@ import {
   RefreshCw,
   CreditCard,
   Globe2,
+  Globe,
   FileText,
   RotateCcw,
   Check,
@@ -356,6 +357,10 @@ export const SettingsView: React.FC = () => {
   const [opusKey, setOpusKey] = useState(settings.providerKeys?.opus || '');
   const [cursorKey, setCursorKey] = useState(settings.providerKeys?.cursor || '');
   const [grokKey, setGrokKey] = useState(settings.providerKeys?.grok || '');
+  const [googleMapsKey, setGoogleMapsKey] = useState(settings.providerKeys?.googleMaps || settings.providerKeys?.google_maps || '');
+  const [pageSpeedKey, setPageSpeedKey] = useState(settings.providerKeys?.pageSpeed || settings.providerKeys?.pagespeed || '');
+  const [hunterKey, setHunterKey] = useState(settings.providerKeys?.hunter || '');
+  const [apolloKey, setApolloKey] = useState(settings.providerKeys?.apollo || '');
 
   // Provider model selections
   const [providerModels, setProviderModels] = useState<Record<string, string>>(() => ({
@@ -390,6 +395,14 @@ export const SettingsView: React.FC = () => {
       if (settings.providerKeys.opus !== undefined) setOpusKey(settings.providerKeys.opus);
       if (settings.providerKeys.cursor !== undefined) setCursorKey(settings.providerKeys.cursor);
       if (settings.providerKeys.grok !== undefined) setGrokKey(settings.providerKeys.grok);
+      if (settings.providerKeys.googleMaps !== undefined || settings.providerKeys.google_maps !== undefined) {
+        setGoogleMapsKey(settings.providerKeys.googleMaps || settings.providerKeys.google_maps || '');
+      }
+      if (settings.providerKeys.pageSpeed !== undefined || settings.providerKeys.pagespeed !== undefined) {
+        setPageSpeedKey(settings.providerKeys.pageSpeed || settings.providerKeys.pagespeed || '');
+      }
+      if (settings.providerKeys.hunter !== undefined) setHunterKey(settings.providerKeys.hunter);
+      if (settings.providerKeys.apollo !== undefined) setApolloKey(settings.providerKeys.apollo);
     }
     if (settings?.providerModels) {
       setProviderModels((prev) => ({ ...prev, ...settings.providerModels }));
@@ -632,6 +645,12 @@ export const SettingsView: React.FC = () => {
         opus: opusKey,
         cursor: cursorKey,
         grok: grokKey,
+        googleMaps: googleMapsKey,
+        google_maps: googleMapsKey,
+        pageSpeed: pageSpeedKey,
+        pagespeed: pageSpeedKey,
+        hunter: hunterKey,
+        apollo: apolloKey,
       },
       providerModels,
       activeModelVersion: activeModel,

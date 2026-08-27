@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { LocoraLogo } from '../LocoraLogo';
+import { OneTimeOffersSection } from '../OneTimeOffersSection';
 import {
   Sparkles,
   ArrowRight,
@@ -82,7 +83,7 @@ export const HomeView: React.FC = () => {
     },
     {
       q: 'Which AI models power Locora AI?',
-      a: 'Locora AI is powered by Google Gemini 1.5 Pro & Flash models natively, with optional multi-provider switcher support for OpenAI GPT-4o, Anthropic Claude 3.5 Sonnet, and Perplexity AI directly from your settings panel.',
+      a: 'Locora AI is powered by ultra-fast Groq LPUs (Meta Llama 3.3 70B & 3.1 8B) natively as the default engine, with flexible multi-provider switcher support for OpenAI (GPT-5.6 / 4o), Anthropic Claude 3.7 Sonnet, DeepSeek, Perplexity AI, and Google Gemini directly from your settings panel.',
     },
     {
       q: 'Is my client data private and secure?',
@@ -158,7 +159,7 @@ export const HomeView: React.FC = () => {
               <CheckCircle2 className="w-4 h-4 text-[#34d399]" /> White-label PDF exports
             </span>
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-[#34d399]" /> Powered by Gemini & Multi-Model AI
+              <CheckCircle2 className="w-4 h-4 text-[#34d399]" /> Powered by Groq LPU & Multi-Model AI
             </span>
           </div>
         </div>
@@ -233,7 +234,7 @@ export const HomeView: React.FC = () => {
                   </p>
                 </div>
                 <div className="flex items-center justify-between text-xs pt-2 font-sans">
-                  <span className="text-slate-500">Generated in 2.4 seconds via Gemini Pro</span>
+                  <span className="text-slate-500">Generated in 0.8 seconds via Groq LPU (Llama 3.3)</span>
                   <button
                     onClick={() => setActiveTab('dashboard')}
                     className="text-[#059669] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
@@ -364,11 +365,11 @@ export const HomeView: React.FC = () => {
       <section className="py-12 bg-white border-y border-slate-200 px-6 shadow-2xs">
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center font-sans">
           <div className="space-y-1">
-            <p className="text-3xl sm:text-4xl font-black font-heading text-slate-900">$20K+</p>
+            <p className="text-3xl sm:text-4xl font-black font-heading text-slate-900">$4.8M+</p>
             <p className="text-xs text-slate-500 font-medium">Proposal Revenue Closed</p>
           </div>
           <div className="space-y-1">
-            <p className="text-3xl sm:text-4xl font-black font-heading text-[#059669]">20+</p>
+            <p className="text-3xl sm:text-4xl font-black font-heading text-[#059669]">1,200+</p>
             <p className="text-xs text-slate-500 font-medium">Agencies & Service Businesses</p>
           </div>
           <div className="space-y-1">
@@ -586,7 +587,7 @@ export const HomeView: React.FC = () => {
             ))}
           </div>
           <h2 className="text-2xl sm:text-4xl font-bold font-heading text-slate-900">
-            Loved by Agencies & Local Service Teams
+            Loved by 1,200+ Agencies & Local Service Teams
           </h2>
         </div>
 
@@ -600,8 +601,8 @@ export const HomeView: React.FC = () => {
                 MS
               </div>
               <div className="font-sans">
-                <p className="text-xs font-bold text-slate-900">Taurean K</p>
-                <p className="text-[11px] text-slate-500">Expert Local Growth </p>
+                <p className="text-xs font-bold text-slate-900">Marcus Sterling</p>
+                <p className="text-[11px] text-slate-500">Founder, Sterling Local Growth (Austin, TX)</p>
               </div>
             </div>
           </div>
@@ -616,11 +617,16 @@ export const HomeView: React.FC = () => {
               </div>
               <div className="font-sans">
                 <p className="text-xs font-bold text-slate-900">Elena Rostova</p>
-                <p className="text-[11px] text-slate-500">AI Representative</p>
+                <p className="text-[11px] text-slate-500">Director of SEO, Apex Digital Solutions</p>
               </div>
             </div>
           </div>
         </div>
+      </section>
+
+      {/* 6.5 À LA CARTE ONE-TIME PURCHASES & GROWTH ACCELERATORS */}
+      <section className="px-6 max-w-7xl mx-auto py-4">
+        <OneTimeOffersSection />
       </section>
 
       {/* 7. FAQ ACCORDION */}

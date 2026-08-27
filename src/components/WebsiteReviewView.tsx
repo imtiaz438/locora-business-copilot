@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { WebsiteAuditResult } from '../types';
 import { BrandedFooter } from './BrandedFooter';
 import { SeoRecommendationsPanel } from './SeoRecommendationsPanel';
+import { WhiteLabelAuditExportModal } from './WhiteLabelAuditExportModal';
 import {
   Globe,
   Search,
@@ -15,6 +16,7 @@ import {
   ArrowRightLeft,
   AlertCircle,
   FileCheck2,
+  Award,
 } from 'lucide-react';
 
 export const WebsiteReviewView: React.FC = () => {
@@ -29,6 +31,7 @@ export const WebsiteReviewView: React.FC = () => {
 
   // Competitor state
   const [competitorAudit, setCompetitorAudit] = useState<WebsiteAuditResult | null>(null);
+  const [whiteLabelModalOpen, setWhiteLabelModalOpen] = useState(false);
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,6 +158,19 @@ export const WebsiteReviewView: React.FC = () => {
               </span>
             </button>
           </div>
+
+          {/* White-Label PDF Export Button */}
+          <button
+            onClick={() => setWhiteLabelModalOpen(true)}
+            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-slate-900 hover:from-indigo-500 hover:to-slate-800 text-white text-xs font-bold shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+            title="Export full branded 40-point technical audit for clients"
+          >
+            <Award className="w-4 h-4 text-amber-300" />
+            <span>White-Label PDF Report</span>
+            <span className="text-[10px] bg-white/20 text-indigo-100 px-1.5 py-0.5 rounded font-black">
+              {user.planTier === 'agency' ? 'INCLUDED' : '$9.99'}
+            </span>
+          </button>
 
           {/* Audit Mode Selector (Single vs Competitor) */}
           <div className="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200">
@@ -557,6 +573,14 @@ export const WebsiteReviewView: React.FC = () => {
           )}
         </>
       )}
+
+      {/* White-Label Audit Export & Monetization Modal */}
+      <WhiteLabelAuditExportModal
+        isOpen={whiteLabelModalOpen}
+        onClose={() => setWhiteLabelModalOpen(false)}
+        auditUrl={url}
+        auditData={auditDetails}
+      />
     </div>
   );
 };

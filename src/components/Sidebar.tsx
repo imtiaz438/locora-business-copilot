@@ -18,6 +18,8 @@ import {
   X,
   Zap,
   ShieldCheck,
+  Database,
+  GraduationCap,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -41,12 +43,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'chat', label: 'AI Business Chat', icon: MessageSquareText, badge: 'Copilot' },
     { id: 'crm', label: 'Clients (CRM)', icon: Users },
+    { id: 'lead_prospector', label: 'Lead Vault & Prospector', icon: Database, badge: 'B2B Leads' },
     { id: 'invoices', label: 'Invoices', icon: FileSpreadsheet },
     { id: 'proposals', label: 'Proposals & Quotes', icon: FileText },
     { id: 'documents', label: 'Document Generator', icon: FileEdit },
     { id: 'website_review', label: 'Website Audit', icon: Globe, badge: 'Lighthouse' },
     { id: 'local_seo', label: 'Local SEO Assistant', icon: MapPin },
     { id: 'marketing_planner', label: 'Marketing Planner', icon: TrendingUp, requiredPlan: 'pro' },
+    { id: 'masterclass_kit', label: 'Agency Growth Vault', icon: GraduationCap, badge: '$5k Retainers' },
   ];
 
   const handleNavClick = (id: string) => {

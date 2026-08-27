@@ -60,6 +60,75 @@ export async function getWhopConfig(): Promise<WhopConfig> {
   };
 }
 
+export interface OpenWhopOneTimeCheckoutOptions {
+  productType: 'fuel_pack' | 'white_label_audit' | 'lead_list' | 'masterclass_kit';
+  packId?: string;
+  auditId?: string;
+  leadsCount?: number;
+  credits?: number;
+  price: number;
+  email: string;
+  name?: string;
+  userId?: string;
+  metadata?: Record<string, any>;
+  onSuccess?: (data?: any) => void;
+  onError?: (errMsg: string) => void;
+}
+
+/**
+ * Initiates a one-time Whop Checkout session for top-ups or à la carte white-label audit exports
+ */
+export async function openWhopOneTimeCheckout(options: OpenWhopOneTimeCheckoutOptions): Promise<{
+  success: boolean;
+  checkoutUrl?: string;
+  directSettled?: boolean;
+}> {
+  const { productType, packId, auditId, credits, price, email, name, userId, metadata, onError } = options;
+
+  try {
+    const res = await fetch('/api/whop/create-onetime-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productType,
+        packId,
+        auditId,
+        credits,
+        price,
+        email,
+        name,
+        userId,
+        metadata,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      const errorMsg = data.message || data.error || 'Failed to create one-time checkout session.';
+      if (onError) onError(errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    const checkoutUrl = data.checkoutUrl || data.url;
+    if (checkoutUrl) {
+      try {
+        const win = window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
+        if (win) win.focus();
+      } catch {}
+    }
+
+    return {
+      success: true,
+      checkoutUrl,
+    };
+  } catch (err: any) {
+    const msg = err.message || 'Error launching one-time checkout.';
+    if (onError) onError(msg);
+    throw err;
+  }
+}
+
+
 export interface OpenWhopCheckoutOptions {
   plan: 'pro' | 'agency';
   billingCycle: 'monthly' | 'yearly';
@@ -74,6 +143,7 @@ export interface OpenWhopCheckoutOptions {
 /**
  * Initiates checkout using Whop Checkout session or direct checkout link
  */
+
 export async function openWhopCheckout(options: OpenWhopCheckoutOptions): Promise<{
   success: boolean;
   url?: string;

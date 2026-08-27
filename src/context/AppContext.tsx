@@ -36,6 +36,10 @@ interface AppContextType {
   checkoutModalPlan: UserPlan | null;
   checkoutModalCycle: BillingCycle;
   setCheckoutModalPlan: (plan: UserPlan | null, cycle?: BillingCycle) => void;
+  fuelPackModalOpen: boolean;
+  setFuelPackModalOpen: (open: boolean) => void;
+  fuelPackReason?: string;
+  setFuelPackReason: (reason?: string) => void;
   initiateStripeCheckout: (plan: UserPlan, billingCycle?: BillingCycle) => Promise<void>;
   pendingPlanAfterAuth: { plan: UserPlan; cycle: BillingCycle } | null;
   setPendingPlanAfterAuth: (value: { plan: UserPlan; cycle: BillingCycle } | null) => void;
@@ -114,7 +118,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   activeModelVersion: 'llama-3.3-70b-versatile',
   providerModels: {
     groq: 'llama-3.3-70b-versatile',
-    gemini: 'gemini-2.5-flash',
+    gemini: 'gemini-3.6-flash',
     openai: 'gpt-4o',
     claude: 'claude-3-7-sonnet-20250219',
     perplexity: 'sonar-pro',
@@ -269,6 +273,8 @@ const PATH_TO_TAB: Record<string, string> = {
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
   const [checkoutModalPlan, setCheckoutModalPlanState] = useState<UserPlan | null>(null);
   const [checkoutModalCycle, setCheckoutModalCycleState] = useState<BillingCycle>('monthly');
+  const [fuelPackModalOpen, setFuelPackModalOpen] = useState<boolean>(false);
+  const [fuelPackReason, setFuelPackReason] = useState<string | undefined>(undefined);
   const [pendingPlanAfterAuth, setPendingPlanAfterAuth] = useState<{ plan: UserPlan; cycle: BillingCycle } | null>(null);
 
   // Hydrate user session directly from PostgreSQL database on load only if active window session exists
@@ -1201,6 +1207,10 @@ const PATH_TO_TAB: Record<string, string> = {
         checkoutModalPlan,
         checkoutModalCycle,
         setCheckoutModalPlan,
+        fuelPackModalOpen,
+        setFuelPackModalOpen,
+        fuelPackReason,
+        setFuelPackReason,
         initiateStripeCheckout,
         pendingPlanAfterAuth,
         setPendingPlanAfterAuth,

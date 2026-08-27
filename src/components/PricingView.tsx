@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { PricingComparisonTable } from './PricingComparisonTable';
+import { OneTimeOffersSection } from './OneTimeOffersSection';
 import {
   Check,
   Zap,
@@ -286,6 +287,11 @@ export const PricingView: React.FC = () => {
             </div>
           );
         })}
+      </div>
+
+      {/* À La Carte & One-Time Products */}
+      <div className="pt-4">
+        <OneTimeOffersSection />
       </div>
 
       {/* Feature & Credits Comparison Table */}

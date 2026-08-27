@@ -22,14 +22,20 @@ import {
   Receipt,
   ExternalLink,
   Eye,
+  Flame,
+  Award,
+  ChevronRight,
 } from 'lucide-react';
 import { BillingCycle, SubscriptionInvoice } from '../types';
 import { SubscriptionInvoiceModal } from './SubscriptionInvoiceModal';
+import { FUEL_PACKS } from './FuelPackModal';
+import { WhiteLabelAuditExportModal } from './WhiteLabelAuditExportModal';
 
 export const SubscriptionView: React.FC = () => {
-  const { user, subscriptionInvoices, setCheckoutModalPlan, setActiveTab, updateUser, logActivity } = useApp();
+  const { user, subscriptionInvoices, setCheckoutModalPlan, setActiveTab, updateUser, logActivity, setFuelPackModalOpen } = useApp();
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showWhiteLabelModal, setShowWhiteLabelModal] = useState(false);
   const [toggleLoading, setToggleLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<SubscriptionInvoice | null>(null);
@@ -537,6 +543,82 @@ export const SubscriptionView: React.FC = () => {
         </div>
       </div>
 
+      {/* Fuel Packs & À La Carte Upgrades (Phase 1 & 2) */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border border-amber-200 rounded-3xl p-6 sm:p-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md">
+              <Flame className="w-6 h-6 fill-amber-200 text-amber-200" />
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold uppercase tracking-wider mb-1 font-heading">
+                <span>Phase 1 & 2 Instant Velocity</span>
+              </div>
+              <h3 className="text-lg sm:text-xl font-black font-heading text-slate-950">
+                On-Demand AI Copilot Fuel Packs & Add-Ons
+              </h3>
+              <p className="text-xs text-slate-600 font-sans">
+                Need more credits without a recurring commitment? Top-up instantly via Whop Checkout. Credits never expire.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowWhiteLabelModal(true)}
+              className="px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+            >
+              <Award className="w-4 h-4 text-amber-400" />
+              <span>White-Label Audit ($9.99)</span>
+            </button>
+
+            <button
+              onClick={() => setFuelPackModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Flame className="w-4 h-4 fill-amber-200 text-amber-200" />
+              <span>Top-Up Credits Now</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 3 Fuel Pack Options Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {FUEL_PACKS.map((pack) => (
+            <div
+              key={pack.id}
+              onClick={() => setFuelPackModalOpen(true)}
+              className="bg-white border border-amber-200 hover:border-amber-400 p-5 rounded-2xl shadow-xs hover:shadow-md transition-all cursor-pointer space-y-3 relative flex flex-col justify-between"
+            >
+              {pack.badge && (
+                <span className="absolute -top-2.5 right-4 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full shadow-2xs">
+                  {pack.badge}
+                </span>
+              )}
+              <div className="space-y-1">
+                <h4 className="text-sm font-black font-heading text-slate-900">{pack.name}</h4>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-black font-heading text-slate-900">+{pack.credits}</span>
+                  <span className="text-xs font-bold text-amber-700">AI Credits</span>
+                </div>
+                <p className="text-xs text-slate-500 font-sans leading-relaxed">{pack.description}</p>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <div>
+                  <span className="text-base font-black text-slate-900">${pack.price}</span>
+                  <span className="text-[10px] text-slate-400"> one-time</span>
+                </div>
+                <span className="text-xs font-bold text-orange-600 flex items-center gap-0.5">
+                  <span>Buy Pack</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Subscription Invoices History */}
       <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xs font-sans">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -688,6 +770,13 @@ export const SubscriptionView: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+      {/* White-Label Audit Modal */}
+      {showWhiteLabelModal && (
+        <WhiteLabelAuditExportModal
+          isOpen={showWhiteLabelModal}
+          onClose={() => setShowWhiteLabelModal(false)}
+        />
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { PricingComparisonTable } from '../PricingComparisonTable';
+import { OneTimeOffersSection } from '../OneTimeOffersSection';
 import {
   Zap,
   CheckCircle2,
@@ -232,6 +233,11 @@ export const PricingPublicView: React.FC = () => {
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
+      </div>
+
+      {/* One-Time Offers & À La Carte Purchases */}
+      <div className="max-w-6xl mx-auto pt-4">
+        <OneTimeOffersSection />
       </div>
 
       {/* Feature & Credits Comparison Table */}
