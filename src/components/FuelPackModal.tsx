@@ -51,7 +51,7 @@ interface Props {
 }
 
 export const FuelPackModal: React.FC<Props> = ({ isOpen, onClose, initialReason }) => {
-  const { user, updateUser, logActivity } = useApp();
+  const { user, updateUser, logActivity, setAuthModalOpen } = useApp();
   const [selectedPack, setSelectedPack] = useState<FuelPackOption>(FUEL_PACKS[1]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -60,6 +60,12 @@ export const FuelPackModal: React.FC<Props> = ({ isOpen, onClose, initialReason 
   if (!isOpen) return null;
 
   const handlePurchaseFuelPack = async () => {
+    if (!user.isAuthenticated) {
+      onClose();
+      setAuthModalOpen(true);
+      return;
+    }
+
     setIsProcessing(true);
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -146,16 +152,33 @@ export const FuelPackModal: React.FC<Props> = ({ isOpen, onClose, initialReason 
                 <Zap className="w-4 h-4 text-amber-600" />
               </div>
               <div>
-                <p className="text-xs text-amber-900 font-bold">Your Current Balance</p>
+                <p className="text-xs text-amber-900 font-bold">
+                  {user.isAuthenticated ? 'Your Current Balance' : 'Instant Activation Upon Purchase'}
+                </p>
                 <p className="text-[11px] text-amber-700">
-                  {user.monthlyAiCredits - (user.aiCreditsUsed || 0)} available credits ({user.planTier.toUpperCase()} Plan)
+                  {user.isAuthenticated
+                    ? `${user.monthlyAiCredits - (user.aiCreditsUsed || 0)} available credits (${user.planTier.toUpperCase()} Plan)`
+                    : 'Sign in to link credits to your workspace profile'}
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <span className="text-xs font-extrabold text-amber-900 bg-amber-200/70 px-3 py-1 rounded-full">
-                Credits Never Expire
-              </span>
+              {user.isAuthenticated ? (
+                <span className="text-xs font-extrabold text-amber-900 bg-amber-200/70 px-3 py-1 rounded-full">
+                  Credits Never Expire
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    setAuthModalOpen(true);
+                  }}
+                  className="text-xs font-bold text-amber-900 underline hover:text-amber-950 cursor-pointer"
+                >
+                  Sign In First →
+                </button>
+              )}
             </div>
           </div>
 

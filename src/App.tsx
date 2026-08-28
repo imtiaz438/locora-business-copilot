@@ -20,6 +20,8 @@ import { PricingView } from './components/PricingView';
 import { SubscriptionView } from './components/SubscriptionView';
 import { LandingPageView } from './components/LandingPageView';
 import { AdminView } from './components/AdminView';
+import { LeadProspectorView } from './components/LeadProspectorView';
+import { MasterclassKitView } from './components/MasterclassKitView';
 
 // Public Marketing & SEO Architecture Views
 import { HomeView } from './components/public/HomeView';
@@ -69,12 +71,17 @@ const PATH_TO_TAB: Record<string, string> = {
   'chat': 'chat',
   'crm': 'crm',
   'projects': 'projects',
+  'lead-prospector': 'lead_prospector',
+  'leads': 'lead_prospector',
+  'lead-vault': 'lead_prospector',
   'invoices': 'invoices',
   'proposals': 'proposals',
   'documents': 'documents',
   'website-audit': 'website_review',
   'local-seo': 'local_seo',
   'marketing-planner': 'marketing',
+  'masterclass': 'masterclass_kit',
+  'growth-kit': 'masterclass_kit',
   'pricing-plans': 'pricing',
   'subscription': 'subscription',
   'settings': 'settings',
@@ -246,6 +253,7 @@ const MainContent: React.FC = () => {
       {activeTab === 'chat' && <ChatView />}
       {activeTab === 'crm' && <CRMView />}
       {activeTab === 'projects' && <CRMView initialTab="projects" />}
+      {(activeTab === 'lead_prospector' || activeTab === 'lead_vault' || activeTab === 'b2b_vault' || activeTab === 'leads' || activeTab === 'lead-prospector') && <LeadProspectorView />}
       {activeTab === 'invoices' && <InvoiceView />}
       {activeTab === 'proposals' && <ProposalView />}
       {activeTab === 'documents' && <DocumentGeneratorView />}
@@ -253,6 +261,7 @@ const MainContent: React.FC = () => {
       {activeTab === 'local_seo' && <LocalSeoView />}
       {activeTab === 'marketing' && <MarketingPlannerView />}
       {activeTab === 'marketing_planner' && <MarketingPlannerView />}
+      {(activeTab === 'masterclass_kit' || activeTab === 'agency_vault' || activeTab === 'growth_vault' || activeTab === 'masterclass') && <MasterclassKitView />}
       {activeTab === 'pricing' && <PricingView />}
       {activeTab === 'subscription' && <SubscriptionView />}
       {activeTab === 'settings' && <SettingsView />}

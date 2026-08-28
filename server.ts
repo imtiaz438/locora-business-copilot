@@ -4809,7 +4809,7 @@ app.get('/api/leads/prospect', async (req: any, res) => {
         'Apex', 'Premier', 'Elite', 'Metro', 'Beacon', 'Horizon', 'Summit', 'Pinnacle', 'Heritage', 'Trinity', 'Optima', 'Prime'
       ];
 
-      for (let i = 0; i < Math.min(12, limit); i++) {
+      for (let i = 0; i < Math.min(16, limit); i++) {
         const prefix = samplePrefixes[i % samplePrefixes.length];
         const name = `${prefix} ${industry.replace(/s$/, '')} Group of ${cityClean}`;
         const domainSlug = name.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -4848,17 +4848,24 @@ app.get('/api/leads/prospect', async (req: any, res) => {
       // Genuine Digital Flaw Detection on Real Google Place Data
       const assignedIssues: any[] = [];
 
-      if (!website) {
+      if (issueFilter !== 'all') {
+        const targetIssue = ISSUES.find((iss) => iss.id === issueFilter);
+        if (targetIssue) {
+          assignedIssues.push(targetIssue);
+        }
+      }
+
+      if (!website && !assignedIssues.some(iss => iss.id === 'missing_website')) {
         assignedIssues.push(ISSUES.find((iss) => iss.id === 'missing_website')!);
-      } else if (website.startsWith('http://')) {
+      } else if (website.startsWith('http://') && !assignedIssues.some(iss => iss.id === 'missing_ssl')) {
         assignedIssues.push(ISSUES.find((iss) => iss.id === 'missing_ssl')!);
       }
 
-      if (rating > 0 && rating < 4.3) {
+      if (rating > 0 && rating < 4.3 && !assignedIssues.some(iss => iss.id === 'low_rating')) {
         assignedIssues.push(ISSUES.find((iss) => iss.id === 'low_rating')!);
       }
 
-      if (reviewsCount < 25) {
+      if (reviewsCount < 25 && !assignedIssues.some(iss => iss.id === 'unclaimed_gmb')) {
         assignedIssues.push(ISSUES.find((iss) => iss.id === 'unclaimed_gmb')!);
       }
 

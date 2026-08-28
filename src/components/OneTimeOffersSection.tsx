@@ -26,7 +26,7 @@ export const OneTimeOffersSection: React.FC<OneTimeOffersSectionProps> = ({
   compact = false,
   className = '',
 }) => {
-  const { user, setActiveTab, setFuelPackModalOpen } = useApp();
+  const { user, setActiveTab, setFuelPackModalOpen, setAuthModalOpen } = useApp();
   const [showWhiteLabelModal, setShowWhiteLabelModal] = useState(false);
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
 
@@ -68,7 +68,13 @@ export const OneTimeOffersSection: React.FC<OneTimeOffersSectionProps> = ({
         'Credits NEVER expire — top up as needed',
       ],
       ctaText: 'Top-Up Credits',
-      onAction: () => setFuelPackModalOpen(true),
+      onAction: () => {
+        if (user.isAuthenticated) {
+          setFuelPackModalOpen(true);
+        } else {
+          setAuthModalOpen(true);
+        }
+      },
       popular: false,
     },
     {

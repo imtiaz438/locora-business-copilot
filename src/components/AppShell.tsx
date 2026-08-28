@@ -75,6 +75,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
         <PublicFooter />
         <AuthModal />
         <CheckoutModal />
+        <FuelPackModal
+          isOpen={fuelPackModalOpen}
+          onClose={() => setFuelPackModalOpen(false)}
+          initialReason={fuelPackReason}
+        />
         <CookieConsentBanner />
       </div>
     );

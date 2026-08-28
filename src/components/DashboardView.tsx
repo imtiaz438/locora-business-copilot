@@ -26,6 +26,8 @@ import {
   Mic,
   Share2,
   Trophy,
+  Database,
+  GraduationCap,
 } from 'lucide-react';
 
 export const DashboardView: React.FC = () => {
@@ -334,13 +336,23 @@ export const DashboardView: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setActiveTab('website_review')}
+            onClick={() => setActiveTab('lead_prospector')}
             className="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl flex flex-col items-center gap-2 text-center transition-all group cursor-pointer"
           >
-            <div className="w-9 h-9 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Globe className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Database className="w-5 h-5" />
             </div>
-            <span className="text-xs font-semibold text-slate-800 font-sans">Website Audit</span>
+            <span className="text-xs font-semibold text-slate-800 font-sans">B2B Vault</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('masterclass_kit')}
+            className="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl flex flex-col items-center gap-2 text-center transition-all group cursor-pointer"
+          >
+            <div className="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <GraduationCap className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-semibold text-slate-800 font-sans">Agency Vault</span>
           </button>
         </div>
       </div>
