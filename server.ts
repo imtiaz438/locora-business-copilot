@@ -4106,6 +4106,29 @@ function getWhopCheckoutUrl(plan: string, isYearly: boolean): string {
   }
 }
 
+function getWhopOneTimeCheckoutUrl(productType: string, packId?: string): string {
+  const pType = (productType || '').toLowerCase();
+  const pId = (packId || '').toLowerCase();
+
+  if (pType === 'masterclass_kit') {
+    return process.env.WHOP_CHECKOUT_MASTERCLASS_KIT_URL?.trim() || process.env.WHOP_CHECKOUT_AGENCY_KIT_URL?.trim() || '';
+  }
+  if (pType === 'white_label_audit') {
+    return process.env.WHOP_CHECKOUT_WHITE_LABEL_AUDIT_URL?.trim() || '';
+  }
+  if (pType === 'lead_list') {
+    if (pId.includes('1000')) return process.env.WHOP_CHECKOUT_LEADS_1000_URL?.trim() || '';
+    if (pId.includes('500')) return process.env.WHOP_CHECKOUT_LEADS_500_URL?.trim() || '';
+    return process.env.WHOP_CHECKOUT_LEADS_250_URL?.trim() || '';
+  }
+  if (pType === 'fuel_pack') {
+    if (pId.includes('500') || pId.includes('300') || pId.includes('power')) return process.env.WHOP_CHECKOUT_FUEL_POWER_URL?.trim() || '';
+    if (pId.includes('150') || pId.includes('120') || pId.includes('growth')) return process.env.WHOP_CHECKOUT_FUEL_GROWTH_URL?.trim() || '';
+    return process.env.WHOP_CHECKOUT_FUEL_STARTER_URL?.trim() || '';
+  }
+  return '';
+}
+
 // Synchronize auto-renewal cancellation with Whop API
 async function syncWhopAutoRenewalCancellation(membershipId?: string): Promise<boolean> {
   if (!membershipId) return false;
@@ -4451,6 +4474,40 @@ app.post('/api/whop/create-onetime-checkout', async (req: any, res) => {
       productName = `Locora AI Verified B2B Lead List (${packId || 'Custom'} Leads)`;
     } else if (productType === 'masterclass_kit') {
       productName = 'Locora AI Agency Growth Kit & Masterclass Vault';
+    }
+
+    // 0. If direct hosted checkout URL is configured for this specific product, use it immediately
+    const directProductCheckoutUrl = getWhopOneTimeCheckoutUrl(productType, packId);
+    if (directProductCheckoutUrl) {
+      try {
+        const urlObj = new URL(directProductCheckoutUrl);
+        if (normalizedEmail) urlObj.searchParams.set('email', normalizedEmail);
+        if (name) urlObj.searchParams.set('name', name);
+        urlObj.searchParams.set('redirect_url', successUrl);
+        urlObj.searchParams.set('return_url', successUrl);
+        urlObj.searchParams.set('success_url', successUrl);
+        urlObj.searchParams.set('destination', successUrl);
+        urlObj.searchParams.set('direct', 'true');
+        urlObj.searchParams.set('metadata[product_type]', productType);
+        if (packId) urlObj.searchParams.set('metadata[pack_id]', packId);
+        if (userId) urlObj.searchParams.set('metadata[user_id]', userId);
+
+        return res.json({
+          success: true,
+          checkoutUrl: urlObj.toString(),
+          url: urlObj.toString(),
+          productName,
+          price,
+        });
+      } catch (urlErr) {
+        return res.json({
+          success: true,
+          checkoutUrl: directProductCheckoutUrl,
+          url: directProductCheckoutUrl,
+          productName,
+          price,
+        });
+      }
     }
 
     // If Whop API key is present, create session
