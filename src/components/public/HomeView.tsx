@@ -70,24 +70,28 @@ export const HomeView: React.FC = () => {
 
   const faqs = [
     {
-      q: 'How does Locora AI help local service businesses and agencies?',
-      a: 'Locora AI consolidates all client operational tasks into one copilot workspace. Instead of using separate tools for proposals, CRM, Google Business SEO, invoice PDFs, and website audits, Locora AI auto-generates structured proposals, audits websites, manages lead pipelines, and builds local schema markup in seconds using multi-model AI.',
+      q: 'What is an AI business operating system for service businesses?',
+      a: 'An AI business operating system is a unified platform like Locora AI that consolidates client relationship management (CRM), proposal generation, local Google Maps ranking automation, technical website health audits, and invoice processing into a single automated workspace—eliminating the need for 5 separate subscriptions.',
+    },
+    {
+      q: 'How do I automate local SEO and Google Maps ranking with Locora AI?',
+      a: 'Locora AI automates local search visibility by analyzing Google Maps competitor gaps, generating keyword-optimized Google Business Profile descriptions and weekly geo-updates, writing contextual 5-star review responses with local service keywords, and generating valid JSON-LD LocalBusiness schema code in one click.',
+    },
+    {
+      q: 'How does the AI proposal generator integrate with the built-in CRM?',
+      a: 'When you track a lead in Locora CRM, the proposal generator pulls client specifications, deal size, and service tier to draft itemized scopes of work, deliverable milestones, and payment terms in under 60 seconds. Once approved, proposals convert directly into trackable PDF invoices.',
+    },
+    {
+      q: 'Can digital agencies white-label PDF proposals, audits, and invoices?',
+      a: 'Yes! Agency and Pro users can customize full white-label branding, including custom agency logos, business addresses, localized tax rates, payment terms, and brand colors across all exported PDF proposals, client audit decks, and invoices.',
+    },
+    {
+      q: 'Which industries and verticals benefit most from Locora AI?',
+      a: 'Locora AI is specialized for digital growth agencies, dental practices, HVAC & plumbing contractors, real estate brokerages, law firms, and multi-location service brands that require automated local visibility and streamlined client workflows.',
     },
     {
       q: 'Do I need a credit card to try Locora AI?',
-      a: 'No! You can sign up for our Free Starter Plan with zero credit card required. You receive 25 complimentary AI copilot credits every month to generate proposals, SEO schemas, and website audits.',
-    },
-    {
-      q: 'Can I white-label PDF proposals and invoices with my own business branding?',
-      a: 'Yes! In your Business Settings, you can configure your custom logo, business address, currency, tax ID, and preferred brand colors. All exported PDF proposals, invoices, and audit documents include your white-label branding.',
-    },
-    {
-      q: 'Which AI models power Locora AI?',
-      a: 'Locora AI is powered by ultra-fast Groq LPUs (Meta Llama 3.3 70B & 3.1 8B) natively as the default engine, with flexible multi-provider switcher support for OpenAI (GPT-5.6 / 4o), Anthropic Claude 3.7 Sonnet, DeepSeek, Perplexity AI, and Google Gemini directly from your settings panel.',
-    },
-    {
-      q: 'Is my client data private and secure?',
-      a: 'Absolutely. We do not use your private client records, CRM data, or proposal contents to train public AI models. All data is encrypted in transit and at rest with strict SOC2-aligned privacy controls.',
+      a: 'No credit card is required. You can start with our Free Starter Plan immediately, which includes 25 monthly AI copilot credits for proposals, local SEO schema generation, and domain health audits.',
     },
   ];
 

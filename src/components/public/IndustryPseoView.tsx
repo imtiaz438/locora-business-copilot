@@ -48,7 +48,13 @@ export const INDUSTRY_DATABASE: Record<string, IndustryData> = {
     heroHeadline: '#1 AI Operating System & Local SEO Copilot for Dental Practices',
     heroSubheadline:
       'Dominate Google Maps local search, automate patient review responses, manage treatment plan estimates, and scale private pay leads for your dental clinic.',
-    targetKeywords: ['Dental Local SEO', 'Dentist CRM Software', 'Google Maps Ranking for Dentists', 'Dental Practice AI Copilot'],
+    targetKeywords: [
+      'AI local SEO for dental practices',
+      'Google Maps ranking tool for dentists',
+      'automated patient CRM and invoicing for dental clinics',
+      'proposal software for dental marketing agencies',
+      'how do dentists improve their Google Business ranking'
+    ],
     stats: [
       { label: 'Map Pack Impressions', value: '+340%', detail: 'In first 60 days on Locora AI' },
       { label: 'Patient Reviews', value: '4.8★', detail: 'Automated 5-star review collection' },
@@ -81,7 +87,13 @@ export const INDUSTRY_DATABASE: Record<string, IndustryData> = {
     heroHeadline: 'AI Business Operating System & Local SEO for HVAC & Cooling Contractors',
     heroSubheadline:
       'Capture emergency repair calls, rank #1 in your local service radius, generate instant job estimates, and manage maintenance contract renewals.',
-    targetKeywords: ['HVAC Local SEO', 'HVAC CRM Software', 'AC Repair Google Maps SEO', 'Contractor Estimate Generator'],
+    targetKeywords: [
+      'local SEO copilot for HVAC companies',
+      'AI lead management for HVAC contractors',
+      'automated invoicing tool for home service contractors',
+      'Google Business optimization for HVAC businesses',
+      'how can HVAC companies get more local leads with AI'
+    ],
     stats: [
       { label: 'Service Call Leads', value: '3.8x', detail: 'More inbound high-intent local calls' },
       { label: 'Estimate Close Rate', value: '+42%', detail: 'Faster digital mobile proposals' },
@@ -114,7 +126,13 @@ export const INDUSTRY_DATABASE: Record<string, IndustryData> = {
     heroHeadline: 'AI Business OS & Hyper-Local Ranking Copilot for Real Estate Agents & Teams',
     heroSubheadline:
       'Establish hyper-local neighborhood authority, generate client pitch decks & CMA proposals, and capture home seller leads before competitors.',
-    targetKeywords: ['Real Estate Local SEO', 'Realtor CRM', 'Neighborhood Market Reports AI', 'Listing Pitch Deck Generator'],
+    targetKeywords: [
+      'AI CRM for real estate agents and teams',
+      'automated proposal generator for real estate professionals',
+      'local SEO tool for real estate agencies',
+      'client follow-up automation for realtors',
+      'how do real estate agents automate client follow-up and SEO'
+    ],
     stats: [
       { label: 'Local Seller Leads', value: '4.2x', detail: 'Higher seller inquiry conversion' },
       { label: 'Proposal Time', value: '< 3 mins', detail: 'To generate personalized CMA decks' },
@@ -303,6 +321,89 @@ export const INDUSTRY_DATABASE: Record<string, IndustryData> = {
     sampleProposalSnippet: 'Complete Brake System Overhaul & Rotor Replacement • Ceramic Pads, Fluid Flush & 24-Mo Warranty • Estimate: $890 • Digital Approval Ready.',
     sampleReviewReply: '"Thank you for trusting our mechanic team with your vehicle, Chris! Safe travels on your road trip and let us know if you need anything else."',
     defaultAvgTicket: 850,
+  },
+  'agencies': {
+    slug: 'agencies',
+    name: 'Marketing & SEO Agencies',
+    category: 'Agency & Professional Services',
+    iconName: 'Briefcase',
+    heroHeadline: 'Agency Operating System with AI Automation & Unified Client CRM',
+    heroSubheadline:
+      'The all-in-one local SEO and CRM platform built for modern agencies. Automate Google Maps ranking audits, generate tiered proposals in 60s, and manage client retainers with white-label invoicing.',
+    targetKeywords: [
+      'white label local SEO and CRM platform for agencies',
+      'AI operating system for digital marketing agencies',
+      'client reporting and proposal automation for SEO agencies',
+      'scalable CRM and SEO tool for small marketing agencies',
+      'agency operating system with AI automation',
+      'AI powered client management for agencies',
+      'automated Google Maps ranking tool for agencies',
+      'all-in-one local SEO and CRM platform',
+      'proposal generator with built-in CRM',
+      'local SEO software with proposal automation'
+    ],
+    stats: [
+      { label: 'Software Overhead Saved', value: '80%', detail: 'Replaces 5+ disconnected SaaS tools' },
+      { label: 'Retainer Close Rate', value: '+45%', detail: 'Using instant 3-tier proposals' },
+      { label: 'Client Retention', value: '14+ Mo', detail: 'Automated local SEO reporting & CRM' },
+    ],
+    useCases: [
+      {
+        title: 'Automated Google Maps & Schema Audits',
+        desc: 'Generate white-label 7-point audit teardowns with JSON-LD schema in 10 seconds to convert cold outreach into retainers.',
+      },
+      {
+        title: 'Tiered Proposal & Scope Generator',
+        desc: 'Draft Good/Better/Best commercial proposals directly from discovery notes with built-in digital signature terms.',
+      },
+      {
+        title: 'Visual Pipeline CRM & PDF Invoicing',
+        desc: 'Track deal stages, log client notes, and issue branded white-label PDF invoices with automated tax calculations.',
+      },
+    ],
+    schemaType: 'ProfessionalService',
+    sampleProposalSnippet: 'Agency Growth Retainer Agreement • Full Local SEO & Google Maps 3-Pack Management, 8 Citations/Mo & Schema Deployment • Retainer: $2,500/mo • Terms: Net 15.',
+    sampleReviewReply: '"Thank you, Marcus! Our team loves scaling local visibility for your dental practice. We are excited for another quarter of record inbound patient calls!"',
+    defaultAvgTicket: 2500,
+  },
+  'contractors': {
+    slug: 'contractors',
+    name: 'General Contractors & Builders',
+    category: 'Home Services & Contracting',
+    iconName: 'Wrench',
+    heroHeadline: 'Google Maps SEO Copilot & Proposal Generator for Contractors',
+    heroSubheadline:
+      'Capture high-margin remodeling and construction projects, automate Google Maps ranking across your service radius, and deliver 3-tier digital estimates on site.',
+    targetKeywords: [
+      'Google Maps SEO copilot for contractors',
+      'local ranking software for multi-location businesses',
+      'client CRM and invoicing in one platform',
+      'AI business operating system for service businesses',
+      'commercial quote generator'
+    ],
+    stats: [
+      { label: 'Remodeling Inquiries', value: '+290%', detail: 'Inbound local search project leads' },
+      { label: 'Bid Win Rate', value: '52%', detail: 'Using 3-tier Good/Better/Best proposals' },
+      { label: 'Average Project Lift', value: '+$3,200', detail: 'Higher average ticket size' },
+    ],
+    useCases: [
+      {
+        title: 'Service Radius Google Maps Dominance',
+        desc: 'Deploy GeneralContractor schema and geotargeted suburb pages to outrank competitors across your entire metro area.',
+      },
+      {
+        title: 'On-Site 3-Tier Proposal Builder',
+        desc: 'Present homeowners with itemized remodeling packages (Standard, Premium, Lifetime Warranty) directly on your tablet.',
+      },
+      {
+        title: 'Automated Job Sign-Off & Reviews',
+        desc: 'Send SMS review requests on the driveway during final project walkthroughs to build a 5-star local reputation.',
+      },
+    ],
+    schemaType: 'GeneralContractor',
+    sampleProposalSnippet: 'Master Bathroom Remodel & Custom Tile Installation • Includes Waterproofing Membrane, Fixtures & 10-Yr Workmanship Warranty • Fixed Price: $14,500.',
+    sampleReviewReply: '"Thank you for the 5-star review, Tom! Our construction crew was glad to complete your kitchen remodel ahead of schedule. Enjoy the new custom countertops!"',
+    defaultAvgTicket: 6500,
   },
 };
 
