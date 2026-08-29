@@ -1649,6 +1649,69 @@ async function saveSubscriberToSql(sub: { email: string; subscribedAt: string })
 
 async function syncSqlDatabase() {
   try {
+    // 1. Sync global settings & API keys from Cloud SQL Database
+    const dbSettings = await dbService.getSettings().catch(() => null);
+    if (dbSettings) {
+      storedAppSettings = {
+        ...(storedAppSettings || {}),
+        ...(dbSettings || {}),
+        providerKeys: {
+          ...(dbSettings.providerKeys || {}),
+          ...(storedAppSettings?.providerKeys || {}),
+        },
+      };
+      if (storedAppSettings.providerKeys) {
+        syncProviderKeysToEnv(storedAppSettings.providerKeys);
+      }
+      saveSettingsToDisk(storedAppSettings);
+      console.log('🔑 [Database Engine] Loaded and synchronized API provider keys from PostgreSQL.');
+    }
+
+    // 2. Sync transactions from Cloud SQL Database
+    const sqlTransactions = await dbService.getTransactions().catch(() => []);
+    if (Array.isArray(sqlTransactions)) {
+      sqlTransactions.forEach((st: any) => {
+        if (st && st.id && !transactionsDb.has(st.id) && !deletedTransactionIds.has(st.id)) {
+          transactionsDb.set(st.id, {
+            ...st,
+            createdAt: st.createdAt ? new Date(st.createdAt).toISOString() : new Date().toISOString(),
+            updatedAt: st.updatedAt ? new Date(st.updatedAt).toISOString() : new Date().toISOString(),
+          });
+        }
+      });
+      saveTransactionsToDisk();
+    }
+
+    // 3. Sync users from Cloud SQL Database
+    const sqlUsers = await dbService.getUsers().catch(() => []);
+    if (Array.isArray(sqlUsers)) {
+      sqlUsers.forEach((u: any) => {
+        if (u && u.email) {
+          const cleanEmail = u.email.toLowerCase().trim();
+          if (!usersDb.has(cleanEmail)) {
+            const sqlRole = (u.role as string) || '';
+            const fallbackRole = sqlRole || (cleanEmail === 'imtiazbaloch3322@gmail.com' || cleanEmail === 'support@locoraai.com' ? 'admin' : u.planTier && u.planTier !== 'free' ? 'subscriber' : 'customer');
+            usersDb.set(cleanEmail, {
+              id: u.uid || `usr_${Date.now()}`,
+              name: u.name || 'User',
+              email: u.email,
+              companyName: u.companyName || 'My Business',
+              role: fallbackRole as any,
+              planTier: (u.planTier as any) || 'free',
+              subscriptionStatus: 'active',
+              billingCycle: 'monthly',
+              monthlyAiCredits: u.planTier === 'agency' ? 9999 : u.planTier === 'pro' ? 250 : 25,
+              aiCreditsUsed: 0,
+              memberSince: u.createdAt ? new Date(u.createdAt).toISOString() : new Date().toISOString(),
+              nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
+            });
+          }
+        }
+      });
+      saveUsersToDisk();
+    }
+
+    // 4. Sync newsletter subscribers
     const sqlSubscribers = await dbService.getNewsletterSubscribers().catch(() => []);
     if (Array.isArray(sqlSubscribers)) {
       sqlSubscribers.forEach((s) => {
@@ -1661,7 +1724,7 @@ async function syncSqlDatabase() {
       });
     }
 
-    console.log(`🐘 [Database Engine] PostgreSQL Cloud SQL Database active.`);
+    console.log(`🐘 [Database Engine] PostgreSQL Cloud SQL Database synchronized successfully.`);
   } catch (err: any) {
     console.log('⚡ [Database Sync status]: PostgreSQL Cloud SQL ready.');
   }
@@ -4064,68 +4127,210 @@ function getWhopEnvironment(): 'sandbox' | 'production' {
   return 'sandbox';
 }
 
+function cleanWhopUrlOrPlanId(raw?: string): string {
+  if (!raw || typeof raw !== 'string') return '';
+  // 1. Remove comments after '#' (e.g., "plan_123   # 120/150 Credits" -> "plan_123")
+  let cleaned = raw.split('#')[0];
+  // 2. Remove comments after ' //' or '/*'
+  const slashComment = cleaned.indexOf(' //');
+  if (slashComment !== -1) {
+    cleaned = cleaned.substring(0, slashComment);
+  }
+  // 3. Trim whitespace
+  cleaned = cleaned.trim();
+  if (!cleaned) return '';
+
+  // 4. If it's a full URL (http or https)
+  if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) {
+    try {
+      const urlObj = new URL(cleaned);
+      // Clean path segments of any trailing whitespace or trailing slashes
+      const cleanSegments = urlObj.pathname
+        .split('/')
+        .map((s) => decodeURIComponent(s).trim())
+        .filter(Boolean);
+      urlObj.pathname = '/' + cleanSegments.join('/');
+      urlObj.hash = ''; // clear hash
+      return urlObj.toString();
+    } catch {
+      return cleaned.replace(/\s+/g, '');
+    }
+  }
+
+  // 5. If it's a plan ID (e.g. starts with plan_ or contains plan_):
+  const planMatch = cleaned.match(/plan_[a-zA-Z0-9_-]+/);
+  if (planMatch) {
+    return `https://whop.com/checkout/${planMatch[0]}`;
+  }
+
+  // 6. If it's a direct checkout slug or id:
+  const firstWord = cleaned.split(/\s+/)[0].replace(/\/+$/, '');
+  if (firstWord) {
+    if (firstWord.startsWith('https://') || firstWord.startsWith('http://')) {
+      return firstWord;
+    }
+    return `https://whop.com/checkout/${firstWord}`;
+  }
+
+  return '';
+}
+
 function getWhopPlanId(plan: string, isYearly: boolean): string {
   const normalizedPlan = (plan || 'pro').toLowerCase();
+  let raw = '';
   if (normalizedPlan === 'agency') {
-    return isYearly
-      ? (process.env.WHOP_PLAN_ID_AGENCY_YEARLY?.trim() ||
-         process.env.WHOP_AGENCY_PRICE_ID_YEARLY?.trim() ||
-         process.env.WHOP_AGENCY_YEARLY_PLAN_ID?.trim() ||
-         process.env.WHOP_PLAN_AGENCY_YEARLY?.trim() ||
+    raw = isYearly
+      ? (process.env.WHOP_PLAN_ID_AGENCY_YEARLY ||
+         process.env.WHOP_AGENCY_PRICE_ID_YEARLY ||
+         process.env.WHOP_AGENCY_YEARLY_PLAN_ID ||
+         process.env.WHOP_PLAN_AGENCY_YEARLY ||
          '')
-      : (process.env.WHOP_PLAN_ID_AGENCY_MONTHLY?.trim() ||
-         process.env.WHOP_AGENCY_PRICE_ID_MONTHLY?.trim() ||
-         process.env.WHOP_AGENCY_MONTHLY_PLAN_ID?.trim() ||
-         process.env.WHOP_PLAN_AGENCY_MONTHLY?.trim() ||
+      : (process.env.WHOP_PLAN_ID_AGENCY_MONTHLY ||
+         process.env.WHOP_AGENCY_PRICE_ID_MONTHLY ||
+         process.env.WHOP_AGENCY_MONTHLY_PLAN_ID ||
+         process.env.WHOP_PLAN_AGENCY_MONTHLY ||
          '');
   } else {
-    return isYearly
-      ? (process.env.WHOP_PLAN_ID_PRO_YEARLY?.trim() ||
-         process.env.WHOP_PRO_PRICE_ID_YEARLY?.trim() ||
-         process.env.WHOP_PRO_YEARLY_PLAN_ID?.trim() ||
-         process.env.WHOP_PLAN_PRO_YEARLY?.trim() ||
+    raw = isYearly
+      ? (process.env.WHOP_PLAN_ID_PRO_YEARLY ||
+         process.env.WHOP_PRO_PRICE_ID_YEARLY ||
+         process.env.WHOP_PRO_YEARLY_PLAN_ID ||
+         process.env.WHOP_PLAN_PRO_YEARLY ||
          '')
-      : (process.env.WHOP_PLAN_ID_PRO_MONTHLY?.trim() ||
-         process.env.WHOP_PRO_PRICE_ID_MONTHLY?.trim() ||
-         process.env.WHOP_PRO_MONTHLY_PLAN_ID?.trim() ||
-         process.env.WHOP_PLAN_PRO_MONTHLY?.trim() ||
+      : (process.env.WHOP_PLAN_ID_PRO_MONTHLY ||
+         process.env.WHOP_PRO_PRICE_ID_MONTHLY ||
+         process.env.WHOP_PRO_MONTHLY_PLAN_ID ||
+         process.env.WHOP_PLAN_PRO_MONTHLY ||
          'plan_YnyK5b0EghXB1');
   }
+  if (!raw) return normalizedPlan === 'agency' ? '' : 'plan_YnyK5b0EghXB1';
+  const planMatch = raw.split('#')[0].trim().match(/plan_[a-zA-Z0-9_-]+/);
+  if (planMatch) return planMatch[0];
+  return raw.split('#')[0].trim().split(/\s+/)[0];
 }
 
 function getWhopCheckoutUrl(plan: string, isYearly: boolean): string {
   const normalizedPlan = (plan || 'pro').toLowerCase();
+  let raw = '';
   if (normalizedPlan === 'agency') {
-    return isYearly
-      ? (process.env.WHOP_CHECKOUT_AGENCY_YEARLY_URL?.trim() || '')
-      : (process.env.WHOP_CHECKOUT_AGENCY_MONTHLY_URL?.trim() || '');
+    raw = isYearly
+      ? (process.env.WHOP_CHECKOUT_AGENCY_YEARLY_URL || '')
+      : (process.env.WHOP_CHECKOUT_AGENCY_MONTHLY_URL || '');
   } else {
-    return isYearly
-      ? (process.env.WHOP_CHECKOUT_PRO_YEARLY_URL?.trim() || '')
-      : (process.env.WHOP_CHECKOUT_PRO_MONTHLY_URL?.trim() || 'https://whop.com/checkout/plan_YnyK5b0EghXB1');
+    raw = isYearly
+      ? (process.env.WHOP_CHECKOUT_PRO_YEARLY_URL || '')
+      : (process.env.WHOP_CHECKOUT_PRO_MONTHLY_URL || 'https://whop.com/checkout/plan_YnyK5b0EghXB1');
   }
+  const cleaned = cleanWhopUrlOrPlanId(raw);
+  if (cleaned) return cleaned;
+  const planId = getWhopPlanId(plan, isYearly);
+  if (planId) return `https://whop.com/checkout/${planId.startsWith('plan_') ? planId : `plan_${planId}`}`;
+  return '';
 }
 
 function getWhopOneTimeCheckoutUrl(productType: string, packId?: string): string {
   const pType = (productType || '').toLowerCase();
   const pId = (packId || '').toLowerCase();
 
-  if (pType === 'masterclass_kit') {
-    return process.env.WHOP_CHECKOUT_MASTERCLASS_KIT_URL?.trim() || process.env.WHOP_CHECKOUT_AGENCY_KIT_URL?.trim() || '';
+  if (pType === 'masterclass_kit' || pType === 'agency_kit' || pType === 'agency_vault' || pType === 'masterclass') {
+    const raw =
+      process.env.WHOP_CHECKOUT_MASTERCLASS_KIT_URL ||
+      process.env.WHOP_PLAN_ID_MASTERCLASS_KIT ||
+      process.env.WHOP_CHECKOUT_AGENCY_KIT_URL ||
+      process.env.WHOP_PLAN_ID_AGENCY_KIT ||
+      process.env.WHOP_CHECKOUT_MASTERCLASS_URL ||
+      process.env.WHOP_PLAN_ID_MASTERCLASS ||
+      process.env.WHOP_CHECKOUT_AGENCY_GROWTH_KIT_URL ||
+      process.env.WHOP_PLAN_ID_AGENCY_GROWTH_KIT ||
+      '';
+    return cleanWhopUrlOrPlanId(raw);
   }
-  if (pType === 'white_label_audit') {
-    return process.env.WHOP_CHECKOUT_WHITE_LABEL_AUDIT_URL?.trim() || '';
+
+  if (pType === 'white_label_audit' || pType === 'whitelabel_audit' || pType === 'audit') {
+    const raw =
+      process.env.WHOP_CHECKOUT_WHITE_LABEL_AUDIT_URL ||
+      process.env.WHOP_PLAN_ID_WHITE_LABEL_AUDIT ||
+      process.env.WHOP_CHECKOUT_AUDIT_URL ||
+      process.env.WHOP_PLAN_ID_AUDIT ||
+      process.env.WHOP_CHECKOUT_WHITELABEL_URL ||
+      process.env.WHOP_PLAN_ID_WHITELABEL_AUDIT ||
+      '';
+    return cleanWhopUrlOrPlanId(raw);
   }
-  if (pType === 'lead_list') {
-    if (pId.includes('1000')) return process.env.WHOP_CHECKOUT_LEADS_1000_URL?.trim() || '';
-    if (pId.includes('500')) return process.env.WHOP_CHECKOUT_LEADS_500_URL?.trim() || '';
-    return process.env.WHOP_CHECKOUT_LEADS_250_URL?.trim() || '';
+
+  if (pType === 'lead_list' || pType === 'leads' || pType === 'lead_pack') {
+    if (pId.includes('1000') || pId.includes('pro') || pId.includes('enterprise')) {
+      const raw =
+        process.env.WHOP_CHECKOUT_LEADS_1000_URL ||
+        process.env.WHOP_PLAN_ID_LEADS_1000 ||
+        process.env.WHOP_CHECKOUT_LEADS_PRO_URL ||
+        process.env.WHOP_PLAN_ID_LEADS_PRO ||
+        process.env.WHOP_CHECKOUT_LEADS_ENTERPRISE_URL ||
+        process.env.WHOP_PLAN_LEADS_1000 ||
+        '';
+      return cleanWhopUrlOrPlanId(raw);
+    }
+    if (pId.includes('500') || pId.includes('growth')) {
+      const raw =
+        process.env.WHOP_CHECKOUT_LEADS_500_URL ||
+        process.env.WHOP_PLAN_ID_LEADS_500 ||
+        process.env.WHOP_CHECKOUT_LEADS_GROWTH_URL ||
+        process.env.WHOP_PLAN_ID_LEADS_GROWTH ||
+        process.env.WHOP_PLAN_LEADS_500 ||
+        '';
+      return cleanWhopUrlOrPlanId(raw);
+    }
+    // 250 leads / Starter
+    const raw =
+      process.env.WHOP_CHECKOUT_LEADS_250_URL ||
+      process.env.WHOP_PLAN_ID_LEADS_250 ||
+      process.env.WHOP_CHECKOUT_LEADS_STARTER_URL ||
+      process.env.WHOP_PLAN_ID_LEADS_STARTER ||
+      process.env.WHOP_PLAN_LEADS_250 ||
+      '';
+    return cleanWhopUrlOrPlanId(raw);
   }
-  if (pType === 'fuel_pack') {
-    if (pId.includes('500') || pId.includes('300') || pId.includes('power')) return process.env.WHOP_CHECKOUT_FUEL_POWER_URL?.trim() || '';
-    if (pId.includes('150') || pId.includes('120') || pId.includes('growth')) return process.env.WHOP_CHECKOUT_FUEL_GROWTH_URL?.trim() || '';
-    return process.env.WHOP_CHECKOUT_FUEL_STARTER_URL?.trim() || '';
+
+  if (pType === 'fuel_pack' || pType === 'fuel' || pType === 'credits') {
+    if (pId.includes('500') || pId.includes('300') || pId.includes('power') || pId.includes('agency')) {
+      const raw =
+        process.env.WHOP_CHECKOUT_FUEL_POWER_URL ||
+        process.env.WHOP_PLAN_ID_FUEL_POWER ||
+        process.env.WHOP_CHECKOUT_FUEL_500_URL ||
+        process.env.WHOP_PLAN_ID_FUEL_500 ||
+        process.env.WHOP_PLAN_ID_FUEL_300 ||
+        process.env.WHOP_CHECKOUT_FUEL_300_URL ||
+        process.env.WHOP_PLAN_ID_FUEL_PACK_POWER ||
+        process.env.WHOP_PLAN_FUEL_500 ||
+        '';
+      return cleanWhopUrlOrPlanId(raw);
+    }
+    if (pId.includes('150') || pId.includes('120') || pId.includes('growth') || pId.includes('pro')) {
+      const raw =
+        process.env.WHOP_CHECKOUT_FUEL_GROWTH_URL ||
+        process.env.WHOP_PLAN_ID_FUEL_GROWTH ||
+        process.env.WHOP_CHECKOUT_FUEL_150_URL ||
+        process.env.WHOP_PLAN_ID_FUEL_150 ||
+        process.env.WHOP_PLAN_ID_FUEL_120 ||
+        process.env.WHOP_CHECKOUT_FUEL_120_URL ||
+        process.env.WHOP_PLAN_ID_FUEL_PACK_GROWTH ||
+        process.env.WHOP_PLAN_FUEL_150 ||
+        '';
+      return cleanWhopUrlOrPlanId(raw);
+    }
+    // 50 credits / Starter
+    const raw =
+      process.env.WHOP_CHECKOUT_FUEL_STARTER_URL ||
+      process.env.WHOP_PLAN_ID_FUEL_STARTER ||
+      process.env.WHOP_CHECKOUT_FUEL_50_URL ||
+      process.env.WHOP_PLAN_ID_FUEL_50 ||
+      process.env.WHOP_PLAN_ID_FUEL_PACK_50 ||
+      process.env.WHOP_PLAN_FUEL_50 ||
+      process.env.WHOP_CHECKOUT_FUEL_PACK_STARTER_URL ||
+      '';
+    return cleanWhopUrlOrPlanId(raw);
   }
+
   return '';
 }
 
@@ -4466,14 +4671,21 @@ app.post('/api/whop/create-onetime-checkout', async (req: any, res) => {
     const successUrl = `${host}/?payment_status=success&product_type=${encodeURIComponent(productType || '')}&pack_id=${encodeURIComponent(packId || '')}&email=${encodeURIComponent(normalizedEmail)}&amount=${price || 0}`;
 
     let productName = 'Locora AI One-Time Product';
+    let resolvedPrice = Number(price) || 0;
+
     if (productType === 'fuel_pack') {
-      productName = `Locora AI Fuel Pack (+${credits || 50} Credits)`;
+      const fuelCredits = Number(credits) || (packId?.includes('500') || packId?.includes('300') ? 500 : packId?.includes('150') || packId?.includes('120') ? 150 : 50);
+      productName = `Locora AI Fuel Pack (+${fuelCredits} Credits)`;
+      if (!resolvedPrice) resolvedPrice = fuelCredits >= 500 ? 35 : fuelCredits >= 150 ? 12 : 5;
     } else if (productType === 'white_label_audit') {
       productName = 'Locora AI 40-Point White-Label Technical Audit PDF Export';
+      if (!resolvedPrice) resolvedPrice = 9.99;
     } else if (productType === 'lead_list') {
       productName = `Locora AI Verified B2B Lead List (${packId || 'Custom'} Leads)`;
+      if (!resolvedPrice) resolvedPrice = packId?.includes('1000') ? 89 : packId?.includes('500') ? 49 : 29;
     } else if (productType === 'masterclass_kit') {
       productName = 'Locora AI Agency Growth Kit & Masterclass Vault';
+      if (!resolvedPrice) resolvedPrice = 97;
     }
 
     // 0. If direct hosted checkout URL is configured for this specific product, use it immediately
@@ -4481,6 +4693,14 @@ app.post('/api/whop/create-onetime-checkout', async (req: any, res) => {
     if (directProductCheckoutUrl) {
       try {
         const urlObj = new URL(directProductCheckoutUrl);
+        // Clean pathname to remove any trailing whitespace or trailing slashes
+        const cleanSegments = urlObj.pathname
+          .split('/')
+          .map((s) => decodeURIComponent(s).trim())
+          .filter(Boolean);
+        urlObj.pathname = '/' + cleanSegments.join('/');
+        urlObj.hash = ''; // clear hash
+
         if (normalizedEmail) urlObj.searchParams.set('email', normalizedEmail);
         if (name) urlObj.searchParams.set('name', name);
         urlObj.searchParams.set('redirect_url', successUrl);
@@ -4497,7 +4717,7 @@ app.post('/api/whop/create-onetime-checkout', async (req: any, res) => {
           checkoutUrl: urlObj.toString(),
           url: urlObj.toString(),
           productName,
-          price,
+          price: resolvedPrice,
         });
       } catch (urlErr) {
         return res.json({
@@ -4505,7 +4725,7 @@ app.post('/api/whop/create-onetime-checkout', async (req: any, res) => {
           checkoutUrl: directProductCheckoutUrl,
           url: directProductCheckoutUrl,
           productName,
-          price,
+          price: resolvedPrice,
         });
       }
     }
@@ -4534,7 +4754,7 @@ app.post('/api/whop/create-onetime-checkout', async (req: any, res) => {
               packId,
               auditId,
               credits,
-              price,
+              price: resolvedPrice,
               ...metadata,
             },
           }),
@@ -4544,7 +4764,7 @@ app.post('/api/whop/create-onetime-checkout', async (req: any, res) => {
           const whopData = await whopRes.json();
           const checkoutUrl = whopData.url || whopData.checkout_url || whopData.data?.url;
           if (checkoutUrl) {
-            return res.json({ success: true, checkoutUrl, url: checkoutUrl, productName, price });
+            return res.json({ success: true, checkoutUrl, url: checkoutUrl, productName, price: resolvedPrice });
           }
         }
       } catch (err: any) {
@@ -4554,7 +4774,7 @@ app.post('/api/whop/create-onetime-checkout', async (req: any, res) => {
 
     // Direct Whop Link fallback
     const directUrl = companyId
-      ? `https://whop.com/${companyId}?email=${encodeURIComponent(normalizedEmail)}&redirect_url=${encodeURIComponent(successUrl)}&product=${encodeURIComponent(productType)}&price=${price}`
+      ? `https://whop.com/${companyId}?email=${encodeURIComponent(normalizedEmail)}&redirect_url=${encodeURIComponent(successUrl)}&product=${encodeURIComponent(productType)}&price=${resolvedPrice}`
       : `https://whop.com/checkout?product=${encodeURIComponent(productType)}&email=${encodeURIComponent(normalizedEmail)}&redirect_url=${encodeURIComponent(successUrl)}`;
 
     return res.json({
@@ -4562,7 +4782,7 @@ app.post('/api/whop/create-onetime-checkout', async (req: any, res) => {
       checkoutUrl: directUrl,
       url: directUrl,
       productName,
-      price,
+      price: resolvedPrice,
     });
   } catch (err: any) {
     console.error('Error creating one-time checkout:', err);
@@ -4581,29 +4801,59 @@ app.post('/api/whop/verify-onetime-payment', async (req: any, res) => {
     const invoiceId = `INV-1TIME-${Date.now().toString().slice(-6)}`;
 
     let addedCredits = 0;
+    let resolvedPrice = Number(price) || 0;
+    let productTitle = 'One-Time Purchase';
+
     if (productType === 'fuel_pack') {
-      addedCredits = Number(credits) || (packId === 'fuel_300' ? 300 : packId === 'fuel_120' ? 120 : 50);
+      if (credits && Number(credits) > 0) {
+        addedCredits = Number(credits);
+      } else if (packId?.includes('500') || packId?.includes('300') || packId?.includes('power')) {
+        addedCredits = 500;
+      } else if (packId?.includes('150') || packId?.includes('120') || packId?.includes('growth')) {
+        addedCredits = 150;
+      } else {
+        addedCredits = 50;
+      }
+      productTitle = `Fuel Pack (+${addedCredits} AI Credits)`;
+      if (!resolvedPrice) resolvedPrice = addedCredits >= 500 ? 35 : addedCredits >= 150 ? 12 : 5;
+
       if (user) {
-        user.monthlyAiCredits = (user.monthlyAiCredits || 250) + addedCredits;
+        user.monthlyAiCredits = (user.monthlyAiCredits || 25) + addedCredits;
         usersDb.set(normalizedEmail, user);
         await saveUserToSql(user);
       }
+    } else if (productType === 'masterclass_kit') {
+      productTitle = 'Agency Growth Kit & Masterclass Vault';
+      if (!resolvedPrice) resolvedPrice = 97;
+      if (user) {
+        (user as any).masterclassKitUnlocked = true;
+        usersDb.set(normalizedEmail, user);
+        await saveUserToSql(user);
+      }
+    } else if (productType === 'white_label_audit') {
+      productTitle = '40-Point White-Label Audit PDF Export';
+      if (!resolvedPrice) resolvedPrice = 9.99;
+    } else if (productType === 'lead_list') {
+      productTitle = `Verified B2B Lead List (${packId || 'Custom'})`;
+      if (!resolvedPrice) resolvedPrice = packId?.includes('1000') ? 89 : packId?.includes('500') ? 49 : 29;
     }
 
     const txnRecord: PaymentTransaction = {
       id: txnId,
-      userId: user?.id,
+      userId: user?.id || `usr_${Date.now()}`,
       userEmail: normalizedEmail,
       userName: user?.name || normalizedEmail.split('@')[0],
-      planTier: user?.planTier || 'free',
+      planTier: user?.planTier || 'pro',
       billingCycle: 'monthly',
-      amount: Number(price) || 0,
+      amount: resolvedPrice,
       currency: 'USD',
       paymentMethod: 'whop',
       whopDetails: {
         paymentId: txnId,
+        membershipId: txnId,
         status: 'completed',
-        receiptUrl: 'https://whop.com/hub/orders',
+        paymentMethodBrand: 'whop_checkout',
+        receiptUrl: `https://whop.com/hub/orders`,
       },
       status: 'success',
       invoiceId,
@@ -4617,10 +4867,12 @@ app.post('/api/whop/verify-onetime-payment', async (req: any, res) => {
 
     return res.json({
       success: true,
-      message: 'Payment verified and product fulfilled instantly.',
+      message: `${productTitle} verified and unlocked successfully!`,
       invoiceId,
+      productTitle,
       addedCredits,
       updatedCredits: user?.monthlyAiCredits,
+      transaction: txnRecord,
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -5295,6 +5547,10 @@ app.get(['/api/whop/verify-session', '/api/whop/sync-payment'], async (req: any,
     const planParam = (req.query.plan || (sessionId.includes('agency') ? 'agency' : 'pro')).toString().toLowerCase().trim() as 'pro' | 'agency';
     const isYearly = req.query.billing_cycle === 'yearly' || req.query.billing_cycle === 'annual' || req.query.billingCycle === 'yearly';
     const billingCycle = isYearly ? 'yearly' : 'monthly';
+    const productType = (req.query.product_type || req.query.productType || '').toString().toLowerCase().trim();
+    const packId = (req.query.pack_id || req.query.packId || '').toString().toLowerCase().trim();
+    const queryAmount = Number(req.query.amount) || Number(req.query.price) || 0;
+    const queryCredits = Number(req.query.credits) || 0;
 
     // Find authenticated user or match by email
     let user = req.user ? await findUserByEmail(req.user.email) : null;
@@ -5361,6 +5617,123 @@ app.get(['/api/whop/verify-session', '/api/whop/sync-payment'], async (req: any,
           // ignore error and proceed
         }
       }
+    }
+
+    // Handle One-Time Product Fulfilment (Fuel Packs, Leads, White-Label PDF, Agency Kit)
+    if (productType) {
+      const txnId = paymentId || sessionId || `whop_onetime_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+      const invoiceId = `INV-1TIME-${Date.now().toString().slice(-6)}`;
+
+      let addedCredits = 0;
+      let resolvedPrice = queryAmount || resolvedAmount || 0;
+      let productTitle = 'One-Time Purchase';
+
+      if (productType === 'fuel_pack') {
+        if (queryCredits > 0) {
+          addedCredits = queryCredits;
+        } else if (packId.includes('500') || packId.includes('300') || packId.includes('power')) {
+          addedCredits = 500;
+        } else if (packId.includes('150') || packId.includes('120') || packId.includes('growth')) {
+          addedCredits = 150;
+        } else {
+          addedCredits = 50;
+        }
+        productTitle = `Fuel Pack (+${addedCredits} AI Credits)`;
+        if (!resolvedPrice) resolvedPrice = addedCredits >= 500 ? 35 : addedCredits >= 150 ? 12 : 5;
+
+        if (user) {
+          user.monthlyAiCredits = (user.monthlyAiCredits || 25) + addedCredits;
+          usersDb.set(user.email.toLowerCase(), user);
+          await saveUserToSql(user);
+        }
+      } else if (productType === 'masterclass_kit') {
+        productTitle = 'Agency Growth Kit & Masterclass Vault';
+        if (!resolvedPrice) resolvedPrice = 97;
+        if (user) {
+          (user as any).masterclassKitUnlocked = true;
+          usersDb.set(user.email.toLowerCase(), user);
+          await saveUserToSql(user);
+        }
+      } else if (productType === 'white_label_audit') {
+        productTitle = '40-Point White-Label Audit PDF Export';
+        if (!resolvedPrice) resolvedPrice = 9.99;
+      } else if (productType === 'lead_list') {
+        productTitle = `Verified B2B Lead List (${packId || 'Custom'})`;
+        if (!resolvedPrice) resolvedPrice = packId.includes('1000') ? 89 : packId.includes('500') ? 49 : 29;
+      }
+
+      let existingTxn = Array.from(transactionsDb.values()).find(
+        (t: any) => t.id === txnId || (paymentId && t.whopDetails?.paymentId === paymentId)
+      );
+
+      if (!existingTxn) {
+        const txnRecord: any = {
+          id: txnId,
+          userId: user?.id || `usr_${Date.now()}`,
+          userEmail: user?.email || customerEmail,
+          userName: user?.name || (user?.email || customerEmail).split('@')[0],
+          planTier: user?.planTier || 'pro',
+          billingCycle: 'monthly',
+          amount: resolvedPrice,
+          currency: 'USD',
+          paymentMethod: 'whop',
+          whopDetails: {
+            paymentId: paymentId || txnId,
+            membershipId: txnId,
+            status: 'completed',
+            paymentMethodBrand: 'whop_checkout',
+            receiptUrl: detectedReceiptUrl || `https://whop.com/hub/orders`,
+          },
+          status: 'success',
+          invoiceId,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        transactionsDb.set(txnId, txnRecord);
+        saveTransactionsToDisk();
+        await dbService.saveTransaction(txnRecord).catch(() => {});
+        existingTxn = txnRecord;
+      }
+
+      const invoiceReceipt = {
+        id: existingTxn.invoiceId || invoiceId,
+        transactionId: existingTxn.id,
+        amount: resolvedPrice,
+        subtotal: resolvedPrice,
+        taxAmount: 0,
+        date: existingTxn.createdAt || new Date().toISOString(),
+        status: 'paid' as const,
+        planName: `LOCORA AI — ${productTitle.toUpperCase()}`,
+        planTier: user?.planTier || 'pro',
+        billingCycle: 'one-time',
+        paymentMethod: 'Whop Merchant of Record',
+        whopReceiptId: paymentId || existingTxn.id,
+        whopMembershipId: '',
+        whopPaymentId: paymentId || '',
+        userEmail: user?.email || customerEmail,
+        userName: user?.name || (user?.email || customerEmail).split('@')[0],
+        receiptUrl: 'https://whop.com/hub/orders',
+      };
+
+      return res.json({
+        success: true,
+        message: `${productTitle} verified and unlocked successfully!`,
+        productType,
+        productTitle,
+        addedCredits,
+        user: user ? {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          planTier: user.planTier,
+          monthlyAiCredits: user.monthlyAiCredits,
+          aiCreditsUsed: user.aiCreditsUsed,
+          paymentProvider: user.paymentProvider,
+          masterclassKitUnlocked: (user as any).masterclassKitUnlocked,
+        } : null,
+        invoice: invoiceReceipt,
+        transaction: existingTxn,
+      });
     }
 
     if (user) {

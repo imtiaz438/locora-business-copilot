@@ -158,19 +158,27 @@ const MainContent: React.FC = () => {
       const stateId = query.get('state_id') || '';
       const plan = (query.get('plan') || (sessionId.includes('agency') ? 'agency' : 'pro')).toLowerCase();
       const billingCycle = (query.get('billing_cycle') || 'monthly').toLowerCase();
-      const userEmail = user.email || localStorage.getItem('locora_user_email') || '';
+      const productType = query.get('product_type') || query.get('productType') || '';
+      const packId = query.get('pack_id') || query.get('packId') || '';
+      const amount = query.get('amount') || query.get('price') || '';
+      const credits = query.get('credits') || '';
+      const userEmail = query.get('email') || user.email || localStorage.getItem('locora_user_email') || '';
 
       // Verify and sync Whop checkout session immediately with backend
-      fetch(`/api/whop/verify-session?session=${encodeURIComponent(sessionId)}&payment_id=${encodeURIComponent(paymentId)}&state_id=${encodeURIComponent(stateId)}&plan=${encodeURIComponent(plan)}&billing_cycle=${encodeURIComponent(billingCycle)}&email=${encodeURIComponent(userEmail)}`)
+      const verifyUrl = `/api/whop/verify-session?session=${encodeURIComponent(sessionId)}&payment_id=${encodeURIComponent(paymentId)}&state_id=${encodeURIComponent(stateId)}&plan=${encodeURIComponent(plan)}&billing_cycle=${encodeURIComponent(billingCycle)}&email=${encodeURIComponent(userEmail)}&product_type=${encodeURIComponent(productType)}&pack_id=${encodeURIComponent(packId)}&amount=${encodeURIComponent(amount)}&credits=${encodeURIComponent(credits)}`;
+
+      fetch(verifyUrl)
         .then((res) => res.json())
         .then((data) => {
           if (data.user) {
-            subscribePlan(data.user.planTier || (plan as any), (data.user.billingCycle || billingCycle) as any);
+            if (!productType) {
+              subscribePlan(data.user.planTier || (plan as any), (data.user.billingCycle || billingCycle) as any);
+            }
             updateUser({
               ...data.user,
               isAuthenticated: true,
             });
-          } else {
+          } else if (!productType) {
             subscribePlan(plan as any, billingCycle as any);
           }
 
@@ -180,12 +188,12 @@ const MainContent: React.FC = () => {
           } else {
             const fallbackInv: SubscriptionInvoice = {
               id: `INV-${new Date().getFullYear()}-WHOP`,
-              amount: plan === 'agency' ? (billingCycle === 'yearly' ? 468 : 49) : (billingCycle === 'yearly' ? 180 : 19),
+              amount: productType ? Number(amount) || 12 : plan === 'agency' ? (billingCycle === 'yearly' ? 468 : 49) : (billingCycle === 'yearly' ? 180 : 19),
               date: new Date().toISOString(),
               status: 'paid',
-              planName: `LOCORA AI ${plan.toUpperCase()} PLAN (${billingCycle.toUpperCase()})`,
+              planName: productType ? `LOCORA AI ${productType.toUpperCase()}` : `LOCORA AI ${plan.toUpperCase()} PLAN (${billingCycle.toUpperCase()})`,
               planTier: plan as any,
-              billingCycle: billingCycle as any,
+              billingCycle: (productType ? 'monthly' : billingCycle) as any,
               paymentMethod: 'Whop Merchant of Record',
               whopMembershipId: data.user?.whopMembershipId || sessionId || paymentId,
               whopPaymentId: paymentId || sessionId,
@@ -198,15 +206,26 @@ const MainContent: React.FC = () => {
           }
         })
         .catch(() => {
-          subscribePlan(plan as any, billingCycle as any);
+          if (!productType) {
+            subscribePlan(plan as any, billingCycle as any);
+          }
         });
 
-      // Clean URL params and transition cleanly to the user's dashboard
+      // Clean URL params and transition cleanly to the appropriate view
       try {
         const cleanPath = window.location.pathname.replace(/\/checkout\/success|\/billing\/success|\/payment\/success/, '') || '/';
         window.history.replaceState({}, document.title, cleanPath);
       } catch (e) {}
-      setActiveTab('dashboard');
+
+      if (productType === 'masterclass_kit') {
+        setActiveTab('masterclass_kit');
+      } else if (productType === 'white_label_audit') {
+        setActiveTab('website_review');
+      } else if (productType === 'lead_list') {
+        setActiveTab('lead_prospector');
+      } else {
+        setActiveTab('dashboard');
+      }
     }
 
     return () => window.removeEventListener('popstate', handlePopState);

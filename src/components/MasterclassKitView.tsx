@@ -33,7 +33,7 @@ export const MasterclassKitView: React.FC = () => {
   const { user, logActivity } = useApp();
   const [activeTab, setActiveTabLocal] = useState<'contracts' | 'scripts' | 'calculator' | 'curriculum' | 'resources'>('contracts');
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [isKitUnlocked, setIsKitUnlocked] = useState(user.planTier === 'agency' || user.planTier === 'pro');
+  const [isKitUnlocked, setIsKitUnlocked] = useState(user.planTier === 'agency' || (user as any).masterclassKitUnlocked);
   const [purchasing, setPurchasing] = useState(false);
   const [expandedModule, setExpandedModule] = useState<string | null>('mod_1');
 
@@ -378,10 +378,21 @@ Client:   _______________________      Date: _______________
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold font-heading">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>Full Growth Vault Active</span>
-          </div>
+          {isKitUnlocked ? (
+            <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold font-heading">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span>Full Growth Vault Unlocked</span>
+            </div>
+          ) : (
+            <button
+              onClick={handlePurchaseKit}
+              disabled={purchasing}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold font-heading shadow-sm transition-all cursor-pointer disabled:opacity-50"
+            >
+              <Sparkles className="w-4 h-4 text-yellow-300" />
+              <span>{purchasing ? 'Opening Checkout...' : 'Purchase Lifetime Kit ($97)'}</span>
+            </button>
+          )}
         </div>
       </div>
 
