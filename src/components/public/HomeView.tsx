@@ -621,7 +621,7 @@ export const HomeView: React.FC = () => {
               </div>
               <div className="font-sans">
                 <p className="text-xs font-bold text-slate-900">Heather Denkmire</p>
-                <p className="text-[11px] text-slate-500"> Project Team Leader ]</p>
+                <p className="text-[11px] text-slate-500"> Project Team Leader </p>
               </div>
             </div>
           </div>
