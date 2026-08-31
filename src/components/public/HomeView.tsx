@@ -602,7 +602,7 @@ export const HomeView: React.FC = () => {
             </p>
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-emerald-100 text-[#059669] flex items-center justify-center font-bold text-xs">
-                MS
+                BD
               </div>
               <div className="font-sans">
                 <p className="text-xs font-bold text-slate-900">Brad M</p>
@@ -617,11 +617,11 @@ export const HomeView: React.FC = () => {
             </p>
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
-                ER
+                HD
               </div>
               <div className="font-sans">
                 <p className="text-xs font-bold text-slate-900">Heather Denkmire</p>
-                <p className="text-[11px] text-slate-500"> Project Team Leader </p>
+                <p className="text-[11px] text-slate-500"> Project Team Leader ]</p>
               </div>
             </div>
           </div>
