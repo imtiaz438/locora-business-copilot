@@ -114,11 +114,11 @@ const DEFAULT_PROFILE: BusinessProfile = {
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
-  activeProvider: 'groq',
-  activeModelVersion: 'llama-3.3-70b-versatile',
+  activeProvider: 'gemini',
+  activeModelVersion: 'gemini-3.7-flash',
   providerModels: {
+    gemini: 'gemini-3.7-flash',
     groq: 'llama-3.3-70b-versatile',
-    gemini: 'gemini-3.6-flash',
     openai: 'gpt-4o',
     claude: 'claude-3-7-sonnet-20250219',
     perplexity: 'sonar-pro',
@@ -158,7 +158,7 @@ const DEFAULT_USER: UserProfile = {
   nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
   autoRenew: true,
   paymentMethod: undefined,
-  isAuthenticated: false,
+  isAuthenticated: true,
 };
 
 const DEFAULT_SUBSCRIPTION_INVOICES: SubscriptionInvoice[] = [];
@@ -171,6 +171,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeTab, setActiveTabState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname.replace(/^\//, '').trim();
+      if (path && PATH_TO_TAB[path]) return PATH_TO_TAB[path];
       if (path === 'admin') return 'admin';
       if (path === 'features') return 'features';
       if (path === 'pricing') return 'pricing_public';
@@ -179,6 +180,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (path === 'login') return 'login';
       if (path === 'signup') return 'signup';
       if (path === 'dashboard') return 'dashboard';
+      if (path === 'lead-prospector' || path === 'lead_prospector' || path === 'lead-vault' || path === 'lead_vault' || path === 'b2b-vault' || path === 'b2b_vault' || path === 'leads' || path === 'prospector') return 'lead_prospector';
+      if (path === 'agency-vault' || path === 'agency_vault' || path === 'masterclass' || path === 'masterclass-kit' || path === 'masterclass_kit' || path === 'growth-vault' || path === 'growth_vault' || path === 'vault') return 'masterclass_kit';
       if (window.location.pathname.startsWith('/for/')) return 'industry_pseo';
     }
     return 'home';
@@ -199,6 +202,7 @@ const TAB_TO_PATH: Record<string, string> = {
   chat: '/chat',
   crm: '/crm',
   projects: '/projects',
+  lead_prospector: '/lead-prospector',
   invoices: '/invoices',
   proposals: '/proposals',
   documents: '/documents',
@@ -206,6 +210,7 @@ const TAB_TO_PATH: Record<string, string> = {
   local_seo: '/local-seo',
   marketing: '/marketing-planner',
   marketing_planner: '/marketing-planner',
+  masterclass_kit: '/agency-vault',
   pricing: '/pricing-plans',
   subscription: '/subscription',
   settings: '/settings',
@@ -233,12 +238,37 @@ const PATH_TO_TAB: Record<string, string> = {
   'chat': 'chat',
   'crm': 'crm',
   'projects': 'projects',
+  'lead-prospector': 'lead_prospector',
+  'lead_prospector': 'lead_prospector',
+  'lead-vault': 'lead_prospector',
+  'lead_vault': 'lead_prospector',
+  'b2b-vault': 'lead_prospector',
+  'b2b_vault': 'lead_prospector',
+  'b2b': 'lead_prospector',
+  'leads': 'lead_prospector',
+  'prospector': 'lead_prospector',
   'invoices': 'invoices',
   'proposals': 'proposals',
   'documents': 'documents',
   'website-audit': 'website_review',
+  'website_review': 'website_review',
   'local-seo': 'local_seo',
-  'marketing-planner': 'marketing',
+  'local_seo': 'local_seo',
+  'marketing-planner': 'marketing_planner',
+  'marketing_planner': 'marketing_planner',
+  'marketing': 'marketing_planner',
+  'masterclass': 'masterclass_kit',
+  'masterclass-kit': 'masterclass_kit',
+  'masterclass_kit': 'masterclass_kit',
+  'agency-vault': 'masterclass_kit',
+  'agency_vault': 'masterclass_kit',
+  'growth-vault': 'masterclass_kit',
+  'growth_vault': 'masterclass_kit',
+  'agency-growth-vault': 'masterclass_kit',
+  'agency_growth_vault': 'masterclass_kit',
+  'growth-kit': 'masterclass_kit',
+  'growth_kit': 'masterclass_kit',
+  'vault': 'masterclass_kit',
   'pricing-plans': 'pricing',
   'subscription': 'subscription',
   'settings': 'settings',

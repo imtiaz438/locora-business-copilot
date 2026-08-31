@@ -432,7 +432,7 @@ function getUserSettingsDiskStore(email: string) {
       activeModelVersion: 'llama-3.3-70b-versatile',
       providerModels: {
         groq: 'llama-3.3-70b-versatile',
-        gemini: 'gemini-3.6-flash',
+        gemini: 'gemini-3.7-flash',
         openai: 'gpt-4o',
         claude: 'claude-3-7-sonnet-20250219',
         perplexity: 'sonar-pro',
@@ -805,15 +805,16 @@ async function discoverProviderModels(provider: string, apiKey: string): Promise
       return {
         valid: true,
         provider: 'gemini',
-        detectedModel: 'gemini-3.6-flash',
+        detectedModel: 'gemini-3.7-flash',
         accessibleModels: [
-          { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash', description: 'Ultra-fast, low latency multimodal reasoning', badge: 'Multimodal Flash', isAutoSelected: true },
-          { id: 'gemini-3.6-pro', name: 'Gemini 3.6 Pro', description: 'Advanced deep reasoning and multi-step business logic', badge: 'Deep Reasoning' },
-          { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash', description: 'Flagship high-throughput multimodal generation', badge: 'Latest Gen' },
+          { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash', description: 'Flagship high-speed multimodal generation (Recommended Default)', badge: 'Default High Speed', isAutoSelected: true },
+          { id: 'gemini-flash-latest', name: 'Gemini Flash Latest', description: 'Ultra-fast, low latency multimodal reasoning', badge: 'Ultra Fast' },
+          { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', description: 'Advanced deep reasoning and multi-step business logic', badge: 'Deep Reasoning' },
+          { id: 'gemini-3.1-flash-lite', name: 'Gemini 3.1 Flash Lite', description: 'High-efficiency lightweight model for quick utilities', badge: 'Lite' },
         ],
         isAutoDetected: true,
         isManaged: true,
-        message: 'Google Gemini engine active (Gemini 3.6 Flash auto-selected).',
+        message: 'Google Gemini engine active (Gemini 3.7 Flash auto-selected).',
       };
     }
     if (prov === 'openai') {
@@ -1014,8 +1015,8 @@ async function discoverProviderModels(provider: string, apiKey: string): Promise
         }
       });
 
-      let detectedModel = 'gemini-3.6-flash';
-      if (!accessibleModels.some((m) => m.id === 'gemini-3.6-flash') && accessibleModels.length > 0) {
+      let detectedModel = 'gemini-3.7-flash';
+      if (!accessibleModels.some((m) => m.id === 'gemini-3.7-flash') && accessibleModels.length > 0) {
         detectedModel = accessibleModels[0].id;
       }
       accessibleModels.forEach((m) => {
@@ -1027,8 +1028,10 @@ async function discoverProviderModels(provider: string, apiKey: string): Promise
         provider: 'gemini',
         detectedModel,
         accessibleModels: accessibleModels.length > 0 ? accessibleModels : [
-          { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash', badge: 'Optimal Active', isAutoSelected: true },
-          { id: 'gemini-3.6-pro', name: 'Gemini 3.6 Pro', badge: 'Deep Reasoning' },
+          { id: 'gemini-3.7-flash', name: 'Gemini 3.7 Flash', badge: 'Default High Speed', isAutoSelected: true },
+          { id: 'gemini-flash-latest', name: 'Gemini Flash Latest', badge: 'Ultra Fast' },
+          { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', badge: 'Deep Reasoning' },
+          { id: 'gemini-3.1-flash-lite', name: 'Gemini 3.1 Flash Lite', badge: 'Lite' },
         ],
         isAutoDetected: true,
         isManaged: true,
@@ -2779,11 +2782,11 @@ app.get('/api/workspace/data', async (req, res) => {
 
     const userSavedSettings = userEmail ? getUserSettingsDiskStore(userEmail) : null;
     const mergedSettings = {
-      activeProvider: 'groq',
-      activeModelVersion: 'llama-3.3-70b-versatile',
+      activeProvider: 'gemini',
+      activeModelVersion: 'gemini-3.7-flash',
       providerModels: {
+        gemini: 'gemini-3.7-flash',
         groq: 'llama-3.3-70b-versatile',
-        gemini: 'gemini-3.6-flash',
         openai: 'gpt-4o',
         claude: 'claude-3-7-sonnet-20250219',
         perplexity: 'sonar-pro',
@@ -7318,7 +7321,7 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
   let text = '';
   let providerUsed = effectiveProvider;
   let modelUsed = selectedModel || (
-    effectiveProvider === 'gemini' ? 'gemini-2.5-flash' :
+    effectiveProvider === 'gemini' ? 'gemini-3.7-flash' :
     effectiveProvider === 'openai' ? 'gpt-4o' :
     effectiveProvider === 'claude' || effectiveProvider === 'anthropic' ? 'claude-3-7-sonnet-20250219' :
     effectiveProvider === 'deepseek' ? 'deepseek-chat' :
@@ -7331,7 +7334,9 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
   let realApiExecuted = false;
 
   if (effectiveProvider === 'gemini') {
-    let targetModel = selectedModel || 'gemini-2.5-flash';
+    let targetModel = (selectedModel && !selectedModel.includes('2.5') && !selectedModel.includes('3.6') && !selectedModel.includes('1.5') && !selectedModel.includes('2.0'))
+      ? selectedModel
+      : 'gemini-3.7-flash';
     modelUsed = targetModel;
     const apiKey = customKey || process.env.GEMINI_API_KEY;
     if (!apiKey || !apiKey.trim()) {
@@ -7365,45 +7370,51 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
         contents = [{ role: 'user', parts: [{ text: options.prompt || 'Hello' }] }];
       }
 
-      let response;
-      try {
-        response = await ai.models.generateContent({
-          model: targetModel,
-          contents: contents.length > 0 ? contents : [{ role: 'user', parts: [{ text: 'Hello' }] }],
-          config: {
-            systemInstruction: options.systemInstruction,
-            temperature: options.temperature ?? 0.7,
-          },
-        });
-      } catch (genErr: any) {
-        // If specific model ID failed, try gemini-2.5-flash
-        if (targetModel !== 'gemini-2.5-flash') {
-          targetModel = 'gemini-2.5-flash';
-          modelUsed = targetModel;
-          response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+      // Prioritize modern available models
+      const candidateModels = Array.from(new Set([
+        targetModel,
+        'gemini-3.7-flash',
+        'gemini-3.6-flash',
+        'gemini-3.1-flash-lite',
+        'gemini-flash-latest',
+        'gemini-3.1-pro-preview',
+      ])).filter((m) => Boolean(m && !m.includes('2.5') && !m.includes('1.5') && !m.includes('2.0')));
+
+      let successfulModel = '';
+      let lastGeminiErr: any = null;
+
+      for (const modelToTry of candidateModels) {
+        try {
+          const response = await ai.models.generateContent({
+            model: modelToTry,
             contents: contents.length > 0 ? contents : [{ role: 'user', parts: [{ text: 'Hello' }] }],
             config: {
               systemInstruction: options.systemInstruction,
               temperature: options.temperature ?? 0.7,
             },
           });
-        } else {
-          throw genErr;
+
+          if (response && response.text) {
+            text = response.text;
+            successfulModel = modelToTry;
+            const meta = (response as any)?.usageMetadata;
+            const actualTokens = meta?.totalTokenCount || ((meta?.promptTokenCount || 0) + (meta?.candidatesTokenCount || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
+            tokensUsed = actualTokens;
+            recordRealModelTokenUsage(successfulModel, actualTokens);
+            isFallback = false;
+            realApiExecuted = true;
+            break;
+          }
+        } catch (genErr: any) {
+          lastGeminiErr = genErr;
         }
       }
 
-      text = response.text || '';
       if (!text) {
-        throw new Error('Google Gemini returned an empty response. Please verify your prompt or model status.');
+        throw lastGeminiErr || new Error('Google Gemini returned an empty response. Please verify your prompt or model status.');
       }
 
-      const meta = (response as any)?.usageMetadata;
-      const actualTokens = meta?.totalTokenCount || ((meta?.promptTokenCount || 0) + (meta?.candidatesTokenCount || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
-      tokensUsed = actualTokens;
-      recordRealModelTokenUsage(targetModel, actualTokens);
-      isFallback = false;
-      realApiExecuted = true;
+      modelUsed = successfulModel || targetModel;
     } catch (err: any) {
       const errMsg = err?.message || err?.toString() || 'Unknown Google Gemini Error';
       if (options.fallbackType) {
@@ -7766,6 +7777,49 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
   } else if (effectiveProvider === 'groq') {
     const apiKey = customKey || process.env.GROQ_API_KEY;
     if (!apiKey || !apiKey.trim()) {
+      if (process.env.GEMINI_API_KEY) {
+        try {
+          const ai = getGenAIClient(process.env.GEMINI_API_KEY.trim());
+          let contents: any[] = [];
+          if (options.messages && options.messages.length > 0) {
+            contents = options.messages.map((m: any) => ({
+              role: m.sender === 'user' || m.role === 'user' ? 'user' : 'model',
+              parts: [{ text: m.text || m.content || '' }],
+            }));
+          } else {
+            contents = [{ role: 'user', parts: [{ text: options.prompt || 'Hello' }] }];
+          }
+
+          const fallbackCandidates = ['gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest'];
+          for (const cand of fallbackCandidates) {
+            try {
+              const response = await ai.models.generateContent({
+                model: cand,
+                contents: contents.length > 0 ? contents : [{ role: 'user', parts: [{ text: 'Hello' }] }],
+                config: {
+                  systemInstruction: options.systemInstruction,
+                  temperature: options.temperature ?? 0.7,
+                },
+              });
+
+              if (response && response.text) {
+                text = response.text;
+                tokensUsed = Math.max(1, Math.ceil(text.length / 3.8));
+                return {
+                  text: text.trim(),
+                  providerUsed: 'groq (via Google Gemini system engine)',
+                  modelUsed: cand,
+                  isCustomKey: false,
+                  tokensUsed,
+                  isFallback: false,
+                  realApiExecuted: true,
+                };
+              }
+            } catch (_) {}
+          }
+        } catch (_) {}
+      }
+
       if (options.fallbackType) {
         text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Groq');
         tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
