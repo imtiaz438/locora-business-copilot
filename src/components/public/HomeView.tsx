@@ -605,8 +605,8 @@ export const HomeView: React.FC = () => {
                 MS
               </div>
               <div className="font-sans">
-                <p className="text-xs font-bold text-slate-900">Marcus Sterling</p>
-                <p className="text-[11px] text-slate-500">Founder, Sterling Local Growth (Austin, TX)</p>
+                <p className="text-xs font-bold text-slate-900">Brad M</p>
+                <p className="text-[11px] text-slate-500"> Manager Local Growth</p>
               </div>
             </div>
           </div>
@@ -620,8 +620,8 @@ export const HomeView: React.FC = () => {
                 ER
               </div>
               <div className="font-sans">
-                <p className="text-xs font-bold text-slate-900">Elena Rostova</p>
-                <p className="text-[11px] text-slate-500">Director of SEO, Apex Digital Solutions</p>
+                <p className="text-xs font-bold text-slate-900">Heather Denkmire</p>
+                <p className="text-[11px] text-slate-500"> Project Team Leader </p>
               </div>
             </div>
           </div>
