@@ -158,7 +158,7 @@ const DEFAULT_USER: UserProfile = {
   nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
   autoRenew: true,
   paymentMethod: undefined,
-  isAuthenticated: true,
+  isAuthenticated: false,
 };
 
 const DEFAULT_SUBSCRIPTION_INVOICES: SubscriptionInvoice[] = [];
