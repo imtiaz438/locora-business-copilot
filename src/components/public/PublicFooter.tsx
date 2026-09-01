@@ -178,6 +178,8 @@ export const PublicFooter: React.FC = () => {
             </div>
           </div>
 
+          <a target="_blank" href="https://aixcollection.com/ai/locoraai"><img src="https://aixcollection.com/assets/images/badge.png" alt="AI X Collection" height="54" loading="lazy"></a>
+
           {/* Layer 1: Product Features */}
           <div className="space-y-3 font-sans">
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Product Features</h4>
