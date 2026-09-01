@@ -246,7 +246,7 @@ export const PricingPublicView: React.FC = () => {
       </div>
 
       {/* Money Back Guarantee & Global Payment Notice */}
-      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 font-sans">
+      <div className="max-w-5xl mx-auto grid-cols-1 md:grid-cols-2 gap-6 font-sans">
         <div className="p-6 bg-white border border-slate-200 rounded-2xl flex items-start gap-4 shadow-xs">
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 text-[#059669] flex items-center justify-center flex-shrink-0">
             <ShieldCheck className="w-6 h-6" />
@@ -259,25 +259,6 @@ export const PricingPublicView: React.FC = () => {
           </div>
         </div>
 
-        <div className="p-6 bg-slate-900 text-white border border-slate-800 rounded-2xl flex items-start gap-4 shadow-md">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-950 border border-emerald-800 text-emerald-400 flex items-center justify-center flex-shrink-0 font-bold text-lg">
-            🌐
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-sm font-bold font-heading text-emerald-400 flex items-center gap-1.5">
-              <span>Global Payment & Region Support</span>
-            </h4>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Stripe covers 195+ countries via cards, Apple Pay, & Google Pay. In a country without direct Stripe card access?
-            </p>
-            <button
-              onClick={() => setActiveTab('contact')}
-              className="inline-flex items-center gap-1 text-xs font-bold text-emerald-400 hover:text-emerald-300 underline cursor-pointer"
-            >
-              <span>Contact Billing for Wire / Bank Transfer / Manual Invoice →</span>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
