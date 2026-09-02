@@ -23,7 +23,7 @@ export const BrandedFooter: React.FC<BrandedFooterProps> = ({ className = '' }) 
 
       <div className="flex items-center gap-1 sm:gap-2">
         <a
-          href="https://www.linkedin.com/company/locoraai"
+          href="https://www.linkedin.com/company/locoracopilot"
           target="_blank"
           rel="noopener noreferrer"
           className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center px-2 text-xs text-slate-500 hover:text-slate-900 transition-colors"
@@ -33,7 +33,7 @@ export const BrandedFooter: React.FC<BrandedFooterProps> = ({ className = '' }) 
         </a>
         <span className="text-slate-300">•</span>
         <a
-          href="https://www.facebook.com/locoraai"
+          href="https://www.facebook.com/people/Locora-AI/61593321283379/"
           target="_blank"
           rel="noopener noreferrer"
           className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center px-2 text-xs text-slate-500 hover:text-slate-900 transition-colors"
@@ -41,18 +41,7 @@ export const BrandedFooter: React.FC<BrandedFooterProps> = ({ className = '' }) 
         >
           Facebook
         </a>
-        <span className="text-slate-300">•</span>
-        <a
-          href="https://www.instagram.com/locoraai"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center px-2 text-xs text-slate-500 hover:text-slate-900 transition-colors"
-          title="Instagram"
-        >
-          Instagram
-        </a>
       </div>
     </div>
   );
 };
-
