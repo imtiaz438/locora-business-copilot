@@ -1,24 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import {
-  FileText,
-  ShieldCheck,
   Award,
-  Sparkles,
-  Check,
-  Download,
+  ShieldCheck,
   Printer,
   Upload,
   Globe,
-  Star,
   CheckCircle2,
   Lock,
   ArrowRight,
   Zap,
-  Building,
   Mail,
   Phone,
-  Layers,
   X,
   AlertTriangle,
   XCircle,
@@ -31,21 +24,18 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
+  Image as ImageIcon,
+  Palette,
+  Sparkles,
+  Info,
 } from 'lucide-react';
 import { openWhopOneTimeCheckout } from '../lib/whopService';
-
-export interface AuditCheckItem {
-  id: number;
-  category: 'performance' | 'seo' | 'security' | 'mobile' | 'local_seo';
-  categoryLabel: string;
-  name: string;
-  targetMetric: string;
-  status: 'pass' | 'warning' | 'fail';
-  impact: 'High' | 'Medium' | 'Critical';
-  clientLossMonthly: number;
-  diagnostic: string;
-  remediation: string;
-}
+import {
+  AuditCheckItem,
+  Audit40EvaluationResult,
+  build40PointAudit,
+  BRAND_COLOR_PRESETS,
+} from '../utils/audit40PointsGenerator';
 
 interface Props {
   isOpen: boolean;
@@ -60,607 +50,184 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
   auditUrl,
   auditData,
 }) => {
-  const { user, businessProfile, latestWebsiteAudit, logActivity, setAuthModalOpen } = useApp();
+  const {
+    user,
+    businessProfile,
+    latestWebsiteAudit,
+    setLatestWebsiteAudit,
+    settings,
+    logActivity,
+    setAuthModalOpen,
+  } = useApp();
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Target URL
   const [inputUrl, setInputUrl] = useState<string>(
     auditUrl || latestWebsiteAudit?.url || businessProfile.website || 'brightsmiledental.com'
   );
   const [isScanning, setIsScanning] = useState(false);
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<'all' | 'performance' | 'seo' | 'security' | 'mobile' | 'local_seo'>('all');
-
-  // Customization state for White-Labeling
-  const [agencyName, setAgencyName] = useState(businessProfile.name && businessProfile.name !== 'My Business Workspace' ? businessProfile.name : 'Apex Digital Media Group');
-  const [agencyWebsite, setAgencyWebsite] = useState(businessProfile.website || 'https://apexdigitalmedia.com');
-  const [agencyContactEmail, setAgencyContactEmail] = useState(businessProfile.email || user.email || 'partner@apexdigitalmedia.com');
-  const [agencyPhone, setAgencyPhone] = useState(businessProfile.phone || '+1 (555) 782-9901');
-  const [clientBusinessName, setClientBusinessName] = useState('Bright Smile Dental Care');
-  const [customExecutiveNote, setCustomExecutiveNote] = useState(
-    `Confidential technical assessment prepared for the executive management team. This 40-point diagnostic evaluates Core Web Vitals, organic search discoverability, mobile conversion friction, and technical security standards.`
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [rawAuditResult, setRawAuditResult] = useState<any>(
+    auditData || (latestWebsiteAudit?.url?.includes(inputUrl) ? latestWebsiteAudit : null)
   );
-  const [includePricingPitch, setIncludePricingPitch] = useState(true);
-  const [proposalRetainerQuote, setProposalRetainerQuote] = useState('$2,250/mo');
 
+  // Category filter
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<
+    'all' | 'performance' | 'seo' | 'security' | 'mobile' | 'local_seo'
+  >('all');
+  const [filterIssuesOnly, setFilterIssuesOnly] = useState(false);
+
+  // White-Label Branding state
+  const [agencyName, setAgencyName] = useState(
+    businessProfile.name && businessProfile.name !== 'My Business Workspace'
+      ? businessProfile.name
+      : 'Apex Digital Media Group'
+  );
+  const [agencyWebsite, setAgencyWebsite] = useState(
+    businessProfile.website || 'https://apexdigitalmedia.com'
+  );
+  const [agencyContactEmail, setAgencyContactEmail] = useState(
+    businessProfile.email || user.email || 'partner@apexdigitalmedia.com'
+  );
+  const [agencyPhone, setAgencyPhone] = useState(
+    businessProfile.phone || '+1 (555) 782-9901'
+  );
+
+  // Custom Agency Logo (Upload or URL)
+  const [agencyLogoUrl, setAgencyLogoUrl] = useState<string | null>(
+    (businessProfile as any).logo || null
+  );
+
+  // Custom Agency Brand Primary Color
+  const [agencyBrandColor, setAgencyBrandColor] = useState<string>('#4f46e5');
+
+  // Client Details & Proposal Customization
+  const [clientBusinessName, setClientBusinessName] = useState('Bright Smile Dental');
+  const [customExecutiveNote, setCustomExecutiveNote] = useState(
+    'This comprehensive 40-point technical, SEO, and performance evaluation was executed on live production assets. Immediate remediation of critical issues will protect search rankings, improve mobile conversions, and eliminate estimated monthly revenue leakage.'
+  );
+  const [proposalRetainerQuote, setProposalRetainerQuote] = useState('$2,250/month');
+  const [includePricingPitch, setIncludePricingPitch] = useState(true);
+
+  // Checkout & UI state
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [expandedCheckId, setExpandedCheckId] = useState<number | null>(null);
+  const [showSettingsDrawer, setShowSettingsDrawer] = useState(true);
 
-  // Check if user already has white-label capability (Agency plan)
-  const isAgencyTier = user.planTier === 'agency';
+  // Derive Client Business Name automatically if blank
+  useEffect(() => {
+    if (rawAuditResult?.metadata?.title) {
+      const derived = rawAuditResult.metadata.title.split(/[-|•–]/)[0].trim();
+      if (derived && derived.length < 40) {
+        setClientBusinessName(derived);
+      }
+    } else if (inputUrl) {
+      const clean = inputUrl.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').replace(/^www\./i, '');
+      const nameGuess = clean.split('.')[0];
+      if (nameGuess && clientBusinessName === 'Bright Smile Dental') {
+        const formatted = nameGuess.charAt(0).toUpperCase() + nameGuess.slice(1);
+        setClientBusinessName(formatted);
+      }
+    }
+  }, [rawAuditResult, inputUrl]);
 
-  // 40 Diagnostic Evaluation Points State
-  const [auditPoints, setAuditPoints] = useState<AuditCheckItem[]>([]);
+  // Sync when props change or modal opens
+  useEffect(() => {
+    if (auditUrl && auditUrl !== inputUrl) {
+      setInputUrl(auditUrl);
+    }
+    if (auditData) {
+      setRawAuditResult(auditData);
+    } else if (latestWebsiteAudit) {
+      setRawAuditResult(latestWebsiteAudit);
+    }
+  }, [auditUrl, auditData, isOpen]);
 
-  // Function to build 40 points based on target domain and live signals
-  const build40PointAudit = (targetUrl: string, rawData?: any): AuditCheckItem[] => {
-    const cleanUrl = targetUrl.replace(/^https?:\/\//, '').replace(/\/.*$/, '').toLowerCase();
-    const hasHttps = targetUrl.startsWith('https://') || !targetUrl.startsWith('http://');
-    const isDomainComplex = cleanUrl.length > 15;
-    const isSample = cleanUrl.includes('example') || cleanUrl.includes('test');
+  // Compute 40-Point Evaluation from Real Data
+  const auditEvaluation: Audit40EvaluationResult = useMemo(() => {
+    return build40PointAudit(inputUrl, rawAuditResult);
+  }, [inputUrl, rawAuditResult]);
 
-    const rawScores = rawData?.audit?.scores || rawData?.scores || {};
-    const perfScore = rawScores.performance || 68;
-    const seoScore = rawScores.seo || 74;
-    const secScore = rawScores.bestPractices || 82;
+  // Filtered list of points
+  const visiblePoints = useMemo(() => {
+    return auditEvaluation.points.filter((pt) => {
+      if (selectedCategoryFilter !== 'all' && pt.category !== selectedCategoryFilter) {
+        return false;
+      }
+      if (filterIssuesOnly && pt.status === 'pass') {
+        return false;
+      }
+      return true;
+    });
+  }, [auditEvaluation.points, selectedCategoryFilter, filterIssuesOnly]);
 
-    const points: AuditCheckItem[] = [
-      // PILLAR 1: Performance & Core Web Vitals (Points 1 - 8)
-      {
-        id: 1,
-        category: 'performance',
-        categoryLabel: 'Core Web Vitals & Speed',
-        name: 'Largest Contentful Paint (LCP)',
-        targetMetric: '< 2.5 seconds',
-        status: perfScore > 75 ? 'pass' : perfScore > 50 ? 'warning' : 'fail',
-        impact: 'Critical',
-        clientLossMonthly: 450,
-        diagnostic: perfScore > 75 ? 'Main banner assets render in 1.9s.' : 'Hero image takes 3.8s to render on mobile 4G networks.',
-        remediation: 'Implement WebP image compression, preload hero background LCP element in head tag, and enable CDN edge delivery.',
-      },
-      {
-        id: 2,
-        category: 'performance',
-        categoryLabel: 'Core Web Vitals & Speed',
-        name: 'Interaction to Next Paint (INP / FID)',
-        targetMetric: '< 200 milliseconds',
-        status: perfScore > 65 ? 'pass' : 'warning',
-        impact: 'High',
-        clientLossMonthly: 280,
-        diagnostic: 'Main thread JavaScript execution delay exceeds threshold during initial client click interactions.',
-        remediation: 'Break up long CPU tasks, defer non-critical third-party analytics scripts (Hotjar, Meta Pixel), and optimize UI event listeners.',
-      },
-      {
-        id: 3,
-        category: 'performance',
-        categoryLabel: 'Core Web Vitals & Speed',
-        name: 'Cumulative Layout Shift (CLS)',
-        targetMetric: '< 0.1 score',
-        status: 'pass',
-        impact: 'High',
-        clientLossMonthly: 150,
-        diagnostic: 'Visual elements remain stable during progressive DOM render without unexpected layout jumps.',
-        remediation: 'Always include explicit width and height aspect-ratio attributes on all images and ad containers.',
-      },
-      {
-        id: 4,
-        category: 'performance',
-        categoryLabel: 'Core Web Vitals & Speed',
-        name: 'Time to First Byte (TTFB)',
-        targetMetric: '< 600 milliseconds',
-        status: perfScore > 70 ? 'pass' : 'warning',
-        impact: 'Critical',
-        clientLossMonthly: 350,
-        diagnostic: 'Initial server response latency observed at 740ms before HTML payload transmission starts.',
-        remediation: 'Enable Redis/Varnish full-page server caching and deploy Cloudflare Enterprise edge DNS routing.',
-      },
-      {
-        id: 5,
-        category: 'performance',
-        categoryLabel: 'Core Web Vitals & Speed',
-        name: 'Next-Gen Image Delivery (WebP/AVIF)',
-        targetMetric: '100% Modern Formats',
-        status: 'warning',
-        impact: 'Medium',
-        clientLossMonthly: 180,
-        diagnostic: 'Legacy uncompressed PNG/JPEG files detected occupying 2.4MB of unneeded bandwidth payload.',
-        remediation: 'Automatically serve responsive AVIF/WebP image variants via modern srcset attributes.',
-      },
-      {
-        id: 6,
-        category: 'performance',
-        categoryLabel: 'Core Web Vitals & Speed',
-        name: 'Gzip & Brotli Text Compression',
-        targetMetric: 'Brotli Level 6+ Active',
-        status: 'pass',
-        impact: 'High',
-        clientLossMonthly: 120,
-        diagnostic: 'Brotli byte-level compression enabled for HTML, CSS, and JS file assets.',
-        remediation: 'Maintain active Content-Encoding: br headers on web server configuration.',
-      },
-      {
-        id: 7,
-        category: 'performance',
-        categoryLabel: 'Core Web Vitals & Speed',
-        name: 'Render-Blocking CSS & JS Elimination',
-        targetMetric: '0 Blocking Scripts',
-        status: perfScore > 80 ? 'pass' : 'fail',
-        impact: 'Critical',
-        clientLossMonthly: 400,
-        diagnostic: '3 synchronous script tags block browser DOM construction in document <head>.',
-        remediation: 'Inject async or defer attributes on external script tags and inline critical path CSS above the fold.',
-      },
-      {
-        id: 8,
-        category: 'performance',
-        categoryLabel: 'Core Web Vitals & Speed',
-        name: 'Browser Cache TTL Expiry Policy',
-        targetMetric: 'max-age >= 31536000',
-        status: 'pass',
-        impact: 'Medium',
-        clientLossMonthly: 90,
-        diagnostic: 'Static assets cached for returning visitors with 1-year immutable cache headers.',
-        remediation: 'Keep Cache-Control: public, max-age=31536000, immutable on fingerprinted assets.',
-      },
-
-      // PILLAR 2: Technical SEO & Indexability (Points 9 - 16)
-      {
-        id: 9,
-        category: 'seo',
-        categoryLabel: 'Technical SEO & Indexing',
-        name: 'Title Tag Optimization & Length',
-        targetMetric: '50 - 60 Characters',
-        status: seoScore > 80 ? 'pass' : 'warning',
-        impact: 'Critical',
-        clientLossMonthly: 380,
-        diagnostic: 'Primary homepage title missing high-intent local geo-modifier keywords.',
-        remediation: 'Format homepage title as: "[Primary Service] in [City, State] | [Brand Name]" to maximize click-throughs.',
-      },
-      {
-        id: 10,
-        category: 'seo',
-        categoryLabel: 'Technical SEO & Indexing',
-        name: 'Meta Description & CTR Hook',
-        targetMetric: '140 - 160 Characters',
-        status: seoScore > 75 ? 'pass' : 'fail',
-        impact: 'High',
-        clientLossMonthly: 260,
-        diagnostic: 'Meta description either truncated or missing actionable phone booking call-to-action.',
-        remediation: 'Write compelling 155-character meta snippet featuring unique selling proposition and phone contact.',
-      },
-      {
-        id: 11,
-        category: 'seo',
-        categoryLabel: 'Technical SEO & Indexing',
-        name: 'Single H1 Heading Architecture',
-        targetMetric: 'Exactly 1 H1 per URL',
-        status: 'pass',
-        impact: 'Critical',
-        clientLossMonthly: 220,
-        diagnostic: 'Document contains a clean, semantic H1 tag containing target search keyword phrase.',
-        remediation: 'Ensure each landing page maintains exactly one H1 headline followed by logical H2 and H3 subsections.',
-      },
-      {
-        id: 12,
-        category: 'seo',
-        categoryLabel: 'Technical SEO & Indexing',
-        name: 'Canonical Tag Self-Referencing',
-        targetMetric: 'Rel="canonical" Present',
-        status: 'pass',
-        impact: 'High',
-        clientLossMonthly: 190,
-        diagnostic: 'Self-referencing canonical tag prevents duplicate content penalties across HTTP/HTTPS and trailing slashes.',
-        remediation: 'Maintain absolute canonical URL declarations on all indexable pages.',
-      },
-      {
-        id: 13,
-        category: 'seo',
-        categoryLabel: 'Technical SEO & Indexing',
-        name: 'Robots.txt Crawl Directives',
-        targetMetric: 'Valid Syntax & Access',
-        status: 'pass',
-        impact: 'Critical',
-        clientLossMonthly: 500,
-        diagnostic: 'Googlebot has clear crawling permissions without accidental Disallow: / blocks.',
-        remediation: 'Audit robots.txt quarterly to ensure staging areas are protected while main pages remain open.',
-      },
-      {
-        id: 14,
-        category: 'seo',
-        categoryLabel: 'Technical SEO & Indexing',
-        name: 'XML Sitemap Auto-Sync',
-        targetMetric: 'Valid sitemap.xml in robots.txt',
-        status: 'pass',
-        impact: 'High',
-        clientLossMonthly: 210,
-        diagnostic: 'Dynamic XML sitemap referenced in robots.txt and submitted to Google Search Console.',
-        remediation: 'Auto-ping search engines whenever new service pages, blogs, or location hubs are published.',
-      },
-      {
-        id: 15,
-        category: 'seo',
-        categoryLabel: 'Technical SEO & Indexing',
-        name: 'URL Clean Slugs & Permalink Structure',
-        targetMetric: 'Hyphen-separated lowercase',
-        status: 'pass',
-        impact: 'Medium',
-        clientLossMonthly: 110,
-        diagnostic: 'URLs utilize clean semantic slugs without confusing parameter queries or session IDs.',
-        remediation: 'Maintain structured folder paths such as /services/[service-name]/ for contextual relevance.',
-      },
-      {
-        id: 16,
-        category: 'seo',
-        categoryLabel: 'Technical SEO & Indexing',
-        name: 'Custom 404 Error Page & Redirects',
-        targetMetric: 'HTTP 404 Status Code',
-        status: 'warning',
-        impact: 'Medium',
-        clientLossMonthly: 140,
-        diagnostic: 'Broken links default to generic server error without guided navigation back to services.',
-        remediation: 'Design a friendly custom 404 page featuring top services, search bar, and emergency phone contact.',
-      },
-
-      // PILLAR 3: Security & Trust Protocols (Points 17 - 24)
-      {
-        id: 17,
-        category: 'security',
-        categoryLabel: 'Security & Trust Signals',
-        name: 'Valid 256-Bit SSL/TLS Certificate',
-        targetMetric: 'Valid & Active HTTPS',
-        status: hasHttps ? 'pass' : 'fail',
-        impact: 'Critical',
-        clientLossMonthly: 850,
-        diagnostic: hasHttps ? 'TLS 1.3 encryption active protecting customer data and credit card transactions.' : 'CRITICAL: Site loaded over HTTP without active SSL, triggering "Not Secure" browser warning.',
-        remediation: 'Install automated Let\'s Encrypt or Sectigo 256-bit wildcard SSL certificate immediately.',
-      },
-      {
-        id: 18,
-        category: 'security',
-        categoryLabel: 'Security & Trust Signals',
-        name: 'Permanent 301 HTTPS Redirection',
-        targetMetric: 'Force All Traffic to HTTPS',
-        status: hasHttps ? 'pass' : 'fail',
-        impact: 'Critical',
-        clientLossMonthly: 400,
-        diagnostic: hasHttps ? 'All HTTP queries automatically redirect to secure HTTPS endpoint.' : 'HTTP and HTTPS versions load simultaneously, causing duplicate indexing.',
-        remediation: 'Enforce server-level 301 redirect rules in .htaccess / nginx.conf routing all port 80 traffic to 443.',
-      },
-      {
-        id: 19,
-        category: 'security',
-        categoryLabel: 'Security & Trust Signals',
-        name: 'HTTP Strict Transport Security (HSTS)',
-        targetMetric: 'max-age=31536000; includeSubDomains',
-        status: 'warning',
-        impact: 'High',
-        clientLossMonthly: 170,
-        diagnostic: 'HSTS response header not detected, leaving domain vulnerable to SSL-strip downgrade attacks.',
-        remediation: 'Add Strict-Transport-Security: max-age=31536000; includeSubDomains; preload header.',
-      },
-      {
-        id: 20,
-        category: 'security',
-        categoryLabel: 'Security & Trust Signals',
-        name: 'Content Security Policy (CSP)',
-        targetMetric: 'Content-Security-Policy Configured',
-        status: 'warning',
-        impact: 'Medium',
-        clientLossMonthly: 130,
-        diagnostic: 'No CSP headers declared, permitting unauthorized script execution vectors.',
-        remediation: 'Define strict CSP whitelist specifying authorized domains for fonts, scripts, and media.',
-      },
-      {
-        id: 21,
-        category: 'security',
-        categoryLabel: 'Security & Trust Signals',
-        name: 'X-Frame-Options (Clickjacking Guard)',
-        targetMetric: 'SAMEORIGIN or DENY',
-        status: 'pass',
-        impact: 'High',
-        clientLossMonthly: 160,
-        diagnostic: 'X-Frame-Options configured preventing malicious third parties from embedding site in hidden iframes.',
-        remediation: 'Keep X-Frame-Options: SAMEORIGIN header enabled.',
-      },
-      {
-        id: 22,
-        category: 'security',
-        categoryLabel: 'Security & Trust Signals',
-        name: 'Zero Insecure Mixed Content Assets',
-        targetMetric: '0 HTTP resources on HTTPS',
-        status: 'pass',
-        impact: 'Critical',
-        clientLossMonthly: 320,
-        diagnostic: 'All image, stylesheet, and font resources requested exclusively over HTTPS.',
-        remediation: 'Audit template files to ensure no hardcoded http:// protocol URLs remain.',
-      },
-      {
-        id: 23,
-        category: 'security',
-        categoryLabel: 'Security & Trust Signals',
-        name: 'Domain WHOIS Privacy Shield',
-        targetMetric: 'Private Registration Active',
-        status: 'pass',
-        impact: 'Medium',
-        clientLossMonthly: 80,
-        diagnostic: 'Domain registrar contact details shielded against spam harvesting bots.',
-        remediation: 'Ensure WHOIS Privacy Protection remains active on annual domain renewal.',
-      },
-      {
-        id: 24,
-        category: 'security',
-        categoryLabel: 'Security & Trust Signals',
-        name: 'Google Safe Browsing & Malware Clean',
-        targetMetric: 'Clean Reputation Status',
-        status: 'pass',
-        impact: 'Critical',
-        clientLossMonthly: 600,
-        diagnostic: 'Zero deceptive malware, phishing, or malicious injection payloads detected by Google Security Scanner.',
-        remediation: 'Deploy weekly automated web application firewall (WAF) scans.',
-      },
-
-      // PILLAR 4: Mobile Experience & Conversion Architecture (Points 25 - 32)
-      {
-        id: 25,
-        category: 'mobile',
-        categoryLabel: 'Mobile & Conversion UI',
-        name: 'Mobile Responsive Viewport Tag',
-        targetMetric: 'width=device-width, initial-scale=1',
-        status: 'pass',
-        impact: 'Critical',
-        clientLossMonthly: 550,
-        diagnostic: 'Viewport meta tag properly configured for seamless layout adaptation across iOS and Android screens.',
-        remediation: 'Maintain standard mobile viewport declaration in HTML <head>.',
-      },
-      {
-        id: 26,
-        category: 'mobile',
-        categoryLabel: 'Mobile & Conversion UI',
-        name: 'Touch Target Sizing & Spacing',
-        targetMetric: 'Min 44 x 44 Pixels',
-        status: 'warning',
-        impact: 'High',
-        clientLossMonthly: 240,
-        diagnostic: 'Several navigation dropdown links and footer buttons sit too close together for easy thumb tapping.',
-        remediation: 'Enlarge button touch targets to minimum 48px height with 8px margin spacing.',
-      },
-      {
-        id: 27,
-        category: 'mobile',
-        categoryLabel: 'Mobile & Conversion UI',
-        name: 'Sticky / Floating Call-to-Action (CTA)',
-        targetMetric: 'Persistent Booking Bar on Mobile',
-        status: 'fail',
-        impact: 'Critical',
-        clientLossMonthly: 680,
-        diagnostic: 'No persistent mobile bottom bar for "Book Appointment" or "Call Now" when scrolling long pages.',
-        remediation: 'Implement a sleek sticky bottom mobile action bar with 1-tap direct phone calling and online booking.',
-      },
-      {
-        id: 28,
-        category: 'mobile',
-        categoryLabel: 'Mobile & Conversion UI',
-        name: 'Click-to-Call Phone Links (tel:)',
-        targetMetric: 'href="tel:..." on all numbers',
-        status: 'pass',
-        impact: 'Critical',
-        clientLossMonthly: 490,
-        diagnostic: 'Phone numbers wrapped in tel: protocol links allowing instantaneous mobile dialing.',
-        remediation: 'Verify all header and footer phone numbers launch mobile phone dialer instantly.',
-      },
-      {
-        id: 29,
-        category: 'mobile',
-        categoryLabel: 'Mobile & Conversion UI',
-        name: 'Frictionless Lead Capture Form Access',
-        targetMetric: '<= 4 Required Input Fields',
-        status: 'warning',
-        impact: 'High',
-        clientLossMonthly: 310,
-        diagnostic: 'Lead form requires 8 distinct fields including unnecessary address details, creating high form abandonment.',
-        remediation: 'Streamline lead intake to 3 core fields: Name, Phone, and Preferred Date/Service.',
-      },
-      {
-        id: 30,
-        category: 'mobile',
-        categoryLabel: 'Mobile & Conversion UI',
-        name: 'Zero Horizontal Scroll Overflow',
-        targetMetric: '0px Horizontal Bleed',
-        status: 'pass',
-        impact: 'Critical',
-        clientLossMonthly: 380,
-        diagnostic: 'Page content respects maximum screen width without frustrating horizontal viewport side-scrolling.',
-        remediation: 'Use max-w-full and overflow-x-hidden on root mobile wrappers.',
-      },
-      {
-        id: 31,
-        category: 'mobile',
-        categoryLabel: 'Mobile & Conversion UI',
-        name: 'Typography Legibility & Line Spacing',
-        targetMetric: 'Base Font >= 16px',
-        status: 'pass',
-        impact: 'Medium',
-        clientLossMonthly: 120,
-        diagnostic: 'Primary body text set to 16px with comfortable 1.6 line height for effortless mobile reading.',
-        remediation: 'Ensure high contrast ratio (minimum 4.5:1 WCAG AA) between body copy and container backgrounds.',
-      },
-      {
-        id: 32,
-        category: 'mobile',
-        categoryLabel: 'Mobile & Conversion UI',
-        name: 'Mobile Speed Index Benchmark',
-        targetMetric: '< 3.4 seconds',
-        status: perfScore > 70 ? 'pass' : 'fail',
-        impact: 'Critical',
-        clientLossMonthly: 520,
-        diagnostic: 'Visual above-the-fold completion delayed due to uncompressed video assets and unminified CSS bundles.',
-        remediation: 'Replace heavy hero background auto-play videos on mobile devices with lightweight optimized static images.',
-      },
-
-      // PILLAR 5: Local SEO & Authority Signals (Points 33 - 40)
-      {
-        id: 33,
-        category: 'local_seo',
-        categoryLabel: 'Local SEO & Schema',
-        name: 'LocalBusiness Schema Markup (JSON-LD)',
-        targetMetric: 'Valid LocalBusiness Schema',
-        status: 'fail',
-        impact: 'Critical',
-        clientLossMonthly: 620,
-        diagnostic: 'CRITICAL: No JSON-LD LocalBusiness structured data found. Google cannot extract opening hours, geo-coordinates, or pricing range.',
-        remediation: 'Inject comprehensive JSON-LD schema with exact business name, address, geo-coordinates, opening hours, and service catalogue.',
-      },
-      {
-        id: 34,
-        category: 'local_seo',
-        categoryLabel: 'Local SEO & Schema',
-        name: 'Organization & WebSite Schema',
-        targetMetric: 'JSON-LD @type Organization',
-        status: 'warning',
-        impact: 'High',
-        clientLossMonthly: 210,
-        diagnostic: 'Organization schema incomplete; missing official logo URL and verified social profile sameAs references.',
-        remediation: 'Embed sameAs array referencing official Facebook, Instagram, LinkedIn, and Yelp business profiles.',
-      },
-      {
-        id: 35,
-        category: 'local_seo',
-        categoryLabel: 'Local SEO & Schema',
-        name: 'Open Graph Social Metadata (OG)',
-        targetMetric: 'og:title, og:image, og:description',
-        status: 'pass',
-        impact: 'Medium',
-        clientLossMonthly: 140,
-        diagnostic: 'Rich Open Graph card metadata displays branded 1200x630 visual preview when shared across iMessage, WhatsApp, and social channels.',
-        remediation: 'Maintain high-resolution 1200x630px branded preview image.',
-      },
-      {
-        id: 36,
-        category: 'local_seo',
-        categoryLabel: 'Local SEO & Schema',
-        name: 'Twitter Card Social Directives',
-        targetMetric: 'twitter:card summary_large_image',
-        status: 'pass',
-        impact: 'Medium',
-        clientLossMonthly: 60,
-        diagnostic: 'Twitter card metatags properly defined for link previews.',
-        remediation: 'Keep twitter:card summary_large_image tags synchronized with Open Graph title and descriptions.',
-      },
-      {
-        id: 37,
-        category: 'local_seo',
-        categoryLabel: 'Local SEO & Schema',
-        name: 'Favicon & Apple Touch Icons Configured',
-        targetMetric: '32x32, 180x180, & manifest.json',
-        status: 'pass',
-        impact: 'Medium',
-        clientLossMonthly: 80,
-        diagnostic: 'High-DPI favicon and Apple touch icon display crisply in browser bookmarks and mobile homescreens.',
-        remediation: 'Supply SVG and 192x192 PNG icons in root web manifest.',
-      },
-      {
-        id: 38,
-        category: 'local_seo',
-        categoryLabel: 'Local SEO & Schema',
-        name: 'NAP (Name, Address, Phone) Footer Uniformity',
-        targetMetric: '100% Match with Google Maps',
-        status: 'warning',
-        impact: 'Critical',
-        clientLossMonthly: 410,
-        diagnostic: 'Website footer address formatting has slight discrepancy with verified Google Maps profile.',
-        remediation: 'Align suite numbers, street abbreviations (St vs Street), and area codes exactly with Google Maps listing.',
-      },
-      {
-        id: 39,
-        category: 'local_seo',
-        categoryLabel: 'Local SEO & Schema',
-        name: 'Google Business Profile & Map Embed Link',
-        targetMetric: 'Interactive Verified Map Embed',
-        status: 'pass',
-        impact: 'High',
-        clientLossMonthly: 290,
-        diagnostic: 'Contact page includes interactive Google Map location embed establishing strong local geographical entity relevance.',
-        remediation: 'Link embedded map directly to official Google Place ID CID URL.',
-      },
-      {
-        id: 40,
-        category: 'local_seo',
-        categoryLabel: 'Local SEO & Schema',
-        name: 'Review Rich Snippets & AggregateRating',
-        targetMetric: 'AggregateRating Schema Active',
-        status: 'fail',
-        impact: 'Critical',
-        clientLossMonthly: 580,
-        diagnostic: 'Zero review stars display in Google Search SERPs. Missing schema representation of 4.8-star client reviews.',
-        remediation: 'Deploy schema.org/AggregateRating linking verified Google review count and average rating to capture gold star SERP rich snippets.',
-      },
-    ];
-
-    return points;
+  // Handle Logo Upload from local file
+  const handleLogoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setErrorMessage('Logo image size must be under 2MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const result = uploadEvent.target?.result as string;
+      if (result) {
+        setAgencyLogoUrl(result);
+        setErrorMessage(null);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
-  // Initialize and run audit on mount or when url changes
-  useEffect(() => {
-    const points = build40PointAudit(inputUrl, latestWebsiteAudit);
-    setAuditPoints(points);
-    setClientBusinessName(
-      inputUrl
-        .replace(/^https?:\/\//, '')
-        .replace(/^www\./, '')
-        .split('/')[0]
-        .split('.')[0]
-        .replace(/-/g, ' ')
-        .replace(/\b\w/g, (l) => l.toUpperCase()) + ' Business'
-    );
-  }, [inputUrl, latestWebsiteAudit]);
-
+  // Run Live Website Audit
   const handleRunLiveScan = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!inputUrl.trim()) return;
+    if (e && e.preventDefault) e.preventDefault();
+    const clean = inputUrl.trim();
+    if (!clean || isScanning) return;
 
     setIsScanning(true);
+    setScanError(null);
     setErrorMessage(null);
 
     try {
-      // Run genuine live audit scan against server
-      const res = await fetch('/api/leads/audit-domain', {
+      const activeModel =
+        (settings.providerModels && settings.providerModels[settings.activeProvider]) ||
+        settings.activeModelVersion;
+
+      const response = await fetch('/api/ai/audit-website', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: inputUrl.trim() }),
+        body: JSON.stringify({
+          url: clean,
+          businessProfile,
+          provider: settings.activeProvider,
+          modelVersion: activeModel,
+          providerKey: settings.providerKeys[settings.activeProvider],
+          userEmail: user.email,
+        }),
       });
 
-      const data = await res.json();
-      const newPoints = build40PointAudit(inputUrl.trim(), { scores: { performance: data.mobileScore || 65, seo: 75, bestPractices: data.hasSsl ? 85 : 45 } });
-      setAuditPoints(newPoints);
+      const data = await response.json();
 
-      logActivity('audit', 'Live 40-Point Diagnostic Scan', `Audited ${inputUrl.trim()} across all 5 technical pillars.`);
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'Failed to crawl website.');
+      }
+
+      setRawAuditResult(data);
+      setLatestWebsiteAudit(data);
+      logActivity('audit', 'Live 40-Point Diagnostic', `Crawled and evaluated 40 points for ${clean}`);
     } catch (err: any) {
-      console.warn('Scan fallback calculation:', err);
-      setAuditPoints(build40PointAudit(inputUrl.trim()));
+      setScanError(err.message || 'Unable to complete live crawl.');
     } finally {
       setIsScanning(false);
     }
   };
 
-  if (!isOpen) return null;
-
-  // Compute live scores from the 40 points
-  const passedCount = auditPoints.filter((p) => p.status === 'pass').length;
-  const warningCount = auditPoints.filter((p) => p.status === 'warning').length;
-  const failedCount = auditPoints.filter((p) => p.status === 'fail').length;
-
-  const totalMonthlyLoss = auditPoints
-    .filter((p) => p.status === 'fail' || p.status === 'warning')
-    .reduce((sum, p) => sum + (p.status === 'fail' ? p.clientLossMonthly : p.clientLossMonthly * 0.5), 0);
-  const totalAnnualLoss = Math.round(totalMonthlyLoss * 12);
-
-  const overallScore = Math.round(((passedCount * 1 + warningCount * 0.5) / (auditPoints.length || 40)) * 100);
-
-  const filteredPoints = selectedCategoryFilter === 'all'
-    ? auditPoints
-    : auditPoints.filter((p) => p.category === selectedCategoryFilter);
-
+  // Trigger Checkout for One-Time $9.99 Whop Purchase
   const handleTriggerCheckout = async () => {
-    if (!user.isAuthenticated) {
-      onClose();
+    if (!user || user.id === 'demo-user-123') {
       setAuthModalOpen(true);
       return;
     }
@@ -668,20 +235,18 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
     setIsProcessing(true);
     setErrorMessage(null);
 
-    const userEmail = user.email || 'agency@example.com';
-    const userName = user.name || userEmail.split('@')[0];
-
     try {
       const checkoutResult = await openWhopOneTimeCheckout({
         productType: 'white_label_audit',
         price: 9.99,
-        email: userEmail,
-        name: userName,
+        email: user.email,
+        name: user.name,
         userId: user.id,
         metadata: {
           clientUrl: inputUrl,
           agencyName,
           clientBusinessName,
+          brandColor: agencyBrandColor,
         },
         onError: (err) => setErrorMessage(err),
       });
@@ -700,34 +265,48 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
     }
   };
 
+  // Print Document Handler
   const handlePrintDocument = () => {
-    logActivity('audit', 'Exported White-Label Audit PDF', `Generated 40-point client PDF audit for ${inputUrl}`);
+    logActivity(
+      'audit',
+      'Exported White-Label Audit PDF',
+      `Generated 40-point client PDF audit for ${inputUrl}`
+    );
     window.print();
   };
+
+  const isAgencyTier = user.planTier === 'agency';
+
+  if (!isOpen) return null;
 
   return (
     <div
       id="whitelabel_audit_modal_overlay"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/85 backdrop-blur-xs overflow-y-auto animate-fadeIn font-sans"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-xs overflow-y-auto font-sans"
     >
       <div
         id="whitelabel_audit_modal_container"
-        className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[94vh] flex flex-col"
+        className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[95vh] flex flex-col"
       >
-        {/* Header Banner */}
-        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 sm:p-6 relative shrink-0 border-b border-slate-800">
+        {/* Modal Header */}
+        <div
+          className="text-white p-5 sm:p-6 relative shrink-0 border-b border-white/10 transition-colors"
+          style={{
+            background: `linear-gradient(135deg, #0f172a 0%, ${agencyBrandColor}dd 60%, #0f172a 100%)`,
+          }}
+        >
           <div className="flex items-center justify-between relative z-10">
             <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 backdrop-blur-xs shadow-inner">
+              <div className="w-11 h-11 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center text-white backdrop-blur-xs shadow-inner">
                 <Award className="w-6 h-6" />
               </div>
               <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase tracking-wider mb-0.5 border border-indigo-500/30">
-                  <ShieldCheck className="w-3 h-3 text-indigo-400" />
-                  <span>40-Point Live Technical & SEO Audit Engine</span>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 text-white text-[10px] font-bold uppercase tracking-wider mb-0.5 border border-white/20">
+                  <ShieldCheck className="w-3 h-3 text-emerald-300" />
+                  <span>40-Point Deep Technical & SEO Evaluation</span>
                 </div>
                 <h2 className="text-lg sm:text-2xl font-black font-heading tracking-tight text-white">
-                  White-Label Client PDF Diagnostic Report
+                  White-Label Client PDF Audit
                 </h2>
               </div>
             </div>
@@ -743,431 +322,781 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-5 sm:p-8 overflow-y-auto space-y-6 flex-1 text-slate-900">
-          {/* Live Domain Target & Instant Scan Bar */}
-          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-slate-900">
+          {/* Live Data Target & Instant Live Scan Form */}
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-extrabold font-heading text-slate-900 flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-indigo-600" />
-                  <span>Target Client URL / Domain to Audit</span>
-                </h3>
-                <p className="text-xs text-slate-500 font-sans mt-0.5">
-                  Enter any client or prospect domain. The engine evaluates all 40 points in real time.
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
+                  Live Audit Target Domain
+                </span>
+                <p className="text-xs text-slate-600">
+                  Runs a live crawl analyzing 40 real technical, SEO, speed, security, and mobile signals.
                 </p>
               </div>
 
-              {isAgencyTier ? (
-                <span className="px-3 py-1 bg-emerald-100 text-[#059669] text-xs font-black uppercase rounded-full whitespace-nowrap self-start sm:self-auto">
-                  ✓ Unlimited Agency PDF Exports
-                </span>
-              ) : (
-                <span className="px-3 py-1 bg-indigo-100 text-indigo-800 text-xs font-black uppercase rounded-full whitespace-nowrap self-start sm:self-auto">
-                  $9.99 One-Time / Free on Agency Plan
-                </span>
+              {rawAuditResult?.analyzedAt && (
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200 shrink-0">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Live Crawl Active: {new Date(rawAuditResult.analyzedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
               )}
             </div>
 
-            <form onSubmit={handleRunLiveScan} className="flex flex-col sm:flex-row gap-2.5">
+            <form onSubmit={handleRunLiveScan} className="flex flex-col sm:flex-row gap-2">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Globe className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={inputUrl}
                   onChange={(e) => setInputUrl(e.target.value)}
-                  placeholder="e.g. brightsmiledental.com or https://clientwebsite.com"
-                  className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                  placeholder="e.g. clientwebsite.com"
+                  className="w-full pl-9.5 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
 
               <button
                 type="submit"
-                disabled={isScanning}
-                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs disabled:opacity-60"
+                disabled={isScanning || !inputUrl.trim()}
+                className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
               >
-                {isScanning ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Auditing 40 Points...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                    <span>Run Live 40-Point Diagnostic</span>
-                  </>
-                )}
+                <RefreshCw className={`w-3.5 h-3.5 ${isScanning ? 'animate-spin' : ''}`} />
+                <span>{isScanning ? 'Auditing Live Site...' : 'Run Live 40-Point Diagnostic'}</span>
               </button>
             </form>
+
+            {scanError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold">Live Scan Notice:</span> {scanError}
+                  <p className="text-[11px] text-rose-700 mt-0.5">
+                    Evaluations will calculate based on domain conventions and fallback crawl metrics.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Real Crawl Summary Metrics Bar */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 pt-1 border-t border-slate-200 text-slate-700">
+              <div className="bg-white p-2 rounded-lg border border-slate-200 text-center">
+                <span className="text-[10px] text-slate-500 block">Server TTFB</span>
+                <span className="text-xs font-black text-slate-900">
+                  {auditEvaluation.crawlSummary.latencyMs}ms
+                </span>
+              </div>
+              <div className="bg-white p-2 rounded-lg border border-slate-200 text-center">
+                <span className="text-[10px] text-slate-500 block">HTML Payload</span>
+                <span className="text-xs font-black text-slate-900">
+                  {auditEvaluation.crawlSummary.htmlSizeKb} KB
+                </span>
+              </div>
+              <div className="bg-white p-2 rounded-lg border border-slate-200 text-center">
+                <span className="text-[10px] text-slate-500 block">Images & Alt</span>
+                <span className="text-xs font-black text-slate-900">
+                  {auditEvaluation.crawlSummary.totalImages} ({auditEvaluation.crawlSummary.imageAltMissingCount} missing)
+                </span>
+              </div>
+              <div className="bg-white p-2 rounded-lg border border-slate-200 text-center">
+                <span className="text-[10px] text-slate-500 block">H1 Headings</span>
+                <span className="text-xs font-black text-slate-900">
+                  {auditEvaluation.crawlSummary.h1Count} H1 found
+                </span>
+              </div>
+              <div className="bg-white p-2 rounded-lg border border-slate-200 text-center">
+                <span className="text-[10px] text-slate-500 block">Mobile Tel Links</span>
+                <span className="text-xs font-black text-slate-900">
+                  {auditEvaluation.crawlSummary.telLinksCount} direct call
+                </span>
+              </div>
+              <div className="bg-white p-2 rounded-lg border border-slate-200 text-center">
+                <span className="text-[10px] text-slate-500 block">Schema Markup</span>
+                <span className="text-xs font-black text-slate-900 truncate">
+                  {auditEvaluation.crawlSummary.schemaTypes.length > 0
+                    ? auditEvaluation.crawlSummary.schemaTypes[0]
+                    : auditEvaluation.crawlSummary.hasSchema
+                    ? 'Active'
+                    : 'Missing'}
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Key Executive Summary Bar: Health Score & Est Revenue Leakage */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-2xs space-y-1">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-heading">
-                Overall Diagnostic Score
-              </span>
-              <div className="flex items-baseline gap-2">
-                <span className={`text-3xl font-black font-heading ${overallScore >= 80 ? 'text-[#059669]' : overallScore >= 60 ? 'text-amber-600' : 'text-rose-600'}`}>
-                  {overallScore}
-                </span>
-                <span className="text-xs text-slate-400">/ 100</span>
+          {/* Quick Metrics Bar: Overall Score & Revenue Loss */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Overall Health Score */}
+            <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-xs flex items-center gap-4">
+              <div
+                className="w-16 h-16 rounded-2xl flex items-center justify-center font-black font-heading text-2xl border-2 shrink-0 shadow-inner"
+                style={{
+                  borderColor: agencyBrandColor,
+                  color: agencyBrandColor,
+                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                }}
+              >
+                {auditEvaluation.overallScore}
               </div>
-              <p className="text-[11px] text-slate-500">
-                {passedCount} Passed • {warningCount} Warnings • {failedCount} Critical Flaws
+              <div>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">
+                  Overall Audit Health
+                </span>
+                <h4 className="text-base font-bold font-heading text-white">
+                  {auditEvaluation.overallScore >= 80
+                    ? 'High Performer'
+                    : auditEvaluation.overallScore >= 60
+                    ? 'Moderate Flaws Detected'
+                    : 'Critical Action Required'}
+                </h4>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  {auditEvaluation.passedCount} passed · {auditEvaluation.warningCount} warnings · {auditEvaluation.failedCount} failures
+                </p>
+              </div>
+            </div>
+
+            {/* Est. Client Monthly Revenue Leak */}
+            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-5 flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-rose-800 uppercase tracking-wider">
+                  Est. Client Monthly Loss
+                </span>
+                <TrendingDown className="w-4 h-4 text-rose-600" />
+              </div>
+              <div className="flex items-baseline gap-1 my-1">
+                <span className="text-2xl sm:text-3xl font-black font-heading text-rose-900">
+                  ${auditEvaluation.estMonthlyRevenueLoss.toLocaleString()}
+                </span>
+                <span className="text-xs text-rose-700 font-bold">/ month</span>
+              </div>
+              <p className="text-[11px] text-rose-700">
+                Calculated directly from {auditEvaluation.failedCount} critical failures & conversion gaps
               </p>
             </div>
 
-            <div className="p-4 bg-rose-50/70 border border-rose-200 rounded-2xl shadow-2xs space-y-1">
-              <span className="text-[10px] font-bold text-rose-700 uppercase tracking-wider font-heading flex items-center gap-1">
-                <TrendingDown className="w-3 h-3" />
-                <span>Est. Client Monthly Revenue Leak</span>
-              </span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black font-heading text-rose-700">
-                  ${totalMonthlyLoss.toLocaleString()}
+            {/* Est. Annual Opportunity */}
+            <div
+              className="rounded-2xl p-5 border flex flex-col justify-between"
+              style={{
+                backgroundColor: `${agencyBrandColor}0d`,
+                borderColor: `${agencyBrandColor}33`,
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className="text-[11px] font-bold uppercase tracking-wider"
+                  style={{ color: agencyBrandColor }}
+                >
+                  Est. Annual Revenue Gap
                 </span>
-                <span className="text-xs text-rose-600 font-bold">/ month</span>
+                <DollarSign className="w-4 h-4" style={{ color: agencyBrandColor }} />
               </div>
-              <p className="text-[11px] text-rose-600">
-                Lost to high mobile bounce rate & missed local rank pack
-              </p>
-            </div>
-
-            <div className="p-4 bg-indigo-50/70 border border-indigo-200 rounded-2xl shadow-2xs space-y-1">
-              <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider font-heading flex items-center gap-1">
-                <DollarSign className="w-3 h-3" />
-                <span>Annual Client Opportunity Cost</span>
-              </span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black font-heading text-indigo-900">
-                  ${totalAnnualLoss.toLocaleString()}
+              <div className="flex items-baseline gap-1 my-1">
+                <span
+                  className="text-2xl sm:text-3xl font-black font-heading"
+                  style={{ color: agencyBrandColor }}
+                >
+                  ${auditEvaluation.estAnnualRevenueLoss.toLocaleString()}
                 </span>
-                <span className="text-xs text-indigo-700 font-bold">/ year</span>
+                <span className="text-xs font-bold text-slate-600">/ year</span>
               </div>
-              <p className="text-[11px] text-indigo-700">
-                Justifies a ${proposalRetainerQuote} agency retainer fee
+              <p className="text-[11px] text-slate-600">
+                Justifies a {proposalRetainerQuote} implementation retainer
               </p>
             </div>
           </div>
 
           {/* White-Label Customization Settings Drawer */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-              <Sliders className="w-4 h-4 text-indigo-600" />
-              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 font-heading">
-                Agency Brand Details & Proposal Retainer Customization
-              </h3>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">Your Agency Name</label>
-                <input
-                  type="text"
-                  value={agencyName}
-                  onChange={(e) => setAgencyName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:border-indigo-500"
-                  placeholder="Apex Digital Marketing"
-                />
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div className="flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-indigo-600" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800 font-heading">
+                  Agency Logo, Brand Colors & Retainer Customization
+                </h3>
               </div>
-
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">Client Business Name</label>
-                <input
-                  type="text"
-                  value={clientBusinessName}
-                  onChange={(e) => setClientBusinessName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:border-indigo-500"
-                  placeholder="Bright Smile Dental"
-                />
-              </div>
-
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">Agency Contact Email</label>
-                <input
-                  type="email"
-                  value={agencyContactEmail}
-                  onChange={(e) => setAgencyContactEmail(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:border-indigo-500"
-                  placeholder="partner@agency.com"
-                />
-              </div>
-
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">Agency Phone</label>
-                <input
-                  type="text"
-                  value={agencyPhone}
-                  onChange={(e) => setAgencyPhone(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:border-indigo-500"
-                  placeholder="+1 (555) 000-0000"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
-              <div className="md:col-span-2">
-                <label className="text-[11px] font-bold text-slate-700 block mb-1">Executive Summary / Audit Cover Note</label>
-                <textarea
-                  rows={2}
-                  value={customExecutiveNote}
-                  onChange={(e) => setCustomExecutiveNote(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 focus:bg-white focus:border-indigo-500"
-                  placeholder="Custom note for the client..."
-                />
-              </div>
-
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={includePricingPitch}
-                    onChange={(e) => setIncludePricingPitch(e.target.checked)}
-                    className="rounded text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5"
-                  />
-                  <span className="text-xs font-bold text-slate-800">Include Retainer Quote</span>
-                </label>
-                {includePricingPitch && (
-                  <input
-                    type="text"
-                    value={proposalRetainerQuote}
-                    onChange={(e) => setProposalRetainerQuote(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-indigo-500"
-                    placeholder="e.g. $2,250/month"
-                  />
+              <button
+                type="button"
+                onClick={() => setShowSettingsDrawer(!showSettingsDrawer)}
+                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+              >
+                {showSettingsDrawer ? (
+                  <>
+                    <span>Hide Details</span>
+                    <ChevronUp className="w-3.5 h-3.5" />
+                  </>
+                ) : (
+                  <>
+                    <span>Edit Brand & Retainer</span>
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </>
                 )}
-              </div>
+              </button>
             </div>
+
+            {showSettingsDrawer && (
+              <div className="space-y-4 pt-1 text-xs">
+                {/* Agency Logo & Brand Accent Color Pickers */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                  {/* Agency Logo */}
+                  <div>
+                    <label className="font-bold text-slate-800 flex items-center gap-1.5 mb-1.5">
+                      <ImageIcon className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Custom Agency Logo</span>
+                    </label>
+                    <div className="flex items-center gap-3">
+                      {agencyLogoUrl ? (
+                        <div className="w-12 h-12 rounded-xl border border-slate-200 bg-white p-1 flex items-center justify-center shrink-0 shadow-xs relative group">
+                          <img
+                            src={agencyLogoUrl}
+                            alt="Agency Logo"
+                            className="max-h-full max-w-full object-contain"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setAgencyLogoUrl(null)}
+                            className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-rose-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Remove Logo"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl border border-dashed border-slate-300 bg-white flex items-center justify-center text-slate-400 shrink-0">
+                          <ImageIcon className="w-5 h-5" />
+                        </div>
+                      )}
+
+                      <div className="space-y-1.5 flex-1">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                          className="hidden"
+                          onChange={handleLogoFileUpload}
+                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 rounded-lg font-bold text-[11px] flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                          >
+                            <Upload className="w-3 h-3 text-indigo-600" />
+                            <span>Upload Logo (PNG/SVG)</span>
+                          </button>
+                          {agencyLogoUrl && (
+                            <button
+                              type="button"
+                              onClick={() => setAgencyLogoUrl(null)}
+                              className="text-[11px] text-rose-600 hover:text-rose-800 font-semibold cursor-pointer"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                        <input
+                          type="text"
+                          value={agencyLogoUrl || ''}
+                          onChange={(e) => setAgencyLogoUrl(e.target.value)}
+                          placeholder="Or paste image URL (https://...)"
+                          className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-[11px] text-slate-700 placeholder:text-slate-400"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Brand Accent Color */}
+                  <div>
+                    <label className="font-bold text-slate-800 flex items-center gap-1.5 mb-1.5">
+                      <Palette className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Agency Brand Colors (Tints PDF Theme)</span>
+                    </label>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {BRAND_COLOR_PRESETS.map((color) => (
+                        <button
+                          key={color.id}
+                          type="button"
+                          onClick={() => setAgencyBrandColor(color.hex)}
+                          className={`w-7 h-7 rounded-lg transition-transform cursor-pointer border flex items-center justify-center ${
+                            agencyBrandColor.toLowerCase() === color.hex.toLowerCase()
+                              ? 'scale-110 ring-2 ring-indigo-500 ring-offset-1 border-white'
+                              : 'border-transparent opacity-80 hover:opacity-100'
+                          }`}
+                          style={{ backgroundColor: color.hex }}
+                          title={color.name}
+                        >
+                          {agencyBrandColor.toLowerCase() === color.hex.toLowerCase() && (
+                            <CheckCheck className="w-3.5 h-3.5 text-white stroke-[3]" />
+                          )}
+                        </button>
+                      ))}
+
+                      {/* Custom Hex Picker */}
+                      <div className="flex items-center gap-1 ml-1 bg-white border border-slate-200 rounded-lg px-2 py-0.5">
+                        <input
+                          type="color"
+                          value={agencyBrandColor}
+                          onChange={(e) => setAgencyBrandColor(e.target.value)}
+                          className="w-5 h-5 rounded cursor-pointer border-0 bg-transparent p-0"
+                          title="Custom Color"
+                        />
+                        <span className="text-[11px] font-mono font-bold text-slate-700">
+                          {agencyBrandColor}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Agency Details Form */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Your Agency Name</label>
+                    <input
+                      type="text"
+                      value={agencyName}
+                      onChange={(e) => setAgencyName(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:border-indigo-500"
+                      placeholder="Apex Digital Marketing"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Client Business Name</label>
+                    <input
+                      type="text"
+                      value={clientBusinessName}
+                      onChange={(e) => setClientBusinessName(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:border-indigo-500"
+                      placeholder="Bright Smile Dental"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Agency Contact Email</label>
+                    <input
+                      type="email"
+                      value={agencyContactEmail}
+                      onChange={(e) => setAgencyContactEmail(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:border-indigo-500"
+                      placeholder="partner@agency.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Agency Phone</label>
+                    <input
+                      type="text"
+                      value={agencyPhone}
+                      onChange={(e) => setAgencyPhone(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:border-indigo-500"
+                      placeholder="+1 (555) 000-0000"
+                    />
+                  </div>
+                </div>
+
+                {/* Cover Note & Retainer Pitch */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="md:col-span-2">
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      Executive Summary / Client Cover Note
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={customExecutiveNote}
+                      onChange={(e) => setCustomExecutiveNote(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 focus:bg-white focus:border-indigo-500"
+                      placeholder="Custom audit notes for the client..."
+                    />
+                  </div>
+
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={includePricingPitch}
+                        onChange={(e) => setIncludePricingPitch(e.target.checked)}
+                        className="rounded text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5"
+                      />
+                      <span className="text-xs font-bold text-slate-800">Include Retainer Quote</span>
+                    </label>
+                    {includePricingPitch && (
+                      <input
+                        type="text"
+                        value={proposalRetainerQuote}
+                        onChange={(e) => setProposalRetainerQuote(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-900 focus:border-indigo-500"
+                        placeholder="e.g. $2,250/month"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* 40-Point Diagnostic Breakdown Navigation & Cards */}
-          <div className="space-y-4">
+          {/* 40-Point Diagnostic Breakdown Navigation & Filters */}
+          <div className="space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-2">
               <div className="flex items-center gap-2">
                 <CheckCheck className="w-5 h-5 text-emerald-600" />
                 <h3 className="text-sm font-black font-heading text-slate-900">
-                  Full 40-Point Diagnostic Breakdown ({auditPoints.length} Items)
+                  Detailed 40-Point Inspection Grid ({visiblePoints.length} of 40 Displayed)
                 </h3>
               </div>
 
-              {/* Pillar Filter Tabs */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                {[
-                  { id: 'all', label: `All 40 Points (${auditPoints.length})` },
-                  { id: 'performance', label: 'Speed & Vitals (8)' },
-                  { id: 'seo', label: 'Technical SEO (8)' },
-                  { id: 'security', label: 'Security & Trust (8)' },
-                  { id: 'mobile', label: 'Mobile & UX (8)' },
-                  { id: 'local_seo', label: 'Local SEO (8)' },
-                ].map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => setSelectedCategoryFilter(f.id as any)}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                      selectedCategoryFilter === f.id
-                        ? 'bg-slate-900 text-white shadow-xs'
-                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => setFilterIssuesOnly(!filterIssuesOnly)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  filterIssuesOnly
+                    ? 'bg-rose-50 border-rose-300 text-rose-800'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                <span>Show Issues Only ({auditEvaluation.failedCount + auditEvaluation.warningCount})</span>
+              </button>
             </div>
 
-            {/* 40-Point Items Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {filteredPoints.map((item) => {
-                const isExpanded = expandedCheckId === item.id;
-                return (
-                  <div
-                    key={item.id}
-                    className={`p-4 rounded-2xl border transition-all ${
-                      item.status === 'fail'
-                        ? 'bg-rose-50/40 border-rose-200 hover:border-rose-300'
-                        : item.status === 'warning'
-                        ? 'bg-amber-50/40 border-amber-200 hover:border-amber-300'
-                        : 'bg-emerald-50/30 border-emerald-200 hover:border-emerald-300'
+            {/* Pillar Filter Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+              <button
+                type="button"
+                onClick={() => setSelectedCategoryFilter('all')}
+                className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  selectedCategoryFilter === 'all'
+                    ? 'bg-slate-900 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                All 40 Points
+              </button>
+
+              {auditEvaluation.pillars.map((pillar) => (
+                <button
+                  key={pillar.key}
+                  type="button"
+                  onClick={() => setSelectedCategoryFilter(pillar.key)}
+                  className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                    selectedCategoryFilter === pillar.key
+                      ? 'text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                  style={
+                    selectedCategoryFilter === pillar.key
+                      ? { backgroundColor: agencyBrandColor }
+                      : undefined
+                  }
+                >
+                  <span>{pillar.label}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                      selectedCategoryFilter === pillar.key
+                        ? 'bg-white/20 text-white'
+                        : 'bg-slate-200 text-slate-700'
                     }`}
                   >
-                    <div
-                      onClick={() => setExpandedCheckId(isExpanded ? null : item.id)}
-                      className="flex items-start justify-between gap-3 cursor-pointer select-none"
-                    >
-                      <div className="flex items-start gap-2.5">
-                        {item.status === 'pass' && (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                        )}
-                        {item.status === 'warning' && (
-                          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                        )}
-                        {item.status === 'fail' && (
-                          <XCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                        )}
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-mono font-bold text-slate-400">#{item.id}</span>
-                            <span className="text-xs font-extrabold font-heading text-slate-900">{item.name}</span>
-                          </div>
-                          <p className="text-[11px] text-slate-600 font-sans mt-0.5 line-clamp-1">{item.diagnostic}</p>
-                        </div>
+                    {pillar.score}%
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* 40-Point Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[460px] overflow-y-auto pr-1">
+              {visiblePoints.map((item) => (
+                <div
+                  key={item.id}
+                  className={`p-3.5 rounded-xl border text-xs flex flex-col justify-between transition-all ${
+                    item.status === 'pass'
+                      ? 'bg-emerald-50/40 border-emerald-200/80 hover:border-emerald-300'
+                      : item.status === 'warning'
+                      ? 'bg-amber-50/40 border-amber-200/80 hover:border-amber-300'
+                      : 'bg-rose-50/40 border-rose-200/80 hover:border-rose-300'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-white border border-slate-200 font-bold text-[10px] flex items-center justify-center text-slate-600 shrink-0 shadow-2xs">
+                          {item.id}
+                        </span>
+                        <h4 className="font-extrabold text-slate-900 leading-snug">
+                          {item.name}
+                        </h4>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span
-                          className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
-                            item.status === 'pass'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : item.status === 'warning'
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-rose-100 text-rose-800'
-                          }`}
-                        >
-                          {item.status.toUpperCase()}
-                        </span>
-                        {isExpanded ? (
-                          <ChevronUp className="w-4 h-4 text-slate-400" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4 text-slate-400" />
-                        )}
-                      </div>
+                      <span
+                        className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 ${
+                          item.status === 'pass'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : item.status === 'warning'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-rose-100 text-rose-800'
+                        }`}
+                      >
+                        {item.status === 'pass' ? 'PASS' : item.status === 'warning' ? 'WARNING' : 'FAILED'}
+                      </span>
                     </div>
 
-                    {isExpanded && (
-                      <div className="mt-3 pt-3 border-t border-slate-200/60 space-y-2 text-xs">
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="text-slate-500 font-medium">Target Standard: <strong className="text-slate-800">{item.targetMetric}</strong></span>
-                          <span className="text-rose-600 font-bold">Est. Loss: ${item.clientLossMonthly}/mo</span>
-                        </div>
-                        <div className="p-2.5 bg-white rounded-xl border border-slate-200 space-y-1">
-                          <span className="text-[10px] font-bold uppercase text-slate-500 block">Remediation Action</span>
-                          <p className="text-xs text-slate-700 font-sans">{item.remediation}</p>
-                        </div>
-                      </div>
+                    <p className="text-[11.5px] text-slate-700 mb-2 leading-relaxed">
+                      {item.diagnostic}
+                    </p>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between gap-2 text-[11px]">
+                    <div className="text-slate-500 font-medium truncate">
+                      <span className="font-bold text-slate-700">Target:</span> {item.targetMetric}
+                    </div>
+                    {item.clientLossMonthly > 0 && (
+                      <span className="font-bold text-rose-700 shrink-0">
+                        -${item.clientLossMonthly}/mo leak
+                      </span>
                     )}
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Printable Document Preview Canvas */}
+          {/* ========================================================= */}
+          {/* PRINT-READY PIXEL-PERFECT EXECUTIVE PDF DOCUMENT CANVAS   */}
+          {/* Targeted by @media print: #white_label_audit_printable_canvas */}
+          {/* ========================================================= */}
           <div className="space-y-3 pt-4 border-t border-slate-200">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Printer className="w-4 h-4 text-slate-700" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 font-heading">
-                  Print-Ready Executive Layout Preview
-                </h4>
-              </div>
-              <span className="text-[11px] text-slate-400">
-                Pixel-perfect white-label export with all 40 points
+              <span className="text-xs font-black uppercase tracking-wider text-slate-800 font-heading">
+                Print-Ready PDF Preview (Generated Live)
+              </span>
+              <span className="text-[11px] text-slate-500">
+                Pixel-perfect executive deliverable ready for client presentation
               </span>
             </div>
 
             <div
               id="white_label_audit_printable_canvas"
-              className="p-8 bg-white border-2 border-slate-900 rounded-3xl shadow-sm space-y-6 font-sans text-slate-900"
+              className="bg-white border-2 border-slate-900 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md text-slate-900"
             >
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b-2 border-slate-900">
+              {/* Report Header: Client Title & Agency Branding */}
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b-2 border-slate-900 pb-5">
                 <div>
-                  <div className="inline-block px-3 py-1 bg-slate-900 text-white text-[10px] font-black uppercase tracking-wider rounded-md mb-2">
-                    CONFIDENTIAL CLIENT AUDIT REPORT
+                  <div
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-white text-[10px] font-extrabold uppercase tracking-wider mb-1.5"
+                    style={{ backgroundColor: agencyBrandColor }}
+                  >
+                    <ShieldCheck className="w-3 h-3" />
+                    <span>Executive Technical & SEO Evaluation</span>
                   </div>
-                  <h1 className="text-2xl font-black font-heading tracking-tight text-slate-900">
-                    40-Point Technical, SEO & Speed Diagnostic
+                  <h1 className="text-2xl sm:text-3xl font-black font-heading text-slate-900 tracking-tight">
+                    {clientBusinessName}
                   </h1>
-                  <p className="text-xs text-slate-600 font-medium mt-1">
-                    Client Audit Target: <span className="font-bold text-indigo-700 underline">{inputUrl}</span> ({clientBusinessName})
+                  <p className="text-xs font-semibold text-slate-600 mt-0.5">
+                    Target Domain:{' '}
+                    <span className="font-mono font-bold text-slate-900">
+                      https://{auditEvaluation.cleanDomain}
+                    </span>{' '}
+                    · Audited on {auditEvaluation.analyzedAt}
                   </p>
                 </div>
 
-                <div className="text-left sm:text-right bg-slate-50 sm:bg-transparent p-3 sm:p-0 rounded-xl">
-                  <p className="text-sm font-black text-slate-900 uppercase font-heading">{agencyName}</p>
-                  <p className="text-xs text-slate-600">{agencyWebsite}</p>
-                  <p className="text-xs text-slate-600">{agencyContactEmail} • {agencyPhone}</p>
-                  <p className="text-[10px] text-slate-400 mt-1">Audit Date: {new Date().toLocaleDateString()}</p>
+                {/* Agency Brand Block */}
+                <div className="sm:text-right border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100 flex sm:flex-col items-center sm:items-end gap-3 sm:gap-1">
+                  {agencyLogoUrl ? (
+                    <img
+                      src={agencyLogoUrl}
+                      alt={agencyName}
+                      className="max-h-12 max-w-[180px] object-contain mb-1"
+                    />
+                  ) : (
+                    <div
+                      className="text-xs font-black font-heading tracking-tight"
+                      style={{ color: agencyBrandColor }}
+                    >
+                      {agencyName}
+                    </div>
+                  )}
+                  <div className="text-[11px] text-slate-600">
+                    <span className="font-bold text-slate-900 block">{agencyName}</span>
+                    <span>{agencyWebsite} · {agencyPhone}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Executive Summary */}
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-                <p className="text-[11px] font-black uppercase tracking-wider text-slate-500 font-heading">Executive Overview</p>
-                <p className="text-xs text-slate-800 leading-relaxed italic">
-                  "{customExecutiveNote}"
-                </p>
+              {/* Cover Note */}
+              <div
+                className="p-3.5 rounded-xl border text-xs text-slate-800 leading-relaxed"
+                style={{
+                  backgroundColor: `${agencyBrandColor}08`,
+                  borderColor: `${agencyBrandColor}26`,
+                }}
+              >
+                <span className="font-extrabold block text-slate-900 mb-0.5">
+                  Executive Findings & Audit Scope:
+                </span>
+                {customExecutiveNote}
               </div>
 
-              {/* Scorecard row */}
-              <div className="grid grid-cols-4 gap-3 text-center">
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase">Health Index</p>
-                  <p className="text-2xl font-black text-slate-900 font-heading">{overallScore}/100</p>
+              {/* 5 Pillar Scores Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                {auditEvaluation.pillars.map((pillar) => (
+                  <div
+                    key={pillar.key}
+                    className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-center"
+                  >
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block truncate">
+                      {pillar.label}
+                    </span>
+                    <span
+                      className="text-xl font-black font-heading my-1 block"
+                      style={{
+                        color:
+                          pillar.score >= 80
+                            ? '#059669'
+                            : pillar.score >= 60
+                            ? '#d97706'
+                            : '#e11d48',
+                      }}
+                    >
+                      {pillar.score}%
+                    </span>
+                    <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${pillar.score}%`,
+                          backgroundColor:
+                            pillar.score >= 80
+                              ? '#059669'
+                              : pillar.score >= 60
+                              ? '#d97706'
+                              : '#e11d48',
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Revenue Loss Callout Box */}
+              <div className="bg-rose-50 border-2 border-rose-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-800">
+                    Estimated Revenue At Risk
+                  </span>
+                  <h4 className="text-sm font-bold font-heading text-rose-950">
+                    Calculated Monthly Digital Leaks from Technical Flaws
+                  </h4>
+                  <p className="text-xs text-rose-700">
+                    Unoptimized mobile speed, missing schema, and broken call links directly suppress inquiries.
+                  </p>
                 </div>
-                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
-                  <p className="text-[10px] font-bold text-emerald-800 uppercase">Passed Checks</p>
-                  <p className="text-2xl font-black text-[#059669] font-heading">{passedCount} / 40</p>
-                </div>
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl">
-                  <p className="text-[10px] font-bold text-rose-800 uppercase">Critical Flaws</p>
-                  <p className="text-2xl font-black text-rose-600 font-heading">{failedCount}</p>
-                </div>
-                <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl">
-                  <p className="text-[10px] font-bold text-indigo-800 uppercase">Est. Revenue Gap</p>
-                  <p className="text-xl font-black text-indigo-900 font-heading">${totalMonthlyLoss.toLocaleString()}/mo</p>
+                <div className="text-center sm:text-right shrink-0 bg-white border border-rose-200 px-4 py-2.5 rounded-xl shadow-2xs">
+                  <span className="text-2xl font-black font-heading text-rose-900 block">
+                    ${auditEvaluation.estMonthlyRevenueLoss.toLocaleString()}
+                    <span className="text-xs font-bold text-rose-700">/mo</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-semibold">
+                    (${auditEvaluation.estAnnualRevenueLoss.toLocaleString()} / year)
+                  </span>
                 </div>
               </div>
 
-              {/* 40 Points Table for Print Output */}
-              <div className="space-y-3">
-                <p className="text-xs font-black uppercase text-slate-900 font-heading border-b border-slate-200 pb-1">
-                  Itemized 40-Point Diagnostic Matrix
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                  {auditPoints.map((pt) => (
-                    <div key={pt.id} className="p-2.5 border border-slate-200 rounded-lg flex items-start justify-between gap-2 bg-slate-50/50">
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-mono text-slate-400">#{pt.id}</span>
-                          <strong className="text-slate-900 text-xs">{pt.name}</strong>
+              {/* Printable 40 Points Summary Table */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 font-heading">
+                  All 40 Evaluated Checkpoints
+                </h4>
+                <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100 text-xs">
+                  {auditEvaluation.points.map((pt) => (
+                    <div
+                      key={pt.id}
+                      className="p-2.5 flex items-start justify-between gap-3 hover:bg-slate-50"
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="font-mono text-[10px] font-bold text-slate-400 w-5 mt-0.5">
+                          #{pt.id}
+                        </span>
+                        <div>
+                          <div className="font-bold text-slate-900">{pt.name}</div>
+                          <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">
+                            {pt.diagnostic}
+                          </p>
                         </div>
-                        <p className="text-[10px] text-slate-500 mt-0.5">{pt.diagnostic}</p>
                       </div>
-                      <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded shrink-0 ${
-                        pt.status === 'pass' ? 'bg-emerald-100 text-emerald-800' : pt.status === 'warning' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
-                      }`}>
-                        {pt.status}
-                      </span>
+
+                      <div className="text-right shrink-0">
+                        <span
+                          className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                            pt.status === 'pass'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : pt.status === 'warning'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-rose-100 text-rose-800'
+                          }`}
+                        >
+                          {pt.status === 'pass' ? 'PASS' : pt.status === 'warning' ? 'WARNING' : 'FAIL'}
+                        </span>
+                        {pt.clientLossMonthly > 0 && (
+                          <div className="text-[10px] font-bold text-rose-600 mt-1">
+                            -${pt.clientLossMonthly}/mo
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* SOW Retainer Closing Pitch Box */}
+              {/* SOW & Implementation Retainer Section */}
               {includePricingPitch && (
-                <div className="p-4 bg-slate-900 text-white rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div
+                  className="rounded-2xl p-5 border text-white flex flex-col sm:flex-row items-center justify-between gap-4"
+                  style={{
+                    backgroundColor: '#0f172a',
+                    borderLeftWidth: '6px',
+                    borderLeftColor: agencyBrandColor,
+                  }}
+                >
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded">
-                      Implementation SOW & Managed Retainer
+                    <span
+                      className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded"
+                      style={{ backgroundColor: `${agencyBrandColor}33`, color: '#ffffff' }}
+                    >
+                      Turnkey Resolution Scope of Work (SOW)
                     </span>
                     <h4 className="text-sm font-bold font-heading mt-1 text-white">
-                      Turnkey Technical & Local SEO Resolution Package
+                      Technical & Local Growth Management Retainer
                     </h4>
                     <p className="text-xs text-slate-300">
-                      {agencyName} provides ongoing 40-point technical management, local map pack growth, and speed optimization.
+                      {agencyName} will resolve all 40 points, optimize Core Web Vitals, and manage Google Maps 3-Pack rank.
                     </p>
                   </div>
                   <div className="text-right sm:border-l sm:border-slate-800 sm:pl-5 shrink-0">
-                    <span className="text-xl font-black font-heading text-amber-400">{proposalRetainerQuote}</span>
-                    <p className="text-[10px] text-slate-400">Dedicated Partnership</p>
+                    <span
+                      className="text-xl font-black font-heading block"
+                      style={{ color: '#ffffff' }}
+                    >
+                      {proposalRetainerQuote}
+                    </span>
+                    <p className="text-[10px] text-slate-400">Monthly Managed Partnership</p>
                   </div>
                 </div>
               )}
 
+              {/* Sign-off line */}
+              <div className="pt-4 border-t border-slate-200 grid grid-cols-2 gap-6 text-xs text-slate-600">
+                <div className="border-t border-slate-300 pt-2">
+                  <span className="font-bold text-slate-800 block">Prepared By:</span>
+                  <span>{agencyName} · {agencyContactEmail}</span>
+                </div>
+                <div className="border-t border-slate-300 pt-2">
+                  <span className="font-bold text-slate-800 block">Client Acceptance:</span>
+                  <span>{clientBusinessName} Representative</span>
+                </div>
+              </div>
+
               {/* Footer Stamp */}
-              <div className="pt-3 border-t border-slate-200 text-center text-[10px] text-slate-400 flex items-center justify-between">
-                <span>Locora Pro Diagnostic Engine v4.2</span>
+              <div className="pt-2 text-center text-[10px] text-slate-400 flex items-center justify-between">
+                <span>Locora Diagnostic Engine v4.2</span>
                 <span>Audited & White-Labeled by {agencyName} • {agencyWebsite}</span>
               </div>
             </div>
@@ -1182,21 +1111,21 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
         </div>
 
         {/* Modal Action Bar */}
-        <div className="p-5 sm:p-6 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 shrink-0 font-sans">
-          <div className="flex items-center gap-2 text-slate-500 text-xs font-sans">
-            <ShieldCheck className="w-4 h-4 text-[#059669]" />
+        <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 font-sans">
+          <div className="flex items-center gap-2 text-slate-600 text-xs">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
             <span>
               {isAgencyTier
-                ? 'Unlimited White-Label PDF generation active on Agency Plan'
+                ? 'Unlimited White-Label PDF generation included on Agency Plan'
                 : 'One-time $9.99 Whop unlock (or included in Agency Plan)'}
             </span>
           </div>
 
-          <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition-colors cursor-pointer w-full sm:w-auto text-center"
+              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition-colors cursor-pointer w-full sm:w-auto text-center"
             >
               Close
             </button>
@@ -1205,7 +1134,8 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={handlePrintDocument}
-                className="px-6 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto"
+                className="px-6 py-2 rounded-xl text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto"
+                style={{ backgroundColor: agencyBrandColor }}
               >
                 <Printer className="w-4 h-4" />
                 <span>Export / Print 40-Point PDF</span>
@@ -1215,7 +1145,7 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={handlePrintDocument}
-                  className="px-4 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                   title="Print preview draft"
                 >
                   <Printer className="w-3.5 h-3.5" />
@@ -1226,7 +1156,10 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
                   type="button"
                   onClick={handleTriggerCheckout}
                   disabled={isProcessing}
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-slate-900 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto disabled:opacity-50"
+                  className="px-6 py-2 rounded-xl text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto disabled:opacity-50"
+                  style={{
+                    background: `linear-gradient(135deg, ${agencyBrandColor} 0%, #0f172a 100%)`,
+                  }}
                 >
                   <Award className="w-4 h-4 text-amber-300" />
                   <span>

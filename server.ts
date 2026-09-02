@@ -8615,6 +8615,40 @@ app.post('/api/ai/audit-website', async (req, res) => {
       .filter(l => l.startsWith('/') && !l.startsWith('//') && !l.includes('#') && !l.endsWith('.css') && !l.endsWith('.js') && !l.endsWith('.png') && !l.endsWith('.jpg'));
     const uniqueInternalLinks = Array.from(new Set(linkMatches)).slice(0, 10);
 
+    // Deep Technical Signals for Detailed 40-Point Audit
+    const telLinks = Array.from(cleanHtml.matchAll(/href=["']tel:([^"']+)["']/gi)).map(m => m[1]);
+    const mailtoLinks = Array.from(cleanHtml.matchAll(/href=["']mailto:([^"']+)["']/gi)).map(m => m[1]);
+    const formMatches = Array.from(cleanHtml.matchAll(/<form\b[^>]*>/gi));
+    const inputMatches = Array.from(cleanHtml.matchAll(/<input\b[^>]*>/gi));
+    const hasMapEmbed = cleanHtml.includes('google.com/maps') || cleanHtml.includes('maps.google.com') || (/<iframe\b[^>]*src=["'][^"']*map[^"']*["']/i.test(cleanHtml));
+    const hasFavicon = /rel=["'](?:shortcut )?icon["']/i.test(cleanHtml);
+    const hasAppleTouchIcon = /rel=["']apple-touch-icon(?:-precomposed)?["']/i.test(cleanHtml);
+    const hasHsts = Boolean(responseHeaders['strict-transport-security']);
+    const hasCsp = Boolean(responseHeaders['content-security-policy']);
+    const hasXFrameOptions = Boolean(responseHeaders['x-frame-options']);
+    const contentEncoding = responseHeaders['content-encoding'] || '';
+    const cacheControl = responseHeaders['cache-control'] || '';
+    
+    const scriptMatches = Array.from(cleanHtml.matchAll(/<script\b[^>]*>/gi));
+    const headMatch = cleanHtml.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+    const headContent = headMatch ? headMatch[1] : '';
+    const headScripts = Array.from(headContent.matchAll(/<script\b([^>]*)>/gi));
+    const blockingScriptsCount = headScripts.filter(s => {
+      const attrs = s[1];
+      return attrs.includes('src=') && !attrs.includes('async') && !attrs.includes('defer') && !attrs.includes('type="module"');
+    }).length;
+
+    const hasAggregateRating = schemaTypes.some(t => /aggregaterating/i.test(t)) || /"@type"\s*:\s*"AggregateRating"/i.test(cleanHtml) || /itemprop=["']aggregateRating["']/i.test(cleanHtml);
+    const hasLocalBusiness = schemaTypes.some(t => /localbusiness|dentist|restaurant|store|physician|legal|medical|contractor|salon|barber|auto|plumb|electr|service/i.test(t)) || /"@type"\s*:\s*"(?:LocalBusiness|Store|Restaurant|DentalClinic|MedicalBusiness|LegalService|AutomotiveBusiness|HomeAndConstructionBusiness)"/i.test(cleanHtml);
+    const hasOrganization = schemaTypes.some(t => /organization/i.test(t)) || /"@type"\s*:\s*"Organization"/i.test(cleanHtml);
+    const hasWebsiteSchema = schemaTypes.some(t => /website/i.test(t)) || /"@type"\s*:\s*"WebSite"/i.test(cleanHtml);
+    const hasMixedContent = isSsl && (/src=["']http:\/\//i.test(cleanHtml) || /href=["']http:\/\/[^"']+\.(?:css|js)["']/i.test(cleanHtml));
+    const hasAddress = /\b\d{1,5}\s+[A-Za-z0-9\s.,]{3,35}\s+(?:street|st|avenue|ave|blvd|boulevard|road|rd|suite|ste|drive|dr|way|lane|ln|court|ct)\b/i.test(textSnippet) || /\b\d{5}(?:-\d{4})?\b/.test(textSnippet);
+    const hasPhoneText = /\b(?:\+?1[-. ]?)?\(?[2-9]\d{2}\)?[-. ]?\d{3}[-. ]?\d{4}\b/.test(textSnippet);
+    const ogImageMatch = cleanHtml.match(/<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]+content=["']([^"']*)["']/i)
+      || cleanHtml.match(/<meta[^>]+content=["']([^"']*)["'][^>]+(?:property|name)=["'](?:og:image|twitter:image)["']/i);
+    const ogImage = ogImageMatch ? ogImageMatch[1] : '';
+
     // 8. If title or content is still completely blank, verify if audit is possible
     if (!pageTitle && h1Matches.length === 0 && textSnippet.length < 50) {
       const diagnosis = buildFailureDiagnosis();
@@ -9209,10 +9243,35 @@ Construct realistic, highly specific issues (marked as "pass", "warning", or "er
         hasSchema,
         schemaTypes,
         hasOpenGraph,
+        hasTwitterCard,
+        ogImage,
         canonical: canonicalMatch ? canonicalMatch[1] : undefined,
         latencyMs,
         htmlSizeKb,
         httpStatus: httpStatus || 200,
+        hasTelLinks: telLinks.length > 0,
+        telLinksCount: telLinks.length,
+        hasMailtoLinks: mailtoLinks.length > 0,
+        hasForms: formMatches.length > 0,
+        formInputCount: inputMatches.length,
+        hasMapEmbed,
+        hasFavicon,
+        hasAppleTouchIcon,
+        hasHsts,
+        hasCsp,
+        hasXFrameOptions,
+        contentEncoding,
+        cacheControl,
+        scriptCount: scriptMatches.length,
+        blockingScriptsCount,
+        hasAggregateRating,
+        hasLocalBusiness,
+        hasOrganization,
+        hasWebsiteSchema,
+        hasMixedContent,
+        hasAddress,
+        hasPhoneText,
+        robotsMeta: robotsMatch ? robotsMatch[1] : '',
       },
       audit: {
         overallScore: resolvedOverallScore,

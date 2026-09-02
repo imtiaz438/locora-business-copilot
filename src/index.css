@@ -236,3 +236,71 @@
   }
 }
 
+/* Print-ready executive layout styles */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  
+  /* Hide UI elements during print */
+  #whitelabel_audit_modal_overlay,
+  nav,
+  header,
+  footer,
+  button,
+  .no-print {
+    background: transparent !important;
+  }
+
+  /* Make sure the modal overlay doesn't darken or position-fixed during print */
+  #whitelabel_audit_modal_overlay {
+    position: static !important;
+    inset: auto !important;
+    padding: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  #whitelabel_audit_modal_container {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Hide interactive controls inside modal during print */
+  #whitelabel_audit_modal_container > div:first-child,
+  #whitelabel_audit_modal_container > div:last-child,
+  .print-hide {
+    display: none !important;
+  }
+
+  /* Show printable canvas exclusively with exact colors */
+  #white_label_audit_printable_canvas {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 24px !important;
+    border: 2px solid #0f172a !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    break-inside: avoid;
+  }
+
+  @page {
+    margin: 1cm;
+    size: letter portrait;
+  }
+}
+
