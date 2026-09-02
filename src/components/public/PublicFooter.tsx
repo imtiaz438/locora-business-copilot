@@ -154,15 +154,6 @@ export const PublicFooter: React.FC = () => {
                   <Linkedin className="w-4 h-4" />
                 </a>
                 <a
-                  href="https://x.com/locoraai"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="X (Twitter)"
-                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-[#059669] hover:border-[#059669] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
-                >
-                  <Twitter className="w-4 h-4" />
-                </a>
-                <a
                   href="https://www.facebook.com/people/Locora-AI/61593321283379/"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -172,7 +163,7 @@ export const PublicFooter: React.FC = () => {
                   <Facebook className="w-4 h-4" />
                 </a>
                 <a
-                  href="https://youtube.com/@locoraai"
+                  href="https://www.youtube.com/watch?v=T-MENEM_VYM"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="YouTube"
@@ -181,7 +172,7 @@ export const PublicFooter: React.FC = () => {
                   <Youtube className="w-4 h-4" />
                 </a>
                 <a
-                  href="https://github.com/locoraai"
+                  href="https://github.com/Locora-AI/.local-seo-resources"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="GitHub"
