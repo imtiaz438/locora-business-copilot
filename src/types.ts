@@ -247,7 +247,11 @@ export interface WebsiteAuditResult {
     h1Count: number;
     imageAltMissingCount: number;
     sslActive: boolean;
+    hasSchema?: boolean;
+    latencyMs?: number;
+    htmlSizeKb?: number;
   };
+  audit?: any;
   keyIssues: {
     type: 'error' | 'warning' | 'pass';
     category: 'SEO' | 'Performance' | 'Accessibility' | 'Security';
@@ -280,7 +284,7 @@ export interface SeoRecommendation {
 
 export interface LocalSeoItem {
   id: string;
-  type: 'gbp_description' | 'service_item' | 'category' | 'review_reply' | 'post' | 'qa' | 'local_landing' | 'schema';
+  type: 'gbp_description' | 'service_item' | 'category' | 'review_reply' | 'post' | 'qa' | 'local_landing' | 'schema' | 'lighthouse_recs';
   title: string;
   content: string;
   createdAt: string;
@@ -297,7 +301,7 @@ export type MarketingPlannerOutput = {
   growthRoadmapSummary: string;
 };
 
-export type UserPlan = 'free' | 'pro' | 'agency';
+export type UserPlan = 'free' | 'pro' | 'agency' | 'elite';
 export type SubscriptionStatus = 'active' | 'trial' | 'past_due' | 'cancelled';
 export type BillingCycle = 'monthly' | 'yearly';
 export type UserRole = 'admin' | 'customer' | 'subscriber' | 'owner' | 'member' | 'client';
@@ -314,6 +318,7 @@ export interface UserProfile {
   billingCycle: BillingCycle;
   monthlyAiCredits: number;
   aiCreditsUsed: number;
+  creditsUsed?: number;
   invoicesCreatedCount?: number;
   memberSince: string;
   nextBillingDate: string;

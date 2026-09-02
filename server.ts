@@ -2753,6 +2753,10 @@ app.get('/api/workspace/data', async (req, res) => {
     let userSavedProfile = userEmail ? userProfilesMap.get(userEmail) : null;
     let dbProfile = userEmail ? null : await dbService.getBusinessProfile().catch(() => null);
     let dbSettings = await dbService.getSettings().catch(() => null);
+    const userSavedSettings = userEmail ? getUserSettingsDiskStore(userEmail) : null;
+
+    const effectiveSiteLogoUrl = storedAppSettings?.siteLogoUrl || dbSettings?.siteLogoUrl || userSavedSettings?.siteLogoUrl || storedBusinessProfile?.logoUrl || '';
+    const effectiveSiteLogoConfig = storedAppSettings?.siteLogoConfig || dbSettings?.siteLogoConfig || userSavedSettings?.siteLogoConfig || storedBusinessProfile?.logoConfig || null;
 
     const mergedProfile = {
       id: `bp_${user?.id || userEmail || 'main'}`,
@@ -2773,14 +2777,13 @@ app.get('/api/workspace/data', async (req, res) => {
       currency: userSavedProfile?.currency || 'USD',
       taxRate: userSavedProfile?.taxRate || 0,
       taxId: userSavedProfile?.taxId || '',
-      logoUrl: userSavedProfile?.logoUrl || '',
-      logoConfig: userSavedProfile?.logoConfig || null,
+      logoUrl: userSavedProfile?.logoUrl || effectiveSiteLogoUrl,
+      logoConfig: userSavedProfile?.logoConfig || effectiveSiteLogoConfig,
       updatedAt: userSavedProfile?.updatedAt || new Date().toISOString(),
       ...(userEmail ? (userSavedProfile || {}) : { ...(storedBusinessProfile || {}), ...(dbProfile || {}) }),
       ...(userEmail ? { email: userEmail, id: `bp_${userEmail}` } : {}),
     };
 
-    const userSavedSettings = userEmail ? getUserSettingsDiskStore(userEmail) : null;
     const mergedSettings = {
       activeProvider: 'gemini',
       activeModelVersion: 'gemini-3.7-flash',
@@ -2809,6 +2812,8 @@ app.get('/api/workspace/data', async (req, res) => {
       defaultTaxRate: 0,
       userKeyStatus: {},
       ...(userEmail ? (userSavedSettings || {}) : { ...(storedAppSettings || {}), ...(dbSettings || {}) }),
+      siteLogoUrl: effectiveSiteLogoUrl,
+      siteLogoConfig: effectiveSiteLogoConfig,
     };
 
     let customers = await dbService.getCustomers(userEmail).catch(() => []);
@@ -2860,10 +2865,36 @@ app.get('/api/workspace/data', async (req, res) => {
   }
 });
 
+// Public Branding Endpoint (Returns site branding for instant client-side rendering)
+app.get('/api/public/branding', (req, res) => {
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  const siteLogoUrl = storedAppSettings?.siteLogoUrl || storedBusinessProfile?.logoUrl || '';
+  const siteLogoConfig = storedAppSettings?.siteLogoConfig || storedBusinessProfile?.logoConfig || null;
+  res.json({
+    siteLogoUrl,
+    siteLogoConfig,
+    businessProfile: storedBusinessProfile || null,
+  });
+});
+
 // Business Profile Save
 app.post('/api/workspace/business-profile', async (req, res) => {
   try {
     const userEmail = (req.body.userEmail || req.body.email || req.query.email || '').toString().toLowerCase().trim();
+    const isSuperAdmin = !userEmail || userEmail === 'imtiazbaloch3322@gmail.com' || userEmail === 'support@locoraai.com';
+
+    if (req.body.logoUrl || req.body.logoConfig) {
+      if (isSuperAdmin || !storedAppSettings?.siteLogoUrl) {
+        storedAppSettings = {
+          ...(storedAppSettings || {}),
+          siteLogoUrl: req.body.logoUrl || storedAppSettings?.siteLogoUrl,
+          siteLogoConfig: req.body.logoConfig || storedAppSettings?.siteLogoConfig,
+        };
+        saveSettingsToDisk(storedAppSettings);
+        dbService.saveSettings(storedAppSettings).catch(() => {});
+      }
+    }
+
     if (userEmail) {
       const existing = userProfilesMap.get(userEmail) || {};
       const updatedProfile = {
@@ -2874,6 +2905,10 @@ app.post('/api/workspace/business-profile', async (req, res) => {
       };
       userProfilesMap.set(userEmail, updatedProfile);
       saveUserProfilesToDisk();
+      if (isSuperAdmin) {
+        saveProfileToDisk(updatedProfile);
+        dbService.saveBusinessProfile(updatedProfile).catch(() => {});
+      }
       res.json({ profile: updatedProfile });
     } else {
       saveProfileToDisk(req.body);
@@ -2890,6 +2925,18 @@ app.post('/api/workspace/settings', async (req, res) => {
   try {
     const incoming = req.body || {};
     const userEmail = (incoming.userEmail || req.query.email || '').toString().toLowerCase().trim();
+    const isSuperAdmin = !userEmail || userEmail === 'imtiazbaloch3322@gmail.com' || userEmail === 'support@locoraai.com';
+
+    // If logo is passed, always update global site settings as well
+    if (incoming.siteLogoUrl !== undefined || incoming.siteLogoConfig !== undefined) {
+      storedAppSettings = {
+        ...(storedAppSettings || {}),
+        siteLogoUrl: incoming.siteLogoUrl !== undefined ? incoming.siteLogoUrl : storedAppSettings?.siteLogoUrl,
+        siteLogoConfig: incoming.siteLogoConfig !== undefined ? incoming.siteLogoConfig : storedAppSettings?.siteLogoConfig,
+      };
+      saveSettingsToDisk(storedAppSettings);
+      dbService.saveSettings(storedAppSettings).catch(() => {});
+    }
 
     const keyStatusUpdates: Record<string, { isValid: boolean; lastTested: string; warning?: string; modelDetected?: string }> = {};
 

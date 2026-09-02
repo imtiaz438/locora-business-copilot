@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const InvoiceView: React.FC = () => {
-  const { invoices, addInvoice, updateInvoiceStatus, deleteInvoice, customers, businessProfile, user, setCheckoutModalPlan } = useApp();
+  const { invoices, addInvoice, updateInvoiceStatus, deleteInvoice, customers, businessProfile, settings, user, setCheckoutModalPlan } = useApp();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(invoices[0] || null);
@@ -105,12 +105,28 @@ export const InvoiceView: React.FC = () => {
 
     // Header Branding
     doc.setFillColor(30, 41, 59); // Slate-800
-    doc.rect(0, 0, 210, 40, 'F');
+    doc.rect(0, 0, 210, 42, 'F');
 
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text(businessProfile.name || 'Your Business Name', 15, 20);
+    const logoSrc = businessProfile.logoUrl || businessProfile.logoConfig?.url || settings.siteLogoUrl || '';
+    if (logoSrc && (logoSrc.startsWith('data:image/png') || logoSrc.startsWith('data:image/jpeg') || logoSrc.startsWith('http'))) {
+      try {
+        doc.addImage(logoSrc, 'PNG', 15, 8, 26, 26, undefined, 'FAST');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text(businessProfile.name || 'Your Business Name', 46, 22);
+      } catch {
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.setFont('helvetica', 'bold');
+        doc.text(businessProfile.name || 'Your Business Name', 15, 22);
+      }
+    } else {
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(22);
+      doc.setFont('helvetica', 'bold');
+      doc.text(businessProfile.name || 'Your Business Name', 15, 22);
+    }
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');

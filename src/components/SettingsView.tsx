@@ -364,7 +364,7 @@ export const SettingsView: React.FC = () => {
 
   // Provider model selections
   const [providerModels, setProviderModels] = useState<Record<string, string>>(() => ({
-    gemini: settings.providerModels?.gemini || 'gemini-3.6-flash',
+    gemini: settings.providerModels?.gemini || 'gemini-3.7-flash',
     openai: settings.providerModels?.openai || 'gpt-5.6-sol',
     claude: settings.providerModels?.claude || 'claude-3-7-sonnet-20250219',
     perplexity: settings.providerModels?.perplexity || 'sonar-pro',
@@ -632,7 +632,7 @@ export const SettingsView: React.FC = () => {
     setKeyErrorMsg(null);
     setSavedSuccess(false);
 
-    const activeModel = providerModels[settings.activeProvider] || 'gemini-2.5-flash';
+    const activeModel = providerModels[settings.activeProvider] || 'gemini-3.7-flash';
 
     const res = await updateSettings({
       providerKeys: {
@@ -658,7 +658,7 @@ export const SettingsView: React.FC = () => {
 
     setValidatingKeys(false);
 
-    if (!res.success) {
+    if (res && !res.success) {
       setKeyErrorMsg(res.error || 'Invalid API key provided. Key was not saved.');
     } else {
       setSavedSuccess(true);
@@ -969,7 +969,7 @@ export const SettingsView: React.FC = () => {
                   </label>
                   <span className="text-[10px] text-slate-600 font-mono flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-200">
                     <Sparkles className="w-3 h-3 text-emerald-600" />
-                    <span>Auto-Selected: <strong>{providerModels.gemini || 'gemini-3.6-flash'}</strong></span>
+                    <span>Auto-Selected: <strong>{providerModels.gemini || 'gemini-3.7-flash'}</strong></span>
                   </span>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -1750,10 +1750,10 @@ export const SettingsView: React.FC = () => {
                 <p className="text-lg font-extrabold text-slate-900 font-mono">
                   {user.planTier === 'agency'
                     ? 'Unlimited'
-                    : `${Math.max(0, (user.planTier === 'pro' ? 250 : 10) - (user.creditsUsed || 0))} Credits`}
+                    : `${Math.max(0, (user.planTier === 'pro' ? 250 : 10) - (user.aiCreditsUsed || user.creditsUsed || 0))} Credits`}
                 </p>
                 <p className="text-[11px] text-slate-500">
-                  {user.creditsUsed || 0} credits used this billing cycle
+                  {user.aiCreditsUsed || user.creditsUsed || 0} credits used this billing cycle
                 </p>
               </div>
 
@@ -1898,10 +1898,10 @@ export const SettingsView: React.FC = () => {
                           ${inv.amount.toFixed(2)}
                         </td>
                         <td className="py-3 px-4">
-                          {inv.paymentMethod?.brand ? (
+                          {(inv.paymentMethod as any)?.brand ? (
                             <span className="flex items-center gap-1.5 font-mono text-[11px]">
                               <CreditCard className="w-3.5 h-3.5 text-blue-600" />
-                              <span>{inv.paymentMethod.brand} •••• {inv.paymentMethod.last4}</span>
+                              <span>{(inv.paymentMethod as any).brand} •••• {(inv.paymentMethod as any).last4}</span>
                             </span>
                           ) : (
                             <span className="flex items-center gap-1.5 text-orange-700 font-semibold text-[11px]">

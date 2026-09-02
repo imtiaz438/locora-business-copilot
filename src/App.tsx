@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { AppShell } from './components/AppShell';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { PaymentSuccessModal } from './components/PaymentSuccessModal';
 import { SubscriptionInvoiceModal } from './components/SubscriptionInvoiceModal';
 import { SubscriptionInvoice } from './types';
@@ -231,60 +232,72 @@ const MainContent: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [setActiveTab, subscribePlan, updateUser, user.email, user.isAuthenticated, user.name]);
 
+  const renderViewContent = () => {
+    // Dynamic Layer 1: Product Pages
+    if (activeTab.startsWith('feature_')) {
+      return <FeatureDetailPage slug={activeTab.replace(/^feature_/, '')} />;
+    }
+
+    // Dynamic Layer 2: Use Cases
+    if (activeTab === 'use_cases_hub') return <UseCasesHubView />;
+    if (activeTab.startsWith('usecase_') || activeTab.startsWith('use_case_')) {
+      return <UseCaseDetailPage slug={activeTab.replace(/^usecase_/, '').replace(/^use_case_/, '')} />;
+    }
+
+    // Dynamic Layer 3: Industry Pages
+    if (activeTab === 'industry_pseo') return <IndustryPseoView />;
+
+    // Dynamic Layer 4: Educational Content & SOPs
+    if (activeTab === 'resources_hub') return <ResourcesHubView />;
+    if (activeTab.startsWith('resource_')) {
+      return <ResourceDetailPage slug={activeTab.replace(/^resource_/, '')} />;
+    }
+
+    // Other Public Routes
+    if (activeTab === 'home') return <HomeView />;
+    if (activeTab === 'features') return <FeaturesView />;
+    if (activeTab === 'pricing_public') return <PricingPublicView />;
+    if (activeTab === 'about') return <AboutView />;
+    if (activeTab === 'contact') return <ContactView />;
+    if (activeTab === 'landing_page') return <LandingPageView />;
+    if (activeTab === 'login') return <AuthView initialMode="login" />;
+    if (activeTab === 'signup') return <AuthView initialMode="signup" />;
+    if (activeTab === 'privacy') return <PrivacyPolicyView />;
+    if (activeTab === 'terms') return <TermsOfServiceView />;
+    if (activeTab === 'refund') return <RefundPolicyView />;
+    if (activeTab === 'security') return <SecurityOverviewView />;
+
+    // Authenticated OS Modules
+    if (activeTab === 'dashboard') return <DashboardView />;
+    if (activeTab === 'chat') return <ChatView />;
+    if (activeTab === 'crm') return <CRMView />;
+    if (activeTab === 'projects') return <CRMView initialTab="projects" />;
+    if (activeTab === 'lead_prospector' || activeTab === 'lead_vault' || activeTab === 'b2b_vault' || activeTab === 'leads' || activeTab === 'lead-prospector') return <LeadProspectorView />;
+    if (activeTab === 'invoices') return <InvoiceView />;
+    if (activeTab === 'proposals') return <ProposalView />;
+    if (activeTab === 'documents') return <DocumentGeneratorView />;
+    if (activeTab === 'website_review') return <WebsiteReviewView />;
+    if (activeTab === 'local_seo') return <LocalSeoView />;
+    if (activeTab === 'marketing' || activeTab === 'marketing_planner') return <MarketingPlannerView />;
+    if (activeTab === 'masterclass_kit' || activeTab === 'agency_vault' || activeTab === 'growth_vault' || activeTab === 'masterclass') return <MasterclassKitView />;
+    if (activeTab === 'pricing') return <PricingView />;
+    if (activeTab === 'subscription') return <SubscriptionView />;
+    if (activeTab === 'settings') return <SettingsView />;
+    if (activeTab === 'admin') {
+      return (user.isAuthenticated && (user.role === 'admin' || user.role === 'owner' || user.email === 'imtiazbaloch3322@gmail.com' || user.email === 'support@locoraai.com'))
+        ? <AdminView />
+        : <DashboardView />;
+    }
+
+    // Guaranteed Fallback — Prevents any white-out or unrendered state
+    return user.isAuthenticated ? <DashboardView /> : <HomeView />;
+  };
+
   return (
     <AppShell>
-      {/* Dynamic Layer 1: Product Pages */}
-      {activeTab.startsWith('feature_') && (
-        <FeatureDetailPage slug={activeTab.replace(/^feature_/, '')} />
-      )}
-
-      {/* Dynamic Layer 2: Use Cases */}
-      {activeTab === 'use_cases_hub' && <UseCasesHubView />}
-      {(activeTab.startsWith('usecase_') || activeTab.startsWith('use_case_')) && (
-        <UseCaseDetailPage slug={activeTab.replace(/^usecase_/, '').replace(/^use_case_/, '')} />
-      )}
-
-      {/* Dynamic Layer 3: Industry Pages */}
-      {activeTab === 'industry_pseo' && <IndustryPseoView />}
-
-      {/* Dynamic Layer 4: Educational Content & SOPs */}
-      {activeTab === 'resources_hub' && <ResourcesHubView />}
-      {activeTab.startsWith('resource_') && (
-        <ResourceDetailPage slug={activeTab.replace(/^resource_/, '')} />
-      )}
-
-      {/* Other Public Routes */}
-      {activeTab === 'home' && <HomeView />}
-      {activeTab === 'features' && <FeaturesView />}
-      {activeTab === 'pricing_public' && <PricingPublicView />}
-      {activeTab === 'about' && <AboutView />}
-      {activeTab === 'contact' && <ContactView />}
-      {activeTab === 'landing_page' && <LandingPageView />}
-      {activeTab === 'login' && <AuthView initialMode="login" />}
-      {activeTab === 'signup' && <AuthView initialMode="signup" />}
-      {activeTab === 'privacy' && <PrivacyPolicyView />}
-      {activeTab === 'terms' && <TermsOfServiceView />}
-      {activeTab === 'refund' && <RefundPolicyView />}
-      {activeTab === 'security' && <SecurityOverviewView />}
-
-      {/* Authenticated OS Modules */}
-      {activeTab === 'dashboard' && <DashboardView />}
-      {activeTab === 'chat' && <ChatView />}
-      {activeTab === 'crm' && <CRMView />}
-      {activeTab === 'projects' && <CRMView initialTab="projects" />}
-      {(activeTab === 'lead_prospector' || activeTab === 'lead_vault' || activeTab === 'b2b_vault' || activeTab === 'leads' || activeTab === 'lead-prospector') && <LeadProspectorView />}
-      {activeTab === 'invoices' && <InvoiceView />}
-      {activeTab === 'proposals' && <ProposalView />}
-      {activeTab === 'documents' && <DocumentGeneratorView />}
-      {activeTab === 'website_review' && <WebsiteReviewView />}
-      {activeTab === 'local_seo' && <LocalSeoView />}
-      {activeTab === 'marketing' && <MarketingPlannerView />}
-      {activeTab === 'marketing_planner' && <MarketingPlannerView />}
-      {(activeTab === 'masterclass_kit' || activeTab === 'agency_vault' || activeTab === 'growth_vault' || activeTab === 'masterclass') && <MasterclassKitView />}
-      {activeTab === 'pricing' && <PricingView />}
-      {activeTab === 'subscription' && <SubscriptionView />}
-      {activeTab === 'settings' && <SettingsView />}
-      {activeTab === 'admin' && (user.isAuthenticated && (user.role === 'admin' || user.role === 'owner' || user.email === 'imtiazbaloch3322@gmail.com' || user.email === 'support@locoraai.com') ? <AdminView /> : <DashboardView />)}
+      <ErrorBoundary>
+        {renderViewContent()}
+      </ErrorBoundary>
 
       {/* Payment Success Instant Celebration & Activation Modal */}
       {showSuccessModal && (
@@ -313,8 +326,10 @@ const MainContent: React.FC = () => {
 
 export default function App() {
   return (
-    <AppProvider>
-      <MainContent />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <MainContent />
+      </AppProvider>
+    </ErrorBoundary>
   );
 }

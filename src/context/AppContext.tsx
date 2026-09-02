@@ -50,7 +50,7 @@ interface AppContextType {
   businessProfile: BusinessProfile;
   updateBusinessProfile: (profile: Partial<BusinessProfile>) => void;
   settings: AppSettings;
-  updateSettings: (settings: Partial<AppSettings>) => void;
+  updateSettings: (settings: Partial<AppSettings>) => Promise<{ success: boolean; error?: string }>;
   customers: Customer[];
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateCustomer: (id: string, customer: Partial<Customer>) => void;
@@ -88,59 +88,94 @@ interface AppContextType {
   setLatestMarketingPlan: (plan: MarketingPlannerOutput) => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  refreshWorkspaceData: () => Promise<void>;
 }
 
-
-const DEFAULT_PROFILE: BusinessProfile = {
-  id: 'bp_1',
-  name: 'My Business Workspace',
-  tagline: 'Local Service & Business Workspace',
-  industry: 'Services',
-  description: '',
-  targetAudience: '',
-  toneOfVoice: 'Professional, helpful and results-driven',
-  website: '',
-  phone: '',
-  email: '',
-  address: '',
-  city: '',
-  state: '',
-  zip: '',
-  country: 'United States',
-  currency: 'USD',
-  taxRate: 0,
-  taxId: '',
-  updatedAt: new Date().toISOString(),
+const getInitialCachedProfile = (): BusinessProfile => {
+  const base: BusinessProfile = {
+    id: 'bp_1',
+    name: 'My Business Workspace',
+    tagline: 'Local Service & Business Workspace',
+    industry: 'Services',
+    description: '',
+    targetAudience: '',
+    toneOfVoice: 'Professional, helpful and results-driven',
+    website: '',
+    phone: '',
+    email: '',
+    address: '',
+    city: '',
+    state: '',
+    zip: '',
+    country: 'United States',
+    currency: 'USD',
+    taxRate: 0,
+    taxId: '',
+    updatedAt: new Date().toISOString(),
+  };
+  if (typeof window !== 'undefined') {
+    try {
+      const cachedLogo = localStorage.getItem('locora_business_profile_logo') || localStorage.getItem('locora_site_logo');
+      const cachedConfigStr = localStorage.getItem('locora_site_logo_config');
+      const cachedConfig = cachedConfigStr ? JSON.parse(cachedConfigStr) : undefined;
+      if (cachedLogo) {
+        base.logoUrl = cachedLogo;
+      }
+      if (cachedConfig) {
+        base.logoConfig = cachedConfig;
+      }
+    } catch {}
+  }
+  return base;
 };
 
-const DEFAULT_SETTINGS: AppSettings = {
-  activeProvider: 'gemini',
-  activeModelVersion: 'gemini-3.7-flash',
-  providerModels: {
-    gemini: 'gemini-3.7-flash',
-    groq: 'llama-3.3-70b-versatile',
-    openai: 'gpt-4o',
-    claude: 'claude-3-7-sonnet-20250219',
-    perplexity: 'sonar-pro',
-    deepseek: 'deepseek-chat',
-  },
-  providerKeys: {
-    gemini: '',
-    openai: '',
-    claude: '',
-    perplexity: '',
-    deepseek: '',
-    groq: '',
-    opus: '',
-    cursor: '',
-    grok: '',
-  },
-  theme: 'dark',
-  autoSave: true,
-  defaultCurrency: 'USD',
-  defaultTaxRate: 0,
-  userKeyStatus: {},
+const getInitialCachedSettings = (): AppSettings => {
+  const base: AppSettings = {
+    activeProvider: 'gemini',
+    activeModelVersion: 'gemini-3.7-flash',
+    providerModels: {
+      gemini: 'gemini-3.7-flash',
+      groq: 'llama-3.3-70b-versatile',
+      openai: 'gpt-4o',
+      claude: 'claude-3-7-sonnet-20250219',
+      perplexity: 'sonar-pro',
+      deepseek: 'deepseek-chat',
+    },
+    providerKeys: {
+      gemini: '',
+      openai: '',
+      claude: '',
+      perplexity: '',
+      deepseek: '',
+      groq: '',
+      opus: '',
+      cursor: '',
+      grok: '',
+    },
+    theme: 'dark',
+    autoSave: true,
+    defaultCurrency: 'USD',
+    defaultTaxRate: 0,
+    userKeyStatus: {},
+  };
+  if (typeof window !== 'undefined') {
+    try {
+      const cachedLogo = localStorage.getItem('locora_site_logo') || localStorage.getItem('locora_business_profile_logo');
+      const cachedConfigStr = localStorage.getItem('locora_site_logo_config');
+      const cachedConfig = cachedConfigStr ? JSON.parse(cachedConfigStr) : undefined;
+      if (cachedLogo) {
+        base.siteLogoUrl = cachedLogo;
+      }
+      if (cachedConfig) {
+        base.siteLogoConfig = cachedConfig;
+      }
+    } catch {}
+  }
+  return base;
 };
+
+const DEFAULT_PROFILE = getInitialCachedProfile();
+const DEFAULT_SETTINGS = getInitialCachedSettings();
 
 const DEFAULT_USER: UserProfile = {
   id: 'usr_guest',
@@ -307,34 +342,40 @@ const PATH_TO_TAB: Record<string, string> = {
   const [fuelPackReason, setFuelPackReason] = useState<string | undefined>(undefined);
   const [pendingPlanAfterAuth, setPendingPlanAfterAuth] = useState<{ plan: UserPlan; cycle: BillingCycle } | null>(null);
 
-  // Hydrate user session directly from PostgreSQL database on load only if active window session exists
+  // Hydrate user session directly from database/API on load and sync global branding
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const hasActiveSession = sessionStorage.getItem('locora_active_session') === 'true';
-    const lastActiveStr = sessionStorage.getItem('locora_last_active');
-    const lastActive = lastActiveStr ? Number(lastActiveStr) : 0;
-    const now = Date.now();
-    const INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes inactivity limit
+    // Immediately fetch public branding to guarantee uploaded logo is shown everywhere
+    fetch('/api/public/branding')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          if (data.siteLogoUrl) {
+            try {
+              localStorage.setItem('locora_site_logo', data.siteLogoUrl);
+            } catch {}
+            setSettings((prev) => ({
+              ...prev,
+              siteLogoUrl: data.siteLogoUrl,
+              siteLogoConfig: data.siteLogoConfig || prev.siteLogoConfig,
+            }));
+            setBusinessProfile((prev) => ({
+              ...prev,
+              logoUrl: prev.logoUrl || data.siteLogoUrl,
+              logoConfig: prev.logoConfig || data.siteLogoConfig,
+            }));
+          }
+          if (data.siteLogoConfig) {
+            try {
+              localStorage.setItem('locora_site_logo_config', JSON.stringify(data.siteLogoConfig));
+            } catch {}
+          }
+        }
+      })
+      .catch(() => {});
 
-    // If window or browser was closed and reopened, sessionStorage will be empty
-    // In that case, enforce logged-out state and clear any stale cookie
-    if (!hasActiveSession) {
-      fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
-      setUser(DEFAULT_USER);
-      return;
-    }
-
-    // If inactivity timeout exceeded within the same session
-    if (lastActive && (now - lastActive > INACTIVITY_TIMEOUT_MS)) {
-      sessionStorage.removeItem('locora_active_session');
-      sessionStorage.removeItem('locora_last_active');
-      fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
-      setUser(DEFAULT_USER);
-      return;
-    }
-
-    // Active window session is valid: fetch user data
+    // Active session hydration via /api/auth/me
     fetch('/api/auth/me', { credentials: 'include' })
       .then((res) => {
         if (!res.ok) throw new Error('No active session');
@@ -351,16 +392,10 @@ const PATH_TO_TAB: Record<string, string> = {
             role: isSuperAdminEmail ? 'admin' : (data.user.role || 'customer'),
             isAuthenticated: true,
           });
-        } else {
-          sessionStorage.removeItem('locora_active_session');
-          sessionStorage.removeItem('locora_last_active');
-          setUser(DEFAULT_USER);
         }
       })
       .catch(() => {
-        sessionStorage.removeItem('locora_active_session');
-        sessionStorage.removeItem('locora_last_active');
-        setUser(DEFAULT_USER);
+        // Unauthenticated visitor: keep default user without destroying application state
       });
   }, []);
 
@@ -468,7 +503,7 @@ const PATH_TO_TAB: Record<string, string> = {
   // Ensure monthlyAiCredits aligns with current planTier (25/mo for Starter, 15 for Demo Guest, 250 for Pro, 9999 for Agency)
   useEffect(() => {
     const isDemo = user.email?.toLowerCase() === 'free.user@starterbiz.com' || !user.email;
-    const creditsMap: Record<UserPlan, number> = { free: isDemo ? 15 : 25, pro: 250, agency: 9999 };
+    const creditsMap: Record<UserPlan, number> = { free: isDemo ? 15 : 25, pro: 250, agency: 9999, elite: 9999 };
     const expected = creditsMap[user.planTier || 'free'] || 25;
     if (!user.monthlyAiCredits || (user.planTier === 'free' && user.monthlyAiCredits !== expected)) {
       setUser((prev) => ({
@@ -720,9 +755,10 @@ const PATH_TO_TAB: Record<string, string> = {
       free: 25,
       pro: 250,
       agency: 9999,
+      elite: 9999,
     };
-    const priceMapMonthly: Record<UserPlan, number> = { free: 0, pro: 19, agency: 49 };
-    const priceMapYearly: Record<UserPlan, number> = { free: 0, pro: 15 * 12, agency: 39 * 12 };
+    const priceMapMonthly: Record<UserPlan, number> = { free: 0, pro: 19, agency: 49, elite: 99 };
+    const priceMapYearly: Record<UserPlan, number> = { free: 0, pro: 15 * 12, agency: 39 * 12, elite: 79 * 12 };
 
     const amount = billingCycle === 'yearly' ? priceMapYearly[plan] : priceMapMonthly[plan];
 
@@ -825,72 +861,114 @@ const PATH_TO_TAB: Record<string, string> = {
   const [latestWebsiteAudit, setLatestWebsiteAudit] = useState<WebsiteAuditResult | null>(null);
   const [latestMarketingPlan, setLatestMarketingPlan] = useState<MarketingPlannerOutput | null>(null);
 
-  // Fetch PostgreSQL Live Data on Mount or User Change
-  useEffect(() => {
-    const fetchWorkspaceData = async () => {
-      try {
-        const queryEmail = user.email ? encodeURIComponent(user.email) : '';
-        const res = await fetch(`/api/workspace/data${queryEmail ? `?email=${queryEmail}` : ''}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.businessProfile) {
-            setBusinessProfile((prev) => {
-              const isApex = (n?: string) => !n || n === 'Apex Digital Solutions' || n === 'My Business Workspace';
-              const resolvedName =
-                (!isApex(user.companyName) ? user.companyName : null) ||
-                (!isApex(data.businessProfile.name) ? data.businessProfile.name : null) ||
-                (!isApex(prev.name) ? prev.name : null) ||
-                (user.name ? `${user.name}'s Business` : 'My Business Workspace');
-
-              const mergedConfig = data.businessProfile.logoConfig || prev.logoConfig;
-              const mergedUrl = data.businessProfile.logoUrl || prev.logoUrl || '';
-
-              return {
-                ...prev,
-                ...data.businessProfile,
-                name: resolvedName,
-                email: user.email || data.businessProfile.email || prev.email || '',
-                logoUrl: mergedUrl,
-                logoConfig: mergedConfig,
-              };
-            });
+  // Fetch PostgreSQL Live Data on Mount, User Change, and Focus
+  const fetchWorkspaceData = useCallback(async () => {
+    try {
+      const queryEmail = user.email ? encodeURIComponent(user.email) : '';
+      const res = await fetch(`/api/workspace/data${queryEmail ? `?email=${queryEmail}` : ''}`, {
+        headers: { 'Cache-Control': 'no-cache' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.businessProfile) {
+          if (data.businessProfile.logoUrl) {
+            try {
+              localStorage.setItem('locora_business_profile_logo', data.businessProfile.logoUrl);
+            } catch {}
           }
-          if (data.settings) {
-            setSettings((prev) => ({
+          if (data.businessProfile.logoConfig) {
+            try {
+              localStorage.setItem('locora_site_logo_config', JSON.stringify(data.businessProfile.logoConfig));
+            } catch {}
+          }
+          setBusinessProfile((prev) => {
+            const isApex = (n?: string) => !n || n === 'Apex Digital Solutions' || n === 'My Business Workspace';
+            const resolvedName =
+              (!isApex(user.companyName) ? user.companyName : null) ||
+              (!isApex(data.businessProfile.name) ? data.businessProfile.name : null) ||
+              (!isApex(prev.name) ? prev.name : null) ||
+              (user.name ? `${user.name}'s Business` : 'My Business Workspace');
+
+            const mergedConfig = data.businessProfile.logoConfig || prev.logoConfig;
+            const mergedUrl = data.businessProfile.logoUrl || prev.logoUrl || '';
+
+            return {
               ...prev,
-              ...data.settings,
-              providerKeys: {
-                ...prev.providerKeys,
-                ...(data.settings.providerKeys || {}),
-              },
-            }));
-          }
-          if (Array.isArray(data.customers)) setCustomers(data.customers);
-          if (Array.isArray(data.projects)) setProjects(data.projects);
-          if (Array.isArray(data.invoices)) setInvoices(data.invoices);
-          const remoteCreatedCount = data.invoicesCreatedCount || 0;
-          setUser((prev) => {
-            const maxCreated = Math.max(prev.invoicesCreatedCount || 0, remoteCreatedCount, (data.invoices || []).length);
-            return { ...prev, invoicesCreatedCount: maxCreated };
+              ...data.businessProfile,
+              name: resolvedName,
+              email: user.email || data.businessProfile.email || prev.email || '',
+              logoUrl: mergedUrl,
+              logoConfig: mergedConfig,
+            };
           });
-          if (Array.isArray(data.proposals)) setProposals(data.proposals);
-          if (Array.isArray(data.documents)) setDocuments(data.documents);
-          if (Array.isArray(data.conversations)) {
-            const normalizedConvs = data.conversations.map((c: any) => ({
-              ...c,
-              messages: Array.isArray(c.messages) ? c.messages : [],
-            }));
-            setConversations(normalizedConvs);
-            if (normalizedConvs.length > 0) setActiveConversationId(normalizedConvs[0].id);
-          }
-          if (Array.isArray(data.activityLogs)) setActivityLogs(data.activityLogs);
         }
-      } catch (err) {
-        console.warn('Could not load remote DB workspace data:', err);
+        if (data.settings) {
+          if (data.settings.siteLogoUrl) {
+            try {
+              localStorage.setItem('locora_site_logo', data.settings.siteLogoUrl);
+            } catch {}
+          }
+          if (data.settings.siteLogoConfig) {
+            try {
+              localStorage.setItem('locora_site_logo_config', JSON.stringify(data.settings.siteLogoConfig));
+            } catch {}
+          }
+          setSettings((prev) => ({
+            ...prev,
+            ...data.settings,
+            providerKeys: {
+              ...prev.providerKeys,
+              ...(data.settings.providerKeys || {}),
+            },
+          }));
+        }
+        if (Array.isArray(data.customers)) setCustomers(data.customers);
+        if (Array.isArray(data.projects)) setProjects(data.projects);
+        if (Array.isArray(data.invoices)) setInvoices(data.invoices);
+        const remoteCreatedCount = data.invoicesCreatedCount || 0;
+        setUser((prev) => {
+          const maxCreated = Math.max(prev.invoicesCreatedCount || 0, remoteCreatedCount, (data.invoices || []).length);
+          return { ...prev, invoicesCreatedCount: maxCreated };
+        });
+        if (Array.isArray(data.proposals)) setProposals(data.proposals);
+        if (Array.isArray(data.documents)) setDocuments(data.documents);
+        if (Array.isArray(data.conversations)) {
+          const normalizedConvs = data.conversations.map((c: any) => ({
+            ...c,
+            messages: Array.isArray(c.messages) ? c.messages : [],
+          }));
+          setConversations(normalizedConvs);
+          if (normalizedConvs.length > 0) setActiveConversationId((current) => current || normalizedConvs[0].id);
+        }
+        if (Array.isArray(data.activityLogs)) setActivityLogs(data.activityLogs);
+      }
+    } catch (err) {
+      console.warn('Could not load remote DB workspace data:', err);
+    }
+  }, [user.email, user.companyName, user.name]);
+
+  useEffect(() => {
+    fetchWorkspaceData();
+
+    // Auto-refresh when user tabs back or switches back into view
+    const handleFocus = () => {
+      fetchWorkspaceData();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchWorkspaceData();
       }
     };
-    fetchWorkspaceData();
-  }, [user.email]);
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [fetchWorkspaceData]);
 
   const logActivity = (type: string, title: string, description?: string) => {
     const newLog: ActivityLogItem = {
@@ -910,6 +988,17 @@ const PATH_TO_TAB: Record<string, string> = {
   };
 
   const updateBusinessProfile = (profile: Partial<BusinessProfile>) => {
+    if (profile.logoUrl) {
+      try {
+        localStorage.setItem('locora_business_profile_logo', profile.logoUrl);
+        localStorage.setItem('locora_site_logo', profile.logoUrl);
+      } catch {}
+    }
+    if (profile.logoConfig) {
+      try {
+        localStorage.setItem('locora_site_logo_config', JSON.stringify(profile.logoConfig));
+      } catch {}
+    }
     setBusinessProfile((prev) => {
       const updated = {
         ...prev,
@@ -930,6 +1019,17 @@ const PATH_TO_TAB: Record<string, string> = {
   };
 
   const updateSettings = async (newSettings: Partial<AppSettings>): Promise<{ success: boolean; error?: string }> => {
+    if (newSettings.siteLogoUrl) {
+      try {
+        localStorage.setItem('locora_site_logo', newSettings.siteLogoUrl);
+        localStorage.setItem('locora_business_profile_logo', newSettings.siteLogoUrl);
+      } catch {}
+    }
+    if (newSettings.siteLogoConfig) {
+      try {
+        localStorage.setItem('locora_site_logo_config', JSON.stringify(newSettings.siteLogoConfig));
+      } catch {}
+    }
     try {
       const res = await fetch(`/api/workspace/settings?email=${encodeURIComponent(user.email || '')}`, {
         method: 'POST',
@@ -1288,6 +1388,7 @@ const PATH_TO_TAB: Record<string, string> = {
         setLatestMarketingPlan,
         activeTab,
         setActiveTab,
+        refreshWorkspaceData: fetchWorkspaceData,
       }}
     >
       {children}

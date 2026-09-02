@@ -56,7 +56,7 @@ import {
 } from 'lucide-react';
 
 export const AdminView: React.FC = () => {
-  const { user, clients, invoices, updateInvoiceStatus, businessProfile, updateBusinessProfile, updateSettings } = useApp();
+  const { user, customers: clients = [], invoices, updateInvoiceStatus, businessProfile, updateBusinessProfile, updateSettings } = useApp();
 
   const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<'users' | 'payments' | 'logo' | 'ai_tokens' | 'sales' | 'subscribers' | 'invoices' | 'dispatch' | 'email_server'>('users');

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { CustomLogoConfig } from '../types';
 
@@ -15,8 +15,9 @@ export interface LocoraLogoProps {
 }
 
 /**
- * LocoraLogo: Displays platform site logo configured via Admin Portal or default Locora brand lockup.
- * When isUserDoc=true, renders user's custom business logo for white-label invoices, proposals, and reports.
+ * LocoraLogo: Displays platform site logo configured via Admin Portal / Settings,
+ * or default Locora brand lockup.
+ * Always renders the uploaded logo across the entire site, dashboard, and invoices/reports.
  */
 export const LocoraLogo: React.FC<LocoraLogoProps> = ({
   className = '',
@@ -27,29 +28,36 @@ export const LocoraLogo: React.FC<LocoraLogoProps> = ({
   isUserDoc = false,
 }) => {
   const { businessProfile, user, settings } = useApp();
+  const [imageError, setImageError] = useState(false);
 
-  // If this is a user document (Invoices, Proposals, SEO Audit Reports), render user's business brand logo
-  if (isUserDoc) {
-    const isProOrElite = user?.planTier === 'pro' || user?.planTier === 'elite';
-
-    // Free plan users get default Locora AI branding on invoices & reports
-    if (!isProOrElite) {
-      return (
-        <div className={`inline-flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white font-extrabold rounded-xl text-xs font-heading shadow-2xs ${className}`}>
-          <div className="w-5 h-5 rounded-md bg-[#059669] text-white font-black flex items-center justify-center text-[10px]">
-            L
-          </div>
-          <span>{businessProfile?.name || user?.companyName || 'Business Workspace'}</span>
-          <span className="text-[10px] font-mono text-emerald-400 font-normal border-l border-slate-700 pl-2">
-            Locora Verified
-          </span>
-        </div>
-      );
+  // Read local cache immediately to prevent flash of default logo on cold page refresh
+  const getCachedLogo = () => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const cachedSite = localStorage.getItem('locora_site_logo');
+      const cachedProfile = localStorage.getItem('locora_business_profile_logo');
+      return isUserDoc ? (cachedProfile || cachedSite) : (cachedSite || cachedProfile);
+    } catch {
+      return null;
     }
+  };
 
-    // Pro and Elite Subscribers get full white-label custom logo support
+  const cachedLogoUrl = getCachedLogo();
+
+  // Reset image error if logo URL changes
+  useEffect(() => {
+    setImageError(false);
+  }, [
+    settings?.siteLogoUrl,
+    settings?.siteLogoConfig?.url,
+    businessProfile?.logoUrl,
+    businessProfile?.logoConfig?.url,
+  ]);
+
+  // If this is a user document (Invoices, Proposals, SEO Audit Reports)
+  if (isUserDoc) {
     const config: CustomLogoConfig = businessProfile?.logoConfig || {
-      url: businessProfile?.logoUrl || '',
+      url: businessProfile?.logoUrl || settings?.siteLogoConfig?.url || settings?.siteLogoUrl || cachedLogoUrl || '',
       format: 'svg',
       height: 44,
       alignment: 'left',
@@ -58,18 +66,30 @@ export const LocoraLogo: React.FC<LocoraLogoProps> = ({
       fit: 'contain',
     };
 
-    const logoUrl = config.url || businessProfile?.logoUrl || '';
-    const height = size ? (typeof size === 'number' ? `${size}px` : size) : `${config.height || 44}px`;
+    const logoUrl =
+      config.url ||
+      businessProfile?.logoUrl ||
+      settings?.siteLogoConfig?.url ||
+      settings?.siteLogoUrl ||
+      cachedLogoUrl ||
+      '';
 
-    if (logoUrl) {
+    const height = size
+      ? typeof size === 'number'
+        ? `${size}px`
+        : size
+      : `${config.height || 44}px`;
+
+    if (logoUrl && !imageError) {
       return (
         <div className={`inline-flex items-center shrink-0 ${className}`}>
           <img
             src={logoUrl}
-            alt={businessProfile?.name || 'Business Logo'}
+            alt={businessProfile?.name || user?.companyName || 'Business Logo'}
             className="object-contain select-none max-w-full"
-            style={{ height, width: 'auto', ...style }}
+            style={{ height, width: 'auto', maxHeight: '100%', ...style }}
             referrerPolicy="no-referrer"
+            onError={() => setImageError(true)}
           />
         </div>
       );
@@ -83,9 +103,14 @@ export const LocoraLogo: React.FC<LocoraLogoProps> = ({
     );
   }
 
-  // DEFAULT: Website Site Logo (Controlled strictly by Platform/Admin settings, NEVER user business profile)
+  // DEFAULT: Platform & Website Site Logo
   const siteLogoConfig = settings?.siteLogoConfig;
-  const siteLogoUrl = settings?.siteLogoUrl || siteLogoConfig?.url;
+  const siteLogoUrl =
+    settings?.siteLogoUrl ||
+    siteLogoConfig?.url ||
+    businessProfile?.logoUrl ||
+    businessProfile?.logoConfig?.url ||
+    cachedLogoUrl;
 
   let assetUrl = siteLogoUrl || '';
   let assetHeight = siteLogoConfig?.height || 40;
@@ -139,20 +164,22 @@ export const LocoraLogo: React.FC<LocoraLogoProps> = ({
       ? 'p-3.5'
       : 'p-0';
 
-  if (assetUrl) {
+  if (assetUrl && !imageError) {
     return (
       <div className={`inline-flex items-center shrink-0 ${bgStyleClass} ${paddingClass}`}>
         <img
           src={assetUrl}
-          alt="Locora AI"
+          alt="Locora Logo"
           className={`object-contain select-none shrink-0 ${className}`}
           style={{
             height: effectiveHeight,
             width: 'auto',
+            maxHeight: '100%',
             objectFit: fit,
             ...style,
           }}
           referrerPolicy="no-referrer"
+          onError={() => setImageError(true)}
         />
       </div>
     );
