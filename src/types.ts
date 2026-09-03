@@ -291,8 +291,133 @@ export interface WebsiteAuditResult {
     recommendation: string;
   }[];
   seoRecommendations?: SeoRecommendation[];
+  seoMatrix?: SeoMatrixAuditData;
   aiSummary: string;
   actionableSteps: string[];
+}
+
+export interface SeoKeywordMatrixItem {
+  keyword: string;
+  searchVolume: number;
+  cpc: number;
+  competition: 'Low' | 'Medium' | 'High';
+  competitionIndex: number; // 0 - 100
+  difficultyKd: number; // Keyword difficulty (0 - 100)
+  intent: 'Informational' | 'Commercial' | 'Transactional' | 'Navigational';
+  position: number | null; // Global ranking position
+  positionChange: number; // Position change relative to previous scan
+  trafficShare: number; // % of total domain organic traffic
+  volumeTrend: number[]; // 6-month historical search volume sparkline
+  url?: string | null;
+  snippet?: string;
+}
+
+export interface TopTrafficPage {
+  url: string;
+  path: string;
+  title: string;
+  estimatedVisits: number;
+  trafficSharePercent: number;
+  topKeyword: string;
+  keywordsCount: number;
+  changeRate: number; // % growth or change
+}
+
+export interface BacklinkItem {
+  sourceUrl: string;
+  sourceDomain: string;
+  sourceTitle: string;
+  targetUrl: string;
+  anchorText: string;
+  domainRating: number; // 0 - 100
+  linkType: 'dofollow' | 'nofollow';
+  firstSeen: string;
+}
+
+export interface TrafficChannelBreakdown {
+  organic: number; // %
+  direct: number;  // %
+  referral: number;// %
+  social: number;  // %
+  paid: number;    // %
+}
+
+export interface AiVisibilityProfile {
+  score: number; // 0 - 100 AI Visibility rating
+  sentiment: 'Positive' | 'Neutral' | 'Mixed';
+  citationsCount: number;
+  aiReadinessScore: number;
+  topMentionSources: string[];
+}
+
+export interface BrandTrustProfile {
+  trustScore: number; // 0 - 100
+  domainAuthority: number; // 0 - 100 (DA / DR)
+  spamScore: number; // 0 - 100 (low is clean)
+  indexedPages: number;
+  brandSearchShare: number; // % of searches branded
+}
+
+export interface SeoTrafficAnalytics {
+  monthlyVisits: number;
+  organicKeywordsCount: number;
+  paidKeywordsCount: number;
+  averagePosition: number;
+  trafficCostUsd: number;
+  domainRank: number; // 0 - 100
+  historicalTraffic?: { month: string; visits: number; keywords: number }[];
+  channels: TrafficChannelBreakdown;
+  topPages: TopTrafficPage[];
+  aiVisibility: AiVisibilityProfile;
+  brandTrust: BrandTrustProfile;
+  rankingDistribution: {
+    top3: number;
+    pos4_10: number;
+    pos11_20: number;
+    pos21_50: number;
+    pos51_100: number;
+  };
+  topCompetitors?: {
+    domain: string;
+    commonKeywords: number;
+    organicTraffic: number;
+    domainAuthority: number;
+    trafficShare: number;
+  }[];
+}
+
+export interface BacklinkProfile {
+  totalBacklinks: number;
+  referringDomains: number;
+  dofollowBacklinks: number;
+  nofollowBacklinks: number;
+  referringIps: number;
+  domainTrustScore: number; // 0 - 100
+  historicalBacklinks?: { month: string; backlinks: number; refDomains: number }[];
+  links: BacklinkItem[];
+}
+
+export interface SeoMatrixAuditData {
+  tier: 'free' | 'pro';
+  provider: 'serper' | 'serpapi' | 'scaleserp' | 'valueserp' | 'dataforseo' | 'dom_heuristic';
+  providerName: string;
+  isCached: boolean;
+  cachedAt?: string;
+  cacheTtlHours: number;
+  queryOrDomain: string;
+  keywords: SeoKeywordMatrixItem[];
+  traffic: SeoTrafficAnalytics;
+  backlinks: BacklinkProfile;
+  serpFeatures: string[];
+  relatedSearches: string[];
+  peopleAlsoAsk: { question: string; snippet?: string }[];
+  competitorGap?: {
+    commonCount: number;
+    yourUniqueCount: number;
+    competitorUniqueCount: number;
+    keywordOverlapPercent: number;
+  };
+  warning?: string;
 }
 
 export interface SeoRecommendation {

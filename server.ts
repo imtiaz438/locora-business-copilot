@@ -16,6 +16,7 @@ const resolveMxAsync = promisify(dns.resolveMx);
 import { getOrCreateUser } from './src/db/users.ts';
 import * as dbService from './src/db/service.ts';
 import type { PaymentTransaction } from './src/types.ts';
+import { executeSeoIntelligence, resolveUserSeoTier } from './src/services/seoEngine.ts';
 
 const app = express();
 const PORT = 3000;
@@ -9220,6 +9221,23 @@ Construct realistic, highly specific issues (marked as "pass", "warning", or "er
     const resolvedKeyIssues = auditData.keyIssues || [];
     const resolvedActionableSteps = auditData.actionableSteps || [];
 
+    // Tiered SEO & Keyword Analytics (Free Waterfall vs Pro DataForSEO with DB caching)
+    const userPlanTier = creditCheck.user?.planTier || (usersDb.get((userEmail || '').toLowerCase().trim())?.planTier) || 'free';
+    let seoMatrix = null;
+    try {
+      seoMatrix = await executeSeoIntelligence({
+        domain: hostname,
+        query: pageTitle || `${hostname} services`,
+        userEmail,
+        userPlanTier,
+        onPageText: textSnippet,
+        pageTitle,
+        pageDescription: pageDesc,
+      });
+    } catch (sErr) {
+      console.warn('[Website Audit] SEO Matrix extraction warning:', sErr);
+    }
+
     res.json({
       url: finalUrl,
       analyzedAt: new Date().toISOString(),
@@ -9229,6 +9247,7 @@ Construct realistic, highly specific issues (marked as "pass", "warning", or "er
       keyIssues: resolvedKeyIssues,
       actionableSteps: resolvedActionableSteps,
       seoRecommendations: dynamicSeoRecommendations,
+      seoMatrix,
       metadata: {
         title: pageTitle,
         description: pageDesc,
@@ -9280,6 +9299,7 @@ Construct realistic, highly specific issues (marked as "pass", "warning", or "er
         keyIssues: resolvedKeyIssues,
         actionableSteps: resolvedActionableSteps,
         seoRecommendations: dynamicSeoRecommendations,
+        seoMatrix,
       },
       providerUsed,
       modelUsed,
@@ -9292,6 +9312,94 @@ Construct realistic, highly specific issues (marked as "pass", "warning", or "er
     res.status(500).json({ error: error.message || 'Failed to analyze website', message: error.message || 'Failed to analyze website' });
   }
 });
+
+// Dedicated SEO Keyword Matrix API Endpoint
+app.post('/api/seo/keyword-matrix', async (req, res) => {
+  try {
+    const { query, domain, userEmail } = req.body;
+    if (!query && !domain) {
+      return res.status(400).json({ error: 'Query or domain is required' });
+    }
+    const normalizedEmail = (userEmail || '').toLowerCase().trim();
+    const user = usersDb.get(normalizedEmail);
+    const userPlanTier = user?.planTier || 'free';
+
+    const result = await executeSeoIntelligence({
+      domain: domain || query,
+      query: query || domain,
+      userEmail: normalizedEmail,
+      userPlanTier,
+    });
+
+    res.json({
+      success: true,
+      ...result,
+    });
+  } catch (error: any) {
+    console.error('Error in /api/seo/keyword-matrix:', error);
+    res.status(500).json({ error: error.message || 'Failed to generate keyword matrix' });
+  }
+});
+
+// Dedicated SEO Domain & Competitor Traffic Analytics API Endpoint
+app.post('/api/seo/domain-traffic-analytics', async (req, res) => {
+  try {
+    const { domain, competitorDomain, userEmail } = req.body;
+    if (!domain) {
+      return res.status(400).json({ error: 'Domain is required' });
+    }
+    const normalizedEmail = (userEmail || '').toLowerCase().trim();
+    const user = usersDb.get(normalizedEmail);
+    const userPlanTier = user?.planTier || 'free';
+
+    const targetAnalytics = await executeSeoIntelligence({
+      domain,
+      userEmail: normalizedEmail,
+      userPlanTier,
+    });
+
+    let competitorAnalytics = null;
+    let competitorGap = null;
+
+    if (competitorDomain && competitorDomain.trim()) {
+      competitorAnalytics = await executeSeoIntelligence({
+        domain: competitorDomain,
+        userEmail: normalizedEmail,
+        userPlanTier,
+      });
+
+      const targetKwSet = new Set(targetAnalytics.keywords.map((k) => k.keyword.toLowerCase()));
+      const compKwSet = new Set(competitorAnalytics.keywords.map((k) => k.keyword.toLowerCase()));
+
+      let common = 0;
+      targetKwSet.forEach((k) => {
+        if (compKwSet.has(k)) common++;
+      });
+
+      const totalUnique = new Set([...targetKwSet, ...compKwSet]).size;
+      const overlapPercent = totalUnique > 0 ? Math.round((common / totalUnique) * 100) : 0;
+
+      competitorGap = {
+        commonCount: common,
+        yourUniqueCount: targetKwSet.size - common,
+        competitorUniqueCount: compKwSet.size - common,
+        keywordOverlapPercent: overlapPercent,
+      };
+    }
+
+    res.json({
+      success: true,
+      target: targetAnalytics,
+      competitor: competitorAnalytics,
+      competitorGap,
+      userTier: resolveUserSeoTier(userPlanTier),
+    });
+  } catch (error: any) {
+    console.error('Error in /api/seo/domain-traffic-analytics:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch domain traffic analytics' });
+  }
+});
+
 
 // One-Click AI Polish Endpoint
 app.post('/api/ai/polish', async (req, res) => {

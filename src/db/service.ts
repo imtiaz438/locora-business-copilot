@@ -850,3 +850,75 @@ export async function addNewsletterSubscriber(email: string, name?: string) {
     return null;
   }
 }
+
+// --- SEO Caching Layer (Free 24h & Pro 7d Database Cache) ---
+export async function getDbSeoCache(cacheKey: string) {
+  try {
+    const rows = await db
+      .select()
+      .from(schema.seoCacheTable)
+      .where(eq(schema.seoCacheTable.cacheKey, cacheKey))
+      .limit(1);
+    if (!rows || rows.length === 0) return null;
+    const row = rows[0];
+    if (new Date() > new Date(row.expiresAt)) {
+      return null;
+    }
+    return row;
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function saveDbSeoCache(params: {
+  cacheKey: string;
+  cacheType: string;
+  tier: string;
+  domainOrQuery: string;
+  data: any;
+  provider: string;
+  expiresAt: Date;
+}) {
+  try {
+    const id = `seocache_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const existing = await db
+      .select()
+      .from(schema.seoCacheTable)
+      .where(eq(schema.seoCacheTable.cacheKey, params.cacheKey))
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      const updated = await db
+        .update(schema.seoCacheTable)
+        .set({
+          data: params.data,
+          provider: params.provider,
+          tier: params.tier,
+          expiresAt: params.expiresAt,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.seoCacheTable.cacheKey, params.cacheKey))
+        .returning();
+      return updated[0];
+    } else {
+      const inserted = await db
+        .insert(schema.seoCacheTable)
+        .values({
+          id,
+          cacheKey: params.cacheKey,
+          cacheType: params.cacheType,
+          tier: params.tier,
+          domainOrQuery: params.domainOrQuery,
+          data: params.data,
+          provider: params.provider,
+          expiresAt: params.expiresAt,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+      return inserted[0];
+    }
+  } catch (err) {
+    return null;
+  }
+}

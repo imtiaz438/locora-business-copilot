@@ -245,4 +245,18 @@ export const transactionsTable = pgTable('payment_transactions', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+export const seoCacheTable = pgTable('seo_cache', {
+  id: text('id').primaryKey(),
+  cacheKey: text('cache_key').notNull().unique(),
+  cacheType: text('cache_type').notNull(), // 'keyword_matrix' | 'domain_traffic' | 'backlinks' | 'serp_ranking'
+  tier: text('tier').notNull(), // 'free' | 'pro'
+  domainOrQuery: text('domain_or_query').notNull(),
+  data: jsonb('data').$type<any>().notNull(),
+  provider: text('provider').notNull(), // 'serper' | 'serpapi' | 'scaleserp' | 'valueserp' | 'dataforseo' | 'dom_heuristic'
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+
 

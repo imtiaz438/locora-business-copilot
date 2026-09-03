@@ -3,7 +3,8 @@ import { useApp } from '../context/AppContext';
 import {
   Award,
   ShieldCheck,
-  Printer,
+  Download,
+  FileText,
   Upload,
   Globe,
   CheckCircle2,
@@ -36,6 +37,7 @@ import {
   build40PointAudit,
   BRAND_COLOR_PRESETS,
 } from '../utils/audit40PointsGenerator';
+import { generateAuditPdf } from '../utils/auditPdfGenerator';
 
 interface Props {
   isOpen: boolean;
@@ -265,17 +267,80 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
     }
   };
 
-  // Print Document Handler
-  const handlePrintDocument = () => {
-    logActivity(
-      'audit',
-      'Exported White-Label Audit PDF',
-      `Generated 40-point client PDF audit for ${inputUrl}`
-    );
-    window.print();
+  // Direct Client PDF Download Handler (No browser print dialog, instant .pdf download)
+  const handleDownloadPdf = () => {
+    if (!isUnlocked) {
+      setErrorMessage('The white-label report is locked. Please purchase to unlock export.');
+      return;
+    }
+
+    try {
+      generateAuditPdf({
+        evaluation: auditEvaluation,
+        agencyName,
+        clientBusinessName,
+        agencyContactEmail,
+        agencyPhone,
+        agencyWebsite,
+        agencyBrandColor,
+        customExecutiveNote,
+        proposalRetainerQuote,
+      });
+
+      logActivity(
+        'audit',
+        'Exported White-Label Audit PDF',
+        `Downloaded 40-point client PDF audit for ${inputUrl}`
+      );
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to generate PDF document.');
+    }
   };
 
+  const cleanDomainKey = useMemo(() => {
+    return (inputUrl || auditUrl || '')
+      .replace(/^https?:\/\//i, '')
+      .replace(/\/.*$/, '')
+      .trim()
+      .toLowerCase();
+  }, [inputUrl, auditUrl]);
+
   const isAgencyTier = user.planTier === 'agency';
+
+  // Paywall state: Agency tier includes full access; other users unlock per-domain via $9.99 Whop payment
+  const [isUnlockedLocally, setIsUnlockedLocally] = useState<boolean>(() => {
+    if (isAgencyTier) return true;
+    try {
+      const key = (inputUrl || auditUrl || '').replace(/^https?:\/\//i, '').replace(/\/.*$/, '').trim().toLowerCase();
+      return localStorage.getItem(`unlocked_audit_${key}`) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  // Sync unlock status when target domain or user plan changes
+  useEffect(() => {
+    if (isAgencyTier) {
+      setIsUnlockedLocally(true);
+      return;
+    }
+    try {
+      const isSaved = localStorage.getItem(`unlocked_audit_${cleanDomainKey}`) === 'true';
+      setIsUnlockedLocally(isSaved);
+    } catch {
+      setIsUnlockedLocally(false);
+    }
+  }, [cleanDomainKey, isAgencyTier]);
+
+  const isUnlocked = isAgencyTier || isUnlockedLocally;
+
+  const handleUnlockSuccess = () => {
+    setIsUnlockedLocally(true);
+    try {
+      localStorage.setItem(`unlocked_audit_${cleanDomainKey}`, 'true');
+    } catch {}
+    logActivity('audit', 'Unlocked 40-Point White-Label Audit', `Unlocked full report for ${cleanDomainKey}`);
+  };
 
   if (!isOpen) return null;
 
@@ -801,74 +866,108 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
               ))}
             </div>
 
-            {/* 40-Point Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[460px] overflow-y-auto pr-1">
-              {visiblePoints.map((item) => (
-                <div
-                  key={item.id}
-                  className={`p-3.5 rounded-xl border text-xs flex flex-col justify-between transition-all ${
-                    item.status === 'pass'
-                      ? 'bg-emerald-50/40 border-emerald-200/80 hover:border-emerald-300'
-                      : item.status === 'warning'
-                      ? 'bg-amber-50/40 border-amber-200/80 hover:border-amber-300'
-                      : 'bg-rose-50/40 border-rose-200/80 hover:border-rose-300'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-white border border-slate-200 font-bold text-[10px] flex items-center justify-center text-slate-600 shrink-0 shadow-2xs">
-                          {item.id}
-                        </span>
-                        <h4 className="font-extrabold text-slate-900 leading-snug">
-                          {item.name}
-                        </h4>
+            {/* 40-Point Cards Grid or Strict Locked State */}
+            {!isUnlocked ? (
+              <div className="py-12 px-6 rounded-2xl border-2 border-slate-200/90 bg-gradient-to-b from-slate-50 to-white text-center flex flex-col items-center justify-center max-w-2xl mx-auto shadow-xs my-3">
+                <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-300 flex items-center justify-center text-amber-600 mb-4 shadow-2xs">
+                  <Lock className="w-7 h-7" />
+                </div>
+                <h3 className="text-lg font-black font-heading text-slate-900 mb-2">
+                  White-Label Client Audit Report Locked
+                </h3>
+                <p className="text-xs text-slate-600 max-w-lg mb-6 leading-relaxed">
+                  This complete 40-point technical audit, itemized client revenue leak diagnostics, turnkey Scope of Work (SOW), and unbranded agency deliverable are strictly locked. Access will remain completely protected until purchased.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={handleTriggerCheckout}
+                    disabled={isProcessing}
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-white font-extrabold text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    style={{
+                      background: `linear-gradient(135deg, ${agencyBrandColor} 0%, #0f172a 100%)`,
+                    }}
+                  >
+                    <Lock className="w-4 h-4 text-amber-300" />
+                    <span>{isProcessing ? 'Connecting...' : 'Unlock Full 40 Points ($9.99)'}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-4">
+                  Included without limits on Agency Tier. Instant unbranded client-ready PDF deliverable.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[460px] overflow-y-auto pr-1">
+                  {visiblePoints.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`p-3.5 rounded-xl border text-xs flex flex-col justify-between transition-all ${
+                        item.status === 'pass'
+                          ? 'bg-emerald-50/40 border-emerald-200/80 hover:border-emerald-300'
+                          : item.status === 'warning'
+                          ? 'bg-amber-50/40 border-amber-200/80 hover:border-amber-300'
+                          : 'bg-rose-50/40 border-rose-200/80 hover:border-rose-300'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2 mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-white border border-slate-200 font-bold text-[10px] flex items-center justify-center text-slate-600 shrink-0 shadow-2xs">
+                              {item.id}
+                            </span>
+                            <h4 className="font-extrabold text-slate-900 leading-snug">
+                              {item.name}
+                            </h4>
+                          </div>
+
+                          <span
+                            className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 ${
+                              item.status === 'pass'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : item.status === 'warning'
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-rose-100 text-rose-800'
+                            }`}
+                          >
+                            {item.status === 'pass' ? 'PASS' : item.status === 'warning' ? 'WARNING' : 'FAILED'}
+                          </span>
+                        </div>
+
+                        <p className="text-[11.5px] text-slate-700 mb-2 leading-relaxed">
+                          {item.diagnostic}
+                        </p>
                       </div>
 
-                      <span
-                        className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full shrink-0 ${
-                          item.status === 'pass'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : item.status === 'warning'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-rose-100 text-rose-800'
-                        }`}
-                      >
-                        {item.status === 'pass' ? 'PASS' : item.status === 'warning' ? 'WARNING' : 'FAILED'}
-                      </span>
+                      <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between gap-2 text-[11px]">
+                        <div className="text-slate-500 font-medium truncate">
+                          <span className="font-bold text-slate-700">Target:</span> {item.targetMetric}
+                        </div>
+                        {item.clientLossMonthly > 0 && (
+                          <span className="font-bold text-rose-700 shrink-0">
+                            -${item.clientLossMonthly}/mo leak
+                          </span>
+                        )}
+                      </div>
                     </div>
-
-                    <p className="text-[11.5px] text-slate-700 mb-2 leading-relaxed">
-                      {item.diagnostic}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-200/70 flex items-center justify-between gap-2 text-[11px]">
-                    <div className="text-slate-500 font-medium truncate">
-                      <span className="font-bold text-slate-700">Target:</span> {item.targetMetric}
-                    </div>
-                    {item.clientLossMonthly > 0 && (
-                      <span className="font-bold text-rose-700 shrink-0">
-                        -${item.clientLossMonthly}/mo leak
-                      </span>
-                    )}
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* ========================================================= */}
-          {/* PRINT-READY PIXEL-PERFECT EXECUTIVE PDF DOCUMENT CANVAS   */}
-          {/* Targeted by @media print: #white_label_audit_printable_canvas */}
+          {/* CLIENT-READY DELIVERABLE DOCUMENT PREVIEW (WHEN UNLOCKED) */}
           {/* ========================================================= */}
-          <div className="space-y-3 pt-4 border-t border-slate-200">
+          {isUnlocked && (
+            <div className="space-y-3 pt-4 border-t border-slate-200">
             <div className="flex items-center justify-between">
               <span className="text-xs font-black uppercase tracking-wider text-slate-800 font-heading">
-                Print-Ready PDF Preview (Generated Live)
+                Client PDF Deliverable Preview
               </span>
               <span className="text-[11px] text-slate-500">
-                Pixel-perfect executive deliverable ready for client presentation
+                Pixel-perfect unbranded deliverable formatted for client presentation
               </span>
             </div>
 
@@ -1001,12 +1100,21 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
               </div>
 
               {/* Printable 40 Points Summary Table */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 font-heading">
-                  All 40 Evaluated Checkpoints
-                </h4>
+              <div className="space-y-2 relative">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 font-heading">
+                    {isUnlocked ? 'All 40 Evaluated Checkpoints' : 'Evaluated Checkpoints (Executive Teaser: First 5 of 40)'}
+                  </h4>
+                  {!isUnlocked && (
+                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <Lock className="w-3 h-3 text-amber-600" />
+                      <span>Points 6-40 Locked</span>
+                    </span>
+                  )}
+                </div>
+
                 <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100 text-xs">
-                  {auditEvaluation.points.map((pt) => (
+                  {(isUnlocked ? auditEvaluation.points : auditEvaluation.points.slice(0, 5)).map((pt) => (
                     <div
                       key={pt.id}
                       className="p-2.5 flex items-start justify-between gap-3 hover:bg-slate-50"
@@ -1044,12 +1152,54 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
                     </div>
                   ))}
                 </div>
+
+                {/* Frosted Watermark Paywall Overlay when locked */}
+                {!isUnlocked && (
+                  <div className="relative mt-3 rounded-2xl border-2 border-dashed border-amber-300 bg-gradient-to-br from-amber-50/90 via-white/95 to-slate-50/90 p-6 text-center space-y-4 shadow-xs">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center mx-auto shadow-md">
+                      <Lock className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1 max-w-md mx-auto">
+                      <h4 className="text-sm font-extrabold font-heading text-slate-900">
+                        Full Client PDF Deliverable & SOW Agreement Locked
+                      </h4>
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        To protect your agency deliverables against unauthorized screenshots, the remaining 35 checkpoints, line-item revenue leakage, and print-ready PDF export are locked until unlocked.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-1">
+                      <button
+                        type="button"
+                        onClick={handleTriggerCheckout}
+                        disabled={isProcessing}
+                        className="px-6 py-2.5 rounded-xl text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                        style={{
+                          background: `linear-gradient(135deg, ${agencyBrandColor} 0%, #0f172a 100%)`,
+                        }}
+                      >
+                        <Lock className="w-4 h-4 text-amber-300" />
+                        <span>{isProcessing ? 'Connecting...' : 'Unlock Full Report ($9.99)'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleUnlockSuccess}
+                        className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                      >
+                        Instant Unlock (Demo)
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* SOW & Implementation Retainer Section */}
               {includePricingPitch && (
                 <div
-                  className="rounded-2xl p-5 border text-white flex flex-col sm:flex-row items-center justify-between gap-4"
+                  className={`rounded-2xl p-5 border text-white flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden transition-all ${
+                    !isUnlocked ? 'filter blur-[1px] opacity-70 select-none pointer-events-none' : ''
+                  }`}
                   style={{
                     backgroundColor: '#0f172a',
                     borderLeftWidth: '6px',
@@ -1083,7 +1233,11 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
               )}
 
               {/* Sign-off line */}
-              <div className="pt-4 border-t border-slate-200 grid grid-cols-2 gap-6 text-xs text-slate-600">
+              <div
+                className={`pt-4 border-t border-slate-200 grid grid-cols-2 gap-6 text-xs text-slate-600 transition-all ${
+                  !isUnlocked ? 'filter blur-[1px] opacity-70 select-none pointer-events-none' : ''
+                }`}
+              >
                 <div className="border-t border-slate-300 pt-2">
                   <span className="font-bold text-slate-800 block">Prepared By:</span>
                   <span>{agencyName} · {agencyContactEmail}</span>
@@ -1096,11 +1250,49 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
 
               {/* Footer Stamp */}
               <div className="pt-2 text-center text-[10px] text-slate-400 flex items-center justify-between">
-                <span>Locora Diagnostic Engine v4.2</span>
+                <span>Enterprise Diagnostic Engine v4.2</span>
                 <span>Audited & White-Labeled by {agencyName} • {agencyWebsite}</span>
               </div>
             </div>
           </div>
+          )}
+
+          {/* Print Protection Style */}
+          <style>{`
+            @media print {
+              ${!isUnlocked ? `
+                body * {
+                  display: none !important;
+                }
+                body::before {
+                  content: "This White-Label Audit PDF is locked. Please purchase or unlock full access to print or export.";
+                  display: block;
+                  font-size: 16pt;
+                  font-weight: bold;
+                  text-align: center;
+                  padding: 80pt 20pt;
+                  color: #0f172a;
+                }
+              ` : `
+                body * {
+                  visibility: hidden;
+                }
+                #white_label_audit_printable_canvas, #white_label_audit_printable_canvas * {
+                  visibility: visible;
+                }
+                #white_label_audit_printable_canvas {
+                  position: absolute;
+                  left: 0;
+                  top: 0;
+                  width: 100% !important;
+                  margin: 0 !important;
+                  padding: 16mm !important;
+                  box-shadow: none !important;
+                  border: none !important;
+                }
+              `}
+            }
+          `}</style>
 
           {/* Error Notice */}
           {errorMessage && (
@@ -1113,11 +1305,21 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
         {/* Modal Action Bar */}
         <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 font-sans">
           <div className="flex items-center gap-2 text-slate-600 text-xs">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>
+            {isUnlocked ? (
+              <span className="text-emerald-700 font-bold flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Full 40-Point White-Label Report Unlocked</span>
+              </span>
+            ) : (
+              <span className="text-amber-800 font-bold flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
+                <Lock className="w-3.5 h-3.5 text-amber-600" />
+                <span>Locked · Purchase Required to Reveal & Export</span>
+              </span>
+            )}
+            <span className="text-[11px] text-slate-500 hidden md:inline">
               {isAgencyTier
                 ? 'Unlimited White-Label PDF generation included on Agency Plan'
-                : 'One-time $9.99 Whop unlock (or included in Agency Plan)'}
+                : 'One-time $9.99 unlock (or included in Agency Plan)'}
             </span>
           </div>
 
@@ -1130,44 +1332,32 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
               Close
             </button>
 
-            {isAgencyTier ? (
+            {isUnlocked ? (
               <button
                 type="button"
-                onClick={handlePrintDocument}
-                className="px-6 py-2 rounded-xl text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto"
+                onClick={handleDownloadPdf}
+                className="px-6 py-2.5 rounded-xl text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto"
                 style={{ backgroundColor: agencyBrandColor }}
               >
-                <Printer className="w-4 h-4" />
-                <span>Export / Print 40-Point PDF</span>
+                <Download className="w-4 h-4" />
+                <span>Download 40-Point Client PDF</span>
               </button>
             ) : (
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <button
-                  type="button"
-                  onClick={handlePrintDocument}
-                  className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
-                  title="Print preview draft"
-                >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Print Preview</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleTriggerCheckout}
-                  disabled={isProcessing}
-                  className="px-6 py-2 rounded-xl text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto disabled:opacity-50"
-                  style={{
-                    background: `linear-gradient(135deg, ${agencyBrandColor} 0%, #0f172a 100%)`,
-                  }}
-                >
-                  <Award className="w-4 h-4 text-amber-300" />
-                  <span>
-                    {isProcessing ? 'Connecting...' : 'Unlock Full White-Label PDF ($9.99)'}
-                  </span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleTriggerCheckout}
+                disabled={isProcessing}
+                className="px-6 py-2.5 rounded-xl text-white font-bold text-xs shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto disabled:opacity-50"
+                style={{
+                  background: `linear-gradient(135deg, ${agencyBrandColor} 0%, #0f172a 100%)`,
+                }}
+              >
+                <Lock className="w-4 h-4 text-amber-300" />
+                <span>
+                  {isProcessing ? 'Connecting...' : 'Unlock Full White-Label PDF ($9.99)'}
+                </span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             )}
           </div>
         </div>
