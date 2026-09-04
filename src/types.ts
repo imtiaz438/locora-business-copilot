@@ -399,7 +399,7 @@ export interface BacklinkProfile {
 
 export interface SeoMatrixAuditData {
   tier: 'free' | 'pro';
-  provider: 'serper' | 'serpapi' | 'scaleserp' | 'valueserp' | 'dataforseo' | 'dom_heuristic';
+  provider: 'serper' | 'serpapi' | 'scaleserp' | 'valueserp' | 'dataforseo' | 'google_search' | 'google_custom_search' | 'dom_heuristic' | 'dns_verification';
   providerName: string;
   isCached: boolean;
   cachedAt?: string;
@@ -418,6 +418,11 @@ export interface SeoMatrixAuditData {
     keywordOverlapPercent: number;
   };
   warning?: string;
+  isDnsResolved?: boolean;
+  dnsStatus?: 'active' | 'unreachable' | 'not_found' | 'error';
+  typoSuggestion?: string;
+  indexStatus?: 'indexed' | 'unindexed' | 'new_domain' | 'dns_error';
+  liveStatusMessage?: string;
 }
 
 export interface SeoRecommendation {

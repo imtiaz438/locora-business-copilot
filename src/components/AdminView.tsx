@@ -320,6 +320,14 @@ export const AdminView: React.FC = () => {
   const [hunterKeyInput, setHunterKeyInput] = useState('');
   const [apolloKeyInput, setApolloKeyInput] = useState('');
   const [millionVerifierKeyInput, setMillionVerifierKeyInput] = useState('');
+  const [serperKeyInput, setSerperKeyInput] = useState('');
+  const [serpApiKeyInput, setSerpApiKeyInput] = useState('');
+  const [dataforseoLoginInput, setDataforseoLoginInput] = useState('');
+  const [dataforseoPasswordInput, setDataforseoPasswordInput] = useState('');
+  const [googleSearchApiKeyInput, setGoogleSearchApiKeyInput] = useState('');
+  const [googleSearchCxInput, setGoogleSearchCxInput] = useState('');
+  const [scaleSerpKeyInput, setScaleSerpKeyInput] = useState('');
+  const [valueSerpKeyInput, setValueSerpKeyInput] = useState('');
   const [aiModelSearch, setAiModelSearch] = useState('');
   const [aiProviderFilter, setAiProviderFilter] = useState<'all' | 'openai' | 'anthropic' | 'gemini' | 'deepseek' | 'perplexity' | 'groq'>('all');
   const [editingQuotaModelId, setEditingQuotaModelId] = useState<string | null>(null);
@@ -538,6 +546,14 @@ export const AdminView: React.FC = () => {
           setHunterKeyInput(data.savedKeys.hunter || '');
           setApolloKeyInput(data.savedKeys.apollo || '');
           setMillionVerifierKeyInput(data.savedKeys.millionverifier || data.savedKeys.millionVerifier || '');
+          setSerperKeyInput(data.savedKeys.serper || '');
+          setSerpApiKeyInput(data.savedKeys.serpapi || '');
+          setDataforseoLoginInput(data.savedKeys.dataforseoLogin || '');
+          setDataforseoPasswordInput(data.savedKeys.dataforseoPassword || '');
+          setGoogleSearchApiKeyInput(data.savedKeys.googleSearchApiKey || '');
+          setGoogleSearchCxInput(data.savedKeys.googleSearchCx || '');
+          setScaleSerpKeyInput(data.savedKeys.scaleserp || '');
+          setValueSerpKeyInput(data.savedKeys.valueserp || '');
         }
       }
     } catch (err) {
@@ -743,11 +759,19 @@ export const AdminView: React.FC = () => {
           hunterKey: hunterKeyInput,
           apolloKey: apolloKeyInput,
           millionverifierKey: millionVerifierKeyInput,
+          serperKey: serperKeyInput,
+          serpApiKey: serpApiKeyInput,
+          dataforseoLogin: dataforseoLoginInput,
+          dataforseoPassword: dataforseoPasswordInput,
+          googleSearchApiKey: googleSearchApiKeyInput,
+          googleSearchCx: googleSearchCxInput,
+          scaleserpKey: scaleSerpKeyInput,
+          valueserpKey: valueSerpKeyInput,
         }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setActionSuccessMsg('Validated & updated Live AI Model & B2B Prospecting API Keys in database & server configuration!');
+        setActionSuccessMsg('Validated & updated Live AI, SEO Intelligence & Search API credentials in database & server environment!');
         if (data.savedKeys) {
           setGeminiKeyInput(data.savedKeys.gemini || '');
           setOpenaiKeyInput(data.savedKeys.openai || '');
@@ -760,6 +784,14 @@ export const AdminView: React.FC = () => {
           setHunterKeyInput(data.savedKeys.hunter || '');
           setApolloKeyInput(data.savedKeys.apollo || '');
           setMillionVerifierKeyInput(data.savedKeys.millionverifier || data.savedKeys.millionVerifier || '');
+          setSerperKeyInput(data.savedKeys.serper || '');
+          setSerpApiKeyInput(data.savedKeys.serpapi || '');
+          setDataforseoLoginInput(data.savedKeys.dataforseoLogin || '');
+          setDataforseoPasswordInput(data.savedKeys.dataforseoPassword || '');
+          setGoogleSearchApiKeyInput(data.savedKeys.googleSearchApiKey || '');
+          setGoogleSearchCxInput(data.savedKeys.googleSearchCx || '');
+          setScaleSerpKeyInput(data.savedKeys.scaleserp || '');
+          setValueSerpKeyInput(data.savedKeys.valueserp || '');
         }
         fetchAiTokenStats();
       } else {
@@ -2862,6 +2894,209 @@ export const AdminView: React.FC = () => {
                     <p className="text-[10px] text-slate-500">
                       Enriches domain leads with verified decision-maker email addresses and deliverability confidence scores.
                     </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* REAL-WORLD LIVE SEO & SEARCH ENGINE API CREDENTIALS */}
+              <div className="pt-2 border-t border-slate-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                      <span>Real-World Live SEO, SERP & Backlink Intelligence Feeds</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200 uppercase tracking-wide">
+                        Live Search Engines
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Powers live keyword matrix positions, organic search volume, backlink audits, and traffic analytics. Unconfigured feeds automatically utilize zero-cost waterfall failover.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Google Custom Search API Key */}
+                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${googleSearchApiKeyInput || aiStats?.apiKeysConfigured?.googleSearch ? 'bg-blue-50/50 border-blue-300' : 'bg-slate-50/70 border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>Google Search API Key</span>
+                        {googleSearchApiKeyInput || aiStats?.apiKeysConfigured?.googleSearch ? (
+                          <span className="text-[9px] font-mono font-bold text-blue-800 bg-blue-100 px-1.5 py-0.2 rounded border border-blue-300">CONFIGURED</span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">OPTIONAL</span>
+                        )}
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500 font-bold">GOOGLE_SEARCH_API_KEY</span>
+                    </div>
+                    <input
+                      type="password"
+                      value={googleSearchApiKeyInput}
+                      onChange={(e) => setGoogleSearchApiKeyInput(e.target.value)}
+                      placeholder="AIzaSy... (Google Cloud Console)"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-[10px] text-slate-500">Official Google Custom Search JSON API key for real-time site indexation and SERP inspection.</p>
+                  </div>
+
+                  {/* Google Custom Search CX */}
+                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${googleSearchCxInput || aiStats?.apiKeysConfigured?.googleSearch ? 'bg-blue-50/50 border-blue-300' : 'bg-slate-50/70 border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>Google Search Engine ID (CX)</span>
+                        {googleSearchCxInput || aiStats?.apiKeysConfigured?.googleSearch ? (
+                          <span className="text-[9px] font-mono font-bold text-blue-800 bg-blue-100 px-1.5 py-0.2 rounded border border-blue-300">CONFIGURED</span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">OPTIONAL</span>
+                        )}
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500 font-bold">GOOGLE_SEARCH_CX</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={googleSearchCxInput}
+                      onChange={(e) => setGoogleSearchCxInput(e.target.value)}
+                      placeholder="e.g. 017576662... or search engine ID"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <p className="text-[10px] text-slate-500">Programmable Search Engine CX identifier from Google Programmable Search Engine control panel.</p>
+                  </div>
+
+                  {/* DataForSEO Login */}
+                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${dataforseoLoginInput || aiStats?.apiKeysConfigured?.dataforseo ? 'bg-indigo-50/50 border-indigo-300' : 'bg-slate-50/70 border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>DataForSEO API Login</span>
+                        {dataforseoLoginInput || aiStats?.apiKeysConfigured?.dataforseo ? (
+                          <span className="text-[9px] font-mono font-bold text-indigo-800 bg-indigo-100 px-1.5 py-0.2 rounded border border-indigo-300">PRO TIER ACTIVE</span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">OPTIONAL</span>
+                        )}
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500 font-bold">DATAFORSEO_LOGIN</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={dataforseoLoginInput}
+                      onChange={(e) => setDataforseoLoginInput(e.target.value)}
+                      placeholder="your-email@domain.com (DataForSEO account email)"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <p className="text-[10px] text-slate-500">DataForSEO enterprise login email for live Google Domain Rank Overview, Backlinks Summary & Keyword Rankings.</p>
+                  </div>
+
+                  {/* DataForSEO Password */}
+                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${dataforseoPasswordInput || aiStats?.apiKeysConfigured?.dataforseo ? 'bg-indigo-50/50 border-indigo-300' : 'bg-slate-50/70 border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>DataForSEO API Password / Secret</span>
+                        {dataforseoPasswordInput || aiStats?.apiKeysConfigured?.dataforseo ? (
+                          <span className="text-[9px] font-mono font-bold text-indigo-800 bg-indigo-100 px-1.5 py-0.2 rounded border border-indigo-300">PRO TIER ACTIVE</span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">OPTIONAL</span>
+                        )}
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500 font-bold">DATAFORSEO_PASSWORD</span>
+                    </div>
+                    <input
+                      type="password"
+                      value={dataforseoPasswordInput}
+                      onChange={(e) => setDataforseoPasswordInput(e.target.value)}
+                      placeholder="DataForSEO API Secret Key"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <p className="text-[10px] text-slate-500">DataForSEO API secret generated from the DataForSEO customer dashboard.</p>
+                  </div>
+
+                  {/* Serper.dev API */}
+                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${serperKeyInput || aiStats?.apiKeysConfigured?.serper ? 'bg-emerald-50/50 border-emerald-300' : 'bg-slate-50/70 border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>Serper.dev Search API</span>
+                        {serperKeyInput || aiStats?.apiKeysConfigured?.serper ? (
+                          <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">ACTIVE</span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">WATERFALL TIER 1</span>
+                        )}
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500 font-bold">SERPER_API_KEY</span>
+                    </div>
+                    <input
+                      type="password"
+                      value={serperKeyInput}
+                      onChange={(e) => setSerperKeyInput(e.target.value)}
+                      placeholder="serper_... (Free 2,500 monthly queries)"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                    />
+                    <p className="text-[10px] text-slate-500">Primary zero-cost Google Search engine API with ultra-low latency organic SERP extraction.</p>
+                  </div>
+
+                  {/* SerpApi API */}
+                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${serpApiKeyInput || aiStats?.apiKeysConfigured?.serpapi ? 'bg-emerald-50/50 border-emerald-300' : 'bg-slate-50/70 border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>SerpApi Engine</span>
+                        {serpApiKeyInput || aiStats?.apiKeysConfigured?.serpapi ? (
+                          <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">ACTIVE</span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">WATERFALL TIER 2</span>
+                        )}
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500 font-bold">SERPAPI_API_KEY</span>
+                    </div>
+                    <input
+                      type="password"
+                      value={serpApiKeyInput}
+                      onChange={(e) => setSerpApiKeyInput(e.target.value)}
+                      placeholder="serpapi_... (Free 250 monthly queries)"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                    />
+                    <p className="text-[10px] text-slate-500">Secondary waterfall failover provider for comprehensive Google SERP scrape & PAA extraction.</p>
+                  </div>
+
+                  {/* ScaleSERP API */}
+                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${scaleSerpKeyInput || aiStats?.apiKeysConfigured?.scaleserp ? 'bg-emerald-50/50 border-emerald-300' : 'bg-slate-50/70 border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>ScaleSERP API</span>
+                        {scaleSerpKeyInput || aiStats?.apiKeysConfigured?.scaleserp ? (
+                          <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">ACTIVE</span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">WATERFALL TIER 3</span>
+                        )}
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500 font-bold">SCALESERP_API_KEY</span>
+                    </div>
+                    <input
+                      type="password"
+                      value={scaleSerpKeyInput}
+                      onChange={(e) => setScaleSerpKeyInput(e.target.value)}
+                      placeholder="ScaleSERP API Key"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                    />
+                    <p className="text-[10px] text-slate-500">Tertiary waterfall fallback for Google SERP data extraction.</p>
+                  </div>
+
+                  {/* ValueSERP API */}
+                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${valueSerpKeyInput || aiStats?.apiKeysConfigured?.valueserp ? 'bg-emerald-50/50 border-emerald-300' : 'bg-slate-50/70 border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>ValueSERP API</span>
+                        {valueSerpKeyInput || aiStats?.apiKeysConfigured?.valueserp ? (
+                          <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">ACTIVE</span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">WATERFALL TIER 4</span>
+                        )}
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500 font-bold">VALUESERP_API_KEY</span>
+                    </div>
+                    <input
+                      type="password"
+                      value={valueSerpKeyInput}
+                      onChange={(e) => setValueSerpKeyInput(e.target.value)}
+                      placeholder="ValueSERP API Key"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                    />
+                    <p className="text-[10px] text-slate-500">Final waterfall backup for Google search engine data scraping.</p>
                   </div>
                 </div>
               </div>

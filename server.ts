@@ -1433,6 +1433,72 @@ function syncProviderKeysToEnv(keys: any) {
     }
   }
 
+  // Live SEO & SERP Intelligence Keys
+  if (keys.serper !== undefined || keys.serperKey !== undefined) {
+    const val = (keys.serper || keys.serperKey || '').trim();
+    if (val) {
+      process.env.SERPER_API_KEY = val;
+    } else {
+      delete process.env.SERPER_API_KEY;
+    }
+  }
+  if (keys.serpapi !== undefined || keys.serpApiKey !== undefined) {
+    const val = (keys.serpapi || keys.serpApiKey || '').trim();
+    if (val) {
+      process.env.SERPAPI_API_KEY = val;
+    } else {
+      delete process.env.SERPAPI_API_KEY;
+    }
+  }
+  if (keys.dataforseo_login !== undefined || keys.dataforseoLogin !== undefined) {
+    const val = (keys.dataforseo_login || keys.dataforseoLogin || '').trim();
+    if (val) {
+      process.env.DATAFORSEO_LOGIN = val;
+    } else {
+      delete process.env.DATAFORSEO_LOGIN;
+    }
+  }
+  if (keys.dataforseo_password !== undefined || keys.dataforseoPassword !== undefined) {
+    const val = (keys.dataforseo_password || keys.dataforseoPassword || '').trim();
+    if (val) {
+      process.env.DATAFORSEO_PASSWORD = val;
+    } else {
+      delete process.env.DATAFORSEO_PASSWORD;
+    }
+  }
+  if (keys.google_search_api_key !== undefined || keys.googleSearchApiKey !== undefined || keys.googleSearchKey !== undefined) {
+    const val = (keys.google_search_api_key || keys.googleSearchApiKey || keys.googleSearchKey || '').trim();
+    if (val) {
+      process.env.GOOGLE_SEARCH_API_KEY = val;
+    } else {
+      delete process.env.GOOGLE_SEARCH_API_KEY;
+    }
+  }
+  if (keys.google_search_cx !== undefined || keys.googleSearchCx !== undefined || keys.googleCx !== undefined) {
+    const val = (keys.google_search_cx || keys.googleSearchCx || keys.googleCx || '').trim();
+    if (val) {
+      process.env.GOOGLE_SEARCH_CX = val;
+    } else {
+      delete process.env.GOOGLE_SEARCH_CX;
+    }
+  }
+  if (keys.scaleserp !== undefined || keys.scaleSerpKey !== undefined) {
+    const val = (keys.scaleserp || keys.scaleSerpKey || '').trim();
+    if (val) {
+      process.env.SCALESERP_API_KEY = val;
+    } else {
+      delete process.env.SCALESERP_API_KEY;
+    }
+  }
+  if (keys.valueserp !== undefined || keys.valueSerpKey !== undefined) {
+    const val = (keys.valueserp || keys.valueSerpKey || '').trim();
+    if (val) {
+      process.env.VALUESERP_API_KEY = val;
+    } else {
+      delete process.env.VALUESERP_API_KEY;
+    }
+  }
+
   updateModelQuotasFromValidation();
   // Trigger background live validation
   validateAllConfiguredKeys().catch(() => {});
@@ -10156,6 +10222,14 @@ app.get('/api/admin/ai-tokens/stats', (req, res) => {
         hunter: storedAppSettings?.providerKeys?.hunter || process.env.HUNTER_API_KEY || '',
         apollo: storedAppSettings?.providerKeys?.apollo || process.env.APOLLO_API_KEY || '',
         millionverifier: storedAppSettings?.providerKeys?.millionverifier || storedAppSettings?.providerKeys?.millionVerifier || process.env.MILLIONVERIFIER_API_KEY || '',
+        serper: storedAppSettings?.providerKeys?.serper || process.env.SERPER_API_KEY || '',
+        serpapi: storedAppSettings?.providerKeys?.serpapi || process.env.SERPAPI_API_KEY || '',
+        dataforseoLogin: storedAppSettings?.providerKeys?.dataforseo_login || storedAppSettings?.providerKeys?.dataforseoLogin || process.env.DATAFORSEO_LOGIN || '',
+        dataforseoPassword: storedAppSettings?.providerKeys?.dataforseo_password || storedAppSettings?.providerKeys?.dataforseoPassword || process.env.DATAFORSEO_PASSWORD || '',
+        googleSearchApiKey: storedAppSettings?.providerKeys?.google_search_api_key || storedAppSettings?.providerKeys?.googleSearchApiKey || process.env.GOOGLE_SEARCH_API_KEY || '',
+        googleSearchCx: storedAppSettings?.providerKeys?.google_search_cx || storedAppSettings?.providerKeys?.googleSearchCx || process.env.GOOGLE_SEARCH_CX || '',
+        scaleserp: storedAppSettings?.providerKeys?.scaleserp || process.env.SCALESERP_API_KEY || '',
+        valueserp: storedAppSettings?.providerKeys?.valueserp || process.env.VALUESERP_API_KEY || '',
       },
       apiKeysConfigured: {
         gemini: hasEnvKeyForModel('GEMINI_API_KEY'),
@@ -10169,6 +10243,12 @@ app.get('/api/admin/ai-tokens/stats', (req, res) => {
         hunter: !!(process.env.HUNTER_API_KEY || storedAppSettings?.providerKeys?.hunter),
         apollo: !!(process.env.APOLLO_API_KEY || storedAppSettings?.providerKeys?.apollo),
         millionverifier: !!(process.env.MILLIONVERIFIER_API_KEY || storedAppSettings?.providerKeys?.millionverifier || storedAppSettings?.providerKeys?.millionVerifier),
+        serper: !!(process.env.SERPER_API_KEY || storedAppSettings?.providerKeys?.serper),
+        serpapi: !!(process.env.SERPAPI_API_KEY || storedAppSettings?.providerKeys?.serpapi),
+        dataforseo: !!((process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD) || (storedAppSettings?.providerKeys?.dataforseo_login && storedAppSettings?.providerKeys?.dataforseo_password) || (storedAppSettings?.providerKeys?.dataforseoLogin && storedAppSettings?.providerKeys?.dataforseoPassword)),
+        googleSearch: !!((process.env.GOOGLE_SEARCH_API_KEY && process.env.GOOGLE_SEARCH_CX) || (storedAppSettings?.providerKeys?.google_search_api_key && storedAppSettings?.providerKeys?.google_search_cx) || (storedAppSettings?.providerKeys?.googleSearchApiKey && storedAppSettings?.providerKeys?.googleSearchCx)),
+        scaleserp: !!(process.env.SCALESERP_API_KEY || storedAppSettings?.providerKeys?.scaleserp),
+        valueserp: !!(process.env.VALUESERP_API_KEY || storedAppSettings?.providerKeys?.valueserp),
       },
     });
   } catch (err: any) {
@@ -10273,7 +10353,12 @@ app.post('/api/admin/ai-tokens/update-keys', async (req, res) => {
       return res.status(403).json({ error: 'Access Denied. Admin key required.' });
     }
 
-    const { geminiKey, openaiKey, anthropicKey, perplexityKey, deepseekKey, groqKey, googleMapsKey, pageSpeedKey, hunterKey, apolloKey, millionverifierKey, millionVerifierKey } = req.body;
+    const {
+      geminiKey, openaiKey, anthropicKey, perplexityKey, deepseekKey, groqKey,
+      googleMapsKey, pageSpeedKey, hunterKey, apolloKey, millionverifierKey, millionVerifierKey,
+      serperKey, serpApiKey, dataforseoLogin, dataforseoPassword,
+      googleSearchApiKey, googleSearchCx, scaleserpKey, valueserpKey
+    } = req.body;
 
     // Validate non-empty provided keys against provider endpoints
     const keyValidations = [
@@ -10311,6 +10396,14 @@ app.post('/api/admin/ai-tokens/update-keys', async (req, res) => {
       ...(hunterKey !== undefined ? { hunter: hunterKey.trim() } : {}),
       ...(apolloKey !== undefined ? { apollo: apolloKey.trim() } : {}),
       ...(resolvedMillionVerifier !== undefined ? { millionverifier: resolvedMillionVerifier.trim(), millionVerifier: resolvedMillionVerifier.trim() } : {}),
+      ...(serperKey !== undefined ? { serper: serperKey.trim(), serperKey: serperKey.trim() } : {}),
+      ...(serpApiKey !== undefined ? { serpapi: serpApiKey.trim(), serpApiKey: serpApiKey.trim() } : {}),
+      ...(dataforseoLogin !== undefined ? { dataforseo_login: dataforseoLogin.trim(), dataforseoLogin: dataforseoLogin.trim() } : {}),
+      ...(dataforseoPassword !== undefined ? { dataforseo_password: dataforseoPassword.trim(), dataforseoPassword: dataforseoPassword.trim() } : {}),
+      ...(googleSearchApiKey !== undefined ? { google_search_api_key: googleSearchApiKey.trim(), googleSearchApiKey: googleSearchApiKey.trim() } : {}),
+      ...(googleSearchCx !== undefined ? { google_search_cx: googleSearchCx.trim(), googleSearchCx: googleSearchCx.trim() } : {}),
+      ...(scaleserpKey !== undefined ? { scaleserp: scaleserpKey.trim(), scaleSerpKey: scaleserpKey.trim() } : {}),
+      ...(valueserpKey !== undefined ? { valueserp: valueserpKey.trim(), valueSerpKey: valueserpKey.trim() } : {}),
     };
 
     storedAppSettings = {
@@ -10324,7 +10417,7 @@ app.post('/api/admin/ai-tokens/update-keys', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Successfully validated live AI model API keys and updated token pools!',
+      message: 'Successfully validated live AI and SEO intelligence credentials!',
       savedKeys: {
         gemini: storedAppSettings?.providerKeys?.gemini || '',
         openai: storedAppSettings?.providerKeys?.openai || '',
@@ -10337,6 +10430,14 @@ app.post('/api/admin/ai-tokens/update-keys', async (req, res) => {
         hunter: storedAppSettings?.providerKeys?.hunter || '',
         apollo: storedAppSettings?.providerKeys?.apollo || '',
         millionverifier: storedAppSettings?.providerKeys?.millionverifier || storedAppSettings?.providerKeys?.millionVerifier || '',
+        serper: storedAppSettings?.providerKeys?.serper || '',
+        serpapi: storedAppSettings?.providerKeys?.serpapi || '',
+        dataforseoLogin: storedAppSettings?.providerKeys?.dataforseo_login || storedAppSettings?.providerKeys?.dataforseoLogin || '',
+        dataforseoPassword: storedAppSettings?.providerKeys?.dataforseo_password || storedAppSettings?.providerKeys?.dataforseoPassword || '',
+        googleSearchApiKey: storedAppSettings?.providerKeys?.google_search_api_key || storedAppSettings?.providerKeys?.googleSearchApiKey || '',
+        googleSearchCx: storedAppSettings?.providerKeys?.google_search_cx || storedAppSettings?.providerKeys?.googleSearchCx || '',
+        scaleserp: storedAppSettings?.providerKeys?.scaleserp || '',
+        valueserp: storedAppSettings?.providerKeys?.valueserp || '',
       },
       apiKeysConfigured: {
         gemini: hasEnvKeyForModel('GEMINI_API_KEY'),
@@ -10350,6 +10451,12 @@ app.post('/api/admin/ai-tokens/update-keys', async (req, res) => {
         hunter: !!(process.env.HUNTER_API_KEY || storedAppSettings?.providerKeys?.hunter),
         apollo: !!(process.env.APOLLO_API_KEY || storedAppSettings?.providerKeys?.apollo),
         millionverifier: !!(process.env.MILLIONVERIFIER_API_KEY || storedAppSettings?.providerKeys?.millionverifier || storedAppSettings?.providerKeys?.millionVerifier),
+        serper: !!(process.env.SERPER_API_KEY || storedAppSettings?.providerKeys?.serper),
+        serpapi: !!(process.env.SERPAPI_API_KEY || storedAppSettings?.providerKeys?.serpapi),
+        dataforseo: !!((process.env.DATAFORSEO_LOGIN && process.env.DATAFORSEO_PASSWORD) || (storedAppSettings?.providerKeys?.dataforseo_login && storedAppSettings?.providerKeys?.dataforseo_password) || (storedAppSettings?.providerKeys?.dataforseoLogin && storedAppSettings?.providerKeys?.dataforseoPassword)),
+        googleSearch: !!((process.env.GOOGLE_SEARCH_API_KEY && process.env.GOOGLE_SEARCH_CX) || (storedAppSettings?.providerKeys?.google_search_api_key && storedAppSettings?.providerKeys?.google_search_cx) || (storedAppSettings?.providerKeys?.googleSearchApiKey && storedAppSettings?.providerKeys?.googleSearchCx)),
+        scaleserp: !!(process.env.SCALESERP_API_KEY || storedAppSettings?.providerKeys?.scaleserp),
+        valueserp: !!(process.env.VALUESERP_API_KEY || storedAppSettings?.providerKeys?.valueserp),
       },
     });
   } catch (err: any) {

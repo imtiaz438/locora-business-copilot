@@ -102,45 +102,45 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
 
   const keywords = matrix?.keywords || [];
   const traffic = matrix?.traffic || {
-    monthlyVisits: 1450,
-    organicKeywordsCount: 48,
-    paidKeywordsCount: 4,
-    averagePosition: 16.4,
-    trafficCostUsd: 680,
-    domainRank: 42,
-    channels: { organic: 66, direct: 18, referral: 8, social: 5, paid: 3 },
+    monthlyVisits: 0,
+    organicKeywordsCount: 0,
+    paidKeywordsCount: 0,
+    averagePosition: 0,
+    trafficCostUsd: 0,
+    domainRank: 0,
+    channels: { organic: 0, direct: 0, referral: 0, social: 0, paid: 0 },
     topPages: [],
     aiVisibility: {
-      score: 76,
-      sentiment: 'Positive',
-      citationsCount: 142,
-      aiReadinessScore: 82,
-      topMentionSources: ['techcrunch.com', 'producthunt.com', 'github.com'],
+      score: 0,
+      sentiment: 'Neutral',
+      citationsCount: 0,
+      aiReadinessScore: 0,
+      topMentionSources: [],
     },
     brandTrust: {
-      trustScore: 78,
-      domainAuthority: 42,
-      spamScore: 1,
-      indexedPages: 140,
-      brandSearchShare: 32,
+      trustScore: 0,
+      domainAuthority: 0,
+      spamScore: 0,
+      indexedPages: 0,
+      brandSearchShare: 0,
     },
     rankingDistribution: {
-      top3: 3,
-      pos4_10: 9,
-      pos11_20: 18,
-      pos21_50: 14,
-      pos51_100: 4,
+      top3: 0,
+      pos4_10: 0,
+      pos11_20: 0,
+      pos21_50: 0,
+      pos51_100: 0,
     },
     topCompetitors: [],
   };
 
   const backlinks = matrix?.backlinks || {
-    totalBacklinks: 1820,
-    referringDomains: 94,
-    dofollowBacklinks: 1350,
-    nofollowBacklinks: 470,
-    referringIps: 78,
-    domainTrustScore: 45,
+    totalBacklinks: 0,
+    referringDomains: 0,
+    dofollowBacklinks: 0,
+    nofollowBacklinks: 0,
+    referringIps: 0,
+    domainTrustScore: 0,
     links: [],
     historicalBacklinks: [],
   };
@@ -274,6 +274,43 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
             </button>
           )}
         </div>
+
+        {/* Typo Correction Suggestion */}
+        {matrix?.typoSuggestion && (
+          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between gap-3 text-xs text-blue-900">
+            <div className="flex items-center gap-2">
+              <Compass className="w-4 h-4 text-blue-600 shrink-0" />
+              <span>
+                Domain <strong>{domain}</strong> was not found on DNS. Did you mean <strong>{matrix.typoSuggestion}</strong>?
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleQuerySubmit(undefined, matrix.typoSuggestion)}
+              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg transition-all cursor-pointer shrink-0"
+            >
+              Analyze {matrix.typoSuggestion}
+            </button>
+          </div>
+        )}
+
+        {/* DNS Unreachable Alert */}
+        {matrix?.isDnsResolved === false && !matrix?.typoSuggestion && (
+          <div className="mt-3 p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-xs text-rose-800">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>
+              <strong>DNS Resolution Failed:</strong> The domain &ldquo;{domain}&rdquo; does not resolve to an active IP address. Real-world traffic and rankings are 0.
+            </span>
+          </div>
+        )}
+
+        {/* Live Status Message / Unindexed Info */}
+        {matrix?.liveStatusMessage && (
+          <div className="mt-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-2 text-xs text-slate-700">
+            <CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0" />
+            <span>{matrix.liveStatusMessage}</span>
+          </div>
+        )}
 
         {matrix?.warning && (
           <div className="mt-3 p-2.5 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 text-xs text-amber-800">
@@ -905,8 +942,12 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
                   </h4>
                   <p className="text-xs text-slate-500 mt-0.5">Historical estimated monthly visits and ranked keyword trajectory</p>
                 </div>
-                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                  +33% 6-Mo Growth
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${
+                  (traffic.monthlyVisits || 0) === 0
+                    ? 'text-slate-600 bg-slate-100 border-slate-200'
+                    : 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                }`}>
+                  {(traffic.monthlyVisits || 0) === 0 ? '0 Visits (Unranked / New Domain)' : '+33% 6-Mo Growth'}
                 </span>
               </div>
 
