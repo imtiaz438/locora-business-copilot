@@ -16,7 +16,7 @@ const resolveMxAsync = promisify(dns.resolveMx);
 import { getOrCreateUser } from './src/db/users.ts';
 import * as dbService from './src/db/service.ts';
 import type { PaymentTransaction } from './src/types.ts';
-import { executeSeoIntelligence, resolveUserSeoTier } from './src/services/seoEngine.ts';
+import { executeSeoIntelligence, resolveUserSeoTier, clearCachedSeoMatrix } from './src/services/seoEngine.ts';
 
 const app = express();
 const PORT = 3000;
@@ -9382,7 +9382,7 @@ Construct realistic, highly specific issues (marked as "pass", "warning", or "er
 // Dedicated SEO Keyword Matrix API Endpoint
 app.post('/api/seo/keyword-matrix', async (req, res) => {
   try {
-    const { query, domain, userEmail } = req.body;
+    const { query, domain, userEmail, forceRefresh } = req.body;
     if (!query && !domain) {
       return res.status(400).json({ error: 'Query or domain is required' });
     }
@@ -9395,6 +9395,7 @@ app.post('/api/seo/keyword-matrix', async (req, res) => {
       query: query || domain,
       userEmail: normalizedEmail,
       userPlanTier,
+      forceRefresh: !!forceRefresh,
     });
 
     res.json({
@@ -9410,7 +9411,7 @@ app.post('/api/seo/keyword-matrix', async (req, res) => {
 // Dedicated SEO Domain & Competitor Traffic Analytics API Endpoint
 app.post('/api/seo/domain-traffic-analytics', async (req, res) => {
   try {
-    const { domain, competitorDomain, userEmail } = req.body;
+    const { domain, competitorDomain, userEmail, forceRefresh } = req.body;
     if (!domain) {
       return res.status(400).json({ error: 'Domain is required' });
     }
@@ -9422,6 +9423,7 @@ app.post('/api/seo/domain-traffic-analytics', async (req, res) => {
       domain,
       userEmail: normalizedEmail,
       userPlanTier,
+      forceRefresh: !!forceRefresh,
     });
 
     let competitorAnalytics = null;
@@ -9432,6 +9434,7 @@ app.post('/api/seo/domain-traffic-analytics', async (req, res) => {
         domain: competitorDomain,
         userEmail: normalizedEmail,
         userPlanTier,
+        forceRefresh: !!forceRefresh,
       });
 
       const targetKwSet = new Set(targetAnalytics.keywords.map((k) => k.keyword.toLowerCase()));
@@ -9463,6 +9466,17 @@ app.post('/api/seo/domain-traffic-analytics', async (req, res) => {
   } catch (error: any) {
     console.error('Error in /api/seo/domain-traffic-analytics:', error);
     res.status(500).json({ error: error.message || 'Failed to fetch domain traffic analytics' });
+  }
+});
+
+// Purge SEO cache
+app.post('/api/seo/clear-cache', (req, res) => {
+  try {
+    const { domain } = req.body;
+    clearCachedSeoMatrix(domain);
+    res.json({ success: true, message: domain ? `Cache cleared for ${domain}` : 'All SEO cache cleared' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to clear cache' });
   }
 });
 

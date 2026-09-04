@@ -64,11 +64,17 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
   const [selectedIntentFilter, setSelectedIntentFilter] = useState<string>('all');
   const [backlinkFilter, setBacklinkFilter] = useState<'all' | 'dofollow' | 'nofollow'>('all');
 
+  useEffect(() => {
+    if (initialSeoMatrix) {
+      setCurrentMatrix(initialSeoMatrix);
+    }
+  }, [initialSeoMatrix]);
+
   const matrix = currentMatrix || initialSeoMatrix;
   const isPro = userPlanTier === 'pro' || userPlanTier === 'agency';
 
   // Handle on-demand custom keyword matrix queries through /api/seo/keyword-matrix
-  const handleQuerySubmit = async (e?: React.FormEvent, overrideQuery?: string) => {
+  const handleQuerySubmit = async (e?: React.FormEvent, overrideQuery?: string, forceRefresh = false) => {
     if (e && e.preventDefault) e.preventDefault();
     const q = (overrideQuery || customQuery || domain).trim();
     if (!q || isSearching) return;
@@ -84,6 +90,7 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
           query: q,
           domain,
           userEmail,
+          forceRefresh,
         }),
       });
 
@@ -251,6 +258,17 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
                     : 'Live Synchronized Feed'}
                 </span>
               </span>
+
+              <button
+                type="button"
+                onClick={() => handleQuerySubmit(undefined, domain, true)}
+                title="Force refresh live SEO metrics from search engines"
+                disabled={isSearching}
+                className="text-[11px] font-bold px-2.5 py-0.5 rounded-md border bg-white hover:bg-slate-100 text-slate-700 border-slate-200 flex items-center gap-1 cursor-pointer transition-all disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3 h-3 text-slate-500 ${isSearching ? 'animate-spin' : ''}`} />
+                <span>Refresh Live</span>
+              </button>
 
               <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md border bg-indigo-50 text-indigo-700 border-indigo-200 flex items-center gap-1.5">
                 <Globe className="w-3 h-3" />
@@ -801,11 +819,19 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
                 <span className="text-2xl font-black font-heading text-slate-900">
                   {traffic.monthlyVisits.toLocaleString()}
                 </span>
-                <span className="text-[11px] font-bold text-emerald-600 flex items-center">
-                  <ArrowUpRight className="w-3 h-3" /> +14%
-                </span>
+                {traffic.monthlyVisits > 0 ? (
+                  <span className="text-[11px] font-bold text-emerald-600 flex items-center">
+                    <ArrowUpRight className="w-3 h-3" /> +14%
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-bold text-slate-400">
+                    0%
+                  </span>
+                )}
               </div>
-              <p className="text-[11px] text-slate-500">Across all channels</p>
+              <p className="text-[11px] text-slate-500">
+                {traffic.monthlyVisits > 0 ? 'Across all channels' : 'No search traffic recorded'}
+              </p>
             </div>
 
             <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-1">
@@ -814,10 +840,10 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
               </span>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl font-black font-heading text-emerald-700">
-                  {Math.round(traffic.monthlyVisits * ((traffic.channels?.organic || 66) / 100)).toLocaleString()}
+                  {traffic.monthlyVisits > 0 ? Math.round(traffic.monthlyVisits * ((traffic.channels?.organic || 66) / 100)).toLocaleString() : '0'}
                 </span>
                 <span className="text-[11px] font-mono text-emerald-700 font-bold">
-                  {traffic.channels?.organic || 66}%
+                  {traffic.monthlyVisits > 0 ? (traffic.channels?.organic || 66) : 0}%
                 </span>
               </div>
               <p className="text-[11px] text-slate-500">Unpaid search clicks</p>
@@ -829,10 +855,10 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
               </span>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl font-black font-heading text-slate-900">
-                  {Math.round(traffic.monthlyVisits * ((traffic.channels?.direct || 18) / 100)).toLocaleString()}
+                  {traffic.monthlyVisits > 0 ? Math.round(traffic.monthlyVisits * ((traffic.channels?.direct || 18) / 100)).toLocaleString() : '0'}
                 </span>
                 <span className="text-[11px] font-mono text-slate-500 font-bold">
-                  {traffic.channels?.direct || 18}%
+                  {traffic.monthlyVisits > 0 ? (traffic.channels?.direct || 18) : 0}%
                 </span>
               </div>
               <p className="text-[11px] text-slate-500">Typed URL or bookmark</p>
@@ -844,10 +870,10 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
               </span>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl font-black font-heading text-purple-700">
-                  {Math.round(traffic.monthlyVisits * ((traffic.channels?.social || 5) / 100)).toLocaleString()}
+                  {traffic.monthlyVisits > 0 ? Math.round(traffic.monthlyVisits * ((traffic.channels?.social || 5) / 100)).toLocaleString() : '0'}
                 </span>
                 <span className="text-[11px] font-mono text-purple-700 font-bold">
-                  {traffic.channels?.social || 5}%
+                  {traffic.monthlyVisits > 0 ? (traffic.channels?.social || 5) : 0}%
                 </span>
               </div>
               <p className="text-[11px] text-slate-500">LinkedIn, X, Reddit</p>
