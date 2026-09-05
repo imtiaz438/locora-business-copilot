@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useApp } from '../context/AppContext.tsx';
 import {
   Search,
   TrendingUp,
@@ -54,6 +55,7 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
   onUpgradeClick,
   defaultTab = 'keywords',
 }) => {
+  const { settings } = useApp();
   const [currentMatrix, setCurrentMatrix] = useState<SeoMatrixAuditData | undefined>(initialSeoMatrix);
   const [activeTab, setActiveTab] = useState<'keywords' | 'traffic' | 'backlinks' | 'ai_trust' | 'competitors'>(
     defaultTab === 'traffic' ? 'traffic' : defaultTab
@@ -91,6 +93,7 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
           domain,
           userEmail,
           forceRefresh,
+          providerKeys: settings?.providerKeys,
         }),
       });
 
@@ -218,122 +221,59 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
 
   return (
     <div className="space-y-6 font-sans">
-      {/* 1. Global Intelligence Header & Status */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      {/* 1. Clean Search Analytics Header & Status */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold font-heading text-slate-900 flex items-center gap-1.5">
-                <Database className="w-4 h-4 text-[#059669]" />
-                Global SEO Intelligence Engine:
-              </span>
-
-              {/* White-labeled tier status without backend names */}
-              <span
-                className={`text-[11px] font-bold px-2.5 py-0.5 rounded-md border flex items-center gap-1.5 ${
-                  matrix?.tier === 'pro'
-                    ? 'bg-amber-50 text-amber-900 border-amber-300'
-                    : 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                }`}
-              >
-                {matrix?.tier === 'pro' ? (
-                  <>
-                    <Sparkles className="w-3 h-3 text-amber-600" />
-                    <span>Enterprise Live Feed</span>
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-3 h-3 text-[#059669]" />
-                    <span>Global Search Network</span>
-                  </>
-                )}
-              </span>
-
-              {/* Cache Status Badge */}
-              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md border bg-slate-100 text-slate-700 border-slate-200 flex items-center gap-1.5">
-                <Clock className="w-3 h-3 text-slate-500" />
-                <span>
-                  {matrix?.isCached
-                    ? `Cached Index (${matrix?.cacheTtlHours || 24}h Window)`
-                    : 'Live Synchronized Feed'}
-                </span>
-              </span>
-
-              <button
-                type="button"
-                onClick={() => handleQuerySubmit(undefined, domain, true)}
-                title="Force refresh live SEO metrics from search engines"
-                disabled={isSearching}
-                className="text-[11px] font-bold px-2.5 py-0.5 rounded-md border bg-white hover:bg-slate-100 text-slate-700 border-slate-200 flex items-center gap-1 cursor-pointer transition-all disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3 h-3 text-slate-500 ${isSearching ? 'animate-spin' : ''}`} />
-                <span>Refresh Live</span>
-              </button>
-
-              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-md border bg-indigo-50 text-indigo-700 border-indigo-200 flex items-center gap-1.5">
-                <Globe className="w-3 h-3" />
-                <span>Global Rankings</span>
+            <div className="flex items-center gap-2.5">
+              <h3 className="text-base font-bold font-heading text-slate-900">
+                SEO & Search Performance
+              </h3>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>{matrix?.provider === 'dataforseo' ? 'Verified Enterprise Data' : 'Live Search Telemetry'}</span>
               </span>
             </div>
-
-            <p className="text-xs text-slate-500">
-              Live multi-dimensional ranking data, search volume, keyword difficulty (KD%), traffic channels, inbound backlinks, and AI visibility profile.
+            <p className="text-xs text-slate-500 max-w-2xl">
+              Organic keyword rankings, visitor traffic, backlink profile, and authority metrics for <strong className="text-slate-700 font-medium">{domain}</strong>.
             </p>
           </div>
 
-          {!isPro && onUpgradeClick && (
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={onUpgradeClick}
-              className="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold rounded-xl shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap self-start lg:self-center"
+              onClick={() => handleQuerySubmit(undefined, domain, true)}
+              title="Refresh search metrics"
+              disabled={isSearching}
+              className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Unlock Unlimited Pro Feed</span>
+              <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isSearching ? 'animate-spin' : ''}`} />
+              <span>{isSearching ? 'Refreshing...' : 'Refresh Live'}</span>
             </button>
-          )}
+          </div>
         </div>
 
-        {/* Typo Correction Suggestion */}
-        {matrix?.typoSuggestion && (
-          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between gap-3 text-xs text-blue-900">
-            <div className="flex items-center gap-2">
-              <Compass className="w-4 h-4 text-blue-600 shrink-0" />
-              <span>
-                Domain <strong>{domain}</strong> was not found on DNS. Did you mean <strong>{matrix.typoSuggestion}</strong>?
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => handleQuerySubmit(undefined, matrix.typoSuggestion)}
-              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg transition-all cursor-pointer shrink-0"
-            >
-              Analyze {matrix.typoSuggestion}
-            </button>
-          </div>
-        )}
-
-        {/* DNS Unreachable Alert */}
-        {matrix?.isDnsResolved === false && !matrix?.typoSuggestion && (
-          <div className="mt-3 p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-xs text-rose-800">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-            <span>
-              <strong>DNS Resolution Failed:</strong> The domain &ldquo;{domain}&rdquo; does not resolve to an active IP address. Real-world traffic and rankings are 0.
-            </span>
-          </div>
-        )}
-
-        {/* Live Status Message / Unindexed Info */}
-        {matrix?.liveStatusMessage && (
-          <div className="mt-3 p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-2 text-xs text-slate-700">
-            <CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0" />
-            <span>{matrix.liveStatusMessage}</span>
-          </div>
-        )}
-
-        {matrix?.warning && (
-          <div className="mt-3 p-2.5 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 text-xs text-amber-800">
+        {/* Friendly note if domain DNS failed */}
+        {matrix?.isDnsResolved === false && (
+          <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 text-xs text-amber-900">
             <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-            <span>{matrix.warning}</span>
+            <span>
+              {matrix?.typoSuggestion ? (
+                <>
+                  Domain <strong>{domain}</strong> could not be reached. Did you mean{' '}
+                  <button
+                    type="button"
+                    onClick={() => handleQuerySubmit(undefined, matrix.typoSuggestion)}
+                    className="font-bold underline text-amber-950 hover:text-amber-800 cursor-pointer"
+                  >
+                    {matrix.typoSuggestion}
+                  </button>
+                  ?
+                </>
+              ) : (
+                `Domain "${domain}" is not resolving to an active server. Please check the spelling.`
+              )}
+            </span>
           </div>
         )}
       </div>

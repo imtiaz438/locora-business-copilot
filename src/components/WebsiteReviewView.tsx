@@ -88,6 +88,7 @@ export const WebsiteReviewView: React.FC = () => {
             provider: settings.activeProvider,
             modelVersion: activeModel,
             providerKey: settings.providerKeys[settings.activeProvider],
+            providerKeys: settings.providerKeys,
             userEmail: user.email,
           }),
         });
@@ -141,6 +142,7 @@ export const WebsiteReviewView: React.FC = () => {
               provider: settings.activeProvider,
               modelVersion: activeModel,
               providerKey: settings.providerKeys[settings.activeProvider],
+              providerKeys: settings.providerKeys,
               userEmail: user.email,
             }),
           }),
@@ -156,6 +158,7 @@ export const WebsiteReviewView: React.FC = () => {
               provider: settings.activeProvider,
               modelVersion: activeModel,
               providerKey: settings.providerKeys[settings.activeProvider],
+              providerKeys: settings.providerKeys,
               userEmail: user.email,
             }),
           }),
@@ -496,91 +499,52 @@ export const WebsiteReviewView: React.FC = () => {
         </div>
       </div>
 
-      {/* API / Audit Diagnostic Error Notification */}
+      {/* Simple, Non-Intimidating Error Notification */}
       {apiError && (
-        <div className="p-5 bg-rose-50/90 border border-rose-200 rounded-2xl text-rose-950 shadow-sm animate-in fade-in space-y-3">
+        <div className="p-4 bg-amber-50/90 border border-amber-200 rounded-2xl text-amber-950 shadow-xs animate-in fade-in space-y-2.5">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-xl bg-rose-100 border border-rose-300 text-rose-700 flex items-center justify-center shrink-0 mt-0.5">
-                <ShieldAlert className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-xl bg-amber-100 border border-amber-300 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
+                <AlertCircle className="w-4 h-4" />
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600">
-                    {auditDiagnosis?.category || 'Audit Notice'}
-                  </span>
-                  {auditDiagnosis?.failCode && (
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-rose-200/80 text-rose-900 border border-rose-300">
-                      {auditDiagnosis.failCode}
-                    </span>
-                  )}
+                <div className="font-bold text-sm text-amber-950 font-heading">
+                  {auditDiagnosis?.title || 'Unable to Complete Website Audit'}
                 </div>
-                <div className="font-extrabold text-sm text-rose-950 font-heading mt-0.5">
-                  {auditDiagnosis?.title || 'Audit Failed'}
-                </div>
-                <p className="text-xs text-rose-900 mt-1 leading-relaxed font-medium">
+                <p className="text-xs text-amber-900 mt-1 leading-relaxed font-normal">
                   {auditDiagnosis?.reason || apiError}
                 </p>
+                {auditDiagnosis?.suggestedAction && (
+                  <p className="text-xs text-amber-800/90 mt-1 leading-relaxed">
+                    <strong>Tip:</strong> {auditDiagnosis.suggestedAction}
+                  </p>
+                )}
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setApiError(null)}
-                className="text-rose-400 hover:text-rose-700 p-1 text-xs transition-colors cursor-pointer"
-                title="Dismiss"
-              >
-                ✕
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setApiError(null)}
+              className="text-amber-700 hover:text-amber-950 p-1 text-xs transition-colors cursor-pointer"
+              title="Dismiss"
+            >
+              ✕
+            </button>
           </div>
 
-          {/* Root cause technical details */}
-          {auditDiagnosis?.technicalDetails && (
-            <div className="p-2.5 bg-rose-100/70 rounded-xl border border-rose-200 text-[11px] font-mono text-rose-950 break-all flex items-center gap-2">
-              <Server className="w-3.5 h-3.5 text-rose-700 shrink-0" />
-              <span><strong>Root Cause:</strong> {auditDiagnosis.technicalDetails}</span>
-            </div>
-          )}
-
-          {/* Explanation & Next Steps */}
-          {auditDiagnosis?.suggestedAction && (
-            <div className="p-3 bg-white/80 border border-rose-200/80 rounded-xl text-xs text-slate-700 space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-slate-900 text-[11px]">
-                <Info className="w-3.5 h-3.5 text-slate-600" />
-                <span>Next Steps & Guidance</span>
-              </div>
-              <p className="text-slate-600 leading-relaxed text-[11px]">
-                {auditDiagnosis.suggestedAction}
-              </p>
-            </div>
-          )}
-
           {/* 1-Click Working Examples */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-rose-200/60">
-            <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-              <span className="text-rose-900 font-semibold">Test with accessible live sites:</span>
-              {['stripe.com', 'apple.com', 'wikipedia.org', 'shopify.com'].map((demoDomain) => (
-                <button
-                  key={demoDomain}
-                  type="button"
-                  onClick={(e) => handleAnalyze(e, demoDomain)}
-                  className="px-2 py-0.5 bg-white hover:bg-emerald-50 text-emerald-900 font-medium rounded border border-emerald-200 transition-colors flex items-center gap-1 cursor-pointer"
-                >
-                  <Globe className="w-2.5 h-2.5 text-emerald-600" />
-                  <span>{demoDomain}</span>
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs pt-2 border-t border-amber-200/80">
+            <span className="text-amber-900 font-medium">Try testing with:</span>
+            {['stripe.com', 'apple.com', 'shopify.com'].map((demoDomain) => (
               <button
+                key={demoDomain}
                 type="button"
-                onClick={() => setActiveTab('settings')}
-                className="text-[11px] font-semibold px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors cursor-pointer"
+                onClick={(e) => handleAnalyze(e, demoDomain)}
+                className="px-2 py-0.5 bg-white hover:bg-emerald-50 text-emerald-900 font-medium rounded-lg border border-amber-300 transition-colors flex items-center gap-1 cursor-pointer"
               >
-                AI Settings
+                <Globe className="w-2.5 h-2.5 text-emerald-600" />
+                <span>{demoDomain}</span>
               </button>
-            </div>
+            ))}
           </div>
         </div>
       )}

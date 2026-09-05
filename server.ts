@@ -541,8 +541,13 @@ function loadUsersFromDisk() {
     try {
       const content = fs.readFileSync(USERS_FILE, 'utf-8');
       const list: UserRecord[] = JSON.parse(content);
+      const seenIds = new Set<string>();
       list.forEach((u) => {
         if (u && u.email) {
+          if (!u.id || seenIds.has(u.id)) {
+            u.id = `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+          }
+          seenIds.add(u.id);
           usersDb.set(u.email.toLowerCase().trim(), u);
         }
       });
@@ -1434,69 +1439,37 @@ function syncProviderKeysToEnv(keys: any) {
   }
 
   // Live SEO & SERP Intelligence Keys
-  if (keys.serper !== undefined || keys.serperKey !== undefined) {
-    const val = (keys.serper || keys.serperKey || '').trim();
-    if (val) {
-      process.env.SERPER_API_KEY = val;
-    } else {
-      delete process.env.SERPER_API_KEY;
-    }
+  const serperVal = (keys.serper || keys.serperKey || keys.serper_api_key || keys.serperApiKey || keys.SERPER_API_KEY || '').trim();
+  if (serperVal) {
+    process.env.SERPER_API_KEY = serperVal;
   }
-  if (keys.serpapi !== undefined || keys.serpApiKey !== undefined) {
-    const val = (keys.serpapi || keys.serpApiKey || '').trim();
-    if (val) {
-      process.env.SERPAPI_API_KEY = val;
-    } else {
-      delete process.env.SERPAPI_API_KEY;
-    }
+  const serpApiVal = (keys.serpapi || keys.serpApiKey || keys.serp_api_key || keys.SERPAPI_API_KEY || '').trim();
+  if (serpApiVal) {
+    process.env.SERPAPI_API_KEY = serpApiVal;
   }
-  if (keys.dataforseo_login !== undefined || keys.dataforseoLogin !== undefined) {
-    const val = (keys.dataforseo_login || keys.dataforseoLogin || '').trim();
-    if (val) {
-      process.env.DATAFORSEO_LOGIN = val;
-    } else {
-      delete process.env.DATAFORSEO_LOGIN;
-    }
+  const dataforseoLoginVal = (keys.dataforseo_login || keys.dataforseoLogin || keys.dataforseo_username || keys.dataforseoUsername || keys.DATAFORSEO_LOGIN || '').trim();
+  if (dataforseoLoginVal) {
+    process.env.DATAFORSEO_LOGIN = dataforseoLoginVal;
   }
-  if (keys.dataforseo_password !== undefined || keys.dataforseoPassword !== undefined) {
-    const val = (keys.dataforseo_password || keys.dataforseoPassword || '').trim();
-    if (val) {
-      process.env.DATAFORSEO_PASSWORD = val;
-    } else {
-      delete process.env.DATAFORSEO_PASSWORD;
-    }
+  const dataforseoPassVal = (keys.dataforseo_password || keys.dataforseoPassword || keys.dataforseo_pass || keys.DATAFORSEO_PASSWORD || '').trim();
+  if (dataforseoPassVal) {
+    process.env.DATAFORSEO_PASSWORD = dataforseoPassVal;
   }
-  if (keys.google_search_api_key !== undefined || keys.googleSearchApiKey !== undefined || keys.googleSearchKey !== undefined) {
-    const val = (keys.google_search_api_key || keys.googleSearchApiKey || keys.googleSearchKey || '').trim();
-    if (val) {
-      process.env.GOOGLE_SEARCH_API_KEY = val;
-    } else {
-      delete process.env.GOOGLE_SEARCH_API_KEY;
-    }
+  const googleSearchKeyVal = (keys.google_search_api_key || keys.googleSearchApiKey || keys.googleSearchKey || keys.GOOGLE_SEARCH_API_KEY || '').trim();
+  if (googleSearchKeyVal) {
+    process.env.GOOGLE_SEARCH_API_KEY = googleSearchKeyVal;
   }
-  if (keys.google_search_cx !== undefined || keys.googleSearchCx !== undefined || keys.googleCx !== undefined) {
-    const val = (keys.google_search_cx || keys.googleSearchCx || keys.googleCx || '').trim();
-    if (val) {
-      process.env.GOOGLE_SEARCH_CX = val;
-    } else {
-      delete process.env.GOOGLE_SEARCH_CX;
-    }
+  const googleSearchCxVal = (keys.google_search_cx || keys.googleSearchCx || keys.googleCx || keys.GOOGLE_SEARCH_CX || '').trim();
+  if (googleSearchCxVal) {
+    process.env.GOOGLE_SEARCH_CX = googleSearchCxVal;
   }
-  if (keys.scaleserp !== undefined || keys.scaleSerpKey !== undefined) {
-    const val = (keys.scaleserp || keys.scaleSerpKey || '').trim();
-    if (val) {
-      process.env.SCALESERP_API_KEY = val;
-    } else {
-      delete process.env.SCALESERP_API_KEY;
-    }
+  const scaleSerpVal = (keys.scaleserp || keys.scaleSerpKey || keys.scaleserp_api_key || keys.SCALESERP_API_KEY || '').trim();
+  if (scaleSerpVal) {
+    process.env.SCALESERP_API_KEY = scaleSerpVal;
   }
-  if (keys.valueserp !== undefined || keys.valueSerpKey !== undefined) {
-    const val = (keys.valueserp || keys.valueSerpKey || '').trim();
-    if (val) {
-      process.env.VALUESERP_API_KEY = val;
-    } else {
-      delete process.env.VALUESERP_API_KEY;
-    }
+  const valueSerpVal = (keys.valueserp || keys.valueSerpKey || keys.valueserp_api_key || keys.VALUESERP_API_KEY || '').trim();
+  if (valueSerpVal) {
+    process.env.VALUESERP_API_KEY = valueSerpVal;
   }
 
   updateModelQuotasFromValidation();
@@ -1605,7 +1578,7 @@ const seedDefaultUsers = () => {
       nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
     },
     {
-      id: 'usr_admin_default',
+      id: 'usr_admin_support',
       name: 'System Admin',
       email: 'support@locoraai.com',
       companyName: 'Locora AI Admin',
@@ -8413,7 +8386,11 @@ Format response with clear markdown headings for:
 // Website Audit Endpoint
 app.post('/api/ai/audit-website', async (req, res) => {
   try {
-    const { url, businessProfile, provider, modelVersion, providerKey, userEmail } = req.body;
+    const { url, businessProfile, provider, modelVersion, providerKey, providerKeys, userEmail } = req.body;
+
+    if (providerKeys && typeof providerKeys === 'object') {
+      syncProviderKeysToEnv(providerKeys);
+    }
 
     if (!url || typeof url !== 'string' || !url.trim()) {
       return res.status(400).json({ error: 'URL is required', message: 'Please enter a valid website URL.' });
@@ -9382,9 +9359,12 @@ Construct realistic, highly specific issues (marked as "pass", "warning", or "er
 // Dedicated SEO Keyword Matrix API Endpoint
 app.post('/api/seo/keyword-matrix', async (req, res) => {
   try {
-    const { query, domain, userEmail, forceRefresh } = req.body;
+    const { query, domain, userEmail, forceRefresh, providerKeys } = req.body;
     if (!query && !domain) {
       return res.status(400).json({ error: 'Query or domain is required' });
+    }
+    if (providerKeys && typeof providerKeys === 'object') {
+      syncProviderKeysToEnv(providerKeys);
     }
     const normalizedEmail = (userEmail || '').toLowerCase().trim();
     const user = usersDb.get(normalizedEmail);
@@ -9411,9 +9391,12 @@ app.post('/api/seo/keyword-matrix', async (req, res) => {
 // Dedicated SEO Domain & Competitor Traffic Analytics API Endpoint
 app.post('/api/seo/domain-traffic-analytics', async (req, res) => {
   try {
-    const { domain, competitorDomain, userEmail, forceRefresh } = req.body;
+    const { domain, competitorDomain, userEmail, forceRefresh, providerKeys } = req.body;
     if (!domain) {
       return res.status(400).json({ error: 'Domain is required' });
+    }
+    if (providerKeys && typeof providerKeys === 'object') {
+      syncProviderKeysToEnv(providerKeys);
     }
     const normalizedEmail = (userEmail || '').toLowerCase().trim();
     const user = usersDb.get(normalizedEmail);

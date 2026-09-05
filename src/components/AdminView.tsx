@@ -1535,8 +1535,8 @@ export const AdminView: React.FC = () => {
                       </td>
                     </tr>
                   ) : (
-                    filteredUsers.map((usr) => (
-                      <tr key={usr.id} className="hover:bg-slate-50/80 transition-colors">
+                    filteredUsers.map((usr, idx) => (
+                      <tr key={`${usr.id || 'usr'}-${usr.email || idx}`} className="hover:bg-slate-50/80 transition-colors">
                         <td className="p-3 font-semibold text-slate-900">{usr.name || 'User'}</td>
                         <td className="p-3 font-mono text-slate-700 text-[11px]">{usr.email}</td>
                         <td className="p-3">
@@ -3178,11 +3178,11 @@ export const AdminView: React.FC = () => {
                   ) : (
                     usersTable
                       .filter((u) => u.planTier && u.planTier !== 'free')
-                      .map((u) => {
+                      .map((u, idx) => {
                         const isYearly = u.billingCycle === 'yearly' || u.billingCycle === 'annual';
                         const rate = u.planTier === 'agency' ? (isYearly ? 39 : 49) : (isYearly ? 15 : 19);
                         return (
-                          <tr key={u.id} className="hover:bg-slate-50">
+                          <tr key={`${u.id || 'sub'}-${u.email || idx}`} className="hover:bg-slate-50">
                             <td className="p-3 font-mono font-bold text-slate-900">{u.email}</td>
                             <td className="p-3 font-bold uppercase text-emerald-700">{u.planTier}</td>
                             <td className="p-3 font-mono text-slate-800">${rate} / mo {isYearly && <span className="text-[10px] text-slate-400 font-sans">(billed annually)</span>}</td>

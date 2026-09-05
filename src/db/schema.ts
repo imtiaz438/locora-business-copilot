@@ -234,6 +234,8 @@ export const transactionsTable = pgTable('payment_transactions', {
     isTestCard?: boolean;
     walletType?: 'apple_pay' | 'google_pay' | 'none';
   }>(),
+  payoneerDetails: jsonb('payoneer_details').$type<any>(),
+  bankTransferDetails: jsonb('bank_transfer_details').$type<any>(),
   status: text('status').notNull(), // 'success' | 'failed' | 'cancelled' | 'pending' | 'refunded'
   failureReason: text('failure_reason'),
   refundedAmount: doublePrecision('refunded_amount'),
