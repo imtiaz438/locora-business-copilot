@@ -313,25 +313,30 @@ export interface SeoKeywordMatrixItem {
 }
 
 export interface TopTrafficPage {
-  url: string;
+  url?: string;
   path: string;
   title: string;
   estimatedVisits: number;
   trafficSharePercent: number;
-  topKeyword: string;
-  keywordsCount: number;
+  topKeyword?: string;
+  primaryKeyword?: string;
+  keywordsCount?: number;
+  rankedKeywordsCount?: number;
   changeRate: number; // % growth or change
 }
 
 export interface BacklinkItem {
   sourceUrl: string;
   sourceDomain: string;
-  sourceTitle: string;
+  sourceTitle?: string;
   targetUrl: string;
   anchorText: string;
-  domainRating: number; // 0 - 100
+  domainRating?: number; // 0 - 100
+  domainAuthority?: number; // 0 - 100
+  isDofollow?: boolean;
   linkType: 'dofollow' | 'nofollow';
-  firstSeen: string;
+  firstSeen?: string;
+  firstSeenDate?: string;
 }
 
 export interface TrafficChannelBreakdown {
@@ -344,7 +349,7 @@ export interface TrafficChannelBreakdown {
 
 export interface AiVisibilityProfile {
   score: number; // 0 - 100 AI Visibility rating
-  sentiment: 'Positive' | 'Neutral' | 'Mixed';
+  sentiment: 'Positive' | 'Neutral' | 'Mixed' | 'Unranked';
   citationsCount: number;
   aiReadinessScore: number;
   topMentionSources: string[];
@@ -399,7 +404,7 @@ export interface BacklinkProfile {
 
 export interface SeoMatrixAuditData {
   tier: 'free' | 'pro';
-  provider: 'serper' | 'serpapi' | 'scaleserp' | 'valueserp' | 'dataforseo' | 'google_search' | 'google_custom_search' | 'dom_heuristic' | 'dns_verification';
+  provider: 'serper' | 'serpapi' | 'scaleserp' | 'valueserp' | 'dataforseo' | 'google_search' | 'google_custom_search' | 'dom_heuristic' | 'dns_verification' | 'global_authority_index';
   providerName: string;
   isCached: boolean;
   cachedAt?: string;
@@ -500,8 +505,25 @@ export interface UserProfile {
     cardBrand: string;
     expDate: string;
   };
+  seoLookupsPerMonth?: number;
+  seoLookupsUsed?: number;
+  seoLookupsResetAt?: string;
+  aiVisibilityRunsPerMonth?: number;
+  aiVisibilityRunsUsed?: number;
+  aiVisibilityResetAt?: string;
   isAuthenticated: boolean;
 }
+
+export type {
+  NormalizedSeoAudit,
+  DomainOverviewData,
+  BacklinkSummaryData,
+  KeywordItemData,
+  SerpOverviewData,
+  AiOverviewPresenceData,
+  AiVisibilityCheckItem,
+} from './lib/seo-data/types.ts';
+
 
 export type PaymentMethodType = 'whop' | 'card' | 'apple_pay' | 'google_pay' | 'paypal';
 export type PaymentTransactionStatus = 'success' | 'failed' | 'cancelled' | 'pending' | 'refunded';

@@ -922,3 +922,115 @@ export async function saveDbSeoCache(params: {
     return null;
   }
 }
+
+// --- Dedicated Real SEO Data Cache Layer (Phase B) ---
+export async function getSeoDataCache(cacheKey: string) {
+  try {
+    const rows = await db
+      .select()
+      .from(schema.seoDataCacheTable)
+      .where(eq(schema.seoDataCacheTable.cacheKey, cacheKey))
+      .limit(1);
+    if (!rows || rows.length === 0) return null;
+    const row = rows[0];
+    if (new Date() > new Date(row.expiresAt)) {
+      return null;
+    }
+    return row;
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function saveSeoDataCache(cacheKey: string, payload: any, ttlMs: number) {
+  try {
+    const id = `seodc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const now = new Date();
+    const expiresAt = new Date(Date.now() + ttlMs);
+
+    const existing = await db
+      .select()
+      .from(schema.seoDataCacheTable)
+      .where(eq(schema.seoDataCacheTable.cacheKey, cacheKey))
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      const updated = await db
+        .update(schema.seoDataCacheTable)
+        .set({
+          payload,
+          fetchedAt: now,
+          expiresAt,
+        })
+        .where(eq(schema.seoDataCacheTable.cacheKey, cacheKey))
+        .returning();
+      return updated[0];
+    } else {
+      const inserted = await db
+        .insert(schema.seoDataCacheTable)
+        .values({
+          id,
+          cacheKey,
+          payload,
+          fetchedAt: now,
+          expiresAt,
+        })
+        .returning();
+      return inserted[0];
+    }
+  } catch (err) {
+    return null;
+  }
+}
+
+// --- AI Visibility Checks Persistence (Phase E) ---
+export async function saveAiVisibilityCheck(params: {
+  userId: string;
+  userEmail?: string;
+  businessName?: string;
+  provider: string;
+  prompt: string;
+  mentioned: boolean;
+  responseSnippet?: string;
+}) {
+  try {
+    const id = `aiv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const inserted = await db
+      .insert(schema.aiVisibilityChecksTable)
+      .values({
+        id,
+        userId: params.userId,
+        userEmail: params.userEmail,
+        businessName: params.businessName,
+        provider: params.provider,
+        prompt: params.prompt,
+        mentioned: params.mentioned,
+        responseSnippet: params.responseSnippet,
+        checkedAt: new Date(),
+      })
+      .returning();
+    return inserted[0];
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function getAiVisibilityChecks(userIdOrEmail: string, limit = 20) {
+  try {
+    const rows = await db
+      .select()
+      .from(schema.aiVisibilityChecksTable)
+      .where(
+        or(
+          eq(schema.aiVisibilityChecksTable.userId, userIdOrEmail),
+          eq(schema.aiVisibilityChecksTable.userEmail, userIdOrEmail)
+        )
+      )
+      .orderBy(desc(schema.aiVisibilityChecksTable.checkedAt))
+      .limit(limit);
+    return rows;
+  } catch (err) {
+    return [];
+  }
+}
+

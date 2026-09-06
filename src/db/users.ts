@@ -1,9 +1,22 @@
 import { db } from './index.ts';
 import { users } from './schema.ts';
+import { eq } from 'drizzle-orm';
 
-export async function getOrCreateUser(uid: string, email: string, name?: string, companyName?: string, planTier: string = 'free', role: string = 'customer') {
+export async function getOrCreateUser(
+  uid: string,
+  email: string,
+  name?: string,
+  companyName?: string,
+  planTier: string = 'free',
+  role: string = 'customer',
+  seoLookupsPerMonth?: number,
+  seoLookupsUsed?: number,
+  aiVisibilityRunsPerMonth?: number,
+  aiVisibilityRunsUsed?: number
+) {
   try {
-    const result = await db.insert(users)
+    const result = await db
+      .insert(users)
       .values({
         uid,
         email,
@@ -11,6 +24,10 @@ export async function getOrCreateUser(uid: string, email: string, name?: string,
         companyName: companyName || 'My Business',
         role: role || 'customer',
         planTier,
+        seoLookupsPerMonth: seoLookupsPerMonth ?? 10,
+        seoLookupsUsed: seoLookupsUsed ?? 0,
+        aiVisibilityRunsPerMonth: aiVisibilityRunsPerMonth ?? 1,
+        aiVisibilityRunsUsed: aiVisibilityRunsUsed ?? 0,
       })
       .onConflictDoUpdate({
         target: users.uid,
@@ -30,3 +47,31 @@ export async function getOrCreateUser(uid: string, email: string, name?: string,
     return { uid, email, name, companyName, planTier, role };
   }
 }
+
+export async function updateUserSeoUsage(params: {
+  uid?: string;
+  email: string;
+  seoLookupsUsed?: number;
+  seoLookupsResetAt?: Date;
+  aiVisibilityRunsUsed?: number;
+  aiVisibilityResetAt?: Date;
+}) {
+  try {
+    const updateData: any = {};
+    if (typeof params.seoLookupsUsed === 'number') updateData.seoLookupsUsed = params.seoLookupsUsed;
+    if (params.seoLookupsResetAt) updateData.seoLookupsResetAt = params.seoLookupsResetAt;
+    if (typeof params.aiVisibilityRunsUsed === 'number') updateData.aiVisibilityRunsUsed = params.aiVisibilityRunsUsed;
+    if (params.aiVisibilityResetAt) updateData.aiVisibilityResetAt = params.aiVisibilityResetAt;
+
+    if (Object.keys(updateData).length === 0) return;
+
+    if (params.uid) {
+      await db.update(users).set(updateData).where(eq(users.uid, params.uid));
+    } else if (params.email) {
+      await db.update(users).set(updateData).where(eq(users.email, params.email.toLowerCase()));
+    }
+  } catch (err) {
+    console.warn('[Cloud SQL] updateUserSeoUsage failed:', err);
+  }
+}
+

@@ -4,6 +4,7 @@ import { WebsiteAuditResult } from '../types';
 import { BrandedFooter } from './BrandedFooter';
 import { SeoRecommendationsPanel } from './SeoRecommendationsPanel';
 import { SeoKeywordsAndTrafficPanel } from './SeoKeywordsAndTrafficPanel';
+import { RealSeoDashboard } from './RealSeoDashboard';
 import { WhiteLabelAuditExportModal } from './WhiteLabelAuditExportModal';
 import {
   Globe,
@@ -34,6 +35,7 @@ import {
   ChevronRight,
   ExternalLink,
   Zap,
+  Bot,
 } from 'lucide-react';
 
 interface AuditDiagnosis {
@@ -50,7 +52,7 @@ export const WebsiteReviewView: React.FC = () => {
   const { businessProfile, latestWebsiteAudit, setLatestWebsiteAudit, settings, user, updateUser, logActivity, setCheckoutModalPlan, setActiveTab } = useApp();
 
   const [mode, setMode] = useState<'single' | 'competitor'>('single');
-  const [activeSubTab, setActiveSubTab] = useState<'overview' | 'keywords' | 'traffic' | 'recommendations'>('overview');
+  const [activeSubTab, setActiveSubTab] = useState<'overview' | 'keywords' | 'traffic' | 'recommendations' | 'real_seo'>('overview');
   const [competitorSubView, setCompetitorSubView] = useState<'matrix' | 'target' | 'competitor'>('matrix');
   const [url, setUrl] = useState(businessProfile.website || 'locora.ai');
   const [competitorUrl, setCompetitorUrl] = useState('competitor-example.com');
@@ -442,6 +444,22 @@ export const WebsiteReviewView: React.FC = () => {
                 7
               </span>
             </button>
+            <button
+              onClick={() => setActiveSubTab('real_seo')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeSubTab === 'real_seo' ? 'bg-[#059669] text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              <Bot className="w-3.5 h-3.5" />
+              <span>Real SEO & AI Citations</span>
+              <span
+                className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                  activeSubTab === 'real_seo' ? 'bg-emerald-800 text-emerald-100' : 'bg-emerald-100 text-emerald-800'
+                }`}
+              >
+                LIVE
+              </span>
+            </button>
           </div>
 
           {/* White-Label PDF Export Button */}
@@ -679,6 +697,17 @@ export const WebsiteReviewView: React.FC = () => {
             userPlanTier={user.planTier}
             onUpgradeClick={() => setCheckoutModalPlan('pro')}
             defaultTab="traffic"
+          />
+          <BrandedFooter className="pt-4 border-t border-slate-200" />
+        </div>
+      )}
+
+      {/* SubTab View: Real SEO Data & AI Citations (Phases A-E) */}
+      {activeSubTab === 'real_seo' && (
+        <div className="space-y-6">
+          <RealSeoDashboard
+            domain={url || businessProfile.website || 'locora.ai'}
+            onUpgradeClick={() => setCheckoutModalPlan('pro')}
           />
           <BrandedFooter className="pt-4 border-t border-slate-200" />
         </div>

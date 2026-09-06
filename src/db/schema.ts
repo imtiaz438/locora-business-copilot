@@ -8,6 +8,12 @@ export const users = pgTable('users', {
   companyName: text('company_name'),
   role: text('role').default('customer'),
   planTier: text('plan_tier').default('free'),
+  seoLookupsPerMonth: integer('seo_lookups_per_month').default(10),
+  seoLookupsUsed: integer('seo_lookups_used').default(0),
+  seoLookupsResetAt: timestamp('seo_lookups_reset_at'),
+  aiVisibilityRunsPerMonth: integer('ai_visibility_runs_per_month').default(1),
+  aiVisibilityRunsUsed: integer('ai_visibility_runs_used').default(0),
+  aiVisibilityResetAt: timestamp('ai_visibility_reset_at'),
   createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -259,6 +265,27 @@ export const seoCacheTable = pgTable('seo_cache', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+export const seoDataCacheTable = pgTable('seo_data_cache', {
+  id: text('id').primaryKey(),
+  cacheKey: text('cache_key').notNull().unique(),
+  payload: jsonb('payload').$type<any>().notNull(),
+  fetchedAt: timestamp('fetched_at').defaultNow().notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+});
+
+export const aiVisibilityChecksTable = pgTable('ai_visibility_checks', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  userEmail: text('user_email'),
+  businessName: text('business_name'),
+  provider: text('provider').notNull(),
+  prompt: text('prompt').notNull(),
+  mentioned: boolean('mentioned').notNull(),
+  responseSnippet: text('response_snippet'),
+  checkedAt: timestamp('checked_at').defaultNow().notNull(),
+});
+
 
 
 
