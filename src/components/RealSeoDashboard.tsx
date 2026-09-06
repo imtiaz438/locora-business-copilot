@@ -38,6 +38,38 @@ interface RealSeoDashboardProps {
   onUpgradeClick?: () => void;
 }
 
+// Resilient JSON fetcher with content-type validation to prevent HTML-parse crashes
+async function safeFetchJson<T = any>(url: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(url, {
+    credentials: 'include',
+    ...init,
+    headers: {
+      'Accept': 'application/json',
+      ...init?.headers,
+    },
+  });
+
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const rawText = await response.text();
+    console.warn(`[RealSeoDashboard] Expected JSON from ${url} but received ${contentType || 'non-JSON'}:`, rawText.slice(0, 150));
+    if (response.status === 404) {
+      throw new Error(`The requested SEO service endpoint was not found (${url}).`);
+    }
+    if (response.status >= 500) {
+      throw new Error(`SEO analytics service is temporarily restarting (${response.status}). Please try again in a few seconds.`);
+    }
+    throw new Error(`Unexpected server response format (${response.status}). Please retry.`);
+  }
+
+  const json = await response.json();
+  if (!response.ok || (json && json.success === false && !json.audit)) {
+    throw new Error(json.message || json.error || `Request failed with status ${response.status}`);
+  }
+
+  return json;
+}
+
 export const RealSeoDashboard: React.FC<RealSeoDashboardProps> = ({
   domain: propDomain,
   initialQuery,
@@ -79,7 +111,12 @@ export const RealSeoDashboard: React.FC<RealSeoDashboardProps> = ({
     setError(null);
 
     try {
-      const res = await fetch('/api/seo/audit', {
+      const json = await safeFetchJson<{
+        success: boolean;
+        audit: NormalizedSeoAudit;
+        seoLookupsUsed?: number;
+        seoLookupsLimit?: number;
+      }>('/api/seo/audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -91,12 +128,9 @@ export const RealSeoDashboard: React.FC<RealSeoDashboardProps> = ({
         }),
       });
 
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.message || json.error || 'Failed to fetch SEO audit');
+      if (json.audit) {
+        setAuditData(json.audit);
       }
-
-      setAuditData(json.audit);
 
       // Update user state with new lookup quota if returned
       if (typeof json.seoLookupsUsed === 'number') {
@@ -106,6 +140,7 @@ export const RealSeoDashboard: React.FC<RealSeoDashboardProps> = ({
         });
       }
     } catch (err: any) {
+      console.error('RealSeoDashboard fetchAudit error:', err);
       setError(err.message || 'Unable to retrieve SEO metrics.');
     } finally {
       setLoading(false);
@@ -122,11 +157,10 @@ export const RealSeoDashboard: React.FC<RealSeoDashboardProps> = ({
   // Fetch AI Visibility benchmark history
   const fetchAiHistory = async () => {
     try {
-      const res = await fetch(`/api/seo/ai-visibility/history?userEmail=${encodeURIComponent(user?.email || '')}`);
-      if (res.ok) {
-        const json = await res.json();
-        if (json.history) setAiHistory(json.history);
-      }
+      const json = await safeFetchJson<{ success: boolean; history?: any[] }>(
+        `/api/seo/ai-visibility/history?userEmail=${encodeURIComponent(user?.email || '')}`
+      );
+      if (json.history) setAiHistory(json.history);
     } catch {
       // ignore
     }
@@ -138,7 +172,15 @@ export const RealSeoDashboard: React.FC<RealSeoDashboardProps> = ({
     setAiBenchmarkError(null);
 
     try {
-      const res = await fetch('/api/seo/ai-visibility/run', {
+      const json = await safeFetchJson<{
+        success: boolean;
+        checks?: AiVisibilityCheckItem[];
+        score?: number;
+        totalMentions?: number;
+        totalChecks?: number;
+        aiVisibilityRunsUsed?: number;
+        aiVisibilityRunsLimit?: number;
+      }>('/api/seo/ai-visibility/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -151,11 +193,6 @@ export const RealSeoDashboard: React.FC<RealSeoDashboardProps> = ({
           },
         }),
       });
-
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        throw new Error(json.message || json.error || 'Failed to run AI visibility benchmark');
-      }
 
       setAiBenchmarkResults({
         checks: json.checks || [],
@@ -265,9 +302,17 @@ export const RealSeoDashboard: React.FC<RealSeoDashboardProps> = ({
         </div>
 
         {error && (
-          <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
-            <span>{error}</span>
+          <div className="mt-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+              <span className="break-words">{error}</span>
+            </div>
+            <button
+              onClick={() => fetchAudit(false)}
+              className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-semibold transition cursor-pointer shrink-0 shadow-xs"
+            >
+              Retry
+            </button>
           </div>
         )}
 

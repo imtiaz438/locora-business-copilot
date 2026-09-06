@@ -17,6 +17,21 @@ import { getOrCreateUser } from './src/db/users.ts';
 import * as dbService from './src/db/service.ts';
 import type { PaymentTransaction } from './src/types.ts';
 import { executeSeoIntelligence, resolveUserSeoTier, clearCachedSeoMatrix } from './src/services/seoEngine.ts';
+import {
+  performNormalizedSeoAudit,
+  getDomainOverviewCached,
+  getBacklinkSummaryCached,
+  getKeywordDataCached,
+  getSerpResultsCached,
+  getAiOverviewPresenceCached,
+  executeAiVisibilityAudit,
+  getAiVisibilityHistory,
+  checkSeoLookupEntitlement,
+  checkAiVisibilityEntitlement,
+  evaluateRollingReset,
+  SEO_PLAN_LIMITS,
+  SEO_LOOKUP_COSTS,
+} from './src/lib/seo-data/index.ts';
 
 const app = express();
 const PORT = 3000;
@@ -345,6 +360,12 @@ interface UserRecord {
   billingCycle: 'monthly' | 'yearly';
   monthlyAiCredits: number;
   aiCreditsUsed: number;
+  seoLookupsPerMonth?: number;
+  seoLookupsUsed?: number;
+  seoLookupsResetAt?: string;
+  aiVisibilityRunsPerMonth?: number;
+  aiVisibilityRunsUsed?: number;
+  aiVisibilityResetAt?: string;
   invoicesCreatedCount?: number;
   autoRenew?: boolean;
   cancelAtPeriodEnd?: boolean;
@@ -1573,6 +1594,12 @@ const seedDefaultUsers = () => {
       billingCycle: 'monthly',
       monthlyAiCredits: 15,
       aiCreditsUsed: 0,
+      seoLookupsPerMonth: 10,
+      seoLookupsUsed: 0,
+      seoLookupsResetAt: new Date(Date.now() + 30 * 86400000).toISOString(),
+      aiVisibilityRunsPerMonth: 1,
+      aiVisibilityRunsUsed: 0,
+      aiVisibilityResetAt: new Date(Date.now() + 30 * 86400000).toISOString(),
       autoRenew: true,
       memberSince: new Date().toISOString(),
       nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
@@ -1588,6 +1615,12 @@ const seedDefaultUsers = () => {
       billingCycle: 'monthly',
       monthlyAiCredits: 9999,
       aiCreditsUsed: 0,
+      seoLookupsPerMonth: 9999,
+      seoLookupsUsed: 0,
+      seoLookupsResetAt: new Date(Date.now() + 30 * 86400000).toISOString(),
+      aiVisibilityRunsPerMonth: 999,
+      aiVisibilityRunsUsed: 0,
+      aiVisibilityResetAt: new Date(Date.now() + 30 * 86400000).toISOString(),
       autoRenew: true,
       memberSince: new Date().toISOString(),
       nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
@@ -1612,7 +1645,18 @@ async function saveUserToSql(user: UserRecord) {
     if (!normalizedEmail) return;
     saveUsersToDisk();
 
-    await getOrCreateUser(user.id, normalizedEmail, user.name, user.companyName, user.planTier, user.role).catch((e) => {
+    await getOrCreateUser(
+      user.id,
+      normalizedEmail,
+      user.name,
+      user.companyName,
+      user.planTier,
+      user.role,
+      user.seoLookupsPerMonth,
+      user.seoLookupsUsed,
+      user.aiVisibilityRunsPerMonth,
+      user.aiVisibilityRunsUsed
+    ).catch((e) => {
       console.warn('[Cloud SQL] User sync warning:', e?.message || e);
     });
   } catch (err: any) {
@@ -1891,6 +1935,80 @@ const deductUserCredit = (userEmail?: string, amount: number = 1) => {
   return { used: user.aiCreditsUsed, remaining: user.planTier === 'agency' ? 9999 : Math.max(0, user.monthlyAiCredits - user.aiCreditsUsed) };
 };
 
+const deductSeoLookup = (userEmail?: string, cost: number = 1) => {
+  const normalizedEmail = (userEmail || '').toLowerCase().trim();
+  const lookupKey = normalizedEmail || 'usr_guest';
+
+  let user = usersDb.get(lookupKey);
+  if (!user) {
+    const isDemoAccount = normalizedEmail === 'free.user@starterbiz.com' || normalizedEmail === 'usr_guest' || !normalizedEmail;
+    const namePart = normalizedEmail ? normalizedEmail.split('@')[0] : 'Guest';
+    user = {
+      id: `usr_${Date.now()}`,
+      name: namePart,
+      email: normalizedEmail,
+      companyName: `${namePart}'s Business`,
+      role: 'owner',
+      planTier: 'free',
+      subscriptionStatus: 'active',
+      billingCycle: 'monthly',
+      monthlyAiCredits: isDemoAccount ? 15 : 25,
+      aiCreditsUsed: 0,
+      seoLookupsPerMonth: 10,
+      seoLookupsUsed: 0,
+      seoLookupsResetAt: new Date(Date.now() + 30 * 86400000).toISOString(),
+      aiVisibilityRunsPerMonth: 1,
+      aiVisibilityRunsUsed: 0,
+      aiVisibilityResetAt: new Date(Date.now() + 30 * 86400000).toISOString(),
+      memberSince: new Date().toISOString(),
+      nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
+    };
+    usersDb.set(lookupKey, user);
+  }
+
+  evaluateRollingReset(user);
+
+  if (user.role !== 'admin') {
+    user.seoLookupsUsed = (user.seoLookupsUsed || 0) + cost;
+    usersDb.set(lookupKey, user);
+    saveUsersToDisk();
+    saveUserToSql(user).catch(() => {});
+  }
+
+  const limit = user.seoLookupsPerMonth || 10;
+  const used = user.seoLookupsUsed || 0;
+  return {
+    used,
+    limit,
+    remaining: user.role === 'admin' ? 9999 : Math.max(0, limit - used),
+  };
+};
+
+const deductAiVisibilityRun = (userEmail?: string) => {
+  const normalizedEmail = (userEmail || '').toLowerCase().trim();
+  const lookupKey = normalizedEmail || 'usr_guest';
+
+  let user = usersDb.get(lookupKey);
+  if (!user) return { used: 1, limit: 1, remaining: 0 };
+
+  evaluateRollingReset(user);
+
+  if (user.role !== 'admin') {
+    user.aiVisibilityRunsUsed = (user.aiVisibilityRunsUsed || 0) + 1;
+    usersDb.set(lookupKey, user);
+    saveUsersToDisk();
+    saveUserToSql(user).catch(() => {});
+  }
+
+  const limit = user.aiVisibilityRunsPerMonth || 1;
+  const used = user.aiVisibilityRunsUsed || 0;
+  return {
+    used,
+    limit,
+    remaining: user.role === 'admin' ? 999 : Math.max(0, limit - used),
+  };
+};
+
 const getUserCreditStats = (userEmail?: string) => {
   const normalizedEmail = (userEmail || '').toLowerCase().trim();
   const lookupKey = normalizedEmail || 'usr_guest';
@@ -1910,6 +2028,12 @@ const getUserCreditStats = (userEmail?: string) => {
       billingCycle: 'monthly',
       monthlyAiCredits: isDemoAccount ? 15 : 25,
       aiCreditsUsed: 0,
+      seoLookupsPerMonth: 10,
+      seoLookupsUsed: 0,
+      seoLookupsResetAt: new Date(Date.now() + 30 * 86400000).toISOString(),
+      aiVisibilityRunsPerMonth: 1,
+      aiVisibilityRunsUsed: 0,
+      aiVisibilityResetAt: new Date(Date.now() + 30 * 86400000).toISOString(),
       memberSince: new Date().toISOString(),
       nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
     };
@@ -1932,7 +2056,18 @@ const getUserCreditStats = (userEmail?: string) => {
     }
   }
 
-  return { used: user.aiCreditsUsed, remaining: user.planTier === 'agency' ? 9999 : Math.max(0, user.monthlyAiCredits - user.aiCreditsUsed) };
+  evaluateRollingReset(user);
+
+  return {
+    used: user.aiCreditsUsed,
+    remaining: user.planTier === 'agency' ? 9999 : Math.max(0, user.monthlyAiCredits - user.aiCreditsUsed),
+    seoLookupsUsed: user.seoLookupsUsed || 0,
+    seoLookupsLimit: user.seoLookupsPerMonth || 10,
+    seoLookupsRemaining: user.role === 'admin' ? 9999 : Math.max(0, (user.seoLookupsPerMonth || 10) - (user.seoLookupsUsed || 0)),
+    aiVisibilityRunsUsed: user.aiVisibilityRunsUsed || 0,
+    aiVisibilityRunsLimit: user.aiVisibilityRunsPerMonth || 1,
+    aiVisibilityRunsRemaining: user.role === 'admin' ? 999 : Math.max(0, (user.aiVisibilityRunsPerMonth || 1) - (user.aiVisibilityRunsUsed || 0)),
+  };
 };
 
 // Initialize GoogleGenAI Client
@@ -9463,6 +9598,329 @@ app.post('/api/seo/clear-cache', (req, res) => {
   }
 });
 
+// ============================================================================
+// REAL SEO DATA, CREDIT METERING & AI VISIBILITY API ROUTES (Phases A–E)
+// ============================================================================
+
+// Primary Full Audit Aggregator: Combines Domain Overview, Backlinks, Keywords, Live SERP, AI Overview
+const handleSeoAudit = async (req: express.Request, res: express.Response) => {
+  try {
+    const params = { ...req.query, ...(req.body || {}) };
+    const domain = (params.domain || params.url || params.targetDomain || params.query || '').toString();
+    const query = (params.query || '').toString();
+    const country = (params.country || 'United States').toString();
+    const suggestedKeywords = Array.isArray(params.suggestedKeywords) ? params.suggestedKeywords : undefined;
+    const forceRefresh = params.forceRefresh === true || params.forceRefresh === 'true';
+    const userEmail = (params.userEmail || '').toString();
+
+    if (!domain && !query) {
+      return res.status(400).json({ error: 'Domain or query is required' });
+    }
+
+    const cleanDomain = (domain || query || '').replace(/^https?:\/\//i, '').replace(/\/.*$/, '').toLowerCase().trim();
+    const normalizedEmail = (userEmail || '').toLowerCase().trim();
+    const user = usersDb.get(normalizedEmail || 'usr_guest');
+
+    // Entitlement Check (Phase C)
+    if (user && forceRefresh) {
+      const entitlement = checkSeoLookupEntitlement(user as any, SEO_LOOKUP_COSTS.FULL_AUDIT_BASE);
+      if (!entitlement.allowed) {
+        return res.status(403).json({
+          error: 'SEO_LOOKUPS_EXHAUSTED',
+          message: entitlement.reason,
+          seoLookupsUsed: entitlement.used,
+          seoLookupsLimit: entitlement.limit,
+        });
+      }
+    }
+
+    // Execute through Caching Layer (Phase B) and Integration Layer (Phase A & D)
+    const result = await performNormalizedSeoAudit({
+      domain: cleanDomain,
+      query: query || cleanDomain,
+      country,
+      suggestedKeywords,
+      forceRefresh: !!forceRefresh,
+    });
+
+    // Credit Metering: Debit ONLY on Real Cache Misses (Phase C #5)
+    let lookupsStats = {
+      used: user?.seoLookupsUsed || 0,
+      limit: user?.seoLookupsPerMonth || 10,
+      remaining: Math.max(0, (user?.seoLookupsPerMonth || 10) - (user?.seoLookupsUsed || 0)),
+    };
+
+    if (result.cacheMiss) {
+      lookupsStats = deductSeoLookup(normalizedEmail, SEO_LOOKUP_COSTS.FULL_AUDIT_BASE);
+    }
+
+    res.json({
+      success: true,
+      audit: result.audit,
+      cacheMiss: result.cacheMiss,
+      isCached: result.audit.isCached,
+      fetchedAt: result.audit.fetchedAt,
+      attribution: result.audit.attribution,
+      seoLookupsUsed: lookupsStats.used,
+      seoLookupsLimit: lookupsStats.limit,
+      seoLookupsRemaining: lookupsStats.remaining,
+    });
+  } catch (error: any) {
+    console.error('Error in /api/seo/audit:', error);
+    res.status(500).json({ error: error.message || 'Failed to complete SEO audit' });
+  }
+};
+app.post('/api/seo/audit', handleSeoAudit);
+app.get('/api/seo/audit', handleSeoAudit);
+
+// Domain Overview Endpoint
+const handleDomainOverview = async (req: express.Request, res: express.Response) => {
+  try {
+    const params = { ...req.query, ...(req.body || {}) };
+    const domain = (params.domain || '').toString();
+    const forceRefresh = params.forceRefresh === true || params.forceRefresh === 'true';
+    const userEmail = (params.userEmail || '').toString();
+
+    if (!domain) return res.status(400).json({ error: 'Domain is required' });
+
+    const normalizedEmail = (userEmail || '').toLowerCase().trim();
+    const user = usersDb.get(normalizedEmail || 'usr_guest');
+
+    if (user && forceRefresh) {
+      const entitlement = checkSeoLookupEntitlement(user as any, SEO_LOOKUP_COSTS.DOMAIN_OVERVIEW);
+      if (!entitlement.allowed) {
+        return res.status(403).json({ error: 'SEO_LOOKUPS_EXHAUSTED', message: entitlement.reason });
+      }
+    }
+
+    const { data, fetchedAt, isCached } = await getDomainOverviewCached(domain, undefined, undefined, !!forceRefresh);
+    if (!isCached) {
+      deductSeoLookup(normalizedEmail, SEO_LOOKUP_COSTS.DOMAIN_OVERVIEW);
+    }
+
+    res.json({ success: true, data, fetchedAt, isCached });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Domain overview lookup failed' });
+  }
+};
+app.post('/api/seo/domain-overview', handleDomainOverview);
+app.get('/api/seo/domain-overview', handleDomainOverview);
+
+// Backlinks Summary Endpoint
+const handleBacklinks = async (req: express.Request, res: express.Response) => {
+  try {
+    const params = { ...req.query, ...(req.body || {}) };
+    const domain = (params.domain || '').toString();
+    const forceRefresh = params.forceRefresh === true || params.forceRefresh === 'true';
+    const userEmail = (params.userEmail || '').toString();
+
+    if (!domain) return res.status(400).json({ error: 'Domain is required' });
+
+    const normalizedEmail = (userEmail || '').toLowerCase().trim();
+    const user = usersDb.get(normalizedEmail || 'usr_guest');
+
+    if (user && forceRefresh) {
+      const entitlement = checkSeoLookupEntitlement(user as any, SEO_LOOKUP_COSTS.BACKLINK_SUMMARY);
+      if (!entitlement.allowed) {
+        return res.status(403).json({ error: 'SEO_LOOKUPS_EXHAUSTED', message: entitlement.reason });
+      }
+    }
+
+    const { data, fetchedAt, isCached } = await getBacklinkSummaryCached(domain, !!forceRefresh);
+    if (!isCached) {
+      deductSeoLookup(normalizedEmail, SEO_LOOKUP_COSTS.BACKLINK_SUMMARY);
+    }
+
+    res.json({ success: true, data, fetchedAt, isCached });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Backlink lookup failed' });
+  }
+};
+app.post('/api/seo/backlinks', handleBacklinks);
+app.get('/api/seo/backlinks', handleBacklinks);
+
+// Keyword Overview (Batch up to 700 keywords in one call)
+const handleKeywords = async (req: express.Request, res: express.Response) => {
+  try {
+    const params = { ...req.query, ...(req.body || {}) };
+    const keywords = params.keywords;
+    const forceRefresh = params.forceRefresh === true || params.forceRefresh === 'true';
+    const userEmail = (params.userEmail || '').toString();
+
+    const kwList = Array.isArray(keywords)
+      ? keywords
+      : typeof keywords === 'string'
+      ? keywords.split(',').map(s => s.trim()).filter(Boolean)
+      : [];
+    if (kwList.length === 0) return res.status(400).json({ error: 'At least one keyword is required' });
+
+    const normalizedEmail = (userEmail || '').toLowerCase().trim();
+    const user = usersDb.get(normalizedEmail || 'usr_guest');
+
+    if (user && forceRefresh) {
+      const entitlement = checkSeoLookupEntitlement(user as any, SEO_LOOKUP_COSTS.KEYWORD_BATCH);
+      if (!entitlement.allowed) {
+        return res.status(403).json({ error: 'SEO_LOOKUPS_EXHAUSTED', message: entitlement.reason });
+      }
+    }
+
+    const { data, fetchedAt, isCached } = await getKeywordDataCached(kwList, undefined, undefined, !!forceRefresh);
+    if (!isCached) {
+      deductSeoLookup(normalizedEmail, SEO_LOOKUP_COSTS.KEYWORD_BATCH);
+    }
+
+    res.json({ success: true, data, count: data.length, fetchedAt, isCached });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Keyword overview lookup failed' });
+  }
+};
+app.post('/api/seo/keywords', handleKeywords);
+app.get('/api/seo/keywords', handleKeywords);
+
+// Live SERP Positions
+const handleSerp = async (req: express.Request, res: express.Response) => {
+  try {
+    const params = { ...req.query, ...(req.body || {}) };
+    const keyword = (params.keyword || '').toString();
+    const location = (params.location || 'United States').toString();
+    const forceRefresh = params.forceRefresh === true || params.forceRefresh === 'true';
+    const userEmail = (params.userEmail || '').toString();
+
+    if (!keyword) return res.status(400).json({ error: 'Keyword is required' });
+
+    const normalizedEmail = (userEmail || '').toLowerCase().trim();
+    const user = usersDb.get(normalizedEmail || 'usr_guest');
+
+    if (user && forceRefresh) {
+      const entitlement = checkSeoLookupEntitlement(user as any, SEO_LOOKUP_COSTS.SERP_CHECK_PER_KEYWORD);
+      if (!entitlement.allowed) {
+        return res.status(403).json({ error: 'SEO_LOOKUPS_EXHAUSTED', message: entitlement.reason });
+      }
+    }
+
+    const { data, fetchedAt, isCached } = await getSerpResultsCached(keyword, location, undefined, !!forceRefresh);
+    if (!isCached) {
+      deductSeoLookup(normalizedEmail, SEO_LOOKUP_COSTS.SERP_CHECK_PER_KEYWORD);
+    }
+
+    res.json({ success: true, data, fetchedAt, isCached });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'SERP lookup failed' });
+  }
+};
+app.post('/api/seo/serp', handleSerp);
+app.get('/api/seo/serp', handleSerp);
+
+// Google AI Overview Citation Presence (Phase E #1)
+const handleAiOverview = async (req: express.Request, res: express.Response) => {
+  try {
+    const params = { ...req.query, ...(req.body || {}) };
+    const domain = (params.domain || '').toString();
+    const forceRefresh = params.forceRefresh === true || params.forceRefresh === 'true';
+    const userEmail = (params.userEmail || '').toString();
+
+    if (!domain) return res.status(400).json({ error: 'Domain is required' });
+
+    const normalizedEmail = (userEmail || '').toLowerCase().trim();
+    const user = usersDb.get(normalizedEmail || 'usr_guest');
+
+    if (user && forceRefresh) {
+      const entitlement = checkSeoLookupEntitlement(user as any, SEO_LOOKUP_COSTS.AI_OVERVIEW_CHECK);
+      if (!entitlement.allowed) {
+        return res.status(403).json({ error: 'SEO_LOOKUPS_EXHAUSTED', message: entitlement.reason });
+      }
+    }
+
+    const { data, fetchedAt, isCached } = await getAiOverviewPresenceCached(domain, undefined, undefined, !!forceRefresh);
+    if (!isCached) {
+      deductSeoLookup(normalizedEmail, SEO_LOOKUP_COSTS.AI_OVERVIEW_CHECK);
+    }
+
+    res.json({ success: true, data, fetchedAt, isCached });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'AI Overview presence lookup failed' });
+  }
+};
+app.post('/api/seo/ai-overview', handleAiOverview);
+app.get('/api/seo/ai-overview', handleAiOverview);
+
+// Multi-LLM AI Visibility Benchmark (ChatGPT, Claude, Gemini, Perplexity) (Phase E #2)
+const handleAiVisibilityRun = async (req: express.Request, res: express.Response) => {
+  try {
+    const params = { ...req.query, ...(req.body || {}) };
+    const userEmail = (params.userEmail || '').toString();
+    const businessProfile = params.businessProfile;
+    const normalizedEmail = (userEmail || '').toLowerCase().trim();
+    const user = usersDb.get(normalizedEmail || 'usr_guest');
+
+    if (user) {
+      const entitlement = checkAiVisibilityEntitlement(user as any);
+      if (!entitlement.allowed) {
+        return res.status(403).json({
+          error: 'AI_VISIBILITY_RUNS_EXHAUSTED',
+          message: entitlement.reason,
+          aiVisibilityRunsUsed: entitlement.used,
+          aiVisibilityRunsLimit: entitlement.limit,
+        });
+      }
+    }
+
+    // Resolve business profile from payload or database
+    let profile = businessProfile;
+    if (!profile || !profile.name) {
+      const dbProf = await dbService.getBusinessProfile();
+      profile = {
+        name: dbProf?.name || user?.companyName || 'My Business',
+        industry: dbProf?.industry || 'Professional Services',
+        city: dbProf?.city || 'New York',
+        state: dbProf?.state || 'NY',
+      };
+    }
+
+    const result = await executeAiVisibilityAudit({
+      userId: user?.id || `usr_${Date.now()}`,
+      userEmail: normalizedEmail,
+      profile,
+    });
+
+    const runStats = deductAiVisibilityRun(normalizedEmail);
+
+    res.json({
+      success: true,
+      ...result,
+      aiVisibilityRunsUsed: runStats.used,
+      aiVisibilityRunsLimit: runStats.limit,
+      aiVisibilityRunsRemaining: runStats.remaining,
+    });
+  } catch (err: any) {
+    console.error('Error in /api/seo/ai-visibility/run:', err);
+    res.status(500).json({ error: err.message || 'Failed to execute AI visibility audit' });
+  }
+};
+app.post('/api/seo/ai-visibility/run', handleAiVisibilityRun);
+app.get('/api/seo/ai-visibility/run', handleAiVisibilityRun);
+
+// AI Visibility Historical Benchmarks
+app.get('/api/seo/ai-visibility/history', async (req, res) => {
+  try {
+    const userEmail = ((req.query.userEmail as string) || (req.body?.userEmail as string) || '').toLowerCase().trim();
+    const history = await getAiVisibilityHistory(userEmail);
+    res.json({ success: true, history });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to fetch AI visibility history' });
+  }
+});
+app.post('/api/seo/ai-visibility/history', async (req, res) => {
+  try {
+    const userEmail = ((req.body?.userEmail as string) || (req.query?.userEmail as string) || '').toLowerCase().trim();
+    const history = await getAiVisibilityHistory(userEmail);
+    res.json({ success: true, history });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to fetch AI visibility history' });
+  }
+});
+
+
 
 // One-Click AI Polish Endpoint
 app.post('/api/ai/polish', async (req, res) => {
@@ -10699,6 +11157,15 @@ app.get('/robots.txt', (_req, res) => {
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=86400');
   res.sendFile(filePath);
+});
+
+// API 404 Catch-All Handler: Prevents unmatched API requests from falling through to the Vite SPA HTML fallback
+app.all('/api/*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'API_ENDPOINT_NOT_FOUND',
+    message: `API route ${req.method} ${req.originalUrl} not found`,
+  });
 });
 
 // Start Server with Vite / Static middleware
