@@ -103,6 +103,9 @@ interface AppContextType {
   activeBusiness: ClientBusiness;
   switchBusiness: (id: string) => void;
   updateActiveBusiness: (data: Partial<ClientBusiness>) => void;
+  syncGoogleBusinessProfile: (data: Partial<ClientBusiness>) => void;
+  isGbpSyncModalOpen: boolean;
+  setIsGbpSyncModalOpen: (open: boolean) => void;
   addBusiness: (data: Partial<ClientBusiness>) => void;
   addLocation: (businessId: string, location: { name: string; address: string; city?: string; state?: string; country?: string; zip?: string; phone?: string }) => void;
   priorityActions: PriorityAction[];
@@ -132,49 +135,38 @@ interface AppContextType {
 
 const getInitialCachedProfile = (): BusinessProfile => {
   const base: BusinessProfile = {
-    id: 'bp_austin_dental',
-    name: 'Austin Dental Care',
-    tagline: 'Gentle, Modern Dental Care & 24/7 Emergency Relief',
-    industry: 'Family & Emergency Dental',
-    description: 'Providing gentle, high-quality family and emergency dental care in downtown Austin with state-of-the-art technology and same-day pain relief.',
-    targetAudience: 'Austin residents, downtown professionals, and families seeking reliable, gentle dental care.',
-    toneOfVoice: 'Warm, empathetic, authoritative and reassuring',
-    website: 'austindentalcare.com',
-    phone: '(512) 555-0199',
-    email: 'info@austindentalcare.com',
-    address: '100 Congress Ave, Suite 400',
-    city: 'Austin',
-    state: 'TX',
-    zip: '78701',
+    id: 'bp_workspace',
+    name: 'My Business Workspace',
+    tagline: 'Autonomous Growth & Local SEO Intelligence',
+    industry: 'Professional Services',
+    description: '',
+    targetAudience: '',
+    toneOfVoice: 'Authoritative, caring, and locally rooted',
+    website: '',
+    phone: '',
+    email: '',
+    address: '',
+    city: '',
+    state: '',
+    zip: '',
     country: 'United States',
     currency: 'USD',
     taxRate: 0,
     taxId: '',
-    services: [
-      'Emergency Dental Care',
-      'Preventative Cleanings',
-      'Same-Day Crowns',
-      'Invisalign Orthodontics',
-      'Dental Implants',
-      'Teeth Whitening',
-    ],
-    targetLocations: ['Austin, TX', 'Round Rock, TX', 'Westlake Hills, TX', 'South Austin, TX'],
-    primaryCompetitors: ['Apex Dental Specialists', 'Austin Emergency Smiles', 'Capital City Dental Studio'],
-    currentOffers: ['$99 New Patient Diagnostic Exam & X-Rays', 'Same-Day Emergency Relief Priority Booking'],
-    businessGoals: [
-      'Capture Top 3 Local Google Maps Pack for Emergency Dentist',
-      'Publish Dedicated Same-Day Crown Landing Page',
-      'Respond to 100% of Patient Google Reviews',
-    ],
+    services: [],
+    targetLocations: [],
+    primaryCompetitors: [],
+    currentOffers: [],
+    businessGoals: [],
     googleBusiness: {
-      connected: true,
-      listingName: 'Austin Dental Care (Google Maps)',
-      rating: 4.8,
-      reviewCount: 142,
-      unansweredReviews: 17,
-      category: 'Dentist & Emergency Dental Clinic',
+      connected: false,
+      listingName: '',
+      rating: 0,
+      reviewCount: 0,
+      unansweredReviews: 0,
+      category: '',
     },
-    brainReadinessScore: 94,
+    brainReadinessScore: 0,
     lastBrainSyncAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -267,9 +259,9 @@ const DEFAULT_NOTIFICATIONS: LocoraNotification[] = [
   {
     id: 'notif_2',
     type: 'opportunity',
-    title: 'You could target 4 new local searches.',
-    message: 'New high-intent keyword gaps identified: Emergency dentist Austin, Same day crowns Austin.',
-    evidence: '420 monthly local searches with low competitor density',
+    title: 'Target high-intent local search queries.',
+    message: 'New local search keyword gaps identified for your primary service area.',
+    evidence: 'High monthly local search interest with accessible competitor positions',
     actionLabel: '[ View ]',
     actionTargetTab: 'visibility',
     isRead: false,
@@ -280,7 +272,7 @@ const DEFAULT_NOTIFICATIONS: LocoraNotification[] = [
     type: 'completed',
     title: 'Weekly growth analysis is ready.',
     message: 'Locora evaluated your digital presence and identified your highest-leverage growth actions.',
-    evidence: 'Locora Growth Health calculated at 78/100 across 6 components',
+    evidence: 'Locora Growth Health calculated across core operational components',
     actionLabel: '[ View Report ]',
     actionTargetTab: 'reports',
     isRead: false,
@@ -292,54 +284,54 @@ const DEFAULT_AI_ACTIONS: AIAction[] = [
   {
     id: 'action_1',
     type: 'CREATE_REVIEW_REPLY',
-    title: 'Reply to Google Review: Patient wait time concern',
-    business_id: 'austin-dental',
-    input: { reviewId: 'rev_101', rating: 1, author: 'Marcus T.' },
-    output: 'Thank you for visiting Austin Dental Care. We sincerely apologize for the unexpected 35-minute delay during our peak morning emergency triage. Our clinical director Dr. Davis has revised our morning scheduling protocols to ensure patient promptness. Please contact us directly so we may care for your next visit.',
+    title: 'Reply to Customer Review: Timeliness and service clarity',
+    business_id: 'demo-growth-workspace',
+    input: { reviewId: 'rev_101', rating: 4, author: 'Marcus T.' },
+    output: 'Thank you for your feedback Marcus. We take pride in delivering efficient, high-quality service and clear communication. Our team has reviewed your notes to ensure continuous improvement for all future engagements.',
     status: 'draft',
     created_by: 'ai',
     isSafeInternal: false,
     explanation: {
-      diagnosis: 'Marcus T. posted a 1-star review mentioning a 35-minute wait time with zero owner response.',
-      whyItMatters: 'Reviews with attentive owner replies convert 38% higher on Google Local 3-Pack rankings.',
-      previewSummary: 'Drafted empathetic owner response addressing the wait time and emphasizing scheduling improvements.',
-      expectedImpact: 'Restores 100% reply rate and improves Google Maps sentiment rating.',
+      diagnosis: 'Marcus T. posted a review that has not yet received an owner response.',
+      whyItMatters: 'Reviews with prompt owner replies boost Google Local 3-Pack conversion by up to 35%.',
+      previewSummary: 'Drafted professional owner response acknowledging the feedback and reinforcing customer satisfaction.',
+      expectedImpact: 'Improves review response rate and customer trust indicators.',
     },
     createdAt: new Date().toISOString(),
   },
   {
     id: 'action_2',
     type: 'CREATE_GBP_POST',
-    title: 'Publish Google Post: Same-Day Emergency Dental Relief',
-    business_id: 'austin-dental',
-    input: { offer: 'Emergency Triage & Pain Relief', targetLocation: 'Austin, TX' },
-    output: 'Experiencing sudden tooth pain in Austin? Austin Dental Care offers same-day emergency triage and gentle pain relief with immediate appointment availability. Call (512) 555-0199 or walk in today!',
+    title: 'Publish Google Post: Highlight Core Capabilities',
+    business_id: 'demo-growth-workspace',
+    input: { offer: 'High-Intent Service Highlight', targetLocation: 'Local Area' },
+    output: 'Looking for proven local solutions? We provide dependable expertise and personalized care tailored to your specific needs. Contact our team today or explore our website for direct inquiries.',
     status: 'draft',
     created_by: 'ai',
     isSafeInternal: false,
     explanation: {
       diagnosis: 'No Google Business Profile update published in the last 14 days.',
-      whyItMatters: 'Weekly GBP posts signal active business status to Google local ranking algorithms.',
-      previewSummary: 'Created a Google Business post promoting emergency availability with direct call CTA.',
-      expectedImpact: '+14% local search impressions and elevated Google Maps ranking.',
+      whyItMatters: 'Regular GBP posts signal active business status to local search ranking algorithms.',
+      previewSummary: 'Created a Google Business post highlighting core offerings with a clear call-to-action.',
+      expectedImpact: '+15% local search impressions and elevated local map visibility.',
     },
     createdAt: new Date().toISOString(),
   },
   {
     id: 'action_3',
     type: 'CREATE_SERVICE_PAGE',
-    title: 'Generate Dedicated Emergency Dentist Service Page',
-    business_id: 'austin-dental',
-    input: { service: 'Emergency Dentist', targetKeyword: 'emergency dentist austin' },
-    output: 'Drafted /services/emergency-dentist-austin with localized H1, urgent care checklist, FAQ schema, and 1-click booking CTA.',
+    title: 'Generate Dedicated Geo-Targeted Service Page',
+    business_id: 'demo-growth-workspace',
+    input: { service: 'Specialized Service', targetKeyword: 'local service expert' },
+    output: 'Drafted dedicated service landing page with localized heading hierarchy, proof points, FAQ schema, and lead capture form.',
     status: 'draft',
     created_by: 'ai',
     isSafeInternal: false,
     explanation: {
-      diagnosis: 'Austin Dental Care is #8 for "emergency dentist austin" because competitors A & B have dedicated service URLs.',
-      whyItMatters: 'A dedicated URL with LocalBusiness schema and targeted copy allows ranking #1–#3.',
-      previewSummary: 'Drafted high-converting emergency dental landing page targeting 850 monthly local searches.',
-      expectedImpact: 'Projected rank jump from #8 → #3, generating ~18 additional patient calls monthly.',
+      diagnosis: 'Search volume exists for high-intent local queries without a dedicated landing page.',
+      whyItMatters: 'A dedicated URL with LocalBusiness schema and targeted copy allows ranking in top organic positions.',
+      previewSummary: 'Drafted high-converting landing page targeting local consumer search queries.',
+      expectedImpact: 'Improves search prominence and captures organic discovery leads.',
     },
     createdAt: new Date().toISOString(),
   },
@@ -1061,7 +1053,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (typeof window !== 'undefined') {
       try {
         const cached = localStorage.getItem('locora_businesses_list');
-        if (cached) return JSON.parse(cached);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && !parsed.some((b: any) => b.id === 'austin-dental' || b.id === 'smith-plumbing' || String(b.name).toLowerCase().includes('austin') || String(b.city).toLowerCase().includes('austin'))) {
+            return parsed;
+          }
+          localStorage.removeItem('locora_businesses_list');
+        }
       } catch {}
     }
     return INITIAL_BUSINESSES;
@@ -1071,17 +1069,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (typeof window !== 'undefined') {
       try {
         const cached = localStorage.getItem('locora_active_business_id');
-        if (cached) return cached;
+        if (cached && cached !== 'austin-dental' && cached !== 'smith-plumbing') {
+          return cached;
+        }
+        localStorage.removeItem('locora_active_business_id');
       } catch {}
     }
-    return 'austin-dental';
+    return 'demo-growth-workspace';
   });
 
   const [priorityActions, setPriorityActions] = useState<PriorityAction[]>(() => {
     if (typeof window !== 'undefined') {
       try {
         const cached = localStorage.getItem('locora_priority_actions');
-        if (cached) return JSON.parse(cached);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && !parsed.some((a: any) => String(a.title).toLowerCase().includes('dental') || String(a.id).includes('dental') || String(a.title).toLowerCase().includes('austin'))) {
+            return parsed;
+          }
+          localStorage.removeItem('locora_priority_actions');
+        }
       } catch {}
     }
     return INITIAL_PRIORITY_ACTIONS;
@@ -1089,6 +1096,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [rightAiPanelOpen, setRightAiPanelOpen] = useState<boolean>(false);
   const toggleRightAiPanel = useCallback(() => setRightAiPanelOpen((prev) => !prev), []);
+
+  const [isGbpSyncModalOpen, setIsGbpSyncModalOpen] = useState<boolean>(false);
 
   const activeBusiness = businesses.find((b) => b.id === activeBusinessId) || businesses[0] || INITIAL_BUSINESSES[0];
 
@@ -1108,6 +1117,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       address: target.address,
       city: target.city,
       state: target.state,
+      country: target.country || prev.country || 'United States',
       zip: target.zip,
       phone: target.phone,
       website: target.website,
@@ -1125,6 +1135,68 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   }, [businesses]);
 
+  const syncGoogleBusinessProfile = useCallback((data: Partial<ClientBusiness>) => {
+    setBusinesses((prev) => {
+      const idx = prev.findIndex((b) => b.id === activeBusinessId);
+      const target = idx >= 0 ? prev[idx] : activeBusiness;
+      const updatedBusiness: ClientBusiness = {
+        ...target,
+        ...data,
+        name: data.name || target.name,
+        category: data.category || target.category,
+        city: data.city !== undefined ? data.city : target.city,
+        state: data.state !== undefined ? data.state : target.state,
+        country: data.country !== undefined ? data.country : (target.country || 'United States'),
+        address: data.address !== undefined ? data.address : target.address,
+        zip: data.zip !== undefined ? data.zip : target.zip,
+        phone: data.phone !== undefined ? data.phone : target.phone,
+        website: data.website !== undefined ? data.website : target.website,
+        googleRating: data.googleRating !== undefined ? data.googleRating : ((data as any).rating || target.googleRating),
+        reviewCount: data.reviewCount !== undefined ? data.reviewCount : target.reviewCount,
+        unansweredReviews: data.unansweredReviews !== undefined ? data.unansweredReviews : target.unansweredReviews,
+        services: data.services && data.services.length > 0 ? data.services : target.services,
+        gbpCompleteness: 98,
+        gbpConnected: true,
+        reviews: (data as any).reviews || target.reviews || [],
+      };
+
+      let nextList: ClientBusiness[];
+      if (idx >= 0) {
+        nextList = [...prev];
+        nextList[idx] = updatedBusiness;
+      } else {
+        nextList = [updatedBusiness, ...prev];
+      }
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('locora_businesses_list', JSON.stringify(nextList));
+      }
+      return nextList;
+    });
+
+    setBusinessProfile((prev) => ({
+      ...prev,
+      name: data.name || prev.name,
+      city: data.city !== undefined ? data.city : prev.city,
+      state: data.state !== undefined ? data.state : prev.state,
+      country: data.country !== undefined ? data.country : prev.country,
+      address: data.address !== undefined ? data.address : prev.address,
+      zip: data.zip !== undefined ? data.zip : prev.zip,
+      phone: data.phone !== undefined ? data.phone : prev.phone,
+      website: data.website !== undefined ? data.website : prev.website,
+      industry: data.category || prev.industry,
+      services: data.services && data.services.length > 0 ? data.services : prev.services,
+      googleBusiness: {
+        connected: true,
+        listingName: data.name || prev.name,
+        rating: data.googleRating !== undefined ? data.googleRating : ((data as any).rating || 0),
+        reviewCount: data.reviewCount || 0,
+        unansweredReviews: data.unansweredReviews || 0,
+        category: data.category || prev.industry,
+      },
+    }));
+  }, [activeBusinessId, activeBusiness]);
+
   const addBusiness = useCallback((data: Partial<ClientBusiness>) => {
     const newId = `biz_${Date.now()}`;
     const newBiz: ClientBusiness = {
@@ -1133,12 +1205,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       category: data.category || 'General Local Business',
       tagline: data.tagline || 'Local Business & Customer Care',
       locationName: data.locationName || 'Main Location',
-      address: data.address || '100 Main St',
-      city: data.city || 'Austin',
-      state: data.state || 'TX',
-      zip: data.zip || '78701',
-      phone: data.phone || '(512) 555-0100',
-      website: data.website || 'example.com',
+      address: data.address || '',
+      city: data.city || '',
+      state: data.state || '',
+      country: data.country || 'United States',
+      zip: data.zip || '',
+      phone: data.phone || '',
+      website: data.website || '',
       healthScore: 75,
       healthDelta: 3,
       highImpactCount: 2,
@@ -1150,19 +1223,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           id: `loc_${Date.now()}`,
           name: data.locationName || 'Main Location',
           isMain: true,
-          address: data.address || '100 Main St',
-          city: data.city || 'Austin',
-          state: data.state || 'TX',
-          zip: data.zip || '78701',
-          phone: data.phone || '(512) 555-0100',
+          address: data.address || '',
+          city: data.city || '',
+          state: data.state || '',
+          country: data.country || 'United States',
+          zip: data.zip || '',
+          phone: data.phone || '',
         },
       ],
       services: data.services || ['Primary Service', 'Secondary Service'],
       competitors: data.competitors || ['Local Competitor'],
-      googleRating: 4.8,
-      reviewCount: 30,
-      unansweredReviews: 4,
-      gbpCompleteness: 90,
+      googleRating: data.googleRating || 0,
+      reviewCount: data.reviewCount || 0,
+      unansweredReviews: 0,
+      gbpCompleteness: 85,
     };
     setBusinesses((prev) => {
       const next = [...prev, newBiz];
@@ -1182,11 +1256,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           id: `loc_${Date.now()}`,
           name: loc.name,
           address: loc.address,
-          city: loc.city || b.city,
-          state: loc.state || b.state,
+          city: loc.city || b.city || '',
+          state: loc.state || b.state || '',
           country: loc.country || b.country || 'United States',
           zip: loc.zip || b.zip || '',
-          phone: loc.phone || b.phone,
+          phone: loc.phone || b.phone || '',
           isMain: false,
         };
         return {
@@ -1506,9 +1580,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 tagline: r.identity?.tagline || '',
                 locationName: 'Main Location',
                 address: r.identity?.address || '',
-                city: r.identity?.city || 'Austin',
-                state: r.identity?.state || 'TX',
-                zip: r.identity?.zip || '78701',
+                city: r.identity?.city || '',
+                state: r.identity?.state || '',
+                country: r.identity?.country || 'United States',
+                zip: r.identity?.zip || '',
                 phone: r.identity?.phone || '',
                 website: r.identity?.website || '',
                 healthScore: r.businessBrain?.score || 82,
@@ -2020,6 +2095,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         activeBusiness,
         switchBusiness,
         updateActiveBusiness,
+        syncGoogleBusinessProfile,
+        isGbpSyncModalOpen,
+        setIsGbpSyncModalOpen,
         addBusiness,
         addLocation,
         priorityActions,

@@ -139,6 +139,9 @@ export interface ClientBusiness {
   reviewCount: number;
   unansweredReviews: number;
   gbpCompleteness: number;
+  gbpConnected?: boolean;
+  placeId?: string;
+  reviews?: any[];
   healthBreakdown?: {
     visibility: number;
     reputation: number;

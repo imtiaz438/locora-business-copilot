@@ -25,7 +25,7 @@ interface FixItModalProps {
 }
 
 export const FixItModal: React.FC<FixItModalProps> = ({ action, onClose }) => {
-  const { businessProfile, fixItAction, publishDraft, consumeAiCredit } = useApp();
+  const { businessProfile, activeBusiness, fixItAction, publishDraft, consumeAiCredit } = useApp();
 
   const [step, setStep] = useState<'recommendation' | 'generating' | 'draft_review' | 'published'>('recommendation');
   const [activeViewTab, setActiveViewTab] = useState<'preview' | 'edit' | 'schema'>('preview');
@@ -59,25 +59,24 @@ export const FixItModal: React.FC<FixItModalProps> = ({ action, onClose }) => {
       setDraftSlug(`/services/${action.id.replace('act_', '').replace('_', '-')}`);
       setDraftSeoTitle(`${action.recommendationTitle} | ${businessProfile.name}`);
       setDraftMetaDesc(action.whyItMatters);
-      setDraftHeadings(action.itemsToCreate || ['Service Overview', 'Why Choose Us', 'Same-Day Treatment', 'Patient FAQs']);
-      setDraftBodyCopy(`Locora AI has generated the comprehensive content blueprint for ${action.recommendationTitle} at ${businessProfile.name} in ${businessProfile.city}, ${businessProfile.state}.\n\nPatients experiencing severe pain, tooth fractures, or urgent dental distress can call our direct emergency line at ${businessProfile.phone} for immediate same-day priority triage.\n\nOur clinic at ${businessProfile.address} is equipped with digital 3D cone beam imaging, nitrous oxide sedation, and gentle compassionate care to relieve dental discomfort immediately.`);
+      setDraftHeadings(action.itemsToCreate || ['Service Overview', 'Why Choose Us', 'Core Capabilities', 'Client FAQs']);
+      setDraftBodyCopy(`Locora AI has generated the comprehensive content blueprint for ${action.recommendationTitle} at ${businessProfile.name || 'our business'}${businessProfile.city ? ` in ${businessProfile.city}, ${businessProfile.state}` : ''}.\n\nClients seeking dependable, high-quality service can call our direct line at ${businessProfile.phone || '(555) 019-2831'} for immediate assistance and priority scheduling.\n\nOur team is committed to prompt response times, transparent pricing, and professional service execution tailored to your specific requirements.`);
       setDraftSchemaJson(
         JSON.stringify(
           {
             '@context': 'https://schema.org',
-            '@type': 'Dentist',
-            'name': `${businessProfile.name} - ${action.recommendationTitle}`,
-            'telephone': businessProfile.phone,
+            '@type': 'LocalBusiness',
+            'name': `${businessProfile.name || 'Business'} - ${action.recommendationTitle}`,
+            'telephone': businessProfile.phone || '',
             'address': {
               '@type': 'PostalAddress',
-              'streetAddress': businessProfile.address,
-              'addressLocality': businessProfile.city,
-              'addressRegion': businessProfile.state,
-              'postalCode': businessProfile.zip,
+              'streetAddress': businessProfile.address || '',
+              'addressLocality': businessProfile.city || '',
+              'addressRegion': businessProfile.state || '',
+              'postalCode': businessProfile.zip || '',
               'addressCountry': 'US',
             },
-            'openingHours': 'Mo-Su 00:00-24:00',
-            'emergencyService': true,
+            'openingHours': 'Mo-Fr 08:00-18:00',
             'priceRange': '$$',
           },
           null,
@@ -86,12 +85,12 @@ export const FixItModal: React.FC<FixItModalProps> = ({ action, onClose }) => {
       );
       setDraftFaqs([
         {
-          question: 'Do you accept same-day emergency dental appointments in Austin?',
-          answer: `Yes, ${businessProfile.name} reserves priority emergency appointment blocks every single morning and afternoon for urgent toothaches, fractures, and trauma.`,
+          question: `How quickly can I schedule an appointment with ${businessProfile.name || 'your team'}?`,
+          answer: `Yes, ${businessProfile.name || 'our team'} offers priority scheduling and fast consultation for immediate service inquiries.`,
         },
         {
-          question: 'What should I do if a tooth is knocked out or broken?',
-          answer: 'Gently rinse the tooth with water without scrubbing the root, place it in milk or saliva, and call our office immediately at (512) 555-0199.',
+          question: 'Are quotes and estimates provided upfront?',
+          answer: `Yes, we provide transparent estimates and clear scopes of work before starting any engagement. Contact our office directly at ${businessProfile.phone || 'our primary line'}.`,
         },
       ]);
       setStep('recommendation');
@@ -273,8 +272,8 @@ export const FixItModal: React.FC<FixItModalProps> = ({ action, onClose }) => {
                   {(action.itemsToCreate || [
                     'Dedicated local service landing page',
                     'JSON-LD LocalBusiness & Service schema markup',
-                    'SEO meta title & description for Austin pack',
-                    'High-intent patient FAQs & internal links',
+                    `SEO meta title & description for ${activeBusiness.city || 'local'} 3-pack`,
+                    'High-intent customer FAQs & internal service links',
                   ]).map((item, idx) => (
                     <div
                       key={idx}
@@ -300,7 +299,7 @@ export const FixItModal: React.FC<FixItModalProps> = ({ action, onClose }) => {
                   Synthesizing Draft Assets...
                 </h3>
                 <p className="text-xs text-slate-500 max-w-sm mt-1">
-                  Drafting content, building LocalBusiness schema, configuring Austin geographic keywords, and assembling patient FAQs.
+                  Drafting content, building LocalBusiness schema, configuring geographic keywords for {activeBusiness.city || 'your area'}, and assembling client FAQs.
                 </p>
               </div>
             </div>
@@ -360,7 +359,7 @@ export const FixItModal: React.FC<FixItModalProps> = ({ action, onClose }) => {
                   {/* Mock Browser URL Bar */}
                   <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-slate-200 text-[11px] text-slate-600 font-mono">
                     <Globe className="w-3.5 h-3.5 text-slate-400" />
-                    <span>https://{businessProfile.website || 'austindentalcare.com'}{draftSlug}</span>
+                    <span>https://{businessProfile.website || 'example.com'}{draftSlug}</span>
                   </div>
 
                   {/* Google SERP Preview Card */}

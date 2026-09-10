@@ -3667,9 +3667,9 @@ app.get('/api/places/autocomplete', async (req, res) => {
         secondaryText: parts.slice(1).join(', ') || 'Custom Location',
         locationData: {
           address: parts[0] || input,
-          city: parts[1] || 'Austin',
-          state: parts[2] ? parts[2].split(' ')[0] : 'TX',
-          country: 'United States',
+          city: parts[1] || '',
+          state: parts[2] ? parts[2].split(' ')[0] : '',
+          country: parts[3] || 'United States',
           zip: '',
           formattedAddress: input,
         }
@@ -3689,7 +3689,7 @@ app.get('/api/places/details', async (req, res) => {
     const apiKey = process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_PLACES_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
 
     if (apiKey && placeId) {
-      const gUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=address_components,formatted_address,geometry&key=${apiKey}`;
+      const gUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=name,address_components,formatted_address,formatted_phone_number,website,rating,user_ratings_count,reviews,opening_hours,photos,types&key=${apiKey}`;
       const gRes = await fetch(gUrl);
       if (gRes.ok) {
         const gData = await gRes.json();
@@ -3715,10 +3715,26 @@ app.get('/api/places/details', async (req, res) => {
 
           const street = [streetNum, route].filter(Boolean).join(' ');
           return res.json({
+            placeId,
+            name: gData.result.name || '',
+            phone: gData.result.formatted_phone_number || '',
+            website: gData.result.website || '',
+            rating: gData.result.rating || 0,
+            reviewCount: gData.result.user_ratings_count || 0,
+            businessHours: gData.result.opening_hours?.weekday_text || [],
+            reviews: (gData.result.reviews || []).map((r: any, idx: number) => ({
+              id: `g_rev_${idx}_${Date.now()}`,
+              author: r.author_name || 'Verified Google User',
+              rating: r.rating || 5,
+              date: r.relative_time_description || 'Recently',
+              text: r.text || '',
+              sentiment: r.rating >= 4 ? 'Positive' : r.rating === 3 ? 'Mixed' : 'Negative',
+              source: 'Google Maps',
+            })),
             locationData: {
               address: street || gData.result.formatted_address || '',
-              city: city || 'Austin',
-              state: state || 'TX',
+              city: city || '',
+              state: state || '',
               country,
               zip,
               formattedAddress: gData.result.formatted_address,
@@ -3731,6 +3747,209 @@ app.get('/api/places/details', async (req, res) => {
     res.status(404).json({ error: 'Place details not found' });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Place details failed' });
+  }
+});
+
+// Live Google Places Search & Sync Endpoint
+app.get('/api/places/search-live', async (req, res) => {
+  try {
+    const query = (req.query.query as string || '').trim();
+    if (!query) {
+      return res.json({ results: [] });
+    }
+
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_PLACES_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
+
+    if (apiKey) {
+      try {
+        const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${apiKey}`;
+        const gRes = await fetch(textSearchUrl);
+        if (gRes.ok) {
+          const gData = await gRes.json();
+          if (gData.results && gData.results.length > 0) {
+            const results = gData.results.slice(0, 6).map((item: any) => {
+              const addrParts = (item.formatted_address || '').split(',').map((s: string) => s.trim());
+              const stateZip = addrParts[addrParts.length - 2] || '';
+              const stateParts = stateZip.split(' ').filter(Boolean);
+              return {
+                placeId: item.place_id,
+                name: item.name,
+                address: addrParts[0] || item.formatted_address,
+                city: addrParts[addrParts.length - 3] || '',
+                state: stateParts[0] || '',
+                zip: stateParts[1] || '',
+                country: addrParts[addrParts.length - 1] || 'United States',
+                formattedAddress: item.formatted_address,
+                rating: item.rating || 0,
+                reviewCount: item.user_ratings_count || 0,
+                types: item.types || [],
+                primaryType: (item.types && item.types[0]) ? item.types[0].replace(/_/g, ' ') : 'Local Business',
+                source: 'google_places_live',
+              };
+            });
+            return res.json({ results, source: 'google_places_live' });
+          }
+        }
+      } catch (gErr: any) {
+        console.warn('[Google Places Search] Upstream API call failed, falling back to parsed query:', gErr.message);
+      }
+    }
+
+    // Direct structured parser fallback (No API key needed / clean user search)
+    const parts = query.split(',').map(s => s.trim());
+    const name = parts[0] || query;
+    const city = parts[1] || '';
+    const stateZip = parts[2] ? parts[2].split(' ') : [];
+    const state = stateZip[0] || '';
+    const country = parts[3] || 'United States';
+
+    const fallbackCandidate = {
+      placeId: `direct_${Date.now()}`,
+      name: name,
+      address: parts.length > 2 ? parts[0] : `${name} Primary Location`,
+      city: city || '',
+      state: state || '',
+      country: country,
+      zip: stateZip[1] || '',
+      formattedAddress: parts.length > 1 ? query : `${name}`,
+      rating: 0,
+      reviewCount: 0,
+      primaryType: 'Local Business',
+      source: 'direct_business_search',
+    };
+
+    return res.json({ results: [fallbackCandidate], source: 'direct_business_search' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Places search failed' });
+  }
+});
+
+// Live Google Business Profile Sync & Persistent Storage
+app.post('/api/gbp/sync-live', async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const userEmail = (payload.userEmail || req.query.email || '').toString().toLowerCase().trim();
+    const businessName = payload.name || payload.businessName || 'My Business';
+    const city = payload.city || '';
+    const state = payload.state || '';
+    const country = payload.country || 'United States';
+    const address = payload.address || payload.formattedAddress || '';
+    const phone = payload.phone || payload.primaryPhone || '';
+    const website = payload.website || '';
+    const category = payload.category || payload.primaryType || 'Local Business';
+    const rating = typeof payload.rating === 'number' ? payload.rating : 0;
+    const reviewCount = typeof payload.reviewCount === 'number' ? payload.reviewCount : 0;
+    const unansweredReviews = typeof payload.unansweredReviews === 'number' ? payload.unansweredReviews : 0;
+    const services = Array.isArray(payload.services) && payload.services.length > 0 ? payload.services : [category];
+    const businessHours = Array.isArray(payload.businessHours) ? payload.businessHours : [];
+    const reviews = Array.isArray(payload.reviews) ? payload.reviews : [];
+
+    const bizId = payload.businessId || payload.id || `biz_${Date.now()}`;
+
+    // Update in-memory and disk database
+    const record: any = {
+      id: bizId,
+      planTier: 'pro',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      identity: {
+        name: businessName,
+        tagline: `${category} in ${city || 'your area'}`,
+        website,
+        phone,
+        address,
+        city,
+        state,
+        zip: payload.zip || '',
+        country,
+        category,
+        industry: category,
+        targetLocations: city ? [`${city}${state ? `, ${state}` : ''}`] : [],
+        services,
+      },
+      gbpData: {
+        connected: true,
+        placeId: payload.placeId || '',
+        listingName: businessName,
+        rating,
+        reviewCount,
+        unansweredReviews,
+        category,
+        businessHours,
+        photosCount: payload.photosCount || 10,
+        primaryPhone: phone,
+        address: address || `${city}, ${state}`,
+        attributes: ['Verified Google Business Profile', 'Live Synced'],
+        lastSyncedAt: new Date().toISOString(),
+        source: 'google_places_live',
+      },
+      reviews: reviews,
+      locations: [
+        {
+          id: `loc_${bizId}`,
+          name: `${businessName} (Main)`,
+          isMain: true,
+          address,
+          city,
+          state,
+          zip: payload.zip || '',
+          country,
+          phone,
+        }
+      ]
+    };
+
+    saveBusinessRecordToLocoraDb(record);
+
+    // Also persist into user profile store if user email is present
+    if (userEmail) {
+      const userProf = userProfilesMap.get(userEmail) || {};
+      userProfilesMap.set(userEmail, {
+        ...userProf,
+        companyName: businessName,
+        name: userProf.name || businessName,
+        city,
+        state,
+        country,
+        address,
+        phone,
+        website,
+        category,
+        services,
+        gbpConnected: true,
+        gbpRating: rating,
+        gbpReviewCount: reviewCount,
+        updatedAt: new Date().toISOString(),
+      });
+      saveUserProfilesToDisk();
+    }
+
+    res.json({
+      success: true,
+      message: 'Google Business Profile successfully synced and stored in database',
+      business: {
+        id: bizId,
+        name: businessName,
+        category,
+        address,
+        city,
+        state,
+        country,
+        zip: payload.zip || '',
+        phone,
+        website,
+        googleRating: rating,
+        reviewCount,
+        unansweredReviews,
+        services,
+        businessHours,
+        reviews,
+        gbpCompleteness: 98,
+      }
+    });
+  } catch (err: any) {
+    console.error('[GBP Sync Error]:', err.message);
+    res.status(500).json({ error: err.message || 'Failed to sync Google Business Profile' });
   }
 });
 

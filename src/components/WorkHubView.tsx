@@ -47,6 +47,7 @@ export const WorkHubView: React.FC<WorkHubViewProps> = ({ initialTab = 'proposal
     addProject,
     customers,
     activeBusiness,
+    priorityActions,
     businessProfile,
     settings,
     user,
@@ -93,21 +94,21 @@ export const WorkHubView: React.FC<WorkHubViewProps> = ({ initialTab = 'proposal
 
     // Simulate AI generation crafted around the 7 growth opportunities
     setTimeout(() => {
-      const generatedScope = `## Executive Proposal for ${clientName}
-### Objective: Turn Local Visibility into Predictable Patient Flow
+      const generatedScope = `## Executive Growth Proposal for ${clientName}
+### Objective: Turn Local Search Prominence into Predictable Revenue
 
-Locora AI analyzed your digital footprint and identified 7 high-impact growth opportunities across Austin.
+Locora AI analyzed your digital footprint and identified core high-impact growth opportunities across ${activeBusiness.city || 'your target market'}.
 
 ### SOW & Deliverables:
-1. **Emergency Service Landing Page & Schema Optimization**: Capture 340+ monthly urgent searches with high-converting mobile click-to-call.
-2. **Review Acceleration & Reputation Funnel**: Deploy automated SMS/Email workflows to convert 450+ annual appointments into 5-star Google reviews.
-3. **MedicalBusiness Schema & Local Pack Optimization**: Sync verified NAP, Google Maps geocoordinates, and accepted insurances.
-4. **Competitor Counter-Strategy**: Target Apex Dental's weakest service gaps with 4 dedicated clinical sub-pages.
-5. **AI Search (ChatGPT / Perplexity) Knowledge Injection**: Optimize entity descriptors so conversational search models cite ${activeBusiness.name}.
+1. **Targeted Service Landing Page & Schema Optimization**: Capture high-intent searches with dedicated localized service pages and clear conversion triggers.
+2. **Review Acceleration & Reputation Funnel**: Deploy automated review request workflows to increase review volume and customer trust signals.
+3. **LocalBusiness Schema & Local Pack Optimization**: Sync verified NAP, Google Maps coordinates, and accurate category attributes.
+4. **Competitor Counter-Strategy**: Target competitor gaps with specialized content addressing under-served search queries.
+5. **AI Search (ChatGPT / Perplexity) Knowledge Optimization**: Structure digital entity data so conversational AI models accurately recommend ${activeBusiness.name}.
 
 ### Financial Terms:
-- Monthly Retainer: $3,200/month
-- Initial Setup & Technical Foundation: $1,600 (One-time)
+- Monthly Retainer: $2,800/month
+- Initial Setup & Technical Audit: $1,200 (One-time)
 - Term: 6-month performance agreement`;
 
       const newProp: Omit<Proposal, 'id' | 'createdAt'> = {
@@ -149,7 +150,7 @@ Locora AI analyzed your digital footprint and identified 7 high-impact growth op
     const cust = customers.find((c) => c.id === invCustomer) || {
       name: activeBusiness.name,
       email: `billing@${activeBusiness.website || 'clientbusiness.com'}`,
-      address: activeBusiness.address || 'Commercial Suite, TX',
+      address: activeBusiness.address || (activeBusiness.city ? `${activeBusiness.city}, ${activeBusiness.state || ''}` : 'Client Business Address'),
     };
 
     addInvoice({
@@ -157,7 +158,7 @@ Locora AI analyzed your digital footprint and identified 7 high-impact growth op
       customerId: cust.name,
       customerName: cust.name,
       customerEmail: (cust as any).email || 'billing@example.com',
-      customerAddress: (cust as any).address || 'Austin, TX',
+      customerAddress: (cust as any).address || activeBusiness.address || 'Client Address',
       issueDate: new Date().toISOString().split('T')[0],
       dueDate: new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
       status: 'sent',
@@ -210,7 +211,7 @@ Locora AI analyzed your digital footprint and identified 7 high-impact growth op
     doc.text('Bill To:', 20, 65);
     doc.setFont('helvetica', 'normal');
     doc.text(inv.customerName, 20, 72);
-    doc.text(inv.customerAddress || 'Austin, TX', 20, 77);
+    doc.text(inv.customerAddress || (activeBusiness.city ? `${activeBusiness.city}, ${activeBusiness.state || ''}` : 'Client Address'), 20, 77);
 
     // Items Header
     doc.setFillColor(245, 247, 250);
@@ -770,10 +771,10 @@ Locora AI analyzed your digital footprint and identified 7 high-impact growth op
           <h4 className="text-sm font-bold text-slate-900 font-heading">Operational Tasks & Milestones</h4>
           <div className="space-y-2 text-xs">
             {[
-              { title: 'Deploy Emergency Dental Landing Page (/emergency-dentist)', priority: 'High', due: 'Tomorrow' },
-              { title: 'Respond to 17 unanswered Google patient reviews', priority: 'Urgent', due: 'Today' },
-              { title: 'Verify MedicalBusiness Schema coordinates with Google Maps API', priority: 'Medium', due: 'In 3 days' },
-              { title: 'Send monthly performance report to Dr. Rodriguez', priority: 'Medium', due: 'Friday' },
+              { title: `Deploy High-Impact Service Landing Page (${priorityActions[0]?.draft?.slug || '/services/priority'})`, priority: 'High', due: 'Tomorrow' },
+              { title: `Respond to ${activeBusiness.unansweredReviews || 0} unanswered Google reviews`, priority: 'Urgent', due: 'Today' },
+              { title: 'Verify LocalBusiness Schema coordinates with Google Maps API', priority: 'Medium', due: 'In 3 days' },
+              { title: 'Send monthly performance report to client stakeholders', priority: 'Medium', due: 'Friday' },
             ].map((task, idx) => (
               <div
                 key={idx}
@@ -846,7 +847,7 @@ Locora AI analyzed your digital footprint and identified 7 high-impact growth op
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             {[
               { name: 'Local SEO Master Retainer Agreement', category: 'Legal / Contract' },
-              { name: 'Same-Day Dental Treatment Estimate', category: 'Patient Billing' },
+              { name: 'Client Scope & Transparent Fee Estimate', category: 'Client Billing' },
               { name: 'Quarterly Executive ROI Diagnostic', category: 'Agency Report' },
             ].map((t, idx) => (
               <div key={idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">

@@ -39,7 +39,7 @@ export const MonthlyReportView: React.FC = () => {
       delta: '↑ 12%',
       current: '84/100',
       previous: '72/100',
-      detail: 'Local Pack prominence across Austin metro',
+      detail: `Local Pack prominence across ${activeBusiness.city || 'local'} market`,
       icon: Eye,
       color: 'text-emerald-800 bg-emerald-50 border-emerald-200',
     },
@@ -124,12 +124,12 @@ export const MonthlyReportView: React.FC = () => {
 
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(11);
-    doc.text('"Create location-specific emergency content."', 25, 178);
+    doc.text(`"Create high-intent, location-specific service content for ${activeBusiness.city || 'your market'}."`, 25, 178);
 
     doc.setFont('helvetica', 'normal');
-    doc.text('1. Deploy /emergency-dentist-south-congress and /emergency-dentist-round-rock pages.', 25, 188);
-    doc.text('2. Launch 2 Google Business posts highlighting same-day pain relief.', 25, 196);
-    doc.text('3. Inject emergency dental FAQ schema into Google Knowledge Graph.', 25, 204);
+    doc.text(`1. Deploy dedicated localized service landing pages for ${activeBusiness.name}.`, 25, 188);
+    doc.text('2. Launch 2 Google Business Profile updates highlighting core capabilities.', 25, 196);
+    doc.text('3. Inject structured LocalBusiness FAQ schema into Google Knowledge Graph.', 25, 204);
 
     doc.setFontSize(9);
     doc.setFont('helvetica', 'italic');
@@ -154,7 +154,7 @@ export const MonthlyReportView: React.FC = () => {
             Monthly Growth Report
           </h2>
           <p className="text-xs text-slate-500">
-            {activeBusiness.name} • {selectedMonth} • Austin, TX Metro
+            {activeBusiness.name} • {selectedMonth} • {activeBusiness.city ? (activeBusiness.state ? `${activeBusiness.city}, ${activeBusiness.state} Metro` : `${activeBusiness.city} Metro`) : 'Active Market'}
           </p>
         </div>
 

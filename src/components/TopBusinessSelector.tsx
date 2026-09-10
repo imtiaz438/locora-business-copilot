@@ -37,6 +37,7 @@ export const TopBusinessSelector: React.FC = () => {
     setCheckoutModalPlan,
     user,
     logActivity,
+    setIsGbpSyncModalOpen,
   } = useApp();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -88,9 +89,9 @@ export const TopBusinessSelector: React.FC = () => {
     updateActiveBusiness({
       name: editBizName.trim(),
       category: editBizCategory.trim() || 'Local Business',
-      address: editBizAddress.trim() || '100 Main St',
-      city: editBizCity.trim() || 'Austin',
-      state: editBizState.trim() || 'TX',
+      address: editBizAddress.trim() || '',
+      city: editBizCity.trim() || '',
+      state: editBizState.trim() || '',
       country: editBizCountry.trim() || 'United States',
       zip: editBizZip.trim(),
       phone: editBizPhone.trim(),
@@ -156,9 +157,9 @@ export const TopBusinessSelector: React.FC = () => {
     addBusiness({
       name: newBizName.trim(),
       category: newBizCategory.trim() || 'Local Business',
-      address: newBizAddress.trim() || '100 Main St',
-      city: newBizCity.trim() || 'Austin',
-      state: newBizState.trim() || 'TX',
+      address: newBizAddress.trim() || '',
+      city: newBizCity.trim() || '',
+      state: newBizState.trim() || '',
       country: newBizCountry.trim() || 'United States',
       zip: newBizZip.trim() || '',
       phone: newBizPhone.trim() || '',
@@ -186,9 +187,9 @@ export const TopBusinessSelector: React.FC = () => {
 
     addLocation(activeBusinessId, {
       name: newLocName.trim(),
-      address: newLocAddress.trim() || '100 Main St',
-      city: newLocCity.trim() || activeBusiness.city || 'Austin',
-      state: newLocState.trim() || activeBusiness.state || 'TX',
+      address: newLocAddress.trim() || '',
+      city: newLocCity.trim() || activeBusiness.city || '',
+      state: newLocState.trim() || activeBusiness.state || '',
       country: newLocCountry.trim() || 'United States',
       zip: newLocZip.trim() || activeBusiness.zip || '',
       phone: newLocPhone.trim() || activeBusiness.phone,
@@ -285,24 +286,35 @@ export const TopBusinessSelector: React.FC = () => {
             </div>
 
             {/* Quick Actions for Business / Location */}
-            <div className="px-2 py-2 border-b border-slate-100 grid grid-cols-2 gap-1.5 text-xs">
+            <div className="px-2 py-2 border-b border-slate-100 grid grid-cols-3 gap-1.5 text-xs">
+              <button
+                onClick={() => {
+                  setIsGbpSyncModalOpen(true);
+                  setIsOpen(false);
+                }}
+                className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] transition-colors cursor-pointer shadow-xs"
+                title="Sync directly from Google Business Profile or search Google Places"
+              >
+                <Globe className="w-3 h-3" />
+                <span>Sync Google</span>
+              </button>
               <button
                 onClick={() => {
                   openEditBusiness();
                   setIsOpen(false);
                 }}
-                className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#059669] font-bold text-[11px] transition-colors cursor-pointer border border-emerald-200"
+                className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#059669] font-bold text-[11px] transition-colors cursor-pointer border border-emerald-200"
                 title="Customize this business profile with your real name & address"
               >
                 <Pencil className="w-3 h-3 text-[#059669]" />
-                <span>Edit Business</span>
+                <span>Edit Info</span>
               </button>
               <button
                 onClick={() => {
                   setShowAddLocationModal(true);
                   setIsOpen(false);
                 }}
-                className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] transition-colors cursor-pointer"
+                className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] transition-colors cursor-pointer"
                 title="Add a physical branch or location"
               >
                 <Plus className="w-3 h-3 text-slate-500" />
@@ -317,7 +329,7 @@ export const TopBusinessSelector: React.FC = () => {
                   Locations / Branches ({activeBusiness.locations?.length || 1})
                 </span>
                 <span className="text-[10px] text-slate-400">
-                  {activeBusiness.locations?.length ? 'Multi-Branch' : 'Single Clinic'}
+                  {activeBusiness.locations?.length ? 'Multi-Branch' : 'Single Location'}
                 </span>
               </div>
 
@@ -325,7 +337,7 @@ export const TopBusinessSelector: React.FC = () => {
                 {(activeBusiness.locations || [
                   {
                     id: 'main',
-                    name: activeBusiness.locationName || 'Main Clinic',
+                    name: activeBusiness.locationName || 'Main Location',
                     address: activeBusiness.address,
                     city: activeBusiness.city,
                     state: activeBusiness.state,
@@ -632,7 +644,7 @@ export const TopBusinessSelector: React.FC = () => {
                     required
                     value={newBizName}
                     onChange={(e) => setNewBizName(e.target.value)}
-                    placeholder="e.g. Apex Dental Studio, Austin Law Group, Peak Roofing"
+                    placeholder="e.g. Apex Digital Solutions, Summit Law, Metro Plumbing"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:outline-none transition-colors"
                   />
                 </div>
@@ -646,7 +658,7 @@ export const TopBusinessSelector: React.FC = () => {
                       type="text"
                       value={newBizCategory}
                       onChange={(e) => setNewBizCategory(e.target.value)}
-                      placeholder="e.g. Healthcare, Legal, HVAC"
+                      placeholder="e.g. Professional Services, Roofing, Auto, Retail"
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:outline-none transition-colors"
                     />
                   </div>
@@ -673,7 +685,7 @@ export const TopBusinessSelector: React.FC = () => {
                       type="text"
                       value={newBizCity}
                       onChange={(e) => setNewBizCity(e.target.value)}
-                      placeholder="e.g. Austin"
+                      placeholder="Enter city..."
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:outline-none transition-colors"
                     />
                   </div>
@@ -687,7 +699,7 @@ export const TopBusinessSelector: React.FC = () => {
                         type="text"
                         value={newBizState}
                         onChange={(e) => setNewBizState(e.target.value)}
-                        placeholder="TX"
+                        placeholder="State"
                         className="w-1/2 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:outline-none transition-colors"
                       />
                       <input
@@ -848,7 +860,7 @@ export const TopBusinessSelector: React.FC = () => {
                       type="text"
                       value={newLocCity}
                       onChange={(e) => setNewLocCity(e.target.value)}
-                      placeholder="e.g. Austin"
+                      placeholder="Enter city..."
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:outline-none transition-colors"
                     />
                   </div>
@@ -860,7 +872,7 @@ export const TopBusinessSelector: React.FC = () => {
                       type="text"
                       value={newLocState}
                       onChange={(e) => setNewLocState(e.target.value)}
-                      placeholder="e.g. TX"
+                      placeholder="State / Province"
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:outline-none transition-colors"
                     />
                   </div>
@@ -973,7 +985,7 @@ export const TopBusinessSelector: React.FC = () => {
                     required
                     value={editBizName}
                     onChange={(e) => setEditBizName(e.target.value)}
-                    placeholder="e.g. Acme Services, Austin Law Group, Modern HVAC"
+                    placeholder="e.g. Acme Services, Premier Consulting, Modern HVAC"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:outline-none transition-colors"
                   />
                 </div>
@@ -1023,7 +1035,7 @@ export const TopBusinessSelector: React.FC = () => {
                       type="text"
                       value={editBizCity}
                       onChange={(e) => setEditBizCity(e.target.value)}
-                      placeholder="e.g. Austin"
+                      placeholder="Enter city..."
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:outline-none transition-colors"
                     />
                   </div>
@@ -1036,7 +1048,7 @@ export const TopBusinessSelector: React.FC = () => {
                         type="text"
                         value={editBizState}
                         onChange={(e) => setEditBizState(e.target.value)}
-                        placeholder="TX"
+                        placeholder="State"
                         className="w-1/2 px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:outline-none transition-colors"
                       />
                       <input

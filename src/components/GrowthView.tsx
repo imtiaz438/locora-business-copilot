@@ -86,16 +86,16 @@ export const GrowthView: React.FC = () => {
       impactLevel: 'high',
       status: 'pending',
       actionKey: 'service_page',
-      description: 'Deploy dedicated /emergency-dentist landing page with MedicalBusiness schema for search volume.',
+      description: `Deploy dedicated /services landing page with LocalBusiness schema for local search volume.`,
     },
     {
       id: 'act_3',
       number: 3,
-      title: 'Add 4 GBP services',
+      title: 'Add core GBP services',
       impactLevel: 'medium',
       status: 'pending',
       actionKey: 'gbp_services',
-      description: 'Sync Emergency Dental, Same-Day Crowns, Dental Implants, and Invisalign to Google listing.',
+      description: 'Sync specialized sub-services and category attributes to Google listing.',
     },
     {
       id: 'act_4',
@@ -104,7 +104,7 @@ export const GrowthView: React.FC = () => {
       impactLevel: 'medium',
       status: 'pending',
       actionKey: 'google_post',
-      description: 'Launch Teeth Whitening promo offer with direct appointment booking link.',
+      description: 'Launch seasonal promotion or service spotlight with direct contact link.',
     },
     {
       id: 'act_5',
@@ -113,7 +113,7 @@ export const GrowthView: React.FC = () => {
       impactLevel: 'low',
       status: 'pending',
       actionKey: 'homepage_cta',
-      description: 'A/B test "Book Emergency Care" button in hero banner to boost phone call conversions.',
+      description: 'Optimize high-intent contact button in hero banner to boost direct inquiry conversions.',
     },
   ]);
 
@@ -123,16 +123,16 @@ export const GrowthView: React.FC = () => {
       weekNumber: 1,
       title: 'Week 1',
       items: [
-        { id: 'w1_1', text: 'Fix GBP services', completed: true, actionKey: 'gbp_services' },
-        { id: 'w1_2', text: 'Respond to reviews', completed: true, actionKey: 'reviews' },
+        { id: 'w1_1', text: 'Audit GBP services', completed: true, actionKey: 'gbp_services' },
+        { id: 'w1_2', text: 'Respond to customer reviews', completed: true, actionKey: 'reviews' },
       ],
     },
     {
       weekNumber: 2,
       title: 'Week 2',
       items: [
-        { id: 'w2_1', text: 'Create emergency dental page', completed: false, actionKey: 'service_page' },
-        { id: 'w2_2', text: 'Add FAQ content', completed: false, actionKey: 'faq' },
+        { id: 'w2_1', text: 'Create high-intent service page', completed: false, actionKey: 'service_page' },
+        { id: 'w2_2', text: 'Add client FAQ content', completed: false, actionKey: 'faq' },
       ],
     },
     {
@@ -627,15 +627,15 @@ export const GrowthView: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed">
-              Adding structured primary procedures to your Google listing directly expands search queries you rank for on Google Maps in Austin.
+              Adding structured primary capabilities to your Google listing directly expands search queries you rank for on Google Maps in {activeBusiness.city || 'your area'}.
             </p>
 
             <div className="space-y-2 text-xs">
               {[
-                { name: 'Emergency Dental Relief & Tooth Extraction', desc: 'Same-day emergency pain treatment and diagnostics.' },
-                { name: 'Same-Day Dental Crowns', desc: 'High-tech single-visit porcelain tooth restoration.' },
-                { name: 'Dental Implants & Tooth Replacement', desc: 'Permanent titanium tooth implant procedures.' },
-                { name: 'Invisalign Clear Orthodontics', desc: 'Clear aligner therapy for adults and teens.' },
+                { name: `${activeBusiness.category || 'Core Service'} Consultation`, desc: `Immediate priority inquiry triage and consultation for ${activeBusiness.name}.` },
+                { name: 'Comprehensive Operational Assessment', desc: 'Detailed diagnostic evaluation and transparent scope estimate.' },
+                { name: 'Priority Rapid Turnaround Service', desc: 'Expedited service dispatch and dedicated account attention.' },
+                { name: 'Ongoing Support & Preventative Maintenance', desc: 'Scheduled follow-ups and long-term customer care.' },
               ].map((s, idx) => (
                 <div key={idx} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-3">
                   <div>
@@ -656,9 +656,9 @@ export const GrowthView: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  logActivity('gbp', '4 Services Synced', 'Added Emergency, Crowns, Implants, Invisalign');
+                  logActivity('gbp', 'Core Services Synced', `Added primary services for ${activeBusiness.name}`);
                   setQuickServiceModalOpen(false);
-                  alert('Successfully synced 4 high-value services to Google Business Profile!');
+                  alert('Successfully synced core services to Google Business Profile!');
                 }}
                 className="px-5 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-md cursor-pointer"
               >
@@ -691,7 +691,7 @@ export const GrowthView: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-600">
-              Replacing the passive generic "Contact Us" button with direct high-intent emergency copy increases mobile phone conversions by <strong>+34%</strong>.
+              Replacing the passive generic "Contact Us" button with direct high-intent action copy increases mobile conversions by <strong>+34%</strong>.
             </p>
 
             <div className="space-y-3 text-xs">
@@ -705,7 +705,7 @@ export const GrowthView: React.FC = () => {
               <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 space-y-1">
                 <span className="font-bold text-emerald-950">Recommended High-Converting Button:</span>
                 <div className="text-emerald-900 font-mono bg-white p-2 rounded border border-emerald-100">
-                  "Book Emergency Dental Relief" → tel:(512)555-0199 (Expected: 5.8%)
+                  "Schedule Service Now" → {activeBusiness.phone ? `tel:${activeBusiness.phone.replace(/[^0-9+]/g, '')}` : '/contact'} (Expected: 5.8%)
                 </div>
               </div>
             </div>
@@ -719,7 +719,7 @@ export const GrowthView: React.FC = () => {
               </button>
               <button
                 onClick={() => {
-                  logActivity('cro', 'Homepage CTA Optimized', 'Set to "Book Emergency Dental Relief"');
+                  logActivity('cro', 'Homepage CTA Optimized', 'Set to "Schedule Service Now"');
                   setCtaModalOpen(false);
                   alert('Homepage hero CTA draft created and queued for deployment!');
                 }}

@@ -22,28 +22,28 @@ interface GoogleAddressAutocompleteProps {
 // Built-in verified seed addresses & cities for instant responsive autocomplete
 const VERIFIED_LOCATIONS = [
   {
-    address: '4200 N Lamar Blvd, Suite 200',
-    city: 'Austin',
-    state: 'TX',
-    country: 'United States',
-    zip: '78756',
-    formatted: '4200 N Lamar Blvd, Suite 200, Austin, TX 78756, USA',
-  },
-  {
-    address: '1200 S Congress Ave',
-    city: 'Austin',
-    state: 'TX',
-    country: 'United States',
-    zip: '78704',
-    formatted: '1200 S Congress Ave, Austin, TX 78704, USA',
-  },
-  {
     address: '350 5th Avenue, Suite 4800',
     city: 'New York',
     state: 'NY',
     country: 'United States',
     zip: '10118',
     formatted: '350 5th Ave, New York, NY 10118, USA',
+  },
+  {
+    address: '233 S Wacker Dr',
+    city: 'Chicago',
+    state: 'IL',
+    country: 'United States',
+    zip: '60606',
+    formatted: '233 S Wacker Dr, Chicago, IL 60606, USA',
+  },
+  {
+    address: '633 W 5th St',
+    city: 'Los Angeles',
+    state: 'CA',
+    country: 'United States',
+    zip: '90071',
+    formatted: '633 W 5th St, Los Angeles, CA 90071, USA',
   },
   {
     address: '100 Wilshire Blvd, Suite 700',
@@ -114,7 +114,7 @@ const VERIFIED_LOCATIONS = [
 export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps> = ({
   onSelectLocation,
   initialValue = '',
-  placeholder = 'Start typing address, city, or state (e.g. 4200 N Lamar, Austin, TX)...',
+  placeholder = 'Start typing address, city, or state (e.g. 500 Market St, San Francisco, CA)...',
   id = 'google_address_autocomplete',
   label = 'Search Address or Location',
   helperText = 'Google Places autocomplete enabled for street addresses, cities, and states',
@@ -203,8 +203,8 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
         const parts = val.split(',').map((p) => p.trim());
         const generatedLoc: LocationData = {
           address: parts[0] || val,
-          city: parts[1] || 'Austin',
-          state: parts[2] ? parts[2].split(' ')[0] : 'TX',
+          city: parts[1] || '',
+          state: parts[2] ? parts[2].split(' ')[0] : '',
           country: 'United States',
           zip: '',
           formattedAddress: val,

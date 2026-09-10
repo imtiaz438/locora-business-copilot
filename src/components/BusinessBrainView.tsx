@@ -29,6 +29,7 @@ export const BusinessBrainView: React.FC = () => {
     updateBusinessProfile,
     setActiveTab,
     logActivity,
+    setIsGbpSyncModalOpen,
   } = useApp();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -40,41 +41,53 @@ export const BusinessBrainView: React.FC = () => {
   const [phone, setPhone] = useState(businessProfile.phone || activeBusiness.phone);
   const [website, setWebsite] = useState(businessProfile.website || activeBusiness.website);
 
-  // Core Section 18 arrays
+  // Core Section 18 arrays - dynamically derived from user's live profile & active business
   const [services, setServices] = useState<string[]>(
     businessProfile.services?.length
       ? businessProfile.services
-      : ['General Dentistry', 'Cosmetic Dentistry', 'Emergency Dentistry', 'Same-Day Crowns', 'Invisalign Orthodontics']
+      : activeBusiness.services?.length
+        ? activeBusiness.services
+        : activeBusiness.category
+          ? [`${activeBusiness.category} Consultation`, `Emergency ${activeBusiness.category}`, `Standard ${activeBusiness.category} Services`]
+          : ['Primary Service Consultation', 'Commercial & Residential Services']
   );
   const [newServiceInput, setNewServiceInput] = useState('');
 
   const [locations, setLocations] = useState<string[]>(
     businessProfile.targetLocations?.length
       ? businessProfile.targetLocations
-      : ['Downtown Austin', 'South Congress', 'Round Rock', 'Westlake Hills']
+      : activeBusiness.city
+        ? [`${activeBusiness.city} Metro`, `${activeBusiness.city} Central`, `${activeBusiness.city} North`, `${activeBusiness.city} South`]
+        : ['Metro Area', 'Downtown Central', 'Suburban Districts']
   );
   const [newLocationInput, setNewLocationInput] = useState('');
 
   const [audiences, setAudiences] = useState<string[]>(
-    ['Families', 'Young Professionals', 'Emergency (Acute Tooth Pain)', 'Corporate Commuters']
+    Array.isArray(businessProfile.targetAudience)
+      ? businessProfile.targetAudience
+      : typeof businessProfile.targetAudience === 'string' && businessProfile.targetAudience.trim()
+        ? [businessProfile.targetAudience.trim()]
+        : ['Local Homeowners & Residents', 'Nearby Businesses & Professionals', 'Emergency & Immediate Service Inquiries']
   );
   const [newAudienceInput, setNewAudienceInput] = useState('');
 
   const [brandVoice, setBrandVoice] = useState(
-    businessProfile.toneOfVoice || 'Warm, Professional, Clinical but Friendly'
+    businessProfile.toneOfVoice || 'Professional, Authoritative, Approachable & Trustworthy'
   );
 
   const [goals, setGoals] = useState<string[]>(
     businessProfile.businessGoals?.length
       ? businessProfile.businessGoals
-      : ['30 new patients/mo', '#1 for emergency dentist', '100% review response rate', 'Dominate local Maps 3-Pack']
+      : ['30+ qualified inquiries/mo', 'Rank in Google Maps 3-Pack', '100% review response rate', 'Increase local citation authority']
   );
   const [newGoalInput, setNewGoalInput] = useState('');
 
   const [competitors, setCompetitors] = useState<string[]>(
     businessProfile.primaryCompetitors?.length
       ? businessProfile.primaryCompetitors
-      : activeBusiness.competitors || ['Apex Dental Specialists', 'Austin Emergency Smiles', 'Capital City Dental Studio']
+      : (activeBusiness.competitors && activeBusiness.competitors.length > 0)
+        ? activeBusiness.competitors
+        : ['Top Regional Competitor', 'Local Category Leader']
   );
   const [newCompetitorInput, setNewCompetitorInput] = useState('');
 
@@ -99,12 +112,7 @@ export const BusinessBrainView: React.FC = () => {
   };
 
   const handleSyncGBP = () => {
-    setIsSyncing(true);
-    setTimeout(() => {
-      setIsSyncing(false);
-      logActivity('profile', 'Business Brain Synced', 'Refreshed entity schema with Google Business Profile live feed');
-      alert('Business Brain successfully synced with live Google Business Profile!');
-    }, 900);
+    setIsGbpSyncModalOpen(true);
   };
 
   const handleAddChip = (

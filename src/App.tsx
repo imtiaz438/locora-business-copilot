@@ -7,6 +7,7 @@ import { SubscriptionInvoiceModal } from './components/SubscriptionInvoiceModal'
 import { FirstTimeOnboardingModal } from './components/FirstTimeOnboardingModal';
 import { AIActionApprovalModal } from './components/AIActionApprovalModal';
 import { GrowthStoreModal } from './components/GrowthStoreModal';
+import { GoogleBusinessSyncModal } from './components/GoogleBusinessSyncModal';
 import { SubscriptionInvoice } from './types';
 import { isAppSubdomain, navigateToMain } from './utils/domain';
 
@@ -137,6 +138,8 @@ const MainContent: React.FC = () => {
     approveAndExecuteAIAction,
     growthStoreModalOpen,
     setGrowthStoreModalOpen,
+    isGbpSyncModalOpen,
+    setIsGbpSyncModalOpen,
   } = useApp();
   const [successInvoice, setSuccessInvoice] = useState<SubscriptionInvoice | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -418,6 +421,12 @@ const MainContent: React.FC = () => {
       <GrowthStoreModal
         isOpen={growthStoreModalOpen}
         onClose={() => setGrowthStoreModalOpen(false)}
+      />
+
+      {/* Live Google Business Profile & Custom Location Sync Modal */}
+      <GoogleBusinessSyncModal
+        isOpen={isGbpSyncModalOpen}
+        onClose={() => setIsGbpSyncModalOpen(false)}
       />
     </AppShell>
   );

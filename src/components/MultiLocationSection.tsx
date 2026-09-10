@@ -52,88 +52,47 @@ export const MultiLocationSection: React.FC = () => {
   // - bookings
   // - reviews
   // - conversions
-  const locationsData: LocationMetricData[] = [
-    {
-      id: 'austin',
-      name: 'Austin — Central Flagship',
-      city: 'Austin, TX',
-      score: 84,
-      status: 'healthy',
-      statusIcon: '🟢',
-      visibility: 84,
-      calls: 142,
-      callsGrowth: '+9%',
-      forms: 58,
-      formsGrowth: '+14%',
-      bookings: 44,
-      bookingsGrowth: '+12%',
-      reviews: 248,
-      rating: 4.9,
-      unansweredReviews: 17,
-      conversionsRate: '14.2%',
-      conversionRevenue: 37400,
-    },
-    {
-      id: 'dallas',
-      name: 'Dallas — Uptown Branch',
-      city: 'Dallas, TX',
-      score: 76,
-      status: 'improving',
-      statusIcon: '🟡',
-      visibility: 76,
-      calls: 98,
-      callsGrowth: '+4%',
-      forms: 34,
-      formsGrowth: '+6%',
-      bookings: 26,
-      bookingsGrowth: '+8%',
-      reviews: 164,
-      rating: 4.6,
-      unansweredReviews: 4,
-      conversionsRate: '11.4%',
-      conversionRevenue: 22100,
-    },
-    {
-      id: 'houston',
-      name: 'Houston — Galleria Branch',
-      city: 'Houston, TX',
-      score: 62,
-      status: 'need_attention',
-      statusIcon: '🔴',
-      visibility: 62,
-      calls: 54,
-      callsGrowth: '-11%',
-      forms: 18,
-      formsGrowth: '-8%',
-      bookings: 12,
-      bookingsGrowth: '-15%',
-      reviews: 88,
-      rating: 4.1,
-      unansweredReviews: 8,
-      conversionsRate: '7.2%',
-      conversionRevenue: 10800,
-    },
-    {
-      id: 'san-antonio',
-      name: 'San Antonio — Medical Center',
-      city: 'San Antonio, TX',
-      score: 81,
-      status: 'healthy',
-      statusIcon: '🟢',
-      visibility: 81,
-      calls: 118,
-      callsGrowth: '+7%',
-      forms: 42,
-      formsGrowth: '+9%',
-      bookings: 35,
-      bookingsGrowth: '+11%',
-      reviews: 210,
-      rating: 4.8,
-      unansweredReviews: 2,
-      conversionsRate: '13.1%',
-      conversionRevenue: 28900,
-    },
-  ];
+  const activeLocations = (activeBusiness.locations && activeBusiness.locations.length > 0)
+    ? activeBusiness.locations
+    : [
+        {
+          id: `loc_${activeBusiness.id}`,
+          name: activeBusiness.name || 'Main Location',
+          city: activeBusiness.city || 'Primary Location',
+          state: activeBusiness.state || '',
+          address: activeBusiness.address || '',
+          phone: activeBusiness.phone || '',
+          isMain: true,
+        },
+      ];
+
+  const locationsData: LocationMetricData[] = activeLocations.map((loc, idx) => {
+    const locScore = Math.max(50, Math.min(99, activeBusiness.healthScore - idx * 4));
+    const status: 'healthy' | 'improving' | 'need_attention' =
+      locScore >= 80 ? 'healthy' : locScore >= 68 ? 'improving' : 'need_attention';
+    const statusIcon = locScore >= 80 ? '🟢' : locScore >= 68 ? '🟡' : '🔴';
+
+    return {
+      id: loc.id,
+      name: loc.name,
+      city: loc.city ? (loc.state ? `${loc.city}, ${loc.state}` : loc.city) : 'Primary Market',
+      score: locScore,
+      status,
+      statusIcon,
+      visibility: locScore,
+      calls: Math.max(12, 120 - idx * 25),
+      callsGrowth: '+8%',
+      forms: Math.max(6, 45 - idx * 10),
+      formsGrowth: '+12%',
+      bookings: Math.max(4, 35 - idx * 8),
+      bookingsGrowth: '+10%',
+      reviews: Math.max(10, (activeBusiness.reviewCount || 120) - idx * 30),
+      rating: activeBusiness.googleRating || 4.8,
+      unansweredReviews: Math.max(0, (activeBusiness.unansweredReviews || 3) - idx),
+      conversionsRate: '12.8%',
+      conversionRevenue: Math.max(8000, 32000 - idx * 7000),
+    };
+  });
 
   const [selectedLocationId, setSelectedLocationId] = useState<string>('all');
 
@@ -143,8 +102,8 @@ export const MultiLocationSection: React.FC = () => {
 
   const displayMetrics = isAll
     ? {
-        name: 'All Locations (Combined Metro Network)',
-        city: 'Texas Multi-Location Network',
+        name: `${activeBusiness.name || 'Business'} Network`,
+        city: activeBusiness.city ? `${activeBusiness.city} & Regional Locations` : 'All Active Locations',
         score: Math.round(locationsData.reduce((s, l) => s + l.score, 0) / locationsData.length),
         statusIcon: '🟢',
         visibility: Math.round(locationsData.reduce((s, l) => s + l.visibility, 0) / locationsData.length),
@@ -155,7 +114,7 @@ export const MultiLocationSection: React.FC = () => {
         bookings: locationsData.reduce((s, l) => s + l.bookings, 0),
         bookingsGrowth: '+10%',
         reviews: locationsData.reduce((s, l) => s + l.reviews, 0),
-        rating: 4.7,
+        rating: activeBusiness.googleRating || 4.8,
         unansweredReviews: locationsData.reduce((s, l) => s + l.unansweredReviews, 0),
         conversionsRate: '12.4%',
         conversionRevenue: locationsData.reduce((s, l) => s + l.conversionRevenue, 0),
@@ -171,7 +130,9 @@ export const MultiLocationSection: React.FC = () => {
             <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#059669] font-bold text-[10px] uppercase font-heading">
               Multi-Location Engine
             </span>
-            <span className="text-xs text-slate-400 font-mono">4 Active Branches</span>
+            <span className="text-xs text-slate-400 font-mono">
+              {locationsData.length} {locationsData.length === 1 ? 'Active Branch' : 'Active Branches'}
+            </span>
           </div>
           <h3 className="text-lg font-bold text-slate-900 font-heading tracking-tight mt-1">
             Branch Performance & Location Intelligence
@@ -343,7 +304,7 @@ export const MultiLocationSection: React.FC = () => {
               {displayMetrics.bookingsGrowth}
             </span>
           </div>
-          <p className="text-[10px] text-slate-400">Confirmed Patients</p>
+          <p className="text-[10px] text-slate-400">Confirmed Clients / Customers</p>
         </div>
 
         {/* 5. Reviews */}
@@ -377,7 +338,7 @@ export const MultiLocationSection: React.FC = () => {
               ${(displayMetrics.conversionRevenue / 1000).toFixed(1)}k
             </span>
           </div>
-          <p className="text-[10px] text-slate-400">Lead-to-Patient Rate</p>
+          <p className="text-[10px] text-slate-400">Lead-to-Customer Rate</p>
         </div>
       </div>
     </div>

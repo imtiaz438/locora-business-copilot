@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const InvoiceView: React.FC = () => {
-  const { invoices, addInvoice, updateInvoiceStatus, deleteInvoice, customers, businessProfile, settings, user, setCheckoutModalPlan } = useApp();
+  const { invoices, addInvoice, updateInvoiceStatus, deleteInvoice, customers, businessProfile, activeBusiness, settings, user, setCheckoutModalPlan } = useApp();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(invoices[0] || null);
@@ -69,7 +69,7 @@ export const InvoiceView: React.FC = () => {
     const cust = customers.find((c) => c.id === selectedCustomerId) || {
       name: 'Walk-in Client',
       email: 'client@example.com',
-      address: 'Austin, TX',
+      address: activeBusiness.city ? (activeBusiness.state ? `${activeBusiness.city}, ${activeBusiness.state}` : activeBusiness.city) : 'Client Address',
     };
 
     const subtotal = calculateSubtotal();

@@ -38,6 +38,7 @@ export const GrowthCommandCenter: React.FC = () => {
     setRightAiPanelOpen,
     user,
     consumeAiCredit,
+    setIsGbpSyncModalOpen,
   } = useApp();
 
   const [selectedFixItAction, setSelectedFixItAction] = useState<PriorityAction | null>(null);
@@ -51,9 +52,9 @@ export const GrowthCommandCenter: React.FC = () => {
 
   // Suggested Quick Prompts
   const quickPrompts = [
-    `Why is the emergency service page our highest ROI action?`,
-    `How do we reach the Google Maps 3-pack for ${activeBusiness.city}?`,
-    `Draft response for patient who complained about wait times`,
+    `Why is the high-intent service page our highest ROI action?`,
+    `How do we reach the Google Maps 3-pack for ${activeBusiness.city || 'our service area'}?`,
+    `Draft a professional response for a client review`,
     `Compare our reviews with ${activeBusiness.competitors?.[0] || 'local competitors'}`,
   ];
 
@@ -89,9 +90,9 @@ export const GrowthCommandCenter: React.FC = () => {
       } else {
         setAiAnswer(
           `### Locora AI Recommendation for ${activeBusiness.name}:\n\n` +
-          `1. **Focus on Priority Action #1**: Publishing the localized Emergency Dental service page directly targets high-intent searchers in ${activeBusiness.city}. This will convert at ~3x the rate of a general homepage visit.\n` +
-          `2. **Clear Review Backlog**: Responding to your 17 unanswered Google reviews signals active patient care to Google's ranking algorithm.\n` +
-          `3. **Continuous Schema Monitoring**: Keeping LocalBusiness & MedicalBusiness structured data valid protects your placement in Google AI Overviews.`
+          `1. **Focus on Priority Action #1**: Publishing the ${priorityActions[0]?.title || 'high-intent local service page'} directly targets qualified searchers in ${activeBusiness.city || 'your primary market'}.\n` +
+          `2. **Clear Review Backlog**: Responding to your ${activeBusiness.unansweredReviews || 0} unanswered customer reviews signals responsiveness to local ranking algorithms.\n` +
+          `3. **Continuous Schema Monitoring**: Keeping LocalBusiness structured data verified strengthens placement in Google Maps and AI Overviews.`
         );
       }
     } catch {
@@ -152,6 +153,38 @@ export const GrowthCommandCenter: React.FC = () => {
               <span>4. Measure</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* 1.5 DIRECT GOOGLE BUSINESS PROFILE SYNC & SETUP BANNER */}
+      <div className="bg-gradient-to-r from-emerald-900 to-slate-900 text-white rounded-3xl p-5 sm:p-6 shadow-md border border-emerald-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+              Live Google Sync Operations
+            </span>
+            <span className="text-xs text-slate-300">
+              {activeBusiness.gbpConnected ? 'Google Business Linked' : 'Connect Your Google Business Profile'}
+            </span>
+          </div>
+          <h3 className="text-base sm:text-lg font-bold font-heading text-white">
+            {activeBusiness.gbpConnected
+              ? `${activeBusiness.name} is synchronized with Google Maps`
+              : 'Sync directly from Google or setup your custom business profile'}
+          </h3>
+          <p className="text-xs text-slate-300 max-w-xl">
+            Pull verified business name, category, customer reviews, rating, and address directly into your database. Clean dashboard with zero dummy data.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto">
+          <button
+            onClick={() => setIsGbpSyncModalOpen(true)}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
+          >
+            <Globe className="w-4 h-4" />
+            <span>{activeBusiness.gbpConnected ? 'Re-Sync from Google' : 'Sync Google Profile'}</span>
+          </button>
         </div>
       </div>
 
@@ -551,7 +584,7 @@ export const GrowthCommandCenter: React.FC = () => {
         {isAsking && (
           <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center gap-3 text-xs text-slate-600 font-sans animate-pulse">
             <Loader2 className="w-4 h-4 text-[#059669] animate-spin shrink-0" />
-            <span>Locora is analyzing local competitor data, Google rank algorithms, and Austin patient search trends...</span>
+            <span>Locora is analyzing local competitor data, Google rank algorithms, and search trends in {activeBusiness.city || 'your primary market'}...</span>
           </div>
         )}
 

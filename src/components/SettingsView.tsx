@@ -840,7 +840,7 @@ export const SettingsView: React.FC = () => {
                         targetLocations: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
                       })
                     }
-                    placeholder="e.g. Austin, TX, Round Rock, TX, Westlake, TX"
+                    placeholder="e.g. Metro Area, Downtown, North Suburbs"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
                   />
                 </div>
