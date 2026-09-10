@@ -62,7 +62,7 @@ export const InvoiceView: React.FC = () => {
   const handleCreateInvoice = (e: React.FormEvent) => {
     e.preventDefault();
     if (isFreePlanLimitReached) {
-      alert('Free Starter plan includes up to 2 invoices limit (used 2/2). Deleting past invoices does not reset this lifetime limit. Upgrade to Pro Growth ($19/mo) for Unlimited Invoices.');
+      alert('Free Explorer plan includes up to 2 invoices limit (used 2/2). Deleting past invoices does not reset this lifetime limit. Upgrade to Pro Growth ($29/mo) for Unlimited Invoices.');
       setCheckoutModalPlan('pro');
       return;
     }
@@ -229,7 +229,7 @@ export const InvoiceView: React.FC = () => {
         <button
           onClick={() => {
             if (isFreePlanLimitReached) {
-              alert('Free Starter plan includes up to 2 invoices limit (used 2/2). Deleting past invoices does not reset this lifetime limit. Upgrade to Pro Growth ($19/mo) for Unlimited Invoices.');
+              alert('Free Explorer plan includes up to 2 invoices limit (used 2/2). Deleting past invoices does not reset this lifetime limit. Upgrade to Pro Growth ($29/mo) for Unlimited Invoices.');
               setCheckoutModalPlan('pro');
             } else {
               setShowCreateModal(true);
@@ -251,7 +251,7 @@ export const InvoiceView: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${isFreePlanLimitReached ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
             <span>
-              <strong>Free Starter Plan:</strong> {totalCreatedCount} / 2 Invoices Generated
+              <strong>Free Explorer Plan:</strong> {totalCreatedCount} / 2 Invoices Generated
               {isFreePlanLimitReached && ' — Limit reached! Deleting past invoices does not reset this lifetime limit.'}
             </span>
           </div>
@@ -260,7 +260,7 @@ export const InvoiceView: React.FC = () => {
               onClick={() => setCheckoutModalPlan('pro')}
               className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg shadow-2xs transition-colors cursor-pointer shrink-0"
             >
-              Upgrade to Pro ($19/mo)
+              Upgrade to Pro ($29/mo)
             </button>
           ) : (
             <span className="text-[11px] text-slate-500 font-medium shrink-0">Unlimited Invoices with Pro</span>

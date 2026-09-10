@@ -154,6 +154,15 @@ export const PublicFooter: React.FC = () => {
                   <Linkedin className="w-4 h-4" />
                 </a>
                 <a
+                  href="https://x.com/locoraai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="X (Twitter)"
+                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-[#059669] hover:border-[#059669] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
+                >
+                  <Twitter className="w-4 h-4" />
+                </a>
+                <a
                   href="https://www.facebook.com/people/Locora-AI/61593321283379/"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -163,7 +172,7 @@ export const PublicFooter: React.FC = () => {
                   <Facebook className="w-4 h-4" />
                 </a>
                 <a
-                  href="https://www.youtube.com/watch?v=T-MENEM_VYM"
+                  href="https://youtube.com/@locoraai"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="YouTube"
@@ -172,7 +181,7 @@ export const PublicFooter: React.FC = () => {
                   <Youtube className="w-4 h-4" />
                 </a>
                 <a
-                  href="https://github.com/Locora-AI/.local-seo-resources"
+                  href="https://github.com/locoraai"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="GitHub"
@@ -197,6 +206,12 @@ export const PublicFooter: React.FC = () => {
           <div className="space-y-3 font-sans">
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Product Features</h4>
             <ul className="space-y-2 text-xs text-slate-600">
+              <li>
+                <button onClick={() => navigateTo('/products', 'products')} className="font-bold text-[#059669] hover:text-[#047857] transition-colors cursor-pointer text-left flex items-center gap-1">
+                  <span>All Products Suite</span>
+                  <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-sm font-bold">New</span>
+                </button>
+              </li>
               <li>
                 <button onClick={() => navigateTo('/features/ai-proposal-generator', 'feature_ai-proposal-generator')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
                   AI Proposal Generator
@@ -235,6 +250,11 @@ export const PublicFooter: React.FC = () => {
               <li>
                 <button onClick={() => navigateTo('/features/document-generator', 'feature_document-generator')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
                   Document Generator
+                </button>
+              </li>
+              <li>
+                <button onClick={() => navigateTo('/features/ai-business-chat', 'feature_ai-business-chat')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  AI Business Chat
                 </button>
               </li>
             </ul>
@@ -313,6 +333,11 @@ export const PublicFooter: React.FC = () => {
           <div className="space-y-3 font-sans">
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Company</h4>
             <ul className="space-y-2 text-xs text-slate-600">
+              <li>
+                <button onClick={() => navigateTo('/', 'home')} className="hover:text-[#059669] transition-colors cursor-pointer">
+                  Home
+                </button>
+              </li>
               <li>
                 <button onClick={() => navigateTo('/about', 'about')} className="hover:text-[#059669] transition-colors cursor-pointer">
                   About Us

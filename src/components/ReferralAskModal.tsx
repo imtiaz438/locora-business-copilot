@@ -22,7 +22,7 @@ export const ReferralAskModal: React.FC<Props> = ({ isOpen, onClose, preselected
 
   const handleGenerate = async () => {
     if (user.planTier === 'free') {
-      alert('Referral-Ask Generator is available on Pro Growth ($19/mo) and Agency Elite plans.');
+      alert('Referral-Ask Generator is available on Pro Growth ($29/mo) and Agency Elite plans.');
       setCheckoutModalPlan('pro');
       return;
     }

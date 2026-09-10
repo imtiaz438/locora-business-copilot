@@ -128,7 +128,17 @@ export function build40PointAudit(targetUrl: string, rawData?: WebsiteAuditResul
   const scriptCount = typeof meta.scriptCount === 'number' ? meta.scriptCount : 12;
   const blockingScriptsCount = typeof meta.blockingScriptsCount === 'number' ? meta.blockingScriptsCount : 1;
   const hasAggregateRating = Boolean(meta.hasAggregateRating);
-  const hasLocalBusiness = Boolean(meta.hasLocalBusiness || schemaTypes.some(t => /localbusiness|dentist|restaurant|store|physician|legal|medical|contractor|salon|barber|auto|plumb|electr|service/i.test(t)));
+  const categoryTerms = (rawData?.business?.category || rawData?.category || meta?.category || '').toLowerCase().split(/[\s,/]+/).filter(Boolean);
+  const hasLocalBusiness = Boolean(
+    meta.hasLocalBusiness ||
+    schemaTypes.some(t => {
+      const lower = t.toLowerCase();
+      if (lower.includes('localbusiness') || lower.includes('service') || lower.includes('organization') || lower.includes('store')) {
+        return true;
+      }
+      return categoryTerms.some(term => term.length > 2 && lower.includes(term));
+    })
+  );
   const hasOrganization = Boolean(meta.hasOrganization || schemaTypes.some(t => /organization/i.test(t)));
   const hasWebsiteSchema = Boolean(meta.hasWebsiteSchema || schemaTypes.some(t => /website/i.test(t)));
   const hasMixedContent = Boolean(meta.hasMixedContent);
@@ -1062,7 +1072,8 @@ export function build40PointAudit(targetUrl: string, rawData?: WebsiteAuditResul
   let p33Loss = 0;
   if (hasLocalBusiness) {
     p33Status = 'pass';
-    p33Diag = `Verified LocalBusiness Schema detected (${schemaTypes.filter(t => /local|dent|rest|store|med|serv/i.test(t)).join(', ') || 'LocalBusiness'}). Google can extract hours, address, and geo-coordinates for the local map pack.`;
+    const detectedSchema = schemaTypes.length > 0 ? schemaTypes.join(', ') : 'LocalBusiness';
+    p33Diag = `Verified LocalBusiness Schema detected (${detectedSchema}). Google can extract hours, address, and geo-coordinates for the local map pack.`;
     p33Rem = 'Ensure geo-coordinates and opening hours in the schema match your Google Business Profile exactly.';
     p33Loss = 0;
   } else {

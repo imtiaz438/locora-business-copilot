@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const FeaturesView: React.FC = () => {
-  const { setActiveTab } = useApp();
+  const { setActiveTab, user } = useApp();
   const [selectedModule, setSelectedModule] = useState<'proposal' | 'seo' | 'crm' | 'invoice' | 'audit' | 'planner'>('proposal');
 
   const featureList = Object.values(SEO_FEATURES_DATABASE);
@@ -194,10 +194,17 @@ export const FeaturesView: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
-              onClick={() => setActiveTab('dashboard')}
+              onClick={() => {
+                if (user.isAuthenticated) {
+                  setActiveTab('dashboard');
+                } else {
+                  setActiveTab('signup');
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-xl border border-slate-200 transition-colors cursor-pointer"
             >
-              Launch in App Workspace
+              Start Free Workspace
             </button>
           </div>
         </div>
@@ -278,12 +285,16 @@ export const FeaturesView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setActiveTab(feat.targetTab);
+                    if (user.isAuthenticated) {
+                      setActiveTab(feat.targetTab);
+                    } else {
+                      navigateToFeature(feat.slug);
+                    }
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   className="px-3 py-1.5 bg-emerald-50 hover:bg-[#059669] text-emerald-800 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
                 >
-                  Open Tool →
+                  Explore Guide →
                 </button>
               </div>
             </div>
@@ -339,7 +350,7 @@ export const FeaturesView: React.FC = () => {
               </tr>
               <tr className="bg-emerald-50/80 font-bold">
                 <td className="p-4 text-slate-900">Total Monthly Cost</td>
-                <td className="p-4 text-[#059669] text-sm">$0 Starter / $49 Pro Growth</td>
+                <td className="p-4 text-[#059669] text-sm">$0 Free / $29 Pro Growth</td>
                 <td className="p-4 text-rose-600 text-sm">$409.00 / month</td>
               </tr>
             </tbody>
@@ -354,10 +365,17 @@ export const FeaturesView: React.FC = () => {
           Start with 25 free monthly AI credits right now in your workspace. No credit card required.
         </p>
         <button
-          onClick={() => setActiveTab('dashboard')}
+          onClick={() => {
+            if (user.isAuthenticated) {
+              setActiveTab('dashboard');
+            } else {
+              setActiveTab('signup');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
           className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-xs transition-all inline-flex items-center gap-2 cursor-pointer font-sans"
         >
-          <span>Launch Workspace App</span>
+          <span>Start Free Explorer Tier</span>
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>

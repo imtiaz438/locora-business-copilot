@@ -30,7 +30,9 @@ import {
   HelpCircle,
   Info,
   ShieldAlert,
+  Lock,
 } from 'lucide-react';
+import { LockedSeoFeatureView } from './LockedSeoFeatureView.tsx';
 
 interface RealSeoDashboardProps {
   domain?: string;
@@ -76,6 +78,8 @@ export const RealSeoDashboard: React.FC<RealSeoDashboardProps> = ({
   onUpgradeClick,
 }) => {
   const { user, businessProfile, updateUser } = useApp();
+  const isPaidUser = user?.planTier === 'pro' || user?.planTier === 'agency' || user?.planTier === 'elite' || user?.role === 'admin' || user?.role === 'owner';
+
   const targetDomain = (propDomain || businessProfile?.website || 'locora.ai')
     .replace(/^https?:\/\//i, '')
     .replace(/\/.*$/, '')
@@ -148,11 +152,12 @@ export const RealSeoDashboard: React.FC<RealSeoDashboardProps> = ({
     }
   };
 
-  // Initial load
+  // Initial load (paid accounts only)
   useEffect(() => {
+    if (!isPaidUser) return;
     fetchAudit(false);
     fetchAiHistory();
-  }, [targetDomain]);
+  }, [targetDomain, isPaidUser]);
 
   // Fetch AI Visibility benchmark history
   const fetchAiHistory = async () => {
@@ -241,6 +246,22 @@ export const RealSeoDashboard: React.FC<RealSeoDashboardProps> = ({
     return matchesSearch && matchesIntent;
   });
 
+  if (!isPaidUser) {
+    return (
+      <LockedSeoFeatureView
+        title="Real SEO Analytics & Multi-Model AI Citations"
+        description="Access DataForSEO Domain Rank metrics, Live Backlink profiles, 700-keyword batch matrices, Google AI Overview verification, and Multi-LLM brand mention benchmarks across ChatGPT, Claude, Gemini, and Perplexity."
+        badgeLabel="PRO & AGENCY ONLY"
+        onUpgradePro={() => {
+          if (onUpgradeClick) onUpgradeClick();
+        }}
+        onUpgradeAgency={() => {
+          if (onUpgradeClick) onUpgradeClick();
+        }}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Top Header Card: Target Domain, Freshness Badge, Quota Meter & Live Refresh */}
@@ -277,14 +298,19 @@ export const RealSeoDashboard: React.FC<RealSeoDashboardProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* SEO Lookup Credit Meter (Phase C) */}
+            {/* SEO Lookup Credit Meter (Phase C - Weighted) */}
             <div className="px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-              <div className="text-slate-500 font-medium">SEO Lookups</div>
+              <div className="text-slate-500 font-medium flex items-center gap-1">
+                <span>SEO Units Used</span>
+                <span title="Weighted consumption: Domain Overview (1), Backlinks (2), Keyword Matrix (1), Full Audit Miss (6). Cached hits consume 0 units.">
+                  <Info className="w-3 h-3 text-slate-400 cursor-help" />
+                </span>
+              </div>
               <div className="font-bold text-slate-900 flex items-center gap-1.5">
                 <span>{user?.seoLookupsUsed || 0}</span>
                 <span className="text-slate-400 font-normal">/</span>
-                <span>{user?.seoLookupsPerMonth || 10}</span>
-                <span className="text-[10px] text-emerald-600 uppercase font-semibold ml-1">Monthly</span>
+                <span>{user?.seoLookupsPerMonth || 100}</span>
+                <span className="text-[10px] text-emerald-600 uppercase font-semibold ml-1">Units</span>
               </div>
             </div>
 
@@ -293,7 +319,7 @@ export const RealSeoDashboard: React.FC<RealSeoDashboardProps> = ({
               onClick={() => fetchAudit(true)}
               disabled={refreshing || loading}
               className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition shadow-xs disabled:opacity-60 cursor-pointer"
-              title="Refresh live data. Cached data is served free; cache miss uses 1 SEO lookup."
+              title="Refresh live data. Cached data is served free; cache miss uses weighted SEO lookup units."
             >
               <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
               {refreshing ? 'Updating...' : 'Refresh Live'}

@@ -131,12 +131,14 @@ export function generateAuditPdf(options: GeneratePdfOptions): void {
   doc.text('OVERALL HEALTH', margin + 14, y + 18);
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  const scoreColor = evaluation.overallHealthScore >= 80 ? [5, 150, 105] : evaluation.overallHealthScore >= 60 ? [217, 119, 6] : [225, 29, 72];
+  const score = evaluation.overallScore ?? 75;
+  const scoreColor = score >= 80 ? [5, 150, 105] : score >= 60 ? [217, 119, 6] : [225, 29, 72];
   doc.setTextColor(scoreColor[0], scoreColor[1], scoreColor[2]);
-  doc.text(`${evaluation.overallHealthScore}/100`, margin + 14, y + 42);
+  doc.text(`${score}/100`, margin + 14, y + 42);
   doc.setFontSize(8);
   doc.setTextColor(100, 116, 139);
-  doc.text(`Grade: ${evaluation.letterGrade}`, margin + 14, y + 56);
+  const grade = score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score >= 60 ? 'D' : 'F';
+  doc.text(`Grade: ${grade}`, margin + 14, y + 56);
 
   // Metric 2: Critical Deficits
   doc.setFontSize(8);
@@ -222,7 +224,7 @@ export function generateAuditPdf(options: GeneratePdfOptions): void {
 
     doc.setFontSize(6.5);
     doc.setTextColor(148, 163, 184);
-    doc.text(`${p.passed}/${p.total} passed`, px + 6, y + 40);
+    doc.text(`${p.passedCount}/${p.totalCount} passed`, px + 6, y + 40);
   });
 
   y += 58;
@@ -274,14 +276,14 @@ export function generateAuditPdf(options: GeneratePdfOptions): void {
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(71, 85, 105);
-    const detailText = `Finding: ${item.currentValue}  ·  Benchmark: ${item.benchmark}`;
+    const detailText = `Diagnostic: ${item.diagnostic}  ·  Target: ${item.targetMetric}`;
     doc.text(detailText, margin + 8, y + 23);
 
     // Fix suggestion
     doc.setFontSize(7);
     doc.setFont('helvetica', isFail || isWarn ? 'bold' : 'normal');
     doc.setTextColor(isFail ? 185 : isWarn ? 146 : 71, isFail ? 28 : isWarn ? 64 : 85, isFail ? 28 : isWarn ? 14 : 105);
-    const fixLine = doc.splitTextToSize(`Action: ${item.howToFix}`, contentWidth - 16);
+    const fixLine = doc.splitTextToSize(`Action: ${item.remediation}`, contentWidth - 16);
     doc.text(fixLine[0], margin + 8, y + 34);
 
     y += 46;

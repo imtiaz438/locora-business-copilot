@@ -213,3 +213,90 @@ export async function triggerLinkedInSSO({
     onError(err.message || 'Could not start LinkedIn sign-in.');
   }
 }
+
+/**
+ * Initiates Google Analytics 4 (GA4) OAuth connection flow.
+ * Obtains token for analytics.readonly and webmasters.readonly and syncs property with Locora database.
+ */
+export async function triggerGoogleAnalyticsOAuth({
+  userEmail,
+  onStart,
+  onSuccess,
+  onError,
+}: {
+  userEmail: string;
+  onStart?: () => void;
+  onSuccess: (ga4Data: any) => void;
+  onError: (errorMsg: string) => void;
+}): Promise<void> {
+  if (onStart) onStart();
+
+  const clientId = await getGoogleClientId();
+  await ensureGoogleGsiLoaded();
+
+  const google = (window as any).google;
+  if (google?.accounts?.oauth2?.initTokenClient) {
+    try {
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'openid email profile https://www.googleapis.com/auth/analytics.readonly https://www.googleapis.com/auth/webmasters.readonly',
+        prompt: 'consent',
+        callback: async (tokenResponse: any) => {
+          if (tokenResponse.error) {
+            console.warn('GA4 OAuth token notice:', tokenResponse);
+            onError(tokenResponse.error_description || 'Google Analytics connection was cancelled.');
+            return;
+          }
+
+          if (tokenResponse.access_token) {
+            try {
+              const res = await fetch('/api/analytics/ga4/connect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  email: userEmail,
+                  accessToken: tokenResponse.access_token,
+                }),
+              });
+              const data = await res.json();
+              if (res.ok && data.success) {
+                onSuccess(data);
+              } else {
+                onError(data.error || 'Failed to link Google Analytics 4 property.');
+              }
+            } catch (err: any) {
+              console.error('GA4 link server error:', err);
+              onError(err.message || 'Could not complete GA4 connection on server.');
+            }
+          }
+        },
+      });
+
+      tokenClient.requestAccessToken({ prompt: 'consent' });
+      return;
+    } catch (gsiErr: any) {
+      console.warn('GSI client init error for GA4, falling back to direct link:', gsiErr);
+    }
+  }
+
+  // Direct connection fallback
+  try {
+    const res = await fetch('/api/analytics/ga4/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: userEmail,
+        isDirectConnect: true,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      onSuccess(data);
+    } else {
+      onError(data.error || 'Failed to connect Google Analytics 4.');
+    }
+  } catch (err: any) {
+    onError(err.message || 'Connection to GA4 service failed.');
+  }
+}
+

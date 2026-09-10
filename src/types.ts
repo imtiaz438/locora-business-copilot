@@ -46,6 +46,28 @@ export interface CustomLogoConfig {
   authLogoConfig?: BrandAssetConfig;
 }
 
+export interface GoogleBusinessProfileInfo {
+  connected: boolean;
+  listingName?: string;
+  rating?: number;
+  reviewCount?: number;
+  unansweredReviews?: number;
+  mapsUrl?: string;
+  category?: string;
+}
+
+export interface BusinessBrainOpportunity {
+  id: string;
+  type: 'review' | 'service_gap' | 'competitor' | 'seo' | 'citation';
+  severity: 'high' | 'medium' | 'low';
+  title: string;
+  description: string;
+  impact: string;
+  actionLabel: string;
+  actionTargetTab: string;
+  promptPayload?: string;
+}
+
 export interface BusinessProfile {
   id: string;
   name: string;
@@ -67,7 +89,106 @@ export interface BusinessProfile {
   taxId: string;
   logoUrl?: string;
   logoConfig?: CustomLogoConfig;
+  // Core Business Brain Fields
+  services?: string[];
+  targetLocations?: string[];
+  primaryCompetitors?: string[];
+  currentOffers?: string[];
+  businessGoals?: string[];
+  googleBusiness?: GoogleBusinessProfileInfo;
+  brainReadinessScore?: number;
+  lastBrainSyncAt?: string;
   updatedAt: string;
+}
+
+export interface BusinessLocationItem {
+  id: string;
+  name: string;
+  isMain?: boolean;
+  address: string;
+  city: string;
+  state: string;
+  country?: string;
+  zip?: string;
+  phone?: string;
+}
+
+export interface ClientBusiness {
+  id: string;
+  name: string;
+  category: string;
+  tagline: string;
+  locationName: string;
+  address: string;
+  city: string;
+  state: string;
+  country?: string;
+  zip: string;
+  phone: string;
+  website: string;
+  healthScore: number;
+  healthDelta: number; // e.g. +6 points this month
+  highImpactCount: number;
+  opportunityCount: number;
+  healthyAreaCount: number;
+  isMainLocation?: boolean;
+  locations?: BusinessLocationItem[];
+  services: string[];
+  competitors: string[];
+  googleRating: number;
+  reviewCount: number;
+  unansweredReviews: number;
+  gbpCompleteness: number;
+  healthBreakdown?: {
+    visibility: number;
+    reputation: number;
+    conversion: number;
+    operations: number;
+  };
+}
+
+export interface FixItDraft {
+  id: string;
+  actionId: string;
+  title: string;
+  slug: string;
+  seoTitle: string;
+  metaDescription: string;
+  schemaType: string;
+  schemaJson: string;
+  headings: string[];
+  bodyCopy: string;
+  faqs: { question: string; answer: string }[];
+  internalLinks: { anchor: string; target: string }[];
+  status: 'draft' | 'reviewed' | 'published';
+  createdAt: string;
+}
+
+export interface PriorityAction {
+  id: string;
+  urgency: 'high' | 'opportunity' | 'good';
+  urgencyLabel: string; // "HIGH IMPACT" | "OPPORTUNITY" | "GOOD"
+  title: string; // Problem
+  problem: string;
+  whyItMatters: string;
+  evidence: string;
+  expectedImpact: string;
+  actionType: 'create_page' | 'respond_reviews' | 'gbp_details' | 'schema_fix' | 'quote_followup' | 'competitor_gap' | 'custom';
+  actionLabel: string; // "[ Fix This ]" | "[ Respond to Reviews ]" | "[ View Details ]"
+  recommendationTitle: string;
+  category?: string;
+  priorityLevel?: 'high' | 'medium' | 'low';
+  aiReasoning?: string;
+  itemsToCreate?: string[];
+  draft?: FixItDraft;
+  aiExplanation: {
+    rootCause: string;
+    competitorEvidence: string;
+    revenueImpact: string;
+    whyNow: string;
+  };
+  isFixed?: boolean;
+  fixedAt?: string;
 }
 
 export interface AppSettings {
@@ -86,6 +207,7 @@ export interface AppSettings {
 }
 
 export type CustomerStatus = 'lead' | 'contacted' | 'proposal_sent' | 'client' | 'inactive';
+export type PipelineStage = 'new_lead' | 'contacted' | 'qualified' | 'proposal' | 'won';
 
 export interface Customer {
   id: string;
@@ -95,11 +217,47 @@ export interface Customer {
   phone: string;
   address: string;
   status: CustomerStatus;
+  pipelineStage?: PipelineStage;
+  leadSource?: string;
+  service?: string;
   value: number;
+  lastActivity?: string;
+  nextAction?: string;
   tags: string[];
   notes?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export type AgencyHealthStatus = 'need_attention' | 'improving' | 'healthy';
+
+export interface AgencyClientSummary {
+  id: string;
+  name: string;
+  category: string;
+  city: string;
+  healthScore: number;
+  healthStatus: AgencyHealthStatus;
+  primaryIssue?: string;
+  recommendedAction?: string;
+  revenue: number;
+  locationsCount: number;
+  unansweredReviews: number;
+  visibilityTrend: number;
+}
+
+export interface LocationPerformanceMetric {
+  id: string;
+  city: string;
+  score: number;
+  status: 'healthy' | 'improving' | 'need_attention';
+  visibility: number;
+  calls: number;
+  forms: number;
+  bookings: number;
+  reviewsCount: number;
+  reviewRating: number;
+  conversions: number;
 }
 
 export type ProjectStatus = 'planning' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
@@ -511,6 +669,8 @@ export interface UserProfile {
   aiVisibilityRunsPerMonth?: number;
   aiVisibilityRunsUsed?: number;
   aiVisibilityResetAt?: string;
+  freeAuditedDomain?: string;
+  freeAuditedDomains?: string[];
   isAuthenticated: boolean;
 }
 
@@ -613,4 +773,113 @@ export interface ActivityLogItem {
   metadata?: Record<string, any>;
   createdAt: string;
 }
+
+// ==========================================
+// SECTION 28: HIGH-SIGNAL NOTIFICATION SYSTEM
+// ==========================================
+export type NotificationType = 'action_needed' | 'opportunity' | 'completed';
+
+export interface LocoraNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  evidence?: string;
+  actionLabel: string; // "[ Investigate ]", "[ View ]", "[ View Report ]"
+  actionTargetTab: string;
+  actionPayload?: Record<string, any>;
+  isRead: boolean;
+  createdAt: string;
+}
+
+// ==========================================
+// SECTION 29: GROWTH HEALTH SCORING SYSTEM
+// ==========================================
+export interface ScoreComponentEvidence {
+  score: number;
+  weight: number; // e.g. 1/6
+  status: 'healthy' | 'improving' | 'needs_attention';
+  evidencePoints: string[];
+  recommendation: string;
+  targetTab: string;
+}
+
+export interface LocoraGrowthHealth {
+  overallScore: number;
+  deltaThisMonth: string;
+  components: {
+    visibility: ScoreComponentEvidence;
+    reputation: ScoreComponentEvidence;
+    website: ScoreComponentEvidence;
+    conversion: ScoreComponentEvidence;
+    content: ScoreComponentEvidence;
+    competitiveness: ScoreComponentEvidence;
+  };
+}
+
+// ==========================================
+// SECTION 32 & 33: AI ACTION & APPROVAL SYSTEM
+// ==========================================
+export type AIActionType =
+  | 'CREATE_REVIEW_REPLY'
+  | 'CREATE_GBP_POST'
+  | 'CREATE_SERVICE_PAGE'
+  | 'CREATE_FAQ'
+  | 'CREATE_PROPOSAL'
+  | 'CREATE_INVOICE'
+  | 'CREATE_TASK'
+  | 'CREATE_REPORT'
+  | 'ANALYZE_COMPETITOR'
+  | 'ANALYZE_REVIEWS'
+  | 'CREATE_GROWTH_PLAN';
+
+export interface AIAction {
+  id: string;
+  type: AIActionType;
+  title: string;
+  business_id: string;
+  input: Record<string, any>;
+  output?: Record<string, any> | string;
+  status: 'draft' | 'approved' | 'completed' | 'rejected';
+  created_by: 'ai' | 'user';
+  isSafeInternal: boolean; // internal (safe) vs external (requires confirmation)
+  explanation: {
+    diagnosis: string; // 1. What's wrong?
+    whyItMatters: string; // 2. What matters most?
+    previewSummary: string; // 3. What should I do?
+    expectedImpact: string; // 4. Did it work?
+  };
+  createdAt: string;
+  approvedAt?: string;
+  executedAt?: string;
+}
+
+// ==========================================
+// SECTION 35: FIRST-TIME ONBOARDING WIZARD
+// ==========================================
+export interface OnboardingData {
+  website: string;
+  businessName: string;
+  phone: string;
+  city: string;
+  state: string;
+  services: string[];
+  goals: string[];
+  googleConnected: boolean;
+}
+
+// ==========================================
+// SECTION 40: GROWTH STORE PRODUCTS
+// ==========================================
+export interface GrowthStoreItem {
+  id: string;
+  category: 'ai_actions' | 'audit' | 'agency' | 'leads' | 'launch_kit';
+  title: string;
+  subtitle: string;
+  price: number;
+  priceLabel: string;
+  features: string[];
+  badge?: string;
+}
+
 

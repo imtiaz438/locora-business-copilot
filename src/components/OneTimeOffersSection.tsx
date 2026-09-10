@@ -14,6 +14,7 @@ import {
   Zap,
   Users,
   ShieldCheck,
+  ShoppingBag,
 } from 'lucide-react';
 import { WhiteLabelAuditExportModal } from './WhiteLabelAuditExportModal';
 
@@ -40,7 +41,7 @@ export const OneTimeOffersSection: React.FC<OneTimeOffersSectionProps> = ({
         name: user.name,
         userId: user.id,
         onError: (err) => {
-          console.warn('Masterclass checkout notice:', err);
+          console.warn('Agency Launch Kit checkout notice:', err);
         },
       });
     } catch (e) {
@@ -50,24 +51,24 @@ export const OneTimeOffersSection: React.FC<OneTimeOffersSectionProps> = ({
     }
   };
 
-  const offers = [
+  const storeItems = [
     {
-      id: 'fuel_packs',
-      phaseBadge: 'Phase 1 · Instant Velocity',
-      title: 'AI Copilot Fuel Packs',
-      tagline: 'On-demand AI credits for proposals, audits & copy with zero monthly commitment.',
+      id: 'ai_actions',
+      badge: 'Action Fuel',
+      title: 'One-Time AI Action Packs',
+      tagline: 'Fuel your Business Brain with on-demand execution actions. Never expire.',
       price: '$5',
       priceSuffix: 'starts at · One-time',
       icon: Flame,
-      iconBg: 'bg-orange-500 text-white',
-      accentBorder: 'border-orange-200 hover:border-orange-400',
+      iconBg: 'bg-emerald-600 text-white',
+      accentBorder: 'border-emerald-200 hover:border-emerald-400',
       highlights: [
-        'Starter: +50 AI Credits ($5.00)',
-        'Growth: +120 AI Credits ($10.00)',
-        'Agency Power: +300 AI Credits ($22.00)',
-        'Credits NEVER expire — top up as needed',
+        'Starter: 50 AI Actions ($5.00)',
+        'Growth: 150 AI Actions ($12.00)',
+        'Power: 500 AI Actions ($29.00)',
+        'Zero monthly commitment — use anytime',
       ],
-      ctaText: 'Top-Up Credits',
+      ctaText: 'Get Action Pack',
       onAction: () => {
         if (user.isAuthenticated) {
           setFuelPackModalOpen(true);
@@ -78,178 +79,159 @@ export const OneTimeOffersSection: React.FC<OneTimeOffersSectionProps> = ({
       popular: false,
     },
     {
-      id: 'white_label_audit',
-      phaseBadge: 'Phase 2 · Agency Deliverable',
-      title: 'White-Label Client PDF Audit',
-      tagline: '40-point technical, SEO & performance audit with your agency logo and client notes.',
-      price: user.planTier === 'agency' ? 'FREE' : '$9.99',
-      priceSuffix: user.planTier === 'agency' ? 'Included in Agency' : 'per report · One-time',
+      id: 'business_audit',
+      badge: 'Executive Diagnostic',
+      title: 'One-Time Business Audit',
+      tagline: 'Deep technical, local SEO, reputation & AI visibility diagnostic report.',
+      price: user.planTier === 'agency' ? 'FREE' : '$19',
+      priceSuffix: user.planTier === 'agency' ? 'Included in Agency' : '($29 White-Label) · One-time',
       icon: Award,
-      iconBg: 'bg-indigo-600 text-white',
-      accentBorder: 'border-indigo-200 hover:border-indigo-400',
+      iconBg: 'bg-slate-900 text-white',
+      accentBorder: 'border-slate-200 hover:border-slate-400',
       highlights: [
-        '40-Point Deep Technical & SEO evaluation',
-        'Custom Agency Logo & Brand Colors',
-        'Estimated Client Revenue Loss calculation',
-        'Print-ready, pixel-perfect executive PDF',
+        'Local SEO & Google Maps opportunity score',
+        'Competitor review velocity & service gap analysis',
+        'AI Search Visibility diagnosis (ChatGPT / Perplexity)',
+        'Prioritized action roadmap & downloadable PDF',
       ],
-      ctaText: user.planTier === 'agency' ? 'Generate Free PDF' : 'Create Branded Audit',
+      ctaText: user.planTier === 'agency' ? 'Generate Client PDF' : 'Get Deep Audit ($19)',
       onAction: () => setShowWhiteLabelModal(true),
-      popular: false,
-    },
-    {
-      id: 'lead_vault',
-      phaseBadge: 'Phase 3 · Pipeline Booster',
-      title: 'Verified B2B Lead Lists',
-      tagline: 'Targeted local business leads filtered by niche, city, and high-ticket digital flaws.',
-      price: '$29',
-      priceSuffix: 'starts at · One-time',
-      icon: Database,
-      iconBg: 'bg-emerald-600 text-white',
-      accentBorder: 'border-emerald-200 hover:border-emerald-400',
-      highlights: [
-        '250 Verified Local Leads ($29.00)',
-        '500 Verified Local Leads ($49.00 - Best Value)',
-        '1,000 Agency Pipeline Leads ($89.00)',
-        'Verified phone, site, SEO score & revenue gap',
-      ],
-      ctaText: 'Explore Lead Vault',
-      onAction: () => {
-        if (user.isAuthenticated) {
-          setActiveTab('lead_prospector');
-        } else {
-          setActiveTab('signup');
-        }
-      },
       popular: true,
     },
     {
-      id: 'masterclass_kit',
-      phaseBadge: 'Phase 4 · Growth Accelerator',
-      title: '$5k/mo Agency Growth Kit',
-      tagline: 'Proven retainer contracts, cold outbound DM scripts, pitch decks, and video masterclass.',
-      price: '$97',
-      priceSuffix: 'one-time · Lifetime Access',
-      icon: GraduationCap,
-      iconBg: 'bg-purple-600 text-white',
-      accentBorder: 'border-purple-200 hover:border-purple-400',
+      id: 'lead_vault',
+      badge: 'B2B Opportunities',
+      title: 'AI-Qualified Local Lead Packs',
+      tagline: 'Verified local businesses with measured digital gaps ready for outreach.',
+      price: '$29',
+      priceSuffix: 'starts at · One-time',
+      icon: Database,
+      iconBg: 'bg-indigo-600 text-white',
+      accentBorder: 'border-indigo-200 hover:border-indigo-400',
       highlights: [
-        '5-Module Video & SOP Masterclass',
-        '3-Tier Client Retainer SOW Contract templates',
-        'Tested Cold Email & LinkedIn Outbound sequences',
-        '40-Point Pitch Deck & Profit Margin Calculator',
+        '250 Leads ($29) · 500 ($49) · 1,000 ($89)',
+        'Includes phone, category, and verified website',
+        'Pre-scanned SEO weakness & estimated revenue gap',
+        '1-Click outreach campaign generation in CRM',
       ],
-      ctaText: purchasingId === 'masterclass' ? 'Opening Whop...' : 'Get Agency Kit ($97)',
+      ctaText: 'Access Lead Packs',
       onAction: () => {
-        if (user.isAuthenticated) {
-          setActiveTab('masterclass_kit');
-        } else {
-          handleBuyMasterclass();
-        }
+        setActiveTab('lead_prospector');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       },
+      popular: false,
+    },
+    {
+      id: 'agency_kit',
+      badge: 'Agency Launch OS',
+      title: 'Locora Agency Launch Kit',
+      tagline: 'Complete operating system, SOWs, sales scripts & retainer templates.',
+      price: '$97',
+      priceSuffix: 'Lifetime Access · One-time',
+      icon: GraduationCap,
+      iconBg: 'bg-amber-600 text-white',
+      accentBorder: 'border-amber-200 hover:border-amber-400',
+      highlights: [
+        'High-closing proposal & retainer SOW templates',
+        'Cold email & audit outreach scripts with 40%+ reply rate',
+        'Agency pricing calculator & onboarding checklists',
+        'Client monthly executive reporting SOPs',
+      ],
+      ctaText: purchasingId === 'masterclass' ? 'Connecting...' : 'Get Agency Kit ($97)',
+      onAction: handleBuyMasterclass,
       popular: false,
     },
   ];
 
   return (
     <div className={`space-y-8 font-sans ${className}`}>
-      {/* Section Header */}
-      <div className="text-center space-y-3 max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 text-emerald-400 text-xs font-bold font-heading uppercase tracking-wider">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>À La Carte & Growth Products</span>
+      {/* Header */}
+      <div className="text-center space-y-3 max-w-2xl mx-auto">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-semibold font-heading uppercase tracking-wider">
+          <ShoppingBag className="w-3.5 h-3.5" />
+          <span>Locora Growth Store</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 tracking-tight">
-          One-Time Upgrades & Growth Assets
-        </h2>
-        <p className="text-xs sm:text-sm text-slate-600 font-sans leading-relaxed">
-          Need extra AI fuel, client-ready deliverables, verified B2B prospect lists, or agency retainer systems? Grab them once with no recurring subscriptions required.
+        <h3 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 tracking-tight">
+          One-Time Upgrades & Growth Add-Ons
+        </h3>
+        <p className="text-xs sm:text-sm text-slate-600">
+          Need extra AI execution fuel, an executive client audit, or curated local leads? Add what you need without changing your plan.
         </p>
       </div>
 
-      {/* Grid of 4 Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {offers.map((offer) => {
-          const Icon = offer.icon;
+      {/* Cards Grid */}
+      <div className={`grid grid-cols-1 ${compact ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-4'} gap-6`}>
+        {storeItems.map((item) => {
+          const IconComp = item.icon;
           return (
             <div
-              key={offer.id}
-              className={`bg-white border ${offer.accentBorder} rounded-3xl p-6 flex flex-col justify-between shadow-2xs hover:shadow-md transition-all relative space-y-6`}
+              key={item.id}
+              className={`bg-white rounded-3xl p-6 border transition-all duration-200 flex flex-col justify-between relative shadow-2xs hover:shadow-md ${item.accentBorder} ${
+                item.popular ? 'ring-2 ring-[#059669]/20' : ''
+              }`}
             >
-              {offer.popular && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-[9px] font-black uppercase px-3 py-0.5 rounded-full shadow-2xs tracking-wider">
-                  HIGH CONVERTING
-                </span>
+              {item.popular && (
+                <div className="absolute -top-3 left-6 px-2.5 py-0.5 bg-[#059669] text-white text-[10px] font-black uppercase tracking-wider rounded-full shadow-xs">
+                  Most Requested
+                </div>
               )}
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className={`w-10 h-10 rounded-2xl ${offer.iconBg} flex items-center justify-center shadow-xs`}>
-                    <Icon className="w-5 h-5" />
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${item.iconBg}`}>
+                    <IconComp className="w-5 h-5" />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-heading">
-                    {offer.phaseBadge}
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-heading">
+                    {item.badge}
                   </span>
                 </div>
 
-                <div className="space-y-1.5">
-                  <h3 className="text-base font-extrabold font-heading text-slate-900">
-                    {offer.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 font-sans leading-relaxed">
-                    {offer.tagline}
+                <div>
+                  <h4 className="text-base font-bold font-heading text-slate-900 leading-snug">
+                    {item.title}
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    {item.tagline}
                   </p>
                 </div>
 
-                <div className="pt-1 font-heading border-t border-slate-100">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-black text-slate-900">{offer.price}</span>
-                    <span className="text-[11px] text-slate-500 font-sans font-medium">
-                      {offer.priceSuffix}
-                    </span>
-                  </div>
+                <div className="pt-1">
+                  <span className="text-2xl sm:text-3xl font-black font-heading text-slate-900">
+                    {item.price}
+                  </span>
+                  <span className="text-[11px] text-slate-500 ml-1 font-medium">
+                    {item.priceSuffix}
+                  </span>
                 </div>
 
-                {/* Highlights List */}
-                <div className="space-y-2 pt-2 text-xs font-sans text-slate-600">
-                  {offer.highlights.map((h, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                      <span className="text-[11px] leading-tight">{h}</span>
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  {item.highlights.map((h, i) => (
+                    <div key={i} className="flex items-start gap-2 text-xs text-slate-700">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#059669] shrink-0 mt-0.5" />
+                      <span className="leading-tight">{h}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <button
-                onClick={offer.onAction}
-                className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
-              >
-                <span>{offer.ctaText}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+              <div className="pt-6">
+                <button
+                  onClick={item.onAction}
+                  className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer font-sans ${
+                    item.popular
+                      ? 'bg-[#059669] hover:bg-[#047857] text-white'
+                      : 'bg-slate-900 hover:bg-slate-800 text-white'
+                  }`}
+                >
+                  <span>{item.ctaText}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           );
         })}
       </div>
 
-      {/* Trust & Guarantee Banner */}
-      <div className="bg-slate-100 border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-700 text-xs">
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0" />
-          <p className="font-sans">
-            <strong>Secure Whop Merchant-of-Record Checkout:</strong> Instant delivery of credits, PDF reports, lead downloads, and masterclass playbooks. 100% satisfaction guarantee.
-          </p>
-        </div>
-        <button
-          onClick={() => setActiveTab('contact')}
-          className="text-xs font-bold text-slate-900 hover:text-emerald-700 underline shrink-0 cursor-pointer"
-        >
-          Have custom enterprise questions? Talk to us
-        </button>
-      </div>
-
-      {/* White-Label Audit Modal */}
       {showWhiteLabelModal && (
         <WhiteLabelAuditExportModal
           isOpen={showWhiteLabelModal}

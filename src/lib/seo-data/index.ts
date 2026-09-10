@@ -13,13 +13,14 @@ import {
   resolveLocationCode,
   getSeoApiCredentials,
 } from './client.ts';
-import type {
+import {
   NormalizedSeoAudit,
   DomainOverviewData,
   BacklinkSummaryData,
   KeywordItemData,
   SerpOverviewData,
   AiOverviewPresenceData,
+  SEO_LOOKUP_COSTS,
 } from './types.ts';
 
 export * from './types.ts';
@@ -166,6 +167,7 @@ export async function performNormalizedSeoAudit(params: {
 }): Promise<{
   audit: NormalizedSeoAudit;
   cacheMiss: boolean;
+  weightedUnitsCost?: number;
 }> {
   const cleanDomain = params.domain.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').toLowerCase().trim();
   const loc = resolveLocationCode(params.country);
@@ -182,6 +184,7 @@ export async function performNormalizedSeoAudit(params: {
           fetchedAt: cachedFull.fetchedAt,
         },
         cacheMiss: false,
+        weightedUnitsCost: 0,
       };
     }
   }
@@ -210,6 +213,13 @@ export async function performNormalizedSeoAudit(params: {
 
   const anyMiss = !domainRes.isCached || !backlinkRes.isCached || !kwRes.isCached || !serpRes.isCached || !aiOverviewRes.isCached;
 
+  let weightedUnitsCost = 0;
+  if (!domainRes.isCached) weightedUnitsCost += SEO_LOOKUP_COSTS.DOMAIN_OVERVIEW;
+  if (!backlinkRes.isCached) weightedUnitsCost += SEO_LOOKUP_COSTS.BACKLINK_SUMMARY;
+  if (!kwRes.isCached) weightedUnitsCost += SEO_LOOKUP_COSTS.KEYWORD_BATCH;
+  if (!serpRes.isCached) weightedUnitsCost += SEO_LOOKUP_COSTS.SERP_CHECK_PER_KEYWORD;
+  if (!aiOverviewRes.isCached) weightedUnitsCost += SEO_LOOKUP_COSTS.AI_OVERVIEW_CHECK;
+
   const now = new Date().toISOString();
   const audit: NormalizedSeoAudit = {
     domainOverview: domainRes.data,
@@ -231,5 +241,6 @@ export async function performNormalizedSeoAudit(params: {
   return {
     audit,
     cacheMiss: anyMiss,
+    weightedUnitsCost,
   };
 }

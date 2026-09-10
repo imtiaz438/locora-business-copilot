@@ -130,7 +130,7 @@ export async function openWhopOneTimeCheckout(options: OpenWhopOneTimeCheckoutOp
 
 
 export interface OpenWhopCheckoutOptions {
-  plan: 'pro' | 'agency';
+  plan: 'pro' | 'agency' | 'free' | 'elite';
   billingCycle: 'monthly' | 'yearly';
   email: string;
   name?: string;

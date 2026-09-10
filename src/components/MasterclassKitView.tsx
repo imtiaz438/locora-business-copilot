@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 
 export const MasterclassKitView: React.FC = () => {
-  const { user, logActivity } = useApp();
+  const { user, activeBusiness, logActivity } = useApp();
   const [activeTab, setActiveTabLocal] = useState<'contracts' | 'scripts' | 'calculator' | 'curriculum' | 'resources'>('contracts');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isKitUnlocked, setIsKitUnlocked] = useState(user.planTier === 'agency' || (user as any).masterclassKitUnlocked);
@@ -39,7 +39,7 @@ export const MasterclassKitView: React.FC = () => {
 
   // SOW Contract State
   const [agencyName, setAgencyName] = useState('Apex Digital Growth');
-  const [clientName, setClientName] = useState('Bright Smile Dental Care');
+  const [clientName, setClientName] = useState(activeBusiness?.name || 'Summit Growth Partners');
   const [monthlyRetainer, setMonthlyRetainer] = useState(2500);
   const [serviceTier, setServiceTier] = useState<'tier1' | 'tier2' | 'tier3'>('tier2');
 
@@ -149,7 +149,7 @@ Best,
     {
       id: 'script_speed_gap',
       title: 'Core Web Vitals & Mobile Speed Penalty Hook',
-      target: 'E-commerce, High-Ticket Home Improvement, Cosmetic Clinics',
+      target: 'E-commerce, High-Ticket Home Improvement, Professional Services',
       body: `Subject: [Client Company] mobile load time test results in [City]
 
 Hi [First Name],
@@ -328,7 +328,7 @@ Response:
 - Custom High-Converting Landing Page Optimization
 - Monthly Video Audit Presentations for Executive Board
 - Dedicated Account Lead & Emergency Response SLA (<2 hours)
-- Target: Multi-location clinics, law firms, and high-ticket service operations.`,
+- Target: Multi-location enterprises, law firms, and high-ticket service operations.`,
     },
   ];
 

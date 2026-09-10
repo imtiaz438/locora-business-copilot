@@ -20,7 +20,13 @@ import {
   SubscriptionInvoice,
   BillingCycle,
   ActivityLogItem,
+  ClientBusiness,
+  PriorityAction,
+  FixItDraft,
+  LocoraNotification,
+  AIAction,
 } from '../types';
+import { INITIAL_BUSINESSES, INITIAL_PRIORITY_ACTIONS } from '../data/mockBusinesses';
 
 interface AppContextType {
   user: UserProfile;
@@ -89,28 +95,86 @@ interface AppContextType {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   refreshWorkspaceData: () => Promise<void>;
+
+  // AI Business Manager & Top Business Selector
+  businesses: ClientBusiness[];
+  activeBusinessId: string;
+  activeBusiness: ClientBusiness;
+  switchBusiness: (id: string) => void;
+  updateActiveBusiness: (data: Partial<ClientBusiness>) => void;
+  addBusiness: (data: Partial<ClientBusiness>) => void;
+  addLocation: (businessId: string, location: { name: string; address: string; city?: string; state?: string; country?: string; zip?: string; phone?: string }) => void;
+  priorityActions: PriorityAction[];
+  fixItAction: (actionId: string, draftData?: Partial<FixItDraft>) => void;
+  publishDraft: (actionId: string) => void;
+  rightAiPanelOpen: boolean;
+  setRightAiPanelOpen: (open: boolean) => void;
+  toggleRightAiPanel: () => void;
+
+  // SECTION 28 & 32 & 33 & 35 & 38 & 40 NEW OS CAPABILITIES
+  notifications: LocoraNotification[];
+  markNotificationAsRead: (id: string) => void;
+  markAllNotificationsAsRead: () => void;
+  addNotification: (notification: Omit<LocoraNotification, 'id' | 'createdAt'>) => void;
+  aiActions: AIAction[];
+  selectedAIActionForApproval: AIAction | null;
+  setSelectedAIActionForApproval: (action: AIAction | null) => void;
+  approveAndExecuteAIAction: (actionId: string) => Promise<void>;
+  createAIAction: (action: Omit<AIAction, 'id' | 'createdAt'>) => void;
+  agencyMode: boolean;
+  setAgencyMode: (agency: boolean) => void;
+  onboardingModalOpen: boolean;
+  setOnboardingModalOpen: (open: boolean) => void;
+  growthStoreModalOpen: boolean;
+  setGrowthStoreModalOpen: (open: boolean) => void;
 }
 
 const getInitialCachedProfile = (): BusinessProfile => {
   const base: BusinessProfile = {
-    id: 'bp_1',
-    name: 'My Business Workspace',
-    tagline: 'Local Service & Business Workspace',
-    industry: 'Services',
-    description: '',
-    targetAudience: '',
-    toneOfVoice: 'Professional, helpful and results-driven',
-    website: '',
-    phone: '',
-    email: '',
-    address: '',
-    city: '',
-    state: '',
-    zip: '',
+    id: 'bp_austin_dental',
+    name: 'Austin Dental Care',
+    tagline: 'Gentle, Modern Dental Care & 24/7 Emergency Relief',
+    industry: 'Family & Emergency Dental',
+    description: 'Providing gentle, high-quality family and emergency dental care in downtown Austin with state-of-the-art technology and same-day pain relief.',
+    targetAudience: 'Austin residents, downtown professionals, and families seeking reliable, gentle dental care.',
+    toneOfVoice: 'Warm, empathetic, authoritative and reassuring',
+    website: 'austindentalcare.com',
+    phone: '(512) 555-0199',
+    email: 'info@austindentalcare.com',
+    address: '100 Congress Ave, Suite 400',
+    city: 'Austin',
+    state: 'TX',
+    zip: '78701',
     country: 'United States',
     currency: 'USD',
     taxRate: 0,
     taxId: '',
+    services: [
+      'Emergency Dental Care',
+      'Preventative Cleanings',
+      'Same-Day Crowns',
+      'Invisalign Orthodontics',
+      'Dental Implants',
+      'Teeth Whitening',
+    ],
+    targetLocations: ['Austin, TX', 'Round Rock, TX', 'Westlake Hills, TX', 'South Austin, TX'],
+    primaryCompetitors: ['Apex Dental Specialists', 'Austin Emergency Smiles', 'Capital City Dental Studio'],
+    currentOffers: ['$99 New Patient Diagnostic Exam & X-Rays', 'Same-Day Emergency Relief Priority Booking'],
+    businessGoals: [
+      'Capture Top 3 Local Google Maps Pack for Emergency Dentist',
+      'Publish Dedicated Same-Day Crown Landing Page',
+      'Respond to 100% of Patient Google Reviews',
+    ],
+    googleBusiness: {
+      connected: true,
+      listingName: 'Austin Dental Care (Google Maps)',
+      rating: 4.8,
+      reviewCount: 142,
+      unansweredReviews: 17,
+      category: 'Dentist & Emergency Dental Clinic',
+    },
+    brainReadinessScore: 94,
+    lastBrainSyncAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
   if (typeof window !== 'undefined') {
@@ -131,28 +195,17 @@ const getInitialCachedProfile = (): BusinessProfile => {
 
 const getInitialCachedSettings = (): AppSettings => {
   const base: AppSettings = {
-    activeProvider: 'gemini',
-    activeModelVersion: 'gemini-3.7-flash',
+    activeProvider: 'groq',
+    activeModelVersion: 'llama-3.3-70b-versatile',
     providerModels: {
-      gemini: 'gemini-3.7-flash',
       groq: 'llama-3.3-70b-versatile',
-      openai: 'gpt-4o',
       claude: 'claude-3-7-sonnet-20250219',
-      perplexity: 'sonar-pro',
-      deepseek: 'deepseek-chat',
     },
     providerKeys: {
-      gemini: '',
-      openai: '',
-      claude: '',
-      perplexity: '',
-      deepseek: '',
       groq: '',
-      opus: '',
-      cursor: '',
-      grok: '',
+      claude: '',
     },
-    theme: 'dark',
+    theme: 'light',
     autoSave: true,
     defaultCurrency: 'USD',
     defaultTaxRate: 0,
@@ -198,29 +251,98 @@ const DEFAULT_USER: UserProfile = {
 
 const DEFAULT_SUBSCRIPTION_INVOICES: SubscriptionInvoice[] = [];
 
-const AppContext = createContext<AppContextType | undefined>(undefined);
+const DEFAULT_NOTIFICATIONS: LocoraNotification[] = [
+  {
+    id: 'notif_1',
+    type: 'action_needed',
+    title: 'Your rating dropped from 4.9 → 4.7',
+    message: '2 recent negative reviews on Google Maps regarding wait times require response.',
+    evidence: 'Unanswered reviews by Marcus T. and Elena R. on Google Maps',
+    actionLabel: '[ Investigate ]',
+    actionTargetTab: 'reputation',
+    isRead: false,
+    createdAt: '10m ago',
+  },
+  {
+    id: 'notif_2',
+    type: 'opportunity',
+    title: 'You could target 4 new local searches.',
+    message: 'New high-intent keyword gaps identified: Emergency dentist Austin, Same day crowns Austin.',
+    evidence: '420 monthly local searches with low competitor density',
+    actionLabel: '[ View ]',
+    actionTargetTab: 'visibility',
+    isRead: false,
+    createdAt: '2h ago',
+  },
+  {
+    id: 'notif_3',
+    type: 'completed',
+    title: 'Weekly growth analysis is ready.',
+    message: 'Locora evaluated your digital presence and identified your highest-leverage growth actions.',
+    evidence: 'Locora Growth Health calculated at 78/100 across 6 components',
+    actionLabel: '[ View Report ]',
+    actionTargetTab: 'reports',
+    isRead: false,
+    createdAt: '1d ago',
+  },
+];
 
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile>(DEFAULT_USER);
-
-  const [activeTab, setActiveTabState] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const path = window.location.pathname.replace(/^\//, '').trim();
-      if (path && PATH_TO_TAB[path]) return PATH_TO_TAB[path];
-      if (path === 'admin') return 'admin';
-      if (path === 'features') return 'features';
-      if (path === 'pricing') return 'pricing_public';
-      if (path === 'about') return 'about';
-      if (path === 'contact') return 'contact';
-      if (path === 'login') return 'login';
-      if (path === 'signup') return 'signup';
-      if (path === 'dashboard') return 'dashboard';
-      if (path === 'lead-prospector' || path === 'lead_prospector' || path === 'lead-vault' || path === 'lead_vault' || path === 'b2b-vault' || path === 'b2b_vault' || path === 'leads' || path === 'prospector') return 'lead_prospector';
-      if (path === 'agency-vault' || path === 'agency_vault' || path === 'masterclass' || path === 'masterclass-kit' || path === 'masterclass_kit' || path === 'growth-vault' || path === 'growth_vault' || path === 'vault') return 'masterclass_kit';
-      if (window.location.pathname.startsWith('/for/')) return 'industry_pseo';
-    }
-    return 'home';
-  });
+const DEFAULT_AI_ACTIONS: AIAction[] = [
+  {
+    id: 'action_1',
+    type: 'CREATE_REVIEW_REPLY',
+    title: 'Reply to Google Review: Patient wait time concern',
+    business_id: 'austin-dental',
+    input: { reviewId: 'rev_101', rating: 1, author: 'Marcus T.' },
+    output: 'Thank you for visiting Austin Dental Care. We sincerely apologize for the unexpected 35-minute delay during our peak morning emergency triage. Our clinical director Dr. Davis has revised our morning scheduling protocols to ensure patient promptness. Please contact us directly so we may care for your next visit.',
+    status: 'draft',
+    created_by: 'ai',
+    isSafeInternal: false,
+    explanation: {
+      diagnosis: 'Marcus T. posted a 1-star review mentioning a 35-minute wait time with zero owner response.',
+      whyItMatters: 'Reviews with attentive owner replies convert 38% higher on Google Local 3-Pack rankings.',
+      previewSummary: 'Drafted empathetic owner response addressing the wait time and emphasizing scheduling improvements.',
+      expectedImpact: 'Restores 100% reply rate and improves Google Maps sentiment rating.',
+    },
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'action_2',
+    type: 'CREATE_GBP_POST',
+    title: 'Publish Google Post: Same-Day Emergency Dental Relief',
+    business_id: 'austin-dental',
+    input: { offer: 'Emergency Triage & Pain Relief', targetLocation: 'Austin, TX' },
+    output: 'Experiencing sudden tooth pain in Austin? Austin Dental Care offers same-day emergency triage and gentle pain relief with immediate appointment availability. Call (512) 555-0199 or walk in today!',
+    status: 'draft',
+    created_by: 'ai',
+    isSafeInternal: false,
+    explanation: {
+      diagnosis: 'No Google Business Profile update published in the last 14 days.',
+      whyItMatters: 'Weekly GBP posts signal active business status to Google local ranking algorithms.',
+      previewSummary: 'Created a Google Business post promoting emergency availability with direct call CTA.',
+      expectedImpact: '+14% local search impressions and elevated Google Maps ranking.',
+    },
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'action_3',
+    type: 'CREATE_SERVICE_PAGE',
+    title: 'Generate Dedicated Emergency Dentist Service Page',
+    business_id: 'austin-dental',
+    input: { service: 'Emergency Dentist', targetKeyword: 'emergency dentist austin' },
+    output: 'Drafted /services/emergency-dentist-austin with localized H1, urgent care checklist, FAQ schema, and 1-click booking CTA.',
+    status: 'draft',
+    created_by: 'ai',
+    isSafeInternal: false,
+    explanation: {
+      diagnosis: 'Austin Dental Care is #8 for "emergency dentist austin" because competitors A & B have dedicated service URLs.',
+      whyItMatters: 'A dedicated URL with LocalBusiness schema and targeted copy allows ranking #1–#3.',
+      previewSummary: 'Drafted high-converting emergency dental landing page targeting 850 monthly local searches.',
+      expectedImpact: 'Projected rank jump from #8 → #3, generating ~18 additional patient calls monthly.',
+    },
+    createdAt: new Date().toISOString(),
+  },
+];
 
 const TAB_TO_PATH: Record<string, string> = {
   home: '/',
@@ -234,17 +356,27 @@ const TAB_TO_PATH: Record<string, string> = {
   terms: '/terms',
   security: '/security',
   dashboard: '/dashboard',
-  chat: '/chat',
-  crm: '/crm',
+  ai_manager: '/ai-manager',
+  chat: '/ai-manager',
+  growth: '/growth',
+  visibility: '/visibility',
+  reputation: '/reputation',
+  competitors: '/competitors',
+  content: '/content',
+  customers: '/customers',
+  work: '/work',
+  reports: '/reports',
+  clients: '/clients',
+  crm: '/customers',
   projects: '/projects',
   lead_prospector: '/lead-prospector',
-  invoices: '/invoices',
-  proposals: '/proposals',
-  documents: '/documents',
-  website_review: '/website-audit',
-  local_seo: '/local-seo',
-  marketing: '/marketing-planner',
-  marketing_planner: '/marketing-planner',
+  invoices: '/work',
+  proposals: '/work',
+  documents: '/content',
+  website_review: '/reports',
+  local_seo: '/visibility',
+  marketing: '/growth',
+  marketing_planner: '/growth',
   masterclass_kit: '/agency-vault',
   pricing: '/pricing-plans',
   subscription: '/subscription',
@@ -254,6 +386,7 @@ const TAB_TO_PATH: Record<string, string> = {
 
 const PATH_TO_TAB: Record<string, string> = {
   '': 'home',
+  'home': 'home',
   'features': 'features',
   'pricing': 'pricing_public',
   'about': 'about',
@@ -270,8 +403,20 @@ const PATH_TO_TAB: Record<string, string> = {
   'terms-condition': 'terms',
   'security': 'security',
   'dashboard': 'dashboard',
-  'chat': 'chat',
-  'crm': 'crm',
+  'home-dashboard': 'dashboard',
+  'ai-manager': 'ai_manager',
+  'ai_manager': 'ai_manager',
+  'chat': 'ai_manager',
+  'growth': 'growth',
+  'visibility': 'visibility',
+  'reputation': 'reputation',
+  'competitors': 'competitors',
+  'content': 'content',
+  'customers': 'customers',
+  'work': 'work',
+  'reports': 'reports',
+  'clients': 'clients',
+  'crm': 'customers',
   'projects': 'projects',
   'lead-prospector': 'lead_prospector',
   'lead_prospector': 'lead_prospector',
@@ -282,16 +427,16 @@ const PATH_TO_TAB: Record<string, string> = {
   'b2b': 'lead_prospector',
   'leads': 'lead_prospector',
   'prospector': 'lead_prospector',
-  'invoices': 'invoices',
-  'proposals': 'proposals',
-  'documents': 'documents',
-  'website-audit': 'website_review',
-  'website_review': 'website_review',
-  'local-seo': 'local_seo',
-  'local_seo': 'local_seo',
-  'marketing-planner': 'marketing_planner',
-  'marketing_planner': 'marketing_planner',
-  'marketing': 'marketing_planner',
+  'invoices': 'work',
+  'proposals': 'work',
+  'documents': 'content',
+  'website-audit': 'reports',
+  'website_review': 'reports',
+  'local-seo': 'visibility',
+  'local_seo': 'visibility',
+  'marketing-planner': 'growth',
+  'marketing_planner': 'growth',
+  'marketing': 'growth',
   'masterclass': 'masterclass_kit',
   'masterclass-kit': 'masterclass_kit',
   'masterclass_kit': 'masterclass_kit',
@@ -309,6 +454,43 @@ const PATH_TO_TAB: Record<string, string> = {
   'settings': 'settings',
   'admin': 'admin',
 };
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<UserProfile>(DEFAULT_USER);
+
+  const [activeTab, setActiveTabState] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname.replace(/^\//, '').trim();
+      if (path === '' || path === 'home') return 'home';
+      if (path && PATH_TO_TAB[path]) return PATH_TO_TAB[path];
+      if (path === 'admin') return 'admin';
+      if (path === 'features') return 'features';
+      if (path === 'pricing') return 'pricing_public';
+      if (path === 'about') return 'about';
+      if (path === 'contact') return 'contact';
+      if (path === 'login') return 'login';
+      if (path === 'signup') return 'signup';
+      if (path === 'dashboard') return 'dashboard';
+      if (path === 'lead-prospector' || path === 'lead_prospector' || path === 'lead-vault' || path === 'lead_vault' || path === 'b2b-vault' || path === 'b2b_vault' || path === 'leads' || path === 'prospector') return 'lead_prospector';
+      if (path === 'agency-vault' || path === 'agency_vault' || path === 'masterclass' || path === 'masterclass-kit' || path === 'masterclass_kit' || path === 'growth-vault' || path === 'growth_vault' || path === 'vault') return 'masterclass_kit';
+      if (window.location.pathname.startsWith('/features/')) {
+        return `feature_${window.location.pathname.replace(/^\/features\//, '').trim()}`;
+      }
+      if (window.location.pathname.startsWith('/use-cases/')) {
+        return `usecase_${window.location.pathname.replace(/^\/use-cases\//, '').trim()}`;
+      }
+      if (window.location.pathname.startsWith('/resources/')) {
+        return `resource_${window.location.pathname.replace(/^\/resources\//, '').trim()}`;
+      }
+      if (window.location.pathname.startsWith('/blog/')) {
+        return `resource_${window.location.pathname.replace(/^\/blog\//, '').trim()}`;
+      }
+      if (window.location.pathname.startsWith('/for/')) return 'industry_pseo';
+    }
+    return 'home';
+  });
 
   const setActiveTab = useCallback((tab: string) => {
     let targetTab = tab;
@@ -861,6 +1043,360 @@ const PATH_TO_TAB: Record<string, string> = {
   const [latestWebsiteAudit, setLatestWebsiteAudit] = useState<WebsiteAuditResult | null>(null);
   const [latestMarketingPlan, setLatestMarketingPlan] = useState<MarketingPlannerOutput | null>(null);
 
+  // Multi-Client & Business Selector State
+  const [businesses, setBusinesses] = useState<ClientBusiness[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('locora_businesses_list');
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return INITIAL_BUSINESSES;
+  });
+
+  const [activeBusinessId, setActiveBusinessId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('locora_active_business_id');
+        if (cached) return cached;
+      } catch {}
+    }
+    return 'austin-dental';
+  });
+
+  const [priorityActions, setPriorityActions] = useState<PriorityAction[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('locora_priority_actions');
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return INITIAL_PRIORITY_ACTIONS;
+  });
+
+  const [rightAiPanelOpen, setRightAiPanelOpen] = useState<boolean>(false);
+  const toggleRightAiPanel = useCallback(() => setRightAiPanelOpen((prev) => !prev), []);
+
+  const activeBusiness = businesses.find((b) => b.id === activeBusinessId) || businesses[0] || INITIAL_BUSINESSES[0];
+
+  const switchBusiness = useCallback((id: string) => {
+    const target = businesses.find((b) => b.id === id);
+    if (!target) return;
+    setActiveBusinessId(id);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('locora_active_business_id', id);
+    }
+    setBusinessProfile((prev) => ({
+      ...prev,
+      id: `bp_${target.id}`,
+      name: target.name,
+      tagline: target.tagline,
+      industry: target.category,
+      address: target.address,
+      city: target.city,
+      state: target.state,
+      zip: target.zip,
+      phone: target.phone,
+      website: target.website,
+      services: target.services,
+      primaryCompetitors: target.competitors,
+      googleBusiness: {
+        ...prev.googleBusiness,
+        connected: true,
+        listingName: `${target.name} (Google Maps)`,
+        rating: target.googleRating,
+        reviewCount: target.reviewCount,
+        unansweredReviews: target.unansweredReviews,
+        category: target.category,
+      },
+    }));
+  }, [businesses]);
+
+  const addBusiness = useCallback((data: Partial<ClientBusiness>) => {
+    const newId = `biz_${Date.now()}`;
+    const newBiz: ClientBusiness = {
+      id: newId,
+      name: data.name || 'New Client Business',
+      category: data.category || 'General Local Business',
+      tagline: data.tagline || 'Local Business & Customer Care',
+      locationName: data.locationName || 'Main Location',
+      address: data.address || '100 Main St',
+      city: data.city || 'Austin',
+      state: data.state || 'TX',
+      zip: data.zip || '78701',
+      phone: data.phone || '(512) 555-0100',
+      website: data.website || 'example.com',
+      healthScore: 75,
+      healthDelta: 3,
+      highImpactCount: 2,
+      opportunityCount: 4,
+      healthyAreaCount: 8,
+      isMainLocation: true,
+      locations: [
+        {
+          id: `loc_${Date.now()}`,
+          name: data.locationName || 'Main Location',
+          isMain: true,
+          address: data.address || '100 Main St',
+          city: data.city || 'Austin',
+          state: data.state || 'TX',
+          zip: data.zip || '78701',
+          phone: data.phone || '(512) 555-0100',
+        },
+      ],
+      services: data.services || ['Primary Service', 'Secondary Service'],
+      competitors: data.competitors || ['Local Competitor'],
+      googleRating: 4.8,
+      reviewCount: 30,
+      unansweredReviews: 4,
+      gbpCompleteness: 90,
+    };
+    setBusinesses((prev) => {
+      const next = [...prev, newBiz];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('locora_businesses_list', JSON.stringify(next));
+      }
+      return next;
+    });
+    switchBusiness(newId);
+  }, [switchBusiness]);
+
+  const addLocation = useCallback((businessId: string, loc: { name: string; address: string; city?: string; state?: string; country?: string; zip?: string; phone?: string }) => {
+    setBusinesses((prev) => {
+      const next = prev.map((b) => {
+        if (b.id !== businessId) return b;
+        const newLoc = {
+          id: `loc_${Date.now()}`,
+          name: loc.name,
+          address: loc.address,
+          city: loc.city || b.city,
+          state: loc.state || b.state,
+          country: loc.country || b.country || 'United States',
+          zip: loc.zip || b.zip || '',
+          phone: loc.phone || b.phone,
+          isMain: false,
+        };
+        return {
+          ...b,
+          locations: [...(b.locations || []), newLoc],
+        };
+      });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('locora_businesses_list', JSON.stringify(next));
+      }
+      return next;
+    });
+  }, []);
+
+  const updateActiveBusiness = useCallback((data: Partial<ClientBusiness>) => {
+    setBusinesses((prev) => {
+      const next = prev.map((b) => {
+        if (b.id !== activeBusinessId) return b;
+        return {
+          ...b,
+          ...data,
+          locationName: data.locationName !== undefined ? data.locationName : (data.name ? `${data.name} (Main)` : b.locationName),
+          address: data.address !== undefined ? data.address : b.address,
+          city: data.city !== undefined ? data.city : b.city,
+          state: data.state !== undefined ? data.state : b.state,
+          country: data.country !== undefined ? data.country : b.country,
+          zip: data.zip !== undefined ? data.zip : b.zip,
+          phone: data.phone !== undefined ? data.phone : b.phone,
+          website: data.website !== undefined ? data.website : b.website,
+        };
+      });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('locora_businesses_list', JSON.stringify(next));
+      }
+      return next;
+    });
+
+    setBusinessProfile((prev) => ({
+      ...prev,
+      name: data.name || prev.name,
+      industry: data.category || prev.industry,
+      website: data.website || prev.website,
+      phone: data.phone || prev.phone,
+      address: data.address || prev.address,
+      city: data.city || prev.city,
+      state: data.state || prev.state,
+      country: data.country || prev.country,
+    }));
+  }, [activeBusinessId]);
+
+  const fixItAction = useCallback((actionId: string) => {
+    setPriorityActions((prev) => {
+      const next = prev.map((act) => {
+        if (act.id !== actionId) return act;
+        return {
+          ...act,
+          isFixed: true,
+          fixedAt: new Date().toISOString(),
+        };
+      });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('locora_priority_actions', JSON.stringify(next));
+      }
+      return next;
+    });
+  }, []);
+
+  const updateActionDraft = useCallback((actionId: string, draftData?: any) => {
+    setPriorityActions((prev) => {
+      const next = prev.map((act) => {
+        if (act.id !== actionId) return act;
+        const existingDraft = act.draft || {
+          id: `draft_${Date.now()}`,
+          actionId,
+          title: `${act.recommendationTitle} Draft`,
+          slug: `/content/${actionId}`,
+          seoTitle: `${act.recommendationTitle} | ${businessProfile.name}`,
+          metaDescription: act.whyItMatters,
+          schemaType: 'LocalBusiness',
+          schemaJson: '{}',
+          headings: act.itemsToCreate || [],
+          bodyCopy: 'Draft generated by Locora AI Business Manager.',
+          faqs: [],
+          internalLinks: [],
+          status: 'draft' as const,
+          createdAt: new Date().toISOString(),
+        };
+        return {
+          ...act,
+          draft: {
+            ...existingDraft,
+            ...draftData,
+            status: (draftData?.status || 'draft') as any,
+          },
+        };
+      });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('locora_priority_actions', JSON.stringify(next));
+      }
+      return next;
+    });
+  }, [businessProfile.name]);
+
+  const publishDraft = useCallback((actionId: string) => {
+    setPriorityActions((prev) => {
+      const next = prev.map((act) => {
+        if (act.id !== actionId) return act;
+        return {
+          ...act,
+          isFixed: true,
+          fixedAt: new Date().toISOString(),
+          draft: act.draft ? { ...act.draft, status: 'published' as const } : undefined,
+        };
+      });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('locora_priority_actions', JSON.stringify(next));
+      }
+      return next;
+    });
+  }, []);
+
+  // SECTION 28: Notification System
+  const [notifications, setNotifications] = useState<LocoraNotification[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('locora_notifications');
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return DEFAULT_NOTIFICATIONS;
+  });
+
+  const markNotificationAsRead = useCallback((id: string) => {
+    setNotifications((prev) => {
+      const next = prev.map((n) => (n.id === id ? { ...n, isRead: true } : n));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('locora_notifications', JSON.stringify(next));
+      }
+      return next;
+    });
+  }, []);
+
+  const markAllNotificationsAsRead = useCallback(() => {
+    setNotifications((prev) => {
+      const next = prev.map((n) => ({ ...n, isRead: true }));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('locora_notifications', JSON.stringify(next));
+      }
+      return next;
+    });
+  }, []);
+
+  const addNotification = useCallback((notification: Omit<LocoraNotification, 'id' | 'createdAt'>) => {
+    const newNotif: LocoraNotification = {
+      ...notification,
+      id: `notif_${Date.now()}`,
+      createdAt: 'Just now',
+    };
+    setNotifications((prev) => {
+      const next = [newNotif, ...prev];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('locora_notifications', JSON.stringify(next));
+      }
+      return next;
+    });
+  }, []);
+
+  // SECTION 32 & 33: AI Action System
+  const [aiActions, setAiActions] = useState<AIAction[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('locora_ai_actions');
+        if (cached) return JSON.parse(cached);
+      } catch {}
+    }
+    return DEFAULT_AI_ACTIONS;
+  });
+
+  const [selectedAIActionForApproval, setSelectedAIActionForApproval] = useState<AIAction | null>(null);
+
+  const approveAndExecuteAIAction = useCallback(async (actionId: string) => {
+    setAiActions((prev) => {
+      const next = prev.map((act) => {
+        if (act.id !== actionId) return act;
+        return {
+          ...act,
+          status: 'completed' as const,
+          approvedAt: new Date().toISOString(),
+          executedAt: new Date().toISOString(),
+        };
+      });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('locora_ai_actions', JSON.stringify(next));
+      }
+      return next;
+    });
+    logActivity('ai_action_executed', 'AI Action Executed', `Action ${actionId} approved and executed successfully`);
+  }, []);
+
+  const createAIAction = useCallback((action: Omit<AIAction, 'id' | 'createdAt'>) => {
+    const newAction: AIAction = {
+      ...action,
+      id: `act_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setAiActions((prev) => {
+      const next = [newAction, ...prev];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('locora_ai_actions', JSON.stringify(next));
+      }
+      return next;
+    });
+  }, []);
+
+  // SECTION 38: Top-Level Agency Mode Switch [ My Business ] [ Agency ]
+  const [agencyMode, setAgencyMode] = useState<boolean>(false);
+
+  // SECTION 35: Onboarding Wizard
+  const [onboardingModalOpen, setOnboardingModalOpen] = useState<boolean>(false);
+
+  // SECTION 40: Growth Store
+  const [growthStoreModalOpen, setGrowthStoreModalOpen] = useState<boolean>(false);
+
   // Fetch PostgreSQL Live Data on Mount, User Change, and Focus
   const fetchWorkspaceData = useCallback(async () => {
     try {
@@ -941,6 +1477,81 @@ const PATH_TO_TAB: Record<string, string> = {
           if (normalizedConvs.length > 0) setActiveConversationId((current) => current || normalizedConvs[0].id);
         }
         if (Array.isArray(data.activityLogs)) setActivityLogs(data.activityLogs);
+      }
+
+      // Sync isolated business record from Locora Database (SINGLE SOURCE OF TRUTH)
+      if (user.email) {
+        try {
+          const bizRes = await fetch(`/api/data-engine/businesses?email=${queryEmail}`);
+          if (bizRes.ok) {
+            const bizData = await bizRes.json();
+            if (Array.isArray(bizData.businesses) && bizData.businesses.length > 0) {
+              const mappedBusinesses: ClientBusiness[] = bizData.businesses.map((r: any) => ({
+                id: r.id,
+                name: r.identity?.name || 'My Local Business',
+                category: r.identity?.category || 'Local Services',
+                tagline: r.identity?.tagline || '',
+                locationName: 'Main Location',
+                address: r.identity?.address || '',
+                city: r.identity?.city || 'Austin',
+                state: r.identity?.state || 'TX',
+                zip: r.identity?.zip || '78701',
+                phone: r.identity?.phone || '',
+                website: r.identity?.website || '',
+                healthScore: r.businessBrain?.score || 82,
+                healthDelta: 5,
+                highImpactCount: (r.businessBrain?.priorityActions || []).filter((a: any) => a.urgency === 'high').length,
+                opportunityCount: (r.businessBrain?.priorityActions || []).filter((a: any) => a.urgency === 'opportunity').length,
+                healthyAreaCount: 10,
+                isMainLocation: true,
+                locations: [
+                  {
+                    id: `loc_${r.id}`,
+                    name: 'Main Location',
+                    isMain: true,
+                    address: r.identity?.address || '',
+                    city: r.identity?.city || '',
+                    state: r.identity?.state || '',
+                    zip: r.identity?.zip || '',
+                    phone: r.identity?.phone || '',
+                  },
+                ],
+                services: r.identity?.services || [],
+                competitors: (r.competitors || []).map((c: any) => c.name || c),
+                googleRating: r.gbpData?.rating || 4.8,
+                reviewCount: r.gbpData?.reviewCount || 34,
+                unansweredReviews: r.gbpData?.unansweredReviews || 0,
+                gbpCompleteness: 92,
+                rankingAvg: r.localPack?.averageRank || 3.2,
+                monthlySearches: r.traffic?.sessions || 1200,
+                opportunitiesCount: r.businessBrain?.swot?.opportunities?.length || 4,
+                monthlyOrganicTraffic: r.traffic?.sessions || 1200,
+                aiReadinessScore: r.businessBrain?.readinessScore || 85,
+              }));
+
+              setBusinesses(mappedBusinesses);
+              setActiveBusinessId((curr) => {
+                if (mappedBusinesses.some((b) => b.id === curr)) return curr;
+                return mappedBusinesses[0].id;
+              });
+
+              // Also sync businessProfile name and website
+              const activeDbBiz = bizData.businesses[0];
+              if (activeDbBiz?.identity) {
+                setBusinessProfile((prev) => ({
+                  ...prev,
+                  name: activeDbBiz.identity.name || prev.name,
+                  website: activeDbBiz.identity.website || prev.website,
+                  city: activeDbBiz.identity.city || prev.city,
+                  phone: activeDbBiz.identity.phone || prev.phone,
+                  address: activeDbBiz.identity.address || prev.address,
+                }));
+              }
+            }
+          }
+        } catch (bizErr) {
+          console.warn('Could not sync Locora DB businesses:', bizErr);
+        }
       }
     } catch (err) {
       console.warn('Could not load remote DB workspace data:', err);
@@ -1389,6 +2000,38 @@ const PATH_TO_TAB: Record<string, string> = {
         activeTab,
         setActiveTab,
         refreshWorkspaceData: fetchWorkspaceData,
+
+        // AI Business Manager & Business Selector
+        businesses,
+        activeBusinessId,
+        activeBusiness,
+        switchBusiness,
+        updateActiveBusiness,
+        addBusiness,
+        addLocation,
+        priorityActions,
+        fixItAction,
+        publishDraft,
+        rightAiPanelOpen,
+        setRightAiPanelOpen,
+        toggleRightAiPanel,
+
+        // SECTION 28, 32, 33, 35, 38, 40 capabilities
+        notifications,
+        markNotificationAsRead,
+        markAllNotificationsAsRead,
+        addNotification,
+        aiActions,
+        selectedAIActionForApproval,
+        setSelectedAIActionForApproval,
+        approveAndExecuteAIAction,
+        createAIAction,
+        agencyMode,
+        setAgencyMode,
+        onboardingModalOpen,
+        setOnboardingModalOpen,
+        growthStoreModalOpen,
+        setGrowthStoreModalOpen,
       }}
     >
       {children}

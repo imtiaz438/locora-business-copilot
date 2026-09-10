@@ -6,6 +6,7 @@ import { SeoRecommendationsPanel } from './SeoRecommendationsPanel';
 import { SeoKeywordsAndTrafficPanel } from './SeoKeywordsAndTrafficPanel';
 import { RealSeoDashboard } from './RealSeoDashboard';
 import { WhiteLabelAuditExportModal } from './WhiteLabelAuditExportModal';
+import { LockedSeoFeatureView } from './LockedSeoFeatureView';
 import {
   Globe,
   Search,
@@ -36,6 +37,7 @@ import {
   ExternalLink,
   Zap,
   Bot,
+  Lock,
 } from 'lucide-react';
 
 interface AuditDiagnosis {
@@ -51,10 +53,29 @@ interface AuditDiagnosis {
 export const WebsiteReviewView: React.FC = () => {
   const { businessProfile, latestWebsiteAudit, setLatestWebsiteAudit, settings, user, updateUser, logActivity, setCheckoutModalPlan, setActiveTab } = useApp();
 
+  const isPaidUser = user.planTier === 'pro' || user.planTier === 'agency' || user.planTier === 'elite' || user.role === 'admin' || user.role === 'owner';
+
   const [mode, setMode] = useState<'single' | 'competitor'>('single');
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'keywords' | 'traffic' | 'recommendations' | 'real_seo'>('overview');
   const [competitorSubView, setCompetitorSubView] = useState<'matrix' | 'target' | 'competitor'>('matrix');
   const [url, setUrl] = useState(businessProfile.website || 'locora.ai');
+
+  // Normalized current domain
+  const currentDomain = (url || businessProfile.website || 'locora.ai')
+    .replace(/^https?:\/\//i, '')
+    .replace(/\/.*$/, '')
+    .toLowerCase()
+    .trim();
+
+  // The 1 allowed free domain for this user
+  const effectiveFreeDomain = user.freeAuditedDomain ||
+    (typeof window !== 'undefined' ? localStorage.getItem('locora_free_audited_domain') : null) ||
+    (businessProfile?.website ? businessProfile.website.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').toLowerCase().trim() : null);
+
+  const isAllowedFreeDomain = !effectiveFreeDomain ||
+    currentDomain === effectiveFreeDomain ||
+    currentDomain === effectiveFreeDomain.replace(/^www\./, '') ||
+    `www.${currentDomain}` === effectiveFreeDomain;
   const [competitorUrl, setCompetitorUrl] = useState('competitor-example.com');
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -115,6 +136,15 @@ export const WebsiteReviewView: React.FC = () => {
 
         if (typeof data.creditsUsed === 'number') {
           updateUser({ aiCreditsUsed: data.creditsUsed });
+        }
+
+        if (!isPaidUser) {
+          const cleanTarget = targetUrl.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').toLowerCase().trim();
+          const freeDomain = data.freeAuditedDomain || effectiveFreeDomain || cleanTarget;
+          updateUser({ freeAuditedDomain: freeDomain, freeAuditedDomains: [freeDomain] });
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('locora_free_audited_domain', freeDomain);
+          }
         }
 
         setLatestWebsiteAudit(data);
@@ -409,15 +439,27 @@ export const WebsiteReviewView: React.FC = () => {
                 activeSubTab === 'keywords' ? 'bg-[#059669] text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'
               }`}
             >
-              <Search className="w-3.5 h-3.5" />
+              {!isPaidUser && !isAllowedFreeDomain ? <Lock className="w-3.5 h-3.5 text-amber-500" /> : <Search className="w-3.5 h-3.5" />}
               <span>Keyword Matrix</span>
-              <span
-                className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                  activeSubTab === 'keywords' ? 'bg-emerald-800 text-emerald-100' : 'bg-emerald-100 text-emerald-800'
-                }`}
-              >
-                LIVE
-              </span>
+              {!isPaidUser ? (
+                isAllowedFreeDomain ? (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                    FREE (1 Domain)
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                    PRO
+                  </span>
+                )
+              ) : (
+                <span
+                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                    activeSubTab === 'keywords' ? 'bg-emerald-800 text-emerald-100' : 'bg-emerald-100 text-emerald-800'
+                  }`}
+                >
+                  LIVE
+                </span>
+              )}
             </button>
             <button
               onClick={() => setActiveSubTab('traffic')}
@@ -425,8 +467,19 @@ export const WebsiteReviewView: React.FC = () => {
                 activeSubTab === 'traffic' ? 'bg-[#059669] text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'
               }`}
             >
-              <TrendingUp className="w-3.5 h-3.5" />
+              {!isPaidUser && !isAllowedFreeDomain ? <Lock className="w-3.5 h-3.5 text-amber-500" /> : <TrendingUp className="w-3.5 h-3.5" />}
               <span>Traffic & Backlinks</span>
+              {!isPaidUser ? (
+                isAllowedFreeDomain ? (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                    FREE (1 Domain)
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                    PRO
+                  </span>
+                )
+              ) : null}
             </button>
             <button
               onClick={() => setActiveSubTab('recommendations')}
@@ -450,15 +503,21 @@ export const WebsiteReviewView: React.FC = () => {
                 activeSubTab === 'real_seo' ? 'bg-[#059669] text-white shadow-xs' : 'text-slate-500 hover:text-slate-900'
               }`}
             >
-              <Bot className="w-3.5 h-3.5" />
+              {!isPaidUser ? <Lock className="w-3.5 h-3.5 text-amber-500" /> : <Bot className="w-3.5 h-3.5" />}
               <span>Real SEO & AI Citations</span>
-              <span
-                className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                  activeSubTab === 'real_seo' ? 'bg-emerald-800 text-emerald-100' : 'bg-emerald-100 text-emerald-800'
-                }`}
-              >
-                LIVE
-              </span>
+              {!isPaidUser ? (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">
+                  PRO / AGENCY
+                </span>
+              ) : (
+                <span
+                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                    activeSubTab === 'real_seo' ? 'bg-emerald-800 text-emerald-100' : 'bg-emerald-100 text-emerald-800'
+                  }`}
+                >
+                  LIVE
+                </span>
+              )}
             </button>
           </div>
 
@@ -494,7 +553,7 @@ export const WebsiteReviewView: React.FC = () => {
             <button
               onClick={() => {
                 if (user.planTier === 'free') {
-                  alert('Competitor Snapshot is included on Pro Growth ($19/mo) and Agency Elite plans.');
+                  alert('Competitor Snapshot is included on Pro Growth ($29/mo) and Agency Elite plans.');
                   setCheckoutModalPlan('pro');
                   return;
                 }
@@ -675,14 +734,29 @@ export const WebsiteReviewView: React.FC = () => {
       {/* SubTab View: Live Keyword Matrix & SERP Rankings */}
       {activeSubTab === 'keywords' && (
         <div className="space-y-6">
-          <SeoKeywordsAndTrafficPanel
-            seoMatrix={auditDetails?.seoMatrix || latestWebsiteAudit?.seoMatrix}
-            domain={url || businessProfile.website || 'locora.ai'}
-            userEmail={user.email}
-            userPlanTier={user.planTier}
-            onUpgradeClick={() => setCheckoutModalPlan('pro')}
-            defaultTab="keywords"
-          />
+          {!isPaidUser && !isAllowedFreeDomain ? (
+            <LockedSeoFeatureView
+              title="Keyword Matrix Locked (1-Domain Free Limit)"
+              description={`Free mode includes full keyword matrix volume, CPC, and intent analytics for 1 domain (you previously unlocked ${effectiveFreeDomain || 'your primary domain'}). For multiple domain audits, only the Technical SEO Audit Overview and Lighthouse Recommendations are included on the Free plan. Upgrade to Pro Growth or Agency Elite to analyze unlimited domains.`}
+              badgeLabel="1-DOMAIN FREE LIMIT"
+              onUpgradePro={() => setCheckoutModalPlan('pro')}
+              onUpgradeAgency={() => setCheckoutModalPlan('agency')}
+              onGoToTechnicalAudit={() => setActiveSubTab('overview')}
+              unlockedDomain={effectiveFreeDomain || undefined}
+              onSwitchToUnlockedDomain={() => {
+                if (effectiveFreeDomain) setUrl(effectiveFreeDomain);
+              }}
+            />
+          ) : (
+            <SeoKeywordsAndTrafficPanel
+              seoMatrix={auditDetails?.seoMatrix || latestWebsiteAudit?.seoMatrix}
+              domain={url || businessProfile.website || 'locora.ai'}
+              userEmail={user.email}
+              userPlanTier={user.planTier}
+              onUpgradeClick={() => setCheckoutModalPlan('pro')}
+              defaultTab="keywords"
+            />
+          )}
           <BrandedFooter className="pt-4 border-t border-slate-200" />
         </div>
       )}
@@ -690,14 +764,29 @@ export const WebsiteReviewView: React.FC = () => {
       {/* SubTab View: Traffic & Backlinks Analytics */}
       {activeSubTab === 'traffic' && (
         <div className="space-y-6">
-          <SeoKeywordsAndTrafficPanel
-            seoMatrix={auditDetails?.seoMatrix || latestWebsiteAudit?.seoMatrix}
-            domain={url || businessProfile.website || 'locora.ai'}
-            userEmail={user.email}
-            userPlanTier={user.planTier}
-            onUpgradeClick={() => setCheckoutModalPlan('pro')}
-            defaultTab="traffic"
-          />
+          {!isPaidUser && !isAllowedFreeDomain ? (
+            <LockedSeoFeatureView
+              title="Traffic & Backlinks Locked (1-Domain Free Limit)"
+              description={`Free mode includes live referring domains, backlink profiles, and traffic estimates for 1 domain (you previously unlocked ${effectiveFreeDomain || 'your primary domain'}). For multiple domain audits, only the Technical SEO Audit Overview and Lighthouse Recommendations are included on the Free plan. Upgrade to Pro Growth or Agency Elite to analyze unlimited domains.`}
+              badgeLabel="1-DOMAIN FREE LIMIT"
+              onUpgradePro={() => setCheckoutModalPlan('pro')}
+              onUpgradeAgency={() => setCheckoutModalPlan('agency')}
+              onGoToTechnicalAudit={() => setActiveSubTab('overview')}
+              unlockedDomain={effectiveFreeDomain || undefined}
+              onSwitchToUnlockedDomain={() => {
+                if (effectiveFreeDomain) setUrl(effectiveFreeDomain);
+              }}
+            />
+          ) : (
+            <SeoKeywordsAndTrafficPanel
+              seoMatrix={auditDetails?.seoMatrix || latestWebsiteAudit?.seoMatrix}
+              domain={url || businessProfile.website || 'locora.ai'}
+              userEmail={user.email}
+              userPlanTier={user.planTier}
+              onUpgradeClick={() => setCheckoutModalPlan('pro')}
+              defaultTab="traffic"
+            />
+          )}
           <BrandedFooter className="pt-4 border-t border-slate-200" />
         </div>
       )}
@@ -705,10 +794,21 @@ export const WebsiteReviewView: React.FC = () => {
       {/* SubTab View: Real SEO Data & AI Citations (Phases A-E) */}
       {activeSubTab === 'real_seo' && (
         <div className="space-y-6">
-          <RealSeoDashboard
-            domain={url || businessProfile.website || 'locora.ai'}
-            onUpgradeClick={() => setCheckoutModalPlan('pro')}
-          />
+          {!isPaidUser ? (
+            <LockedSeoFeatureView
+              title="Real SEO Telemetry & Multi-Model AI Citations"
+              description="Live search intelligence including Google AI Overview presence checks and automated brand citation benchmarks across ChatGPT, Claude, Gemini, and Perplexity."
+              badgeLabel="PRO & AGENCY ONLY"
+              onUpgradePro={() => setCheckoutModalPlan('pro')}
+              onUpgradeAgency={() => setCheckoutModalPlan('agency')}
+              onGoToTechnicalAudit={() => setActiveSubTab('overview')}
+            />
+          ) : (
+            <RealSeoDashboard
+              domain={url || businessProfile.website || 'locora.ai'}
+              onUpgradeClick={() => setCheckoutModalPlan('pro')}
+            />
+          )}
           <BrandedFooter className="pt-4 border-t border-slate-200" />
         </div>
       )}

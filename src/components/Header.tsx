@@ -2,17 +2,23 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import {
   Sparkles,
-  Search,
   Menu,
   User,
   LogOut,
-  Globe,
   Settings,
   CreditCard,
   ChevronDown,
   ShieldCheck,
+  Bell,
+  Bot,
+  PanelRight,
+  ShoppingBag,
+  Building2,
+  Briefcase,
 } from 'lucide-react';
 import { AiCreditMeter } from './AiCreditMeter';
+import { TopBusinessSelector } from './TopBusinessSelector';
+import { NotificationDropdown } from './NotificationDropdown';
 
 interface HeaderProps {
   onOpenCommandPalette: () => void;
@@ -23,12 +29,39 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCommandPalette,
   onOpenMobileMenu,
 }) => {
-  const { businessProfile, setActiveTab, user, setCheckoutModalPlan, logout } = useApp();
+  const {
+    businessProfile,
+    setActiveTab,
+    activeTab,
+    user,
+    updateUser,
+    setCheckoutModalPlan,
+    logout,
+    rightAiPanelOpen,
+    toggleRightAiPanel,
+    priorityActions,
+    notifications,
+    agencyMode,
+    setAgencyMode,
+    setGrowthStoreModalOpen,
+  } = useApp();
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  const unreadNotifsCount = notifications.filter((n) => !n.isRead).length;
+
+  const handleToggleAgency = (isAgency: boolean) => {
+    setAgencyMode(isAgency);
+    if (isAgency) {
+      setActiveTab('clients');
+    } else {
+      setActiveTab('dashboard');
+    }
+  };
 
   return (
     <header className="h-16 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 shadow-2xs font-sans">
-      {/* Left: Mobile Menu Toggle & Title */}
+      {/* Left: Mobile Menu Toggle & Top Business Selector */}
       <div className="flex items-center gap-3">
         <button
           onClick={onOpenMobileMenu}
@@ -38,72 +71,102 @@ export const Header: React.FC<HeaderProps> = ({
           <Menu className="w-5 h-5" />
         </button>
 
-        <div className="hidden sm:block">
-          <h1 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2 font-heading">
-            <span>{businessProfile.name || 'Locora AI Workspace'}</span>
-          </h1>
-          <p className="text-[11px] text-slate-500 font-sans">
-            {businessProfile.tagline || 'Business Operating System'}
-          </p>
+        {/* Top Business / Client Location Selector */}
+        <TopBusinessSelector />
+
+        {/* SECTION 38: TOP-LEVEL SWITCH [ My Business ] [ Agency ] */}
+        <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
+          <button
+            onClick={() => handleToggleAgency(false)}
+            className={`px-3 py-1 rounded-lg transition-all cursor-pointer font-heading flex items-center gap-1.5 ${
+              !agencyMode && activeTab !== 'clients'
+                ? 'bg-white text-slate-900 shadow-2xs'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Briefcase className="w-3.5 h-3.5 text-[#059669]" />
+            <span>My Business</span>
+          </button>
+          <button
+            onClick={() => handleToggleAgency(true)}
+            className={`px-3 py-1 rounded-lg transition-all cursor-pointer font-heading flex items-center gap-1.5 ${
+              agencyMode || activeTab === 'clients'
+                ? 'bg-white text-indigo-900 shadow-2xs'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Agency</span>
+            <span className="text-[9px] px-1 py-0.2 rounded bg-indigo-100 text-indigo-800 uppercase font-mono">
+              12
+            </span>
+          </button>
         </div>
       </div>
 
-      {/* Center: Command Palette Trigger */}
-      <div className="flex-1 max-w-md mx-4">
+      {/* Right Actions & User Controls - Fitted cleanly to prevent off-screen overflow */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        {/* Toggle Right AI Panel */}
         <button
-          onClick={onOpenCommandPalette}
-          className="w-full flex items-center justify-between px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-xs text-slate-500 font-medium transition-all cursor-pointer group"
+          onClick={toggleRightAiPanel}
+          className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs shrink-0 ${
+            rightAiPanelOpen
+              ? 'bg-[#059669] text-white shadow-emerald-500/20'
+              : 'bg-emerald-50 text-[#059669] hover:bg-emerald-100 border border-emerald-200/80'
+          }`}
+          title="Toggle AI Manager Assistant"
         >
-          <div className="flex items-center gap-2">
-            <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600" />
-            <span className="hidden sm:inline">Search commands, clients, invoices...</span>
-            <span className="sm:hidden">Search...</span>
-          </div>
-          <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-slate-500 bg-white border border-slate-200 rounded-md shadow-2xs">
-            <span>⌘</span>K
-          </kbd>
-        </button>
-      </div>
-
-      {/* Right Actions & User Controls */}
-      <div className="flex items-center gap-2.5">
-        {/* Switch to Public Site */}
-        <button
-          onClick={() => setActiveTab('home')}
-          className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-semibold text-[#059669] transition-colors cursor-pointer font-sans"
-          title="View Public Marketing Site"
-        >
-          <Globe className="w-3.5 h-3.5" />
-          <span>Public Site</span>
+          <Bot className="w-4 h-4" />
+          <span className="hidden sm:inline">AI Manager</span>
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse hidden sm:inline-block" />
         </button>
 
-        {/* AI Credit Meter (Always Visible) */}
+        {/* SECTION 28: Notifications with High-Signal Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setNotificationsOpen(!notificationsOpen)}
+            className="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 relative transition-colors cursor-pointer"
+            title="System Notifications & Action Alerts"
+          >
+            <Bell className="w-4 h-4" />
+            {unreadNotifsCount > 0 && (
+              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center animate-pulse">
+                {unreadNotifsCount}
+              </span>
+            )}
+          </button>
+
+          <NotificationDropdown
+            isOpen={notificationsOpen}
+            onClose={() => setNotificationsOpen(false)}
+          />
+        </div>
+
+        {/* AI Credit Meter */}
         <AiCreditMeter />
 
-        {/* Upgrade / Plan Badge */}
+        {/* Upgrade / Plan CTA Button (Proceeds to Stripe Checkout) */}
         {user.planTier === 'free' ? (
           <button
             id="header_upgrade_to_pro_btn"
             onClick={() => setCheckoutModalPlan('pro')}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-sm transition-all cursor-pointer font-sans"
+            className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-sm transition-all cursor-pointer font-sans"
+            title="Unlock Autonomous AI Fixes, 3-Pack Copilot & 500 Credits"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>Upgrade to Pro</span>
+            <span>Upgrade Pro ($29)</span>
           </button>
         ) : user.planTier === 'pro' ? (
           <button
             id="header_upgrade_to_agency_btn"
             onClick={() => setCheckoutModalPlan('agency')}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all cursor-pointer font-sans"
+            className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all cursor-pointer font-sans"
+            title="Unlock Multi-Client Portfolios & White-Label Reporting"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>Upgrade to Agency</span>
+            <span>Upgrade Agency ($99)</span>
           </button>
-        ) : (
-          <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 font-extrabold text-[11px] font-sans">
-            <span>Agency Elite</span>
-          </div>
-        )}
+        ) : null}
 
         {/* User Avatar Dropdown */}
         <div className="relative">
@@ -118,13 +181,37 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           {userDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-50 font-sans animate-fadeIn">
+            <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-50 font-sans animate-fadeIn">
               <div className="px-4 py-2 border-b border-slate-100">
                 <p className="text-xs font-bold text-slate-900 font-heading">{user.name || 'Account Owner'}</p>
                 <p className="text-[10px] text-slate-500 truncate">{user.email}</p>
                 <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-bold uppercase border border-emerald-200">
-                  <span>{user.planTier} Member</span>
+                  <span>{user.planTier} Plan Active</span>
                 </div>
+              </div>
+
+              {/* Plan Tier Status in Dropdown */}
+              <div className="px-3.5 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-heading">
+                    Current Plan
+                  </span>
+                  <span className="text-xs font-extrabold text-slate-900 capitalize font-heading">
+                    {user.planTier === 'agency' ? 'Agency Elite' : user.planTier === 'pro' ? 'Pro Growth' : 'Free Starter'}
+                  </span>
+                </div>
+                {user.planTier !== 'agency' && (
+                  <button
+                    onClick={() => {
+                      setCheckoutModalPlan(user.planTier === 'free' ? 'pro' : 'agency');
+                      setUserDropdownOpen(false);
+                    }}
+                    className="px-2.5 py-1 rounded-xl bg-[#059669] hover:bg-[#047857] text-white text-[11px] font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1"
+                  >
+                    <Sparkles className="w-3 h-3 text-amber-300" />
+                    <span>Upgrade</span>
+                  </button>
+                )}
               </div>
 
               <div className="py-1">

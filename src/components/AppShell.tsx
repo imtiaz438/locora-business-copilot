@@ -6,6 +6,7 @@ import { CommandPalette } from './CommandPalette';
 import { AuthModal } from './AuthModal';
 import { CheckoutModal } from './CheckoutModal';
 import { FuelPackModal } from './FuelPackModal';
+import { RightAiPanel } from './RightAiPanel';
 import { Lock, Sparkles, ArrowRight } from 'lucide-react';
 import { LocoraLogo } from './LocoraLogo';
 import { PublicNavbar } from './public/PublicNavbar';
@@ -46,6 +47,8 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
   const isPublicRoute =
     activeTab === 'home' ||
+    activeTab === 'products' ||
+    activeTab === 'product' ||
     activeTab === 'features' ||
     activeTab.startsWith('feature_') ||
     activeTab === 'use_cases_hub' ||
@@ -144,13 +147,18 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
         onMobileClose={() => setMobileMenuOpen(false)}
       />
 
-      {/* Main OS View Wrapper */}
-      <div ref={mainRef} className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-y-auto">
+      {/* Main OS View Wrapper with Optional Right AI Panel */}
+      <div className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-hidden">
         <Header
           onOpenCommandPalette={() => setCommandPaletteOpen(true)}
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
         />
-        <main className="flex-1 pb-12">{children}</main>
+        <div className="flex-1 flex min-w-0 overflow-hidden">
+          <main ref={mainRef} className="flex-1 min-w-0 overflow-y-auto pb-12">
+            {children}
+          </main>
+          <RightAiPanel />
+        </div>
       </div>
 
       {/* Global Command Palette Modal */}

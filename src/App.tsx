@@ -4,18 +4,26 @@ import { AppShell } from './components/AppShell';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { PaymentSuccessModal } from './components/PaymentSuccessModal';
 import { SubscriptionInvoiceModal } from './components/SubscriptionInvoiceModal';
+import { FirstTimeOnboardingModal } from './components/FirstTimeOnboardingModal';
+import { AIActionApprovalModal } from './components/AIActionApprovalModal';
+import { GrowthStoreModal } from './components/GrowthStoreModal';
 import { SubscriptionInvoice } from './types';
 
 // View Modules
 import { DashboardView } from './components/DashboardView';
-import { ChatView } from './components/ChatView';
+import { AiManagerView } from './components/AiManagerView';
+import { GrowthView } from './components/GrowthView';
 import { CRMView } from './components/CRMView';
+import { WorkHubView } from './components/WorkHubView';
 import { InvoiceView } from './components/InvoiceView';
-import { ProposalView } from './components/ProposalView';
-import { DocumentGeneratorView } from './components/DocumentGeneratorView';
+import { MonthlyReportView } from './components/MonthlyReportView';
+import { AgencyClientsView } from './components/AgencyClientsView';
 import { WebsiteReviewView } from './components/WebsiteReviewView';
-import { LocalSeoView } from './components/LocalSeoView';
-import { MarketingPlannerView } from './components/MarketingPlannerView';
+import { LocalVisibilityView } from './components/LocalVisibilityView';
+import { ReputationView } from './components/ReputationView';
+import { CompetitorIntelligenceView } from './components/CompetitorIntelligenceView';
+import { ContentStudioView } from './components/ContentStudioView';
+import { BusinessBrainView } from './components/BusinessBrainView';
 import { SettingsView } from './components/SettingsView';
 import { PricingView } from './components/PricingView';
 import { SubscriptionView } from './components/SubscriptionView';
@@ -26,6 +34,7 @@ import { MasterclassKitView } from './components/MasterclassKitView';
 
 // Public Marketing & SEO Architecture Views
 import { HomeView } from './components/public/HomeView';
+import { ProductView } from './components/public/ProductView';
 import { FeaturesView } from './components/public/FeaturesView';
 import { FeatureDetailPage } from './components/public/FeatureDetailPage';
 import { UseCaseDetailPage } from './components/public/UseCaseDetailPage';
@@ -44,6 +53,9 @@ import { RefundPolicyView } from './components/public/RefundPolicyView';
 
 const PATH_TO_TAB: Record<string, string> = {
   '': 'home',
+  'home': 'home',
+  'products': 'products',
+  'product': 'products',
   'features': 'features',
   'use-cases': 'use_cases_hub',
   'use-cases/': 'use_cases_hub',
@@ -69,6 +81,24 @@ const PATH_TO_TAB: Record<string, string> = {
   'cancellation-policy': 'refund',
   'security': 'security',
   'dashboard': 'dashboard',
+  'app': 'dashboard',
+  'growth-hub': 'dashboard',
+  'growth': 'marketing',
+  'local-visibility': 'visibility',
+  'visibility': 'visibility',
+  'reputation': 'reputation',
+  'competitors': 'competitors',
+  'content': 'content',
+  'content-studio': 'content',
+  'business-brain': 'business_brain',
+  'brain': 'business_brain',
+  'data-engine': 'dashboard',
+  'data_engine': 'dashboard',
+  'architecture': 'dashboard',
+  'pipeline': 'dashboard',
+  'customers': 'crm',
+  'work': 'proposals',
+  'reports': 'reports',
   'chat': 'chat',
   'crm': 'crm',
   'projects': 'projects',
@@ -93,7 +123,20 @@ const PATH_TO_TAB: Record<string, string> = {
 };
 
 const MainContent: React.FC = () => {
-  const { activeTab, setActiveTab, subscribePlan, user, updateUser } = useApp();
+  const {
+    activeTab,
+    setActiveTab,
+    subscribePlan,
+    user,
+    updateUser,
+    onboardingModalOpen,
+    setOnboardingModalOpen,
+    selectedAIActionForApproval,
+    setSelectedAIActionForApproval,
+    approveAndExecuteAIAction,
+    growthStoreModalOpen,
+    setGrowthStoreModalOpen,
+  } = useApp();
   const [successInvoice, setSuccessInvoice] = useState<SubscriptionInvoice | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showFullInvoiceModal, setShowFullInvoiceModal] = useState(false);
@@ -103,6 +146,20 @@ const MainContent: React.FC = () => {
     const syncRouteFromLocation = () => {
       const rawPath = window.location.pathname;
       const path = rawPath.replace(/^\//, '').trim();
+
+      const isAppSubdomain =
+        typeof window !== 'undefined' &&
+        (window.location.hostname.startsWith('app.') || window.location.hostname === 'app.locoraai.com');
+
+      if (isAppSubdomain && (path === '' || path === 'app' || path === 'dashboard')) {
+        setActiveTab('dashboard');
+        return;
+      }
+
+      if (path === '' || path === 'home') {
+        setActiveTab('home');
+        return;
+      }
 
       if (rawPath.startsWith('/features/')) {
         const slug = rawPath.replace(/^\/features\//, '').trim();
@@ -255,6 +312,7 @@ const MainContent: React.FC = () => {
 
     // Other Public Routes
     if (activeTab === 'home') return <HomeView />;
+    if (activeTab === 'products' || activeTab === 'product') return <ProductView />;
     if (activeTab === 'features') return <FeaturesView />;
     if (activeTab === 'pricing_public') return <PricingPublicView />;
     if (activeTab === 'about') return <AboutView />;
@@ -267,18 +325,23 @@ const MainContent: React.FC = () => {
     if (activeTab === 'refund') return <RefundPolicyView />;
     if (activeTab === 'security') return <SecurityOverviewView />;
 
-    // Authenticated OS Modules
+    // Authenticated OS Modules - Unified AI Manager Architecture
     if (activeTab === 'dashboard') return <DashboardView />;
-    if (activeTab === 'chat') return <ChatView />;
-    if (activeTab === 'crm') return <CRMView />;
-    if (activeTab === 'projects') return <CRMView initialTab="projects" />;
+    if (activeTab === 'ai_manager' || activeTab === 'chat') return <AiManagerView />;
+    if (activeTab === 'growth' || activeTab === 'marketing' || activeTab === 'marketing_planner') return <GrowthView />;
+    if (activeTab === 'visibility' || activeTab === 'local_seo' || activeTab === 'seo_schema') return <LocalVisibilityView />;
+    if (activeTab === 'reputation') return <ReputationView />;
+    if (activeTab === 'competitors') return <CompetitorIntelligenceView />;
+    if (activeTab === 'content' || activeTab === 'documents') return <ContentStudioView />;
+    if (activeTab === 'business_brain' || activeTab === 'brain') return <BusinessBrainView />;
+    if (activeTab === 'customers' || activeTab === 'crm') return <CRMView />;
+    if (activeTab === 'work' || activeTab === 'proposals' || activeTab === 'invoices') return <WorkHubView />;
+    if (activeTab === 'reports' || activeTab === 'growth_report' || activeTab === 'monthly_report') return <MonthlyReportView />;
+    if (activeTab === 'clients' || activeTab === 'agency_clients') return <AgencyClientsView />;
+    if (activeTab === 'website_review' || activeTab === 'audit') return <WebsiteReviewView />;
+    if (activeTab === 'projects') return <WorkHubView initialTab="projects" />;
     if (activeTab === 'lead_prospector' || activeTab === 'lead_vault' || activeTab === 'b2b_vault' || activeTab === 'leads' || activeTab === 'lead-prospector') return <LeadProspectorView />;
     if (activeTab === 'invoices') return <InvoiceView />;
-    if (activeTab === 'proposals') return <ProposalView />;
-    if (activeTab === 'documents') return <DocumentGeneratorView />;
-    if (activeTab === 'website_review') return <WebsiteReviewView />;
-    if (activeTab === 'local_seo') return <LocalSeoView />;
-    if (activeTab === 'marketing' || activeTab === 'marketing_planner') return <MarketingPlannerView />;
     if (activeTab === 'masterclass_kit' || activeTab === 'agency_vault' || activeTab === 'growth_vault' || activeTab === 'masterclass') return <MasterclassKitView />;
     if (activeTab === 'pricing') return <PricingView />;
     if (activeTab === 'subscription') return <SubscriptionView />;
@@ -320,6 +383,26 @@ const MainContent: React.FC = () => {
           onClose={() => setShowFullInvoiceModal(false)}
         />
       )}
+
+      {/* SECTION 35: First-Time Onboarding Wizard Modal */}
+      <FirstTimeOnboardingModal
+        isOpen={onboardingModalOpen}
+        onClose={() => setOnboardingModalOpen(false)}
+      />
+
+      {/* SECTION 32 & 33: AI Action Approval & Execution Gate Modal */}
+      <AIActionApprovalModal
+        isOpen={selectedAIActionForApproval !== null}
+        action={selectedAIActionForApproval}
+        onClose={() => setSelectedAIActionForApproval(null)}
+        onApproveAndExecute={approveAndExecuteAIAction}
+      />
+
+      {/* SECTION 40: Growth Store Modal */}
+      <GrowthStoreModal
+        isOpen={growthStoreModalOpen}
+        onClose={() => setGrowthStoreModalOpen(false)}
+      />
     </AppShell>
   );
 };

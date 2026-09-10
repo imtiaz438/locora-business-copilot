@@ -188,7 +188,7 @@ export const BrandVoiceWizardModal: React.FC<Props> = ({ isOpen, onClose }) => {
             <button
               onClick={() => {
                 if (user.planTier === 'free' && step >= 1) {
-                  if (confirm('Full 4-Step Brand Voice Wizard (Audience, Differentiators, Negative Words) is unlocked on Pro Growth ($19/mo) and Agency Elite.\n\nClick OK to Save your Step 1 Tone, or Cancel to upgrade.')) {
+                  if (confirm('Full 4-Step Brand Voice Wizard (Audience, Differentiators, Negative Words) is unlocked on Pro Growth ($29/mo) and Agency Elite.\n\nClick OK to Save your Step 1 Tone, or Cancel to upgrade.')) {
                     handleSave();
                   } else {
                     setCheckoutModalPlan('pro');

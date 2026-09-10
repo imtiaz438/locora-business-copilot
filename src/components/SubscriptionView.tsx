@@ -203,8 +203,8 @@ export const SubscriptionView: React.FC = () => {
                 {user.planTier === 'free'
                   ? '$0/mo'
                   : user.planTier === 'pro'
-                  ? user.billingCycle === 'yearly' ? '$15/mo ($180/yr)' : '$19/mo'
-                  : user.billingCycle === 'yearly' ? '$39/mo ($468/yr)' : '$49/mo'}
+                  ? user.billingCycle === 'yearly' ? '$249/yr ($20.75/mo)' : '$29/mo'
+                  : user.billingCycle === 'yearly' ? '$790/yr ($65.80/mo)' : '$99/mo'}
               </p>
               <p className="text-[11px] text-slate-500 capitalize font-sans">{user.billingCycle} billing term</p>
             </div>
@@ -239,7 +239,7 @@ export const SubscriptionView: React.FC = () => {
                   )}
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  {user.planTier === 'free' ? 'Standard Free' : user.planTier === 'pro' ? '$19/month auto-billed' : '$49/month auto-billed'}
+                  {user.planTier === 'free' ? 'Standard Free' : user.planTier === 'pro' ? '$29/month auto-billed' : '$99/month auto-billed'}
                 </p>
               </button>
 
@@ -256,7 +256,7 @@ export const SubscriptionView: React.FC = () => {
                   <span className="font-bold text-xs flex items-center gap-1.5">
                     <span>Yearly Renewal</span>
                     <span className="px-1.5 py-0.2 bg-emerald-100 text-[#059669] text-[9px] font-extrabold rounded">
-                      SAVE 20%
+                      SAVE UP TO 28%
                     </span>
                   </span>
                   {user.billingCycle === 'yearly' && (
@@ -264,7 +264,7 @@ export const SubscriptionView: React.FC = () => {
                   )}
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  {user.planTier === 'free' ? 'Standard Free' : user.planTier === 'pro' ? '$15/mo ($180 billed annually)' : '$39/mo ($468 billed annually)'}
+                  {user.planTier === 'free' ? 'Standard Free' : user.planTier === 'pro' ? '$249 billed annually ($20.75/mo)' : '$790 billed annually ($65.80/mo)'}
                 </p>
               </button>
             </div>
@@ -363,8 +363,8 @@ export const SubscriptionView: React.FC = () => {
                 {user.planTier === 'agency'
                   ? 'You have Unlimited AI Generations, 5 team seats, and white-label report cards unlocked.'
                   : user.planTier === 'pro'
-                  ? 'You are on Pro Growth (250 credits/mo). Upgrade to Agency Elite ($49/mo) for Unlimited AI Credits.'
-                  : 'Upgrade to Pro Growth ($19/mo) for 250 Credits or Agency Elite ($49/mo) for Unlimited Credits.'}
+                  ? 'You are on Pro Growth. Upgrade to Agency Elite ($99/mo) for 10 Businesses, AI Client Manager & Unlimited Power.'
+                  : 'Upgrade to Pro Growth ($29/mo) or Agency Elite ($99/mo) for Full Business Brain access.'}
               </p>
             </div>
 

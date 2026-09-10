@@ -30,7 +30,7 @@ export const TeamManagementSection: React.FC = () => {
     if (!newMemberEmail) return;
 
     if (user.planTier !== 'agency') {
-      alert('Multi-User Seats (up to 5 team members) require Agency Elite ($49/mo). Upgrade to invite your team.');
+      alert('Multi-User Seats (up to 5 team members) require Agency Elite ($99/mo). Upgrade to invite your team.');
       setCheckoutModalPlan('agency');
       return;
     }

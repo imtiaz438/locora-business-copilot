@@ -65,10 +65,10 @@ export const CheckoutModal: React.FC = () => {
   const currentPlan = user.planTier || 'free';
   const isYearly = checkoutModalCycle === 'yearly';
   const planName = checkoutModalPlan === 'agency' ? 'Agency Elite' : 'Pro Growth';
-  const monthlyPrice = checkoutModalPlan === 'agency' ? 49 : 19;
-  const annualMonthlyEquivalent = checkoutModalPlan === 'agency' ? 39 : 15;
+  const monthlyPrice = checkoutModalPlan === 'agency' ? 99 : 29;
+  const annualMonthlyEquivalent = checkoutModalPlan === 'agency' ? 65.80 : 20.75;
   const totalAmount = isYearly
-    ? (checkoutModalPlan === 'agency' ? 468 : 180)
+    ? (checkoutModalPlan === 'agency' ? 790 : 249)
     : monthlyPrice;
 
   // Scenario 1: User is already on Agency Elite (Top Tier)
@@ -240,7 +240,7 @@ export const CheckoutModal: React.FC = () => {
                 You Already Have Active Pro Growth!
               </h3>
               <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-                You are currently subscribed to the <strong>Pro Growth ($19/mo)</strong> plan with 250 AI Copilot credits/month and full CRM invoicing.
+                You are currently subscribed to the <strong>Pro Growth ($29/mo)</strong> plan with full Business Brain access, AI Local SEO Copilot, and proactive intelligence.
               </p>
             </div>
 
@@ -249,11 +249,11 @@ export const CheckoutModal: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-indigo-600" />
                 <h4 className="text-sm font-bold text-indigo-950 font-heading">
-                  Upgrade to Agency Elite for Unlimited Power ($49/mo)
+                  Upgrade to Agency Elite for Full Power ($99/mo)
                 </h4>
               </div>
               <p className="text-xs text-indigo-900/80 leading-relaxed">
-                Need unlimited AI generations, white-label client report cards, JSON-LD Schema generators, and up to 5 team member seats? Upgrade to Agency Elite today.
+                Need to manage up to 10 client businesses, automated scans, white-label client PDF reports, and up to 5 team member seats? Upgrade to Agency Elite today.
               </p>
               <div className="pt-2 flex flex-col sm:flex-row gap-3">
                 <button
@@ -262,7 +262,7 @@ export const CheckoutModal: React.FC = () => {
                   className="w-full sm:w-auto px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Crown className="w-4 h-4" />
-                  <span>Upgrade to Agency Elite (${isYearly ? '39/mo' : '49/mo'})</span>
+                  <span>Upgrade to Agency Elite ({isYearly ? '$65.80/mo' : '$99/mo'})</span>
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </button>
                 <button

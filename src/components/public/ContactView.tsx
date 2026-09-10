@@ -140,7 +140,7 @@ export const ContactView: React.FC = () => {
       // Smart Fallback Assistant Answer
       let fallbackAnswer = "Locora AI helps local service businesses and agencies automate proposals, generate SEO strategies, manage client CRMs, and issue professional invoices in minutes. Would you like to test our free 25 copilot credits or book a 15-minute VIP demo?";
       if (textToSend.toLowerCase().includes('price') || textToSend.toLowerCase().includes('cost')) {
-        fallbackAnswer = "Our plans start with a Free Starter tier (25 credits), Pro Plan at $49/mo (250 credits), and Agency Growth Plan at $149/mo with unlimited client sub-accounts. You can toggle monthly/annual billing for 20% off!";
+        fallbackAnswer = "Our plans start with a Free Explorer tier, Pro Growth at $29/mo (or $249/yr billed annually), and Agency Elite at $99/mo (or $790/yr billed annually). You can test Locora AI risk-free!";
       } else if (textToSend.toLowerCase().includes('feature') || textToSend.toLowerCase().includes('seo')) {
         fallbackAnswer = "Locora includes 6 core OS modules: AI Document Generator, Proposal & Contract Builder, Local SEO & Google Business Optimization, Client CRM, Invoice Engine, and Marketing Planner.";
       }

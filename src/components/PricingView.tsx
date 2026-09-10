@@ -42,27 +42,27 @@ export const PricingView: React.FC = () => {
   const plans = [
     {
       id: 'free' as UserPlan,
-      name: 'Free Starter',
-      tagline: 'Ideal for solo freelancers & exploring AI copilot features.',
+      name: 'Free Explorer',
+      tagline: 'Ideal for single business owners discovering their local growth gaps.',
       priceMonthly: 0,
       priceYearly: 0,
       badge: null,
-      aiCredits: '25 AI Credits / month',
+      aiCredits: 'AI Business Checkup Included',
       features: [
-        'AI Business Chat Copilot',
-        'Basic CRM & Contact Management (Up to 10 contacts)',
-        'Invoicing (2 invoices, Locora branding)',
-        'Business Document Generator (Limited)',
-        'Standard Website Review Audit',
-        'Guided Activation Checklist',
-        'One-Click "Polish" Tool',
-        'Shareable Report Card (Branded)',
+        '1 Business Brain Context (basic)',
+        'AI Business Growth Checkup & Diagnosis',
+        'Basic Local SEO & Google Maps Audit',
+        '1 Competitor Tracked',
+        '5 Tracked Growth Opportunities',
+        '10 Review Analyses / month',
+        'Basic Growth Recommendations',
+        'No credit card required',
       ],
       notIncluded: [
-        'Client Portal Shareable Links',
-        'AI Proposals & Contracts',
-        'Google Business SEO Assistant',
-        'Referral-Ask Generator',
+        'Full Autonomous AI Business Manager',
+        'AI Reputation Manager (200 actions/mo)',
+        'AI Search Visibility (ChatGPT / Perplexity)',
+        'White-Label Client PDF Reports',
       ],
       ctaText: user.planTier === 'free' ? 'Current Active Plan' : 'Downgrade to Free',
       ctaDisabled: user.planTier === 'free',
@@ -71,57 +71,59 @@ export const PricingView: React.FC = () => {
     {
       id: 'pro' as UserPlan,
       name: 'Pro Growth',
-      tagline: 'Built for growing local service businesses, consultants & agencies.',
-      priceMonthly: 19,
-      priceYearly: 15,
-      badge: 'MOST POPULAR',
-      aiCredits: '250 AI Credits / month',
+      tagline: 'Your AI Business Growth Manager for 1 business.',
+      priceMonthly: 29,
+      priceYearly: 21,
+      badge: 'MOST POPULAR · AI MANAGER',
+      aiCredits: 'Full Autonomous AI Actions',
       features: [
-        'Everything in Free Starter Plan',
-        'Unlimited CRM Leads & Contacts',
-        'Unlimited Invoicing (Your Branding)',
-        'Client Portal Shareable Links',
-        'Proposals / Quotes / Contracts Generator',
-        'Google Business & Local SEO Assistant',
-        '30-Day & 90-Day Marketing Roadmap Generator',
-        'Full Website Audit & Competitor Snapshot',
-        'Brand Voice Setup Wizard',
-        'Referral-Ask Generator & Multi-Language',
-        'Unbranded Shareable Business Report Card',
+        'Full Business Brain & AI Growth Manager',
+        'AI Local SEO Copilot & Google Maps Ranking',
+        'AI Reputation Manager (200 review actions/mo)',
+        'Competitor Intelligence (5 competitors tracked)',
+        '50 Tracked Search Opportunities & Geo Gaps',
+        '2026 AI Search Visibility (ChatGPT, Perplexity)',
+        'Weekly AI Growth Plan with 1-click execution',
+        'Search Console & Google Analytics Sync',
+        'Unlimited CRM Leads, Pipeline & Deals',
+        'Unlimited AI Proposals, Quotes & SOWs',
+        'Unlimited Invoices & Payment Links',
       ],
       notIncluded: [
-        'JSON-LD Schema Generator',
-        'Up to 5 Team Member Seats',
+        'Multi-Client Workspaces (10 Businesses)',
+        'White-Label Client PDF Reports',
+        'Team Member Seats',
       ],
       ctaText:
         user.planTier === 'pro'
           ? 'Current Active Plan'
           : user.planTier === 'agency'
           ? 'Included in Agency Elite'
-          : 'Upgrade to Pro Growth',
+          : 'Upgrade to Pro ($29/mo)',
       ctaDisabled: user.planTier === 'pro' || user.planTier === 'agency',
       popular: true,
     },
     {
       id: 'agency' as UserPlan,
       name: 'Agency Elite',
-      tagline: 'Designed for scaling marketing agencies, IT providers & power teams.',
-      priceMonthly: 49,
-      priceYearly: 39,
-      badge: 'UNLIMITED POWER',
-      aiCredits: 'UNLIMITED AI Credits / month',
+      tagline: 'AI Client Manager to manage 10, 50 or 100 local businesses.',
+      priceMonthly: 99,
+      priceYearly: 66,
+      badge: 'AI CLIENT MANAGER',
+      aiCredits: 'Unlimited Bulk AI Actions',
       features: [
-        'Everything in Pro Growth Plan',
-        'UNLIMITED AI Generations & Credits',
-        'JSON-LD Schema Generator',
-        'White-Labeled Business Report Cards',
+        'Everything in Pro for 10 Businesses',
+        '10 Dedicated Business Brains',
+        'AI Client Manager with Automated Health Scans',
+        'Bulk Analysis, Review & Content Actions',
+        'White-Label Executive Client PDF Reports',
+        'Custom Client Portals & Dashboards',
         'Up to 5 Team Member Seats Included',
-        'Bring Your Own API Keys (BYOK) Access',
-        'Multi-Client Workspaces',
-        'Dedicated Priority VIP Support',
+        'Agency Branding & Custom Logo Everywhere',
+        'Dedicated Priority VIP Engineering Support',
       ],
       notIncluded: [],
-      ctaText: user.planTier === 'agency' ? 'Current Active Plan' : 'Upgrade to Agency Elite',
+      ctaText: user.planTier === 'agency' ? 'Current Active Plan' : 'Upgrade to Agency ($99/mo)',
       ctaDisabled: user.planTier === 'agency',
       popular: false,
     },
@@ -130,11 +132,11 @@ export const PricingView: React.FC = () => {
   const faqs = [
     {
       q: 'How do AI Credits work across monthly plans?',
-      a: 'Each time you generate a proposal, document, or chat response, AI credits are consumed based on feature complexity. The Free Plan includes 25 credits/mo, Pro Growth ($19/mo) includes 250 AI credits/mo, and Agency Elite ($49/mo) includes Unlimited AI credits!',
+      a: 'Each time you generate a proposal, document, or diagnosis, AI credits are consumed based on feature complexity. The Free Plan includes 25 credits/mo, Pro Growth ($29/mo) includes 250 AI credits/mo, and Agency Elite ($99/mo) includes Unlimited AI credits!',
     },
     {
       q: 'Can I white-label Locora AI reports for my clients?',
-      a: 'Yes! The Agency Elite plan ($49/mo) allows you to white-label report cards, proposals, and invoices with your own agency logo and branding.',
+      a: 'Yes! The Agency Elite plan ($99/mo) allows you to white-label report cards, proposals, and invoices with your own agency logo and branding.',
     },
     {
       q: 'Can I change or cancel my subscription anytime?',
@@ -366,9 +368,9 @@ export const PricingView: React.FC = () => {
 
             <div className="p-3.5 bg-white border border-slate-200 rounded-xl flex items-center justify-between">
               <div className="text-xs">
-                <span className="font-bold text-slate-900 font-heading">Estimated ROI vs $19 Pro Plan:</span>
+                <span className="font-bold text-slate-900 font-heading">Estimated ROI vs $29 Pro Plan:</span>
                 <p className="text-[11px] text-[#059669] font-semibold">
-                  {Math.round((estimatedRevenueSaved / 19) * 100)}% Monthly Return on Investment
+                  {Math.round((estimatedRevenueSaved / 29) * 100)}% Monthly Return on Investment
                 </p>
               </div>
               <button

@@ -1,0 +1,74 @@
+{
+  "claude-3-7-sonnet": {
+    "id": "claude-3-7-sonnet",
+    "name": "Claude 3.7 Sonnet",
+    "provider": "Anthropic",
+    "allocatedTokens": 0,
+    "usedTokens": 0,
+    "remainingTokens": 0,
+    "apiKeyEnvVar": "ANTHROPIC_API_KEY",
+    "hasCustomKey": false,
+    "status": "inactive",
+    "badge": "Latest Flagship"
+  },
+  "claude-3-5-sonnet": {
+    "id": "claude-3-5-sonnet",
+    "name": "Claude 3.5 Sonnet",
+    "provider": "Anthropic",
+    "allocatedTokens": 0,
+    "usedTokens": 0,
+    "remainingTokens": 0,
+    "apiKeyEnvVar": "ANTHROPIC_API_KEY",
+    "hasCustomKey": false,
+    "status": "inactive",
+    "badge": "Proven Quality"
+  },
+  "claude-3-5-haiku": {
+    "id": "claude-3-5-haiku",
+    "name": "Claude 3.5 Haiku",
+    "provider": "Anthropic",
+    "allocatedTokens": 0,
+    "usedTokens": 0,
+    "remainingTokens": 0,
+    "apiKeyEnvVar": "ANTHROPIC_API_KEY",
+    "hasCustomKey": false,
+    "status": "inactive",
+    "badge": "High-Speed Thinking"
+  },
+  "llama-3.3-70b-versatile": {
+    "id": "llama-3.3-70b-versatile",
+    "name": "Meta Llama 3.3 70B (Groq)",
+    "provider": "Groq",
+    "allocatedTokens": 0,
+    "usedTokens": 0,
+    "remainingTokens": 0,
+    "apiKeyEnvVar": "GROQ_API_KEY",
+    "hasCustomKey": false,
+    "status": "inactive",
+    "badge": "300+ t/s LPU"
+  },
+  "llama-3.1-8b-instant": {
+    "id": "llama-3.1-8b-instant",
+    "name": "Meta Llama 3.1 8B Instant (Groq)",
+    "provider": "Groq",
+    "allocatedTokens": 0,
+    "usedTokens": 0,
+    "remainingTokens": 0,
+    "apiKeyEnvVar": "GROQ_API_KEY",
+    "hasCustomKey": false,
+    "status": "inactive",
+    "badge": "Sub-Second LPU"
+  },
+  "mixtral-8x7b-32768": {
+    "id": "mixtral-8x7b-32768",
+    "name": "Mistral Mixtral 8x7B (Groq)",
+    "provider": "Groq",
+    "allocatedTokens": 0,
+    "usedTokens": 0,
+    "remainingTokens": 0,
+    "apiKeyEnvVar": "GROQ_API_KEY",
+    "hasCustomKey": false,
+    "status": "inactive",
+    "badge": "MoE Fast"
+  }
+}

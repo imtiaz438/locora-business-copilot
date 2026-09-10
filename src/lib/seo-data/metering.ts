@@ -2,19 +2,19 @@ import { SEO_LOOKUP_COSTS } from './types.ts';
 
 export const SEO_PLAN_LIMITS: Record<string, { seoLookupsPerMonth: number; aiVisibilityRunsPerMonth: number }> = {
   free: {
-    seoLookupsPerMonth: 10,
-    aiVisibilityRunsPerMonth: 1,
+    seoLookupsPerMonth: 0, // Free mode is strictly limited to Technical SEO & Lighthouse. 0 live API lookups to prevent credit burn.
+    aiVisibilityRunsPerMonth: 0,
   },
   pro: {
-    seoLookupsPerMonth: 100,
+    seoLookupsPerMonth: 100, // 100 weighted units
     aiVisibilityRunsPerMonth: 4, // ~1 run per week
   },
   agency: {
-    seoLookupsPerMonth: 500,
+    seoLookupsPerMonth: 500, // 500 weighted units
     aiVisibilityRunsPerMonth: 16, // ~4 runs per week
   },
   elite: {
-    seoLookupsPerMonth: 1000,
+    seoLookupsPerMonth: 1000, // 1000 weighted units
     aiVisibilityRunsPerMonth: 30,
   },
 };
@@ -91,7 +91,17 @@ export function checkSeoLookupEntitlement(
   evaluateRollingReset(user);
 
   const tier = (user.planTier || 'free').toLowerCase();
-  const limit = user.seoLookupsPerMonth || SEO_PLAN_LIMITS[tier]?.seoLookupsPerMonth || 10;
+  if (tier === 'free') {
+    return {
+      allowed: false,
+      remaining: 0,
+      limit: 0,
+      used: user.seoLookupsUsed || 0,
+      reason: 'Live SEO lookups, backlink profiles, and AI citations require a Pro or Agency Elite subscription. Free mode is limited to on-page Technical SEO and Google Lighthouse recommendations.',
+    };
+  }
+
+  const limit = user.seoLookupsPerMonth || SEO_PLAN_LIMITS[tier]?.seoLookupsPerMonth || 100;
   const used = user.seoLookupsUsed || 0;
   const remaining = Math.max(0, limit - used);
 
@@ -101,7 +111,7 @@ export function checkSeoLookupEntitlement(
       remaining,
       limit,
       used,
-      reason: `SEO Lookup limit reached (${used}/${limit} used this billing period). Upgrade your plan to perform more live audits.`,
+      reason: `SEO Lookup limit reached (${used}/${limit} weighted units used this billing period). Upgrade your plan to perform more live audits.`,
     };
   }
 
@@ -131,7 +141,17 @@ export function checkAiVisibilityEntitlement(
   evaluateRollingReset(user);
 
   const tier = (user.planTier || 'free').toLowerCase();
-  const limit = user.aiVisibilityRunsPerMonth || SEO_PLAN_LIMITS[tier]?.aiVisibilityRunsPerMonth || 1;
+  if (tier === 'free') {
+    return {
+      allowed: false,
+      remaining: 0,
+      limit: 0,
+      used: user.aiVisibilityRunsUsed || 0,
+      reason: 'Multi-Model AI Visibility benchmarking across ChatGPT, Claude, Gemini & Perplexity requires a Pro or Agency Elite subscription.',
+    };
+  }
+
+  const limit = user.aiVisibilityRunsPerMonth || SEO_PLAN_LIMITS[tier]?.aiVisibilityRunsPerMonth || 4;
   const used = user.aiVisibilityRunsUsed || 0;
   const remaining = Math.max(0, limit - used);
 

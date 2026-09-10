@@ -114,7 +114,7 @@ export const TermsOfServiceView: React.FC = () => {
             </h2>
             <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
               <p>
-                Locora AI offers recurring subscription tiers (Free, Pro at $19/mo or $15/mo billed annually, and Agency at $49/mo or $39/mo billed annually).
+                Locora AI offers recurring subscription tiers (Free Explorer, Pro Growth at $29/mo or $249/yr billed annually, and Agency Elite at $99/mo or $790/yr billed annually).
               </p>
               <ul className="list-disc pl-5 space-y-1.5 text-slate-600">
                 <li><strong>Payment Processing:</strong> All subscription payments are processed securely via Whop Checkout. You authorize Locora AI and Whop to process charges on your payment method according to your selected plan and billing cycle.</li>

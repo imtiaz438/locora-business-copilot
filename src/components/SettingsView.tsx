@@ -3,12 +3,14 @@ import { useApp } from '../context/AppContext';
 import { ACTIVE_PROVIDERS, UPCOMING_PROVIDERS, getProviderModelsWithFallback, getModelDisplayName } from '../services/aiProvider';
 import { AIProviderId, CustomLogoConfig } from '../types';
 import { TeamManagementSection } from './TeamManagementSection';
+import { IntegrationsSettingsTab } from './IntegrationsSettingsTab';
 import { LocoraLogo } from './LocoraLogo';
 import { SubscriptionInvoiceModal } from './SubscriptionInvoiceModal';
 import {
   Settings,
   Cpu,
   Building,
+  Brain,
   Key,
   Save,
   CheckCircle2,
@@ -26,6 +28,7 @@ import {
   ExternalLink,
   KeyRound,
   Trash2,
+  BarChart3,
   AlertTriangle,
   User,
   Upload,
@@ -250,17 +253,28 @@ const AccountSecuritySection: React.FC = () => {
 };
 
 export const SettingsView: React.FC = () => {
-  const { settings, updateSettings, businessProfile, updateBusinessProfile, user, updateUser, setCheckoutModalPlan, subscriptionInvoices } = useApp();
+  const { settings, updateSettings, businessProfile, updateBusinessProfile, updateActiveBusiness, user, updateUser, setCheckoutModalPlan, subscriptionInvoices } = useApp();
 
-  const [activeTab, setSettingsTab] = useState<'providers' | 'profile' | 'account' | 'team' | 'billing'>('providers');
+  const isAdmin = Boolean(
+    user.isAuthenticated && (
+      user.role === 'admin' ||
+      user.role === 'owner' ||
+      user.email === 'imtiazbaloch3322@gmail.com' ||
+      user.email === 'support@locoraai.com'
+    )
+  );
+
+  const [activeTab, setSettingsTab] = useState<'profile' | 'integrations' | 'account' | 'team' | 'billing'>('profile');
   const [profileForm, setProfileForm] = useState(() => ({
     ...businessProfile,
     email: user.email || businessProfile.email || '',
+    services: businessProfile.services || [],
+    targetLocations: businessProfile.targetLocations || [],
+    primaryCompetitors: businessProfile.primaryCompetitors || [],
+    currentOffers: businessProfile.currentOffers || [],
+    businessGoals: businessProfile.businessGoals || [],
   }));
   const [savedSuccess, setSavedSuccess] = useState(false);
-  const [keyErrorMsg, setKeyErrorMsg] = useState<string | null>(null);
-  const [validatingKeys, setValidatingKeys] = useState(false);
-  const [upcomingNotice, setUpcomingNotice] = useState<string | null>(null);
   const settingsMsgRef = useRef<HTMLDivElement>(null);
 
   // Billing & Auto-Renew state
@@ -333,213 +347,24 @@ export const SettingsView: React.FC = () => {
   };
 
   useEffect(() => {
-    if (savedSuccess || keyErrorMsg) {
+    if (savedSuccess) {
       settingsMsgRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [savedSuccess, keyErrorMsg]);
+  }, [savedSuccess]);
 
   useEffect(() => {
     if (businessProfile) {
       setProfileForm({
         ...businessProfile,
         email: user.email || businessProfile.email || '',
+        services: businessProfile.services || [],
+        targetLocations: businessProfile.targetLocations || [],
+        primaryCompetitors: businessProfile.primaryCompetitors || [],
+        currentOffers: businessProfile.currentOffers || [],
+        businessGoals: businessProfile.businessGoals || [],
       });
     }
   }, [businessProfile, user.email]);
-
-  // Key state overrides
-  const [geminiKey, setGeminiKey] = useState(settings.providerKeys?.gemini || '');
-  const [openaiKey, setOpenaiKey] = useState(settings.providerKeys?.openai || '');
-  const [claudeKey, setClaudeKey] = useState(settings.providerKeys?.claude || settings.providerKeys?.anthropic || '');
-  const [perplexityKey, setPerplexityKey] = useState(settings.providerKeys?.perplexity || '');
-  const [deepseekKey, setDeepseekKey] = useState(settings.providerKeys?.deepseek || '');
-  const [groqKey, setGroqKey] = useState(settings.providerKeys?.groq || '');
-  const [opusKey, setOpusKey] = useState(settings.providerKeys?.opus || '');
-  const [cursorKey, setCursorKey] = useState(settings.providerKeys?.cursor || '');
-  const [grokKey, setGrokKey] = useState(settings.providerKeys?.grok || '');
-  const [googleMapsKey, setGoogleMapsKey] = useState(settings.providerKeys?.googleMaps || settings.providerKeys?.google_maps || '');
-  const [pageSpeedKey, setPageSpeedKey] = useState(settings.providerKeys?.pageSpeed || settings.providerKeys?.pagespeed || '');
-  const [hunterKey, setHunterKey] = useState(settings.providerKeys?.hunter || '');
-  const [apolloKey, setApolloKey] = useState(settings.providerKeys?.apollo || '');
-
-  // Provider model selections
-  const [providerModels, setProviderModels] = useState<Record<string, string>>(() => ({
-    gemini: settings.providerModels?.gemini || 'gemini-3.7-flash',
-    openai: settings.providerModels?.openai || 'gpt-5.6-sol',
-    claude: settings.providerModels?.claude || 'claude-3-7-sonnet-20250219',
-    perplexity: settings.providerModels?.perplexity || 'sonar-pro',
-    deepseek: settings.providerModels?.deepseek || 'deepseek-chat',
-    groq: settings.providerModels?.groq || 'llama-3.3-70b-versatile',
-  }));
-
-  // Dynamic discovered model variants per provider based on API key capabilities
-  const [discoveredModels, setDiscoveredModels] = useState<Record<string, Array<{ id: string; name: string; description?: string; badge?: string; isAutoSelected?: boolean }>>>(
-    () => settings.detectedProviderModels || {}
-  );
-  const [detectingProvider, setDetectingProvider] = useState<string | null>(null);
-
-  // Per-key validation tester state
-  const [testingProvider, setTestingProvider] = useState<string | null>(null);
-  const [keyTestResults, setKeyTestResults] = useState<Record<string, { valid?: boolean; message?: string; warning?: string; error?: string }>>({});
-
-  useEffect(() => {
-    if (settings?.providerKeys) {
-      if (settings.providerKeys.gemini !== undefined) setGeminiKey(settings.providerKeys.gemini);
-      if (settings.providerKeys.openai !== undefined) setOpenaiKey(settings.providerKeys.openai);
-      if (settings.providerKeys.claude !== undefined || settings.providerKeys.anthropic !== undefined) {
-        setClaudeKey(settings.providerKeys.claude || settings.providerKeys.anthropic || '');
-      }
-      if (settings.providerKeys.perplexity !== undefined) setPerplexityKey(settings.providerKeys.perplexity);
-      if (settings.providerKeys.deepseek !== undefined) setDeepseekKey(settings.providerKeys.deepseek);
-      if (settings.providerKeys.groq !== undefined) setGroqKey(settings.providerKeys.groq);
-      if (settings.providerKeys.opus !== undefined) setOpusKey(settings.providerKeys.opus);
-      if (settings.providerKeys.cursor !== undefined) setCursorKey(settings.providerKeys.cursor);
-      if (settings.providerKeys.grok !== undefined) setGrokKey(settings.providerKeys.grok);
-      if (settings.providerKeys.googleMaps !== undefined || settings.providerKeys.google_maps !== undefined) {
-        setGoogleMapsKey(settings.providerKeys.googleMaps || settings.providerKeys.google_maps || '');
-      }
-      if (settings.providerKeys.pageSpeed !== undefined || settings.providerKeys.pagespeed !== undefined) {
-        setPageSpeedKey(settings.providerKeys.pageSpeed || settings.providerKeys.pagespeed || '');
-      }
-      if (settings.providerKeys.hunter !== undefined) setHunterKey(settings.providerKeys.hunter);
-      if (settings.providerKeys.apollo !== undefined) setApolloKey(settings.providerKeys.apollo);
-    }
-    if (settings?.providerModels) {
-      setProviderModels((prev) => ({ ...prev, ...settings.providerModels }));
-    }
-    if (settings?.detectedProviderModels) {
-      setDiscoveredModels((prev) => ({ ...prev, ...settings.detectedProviderModels }));
-    }
-  }, [settings.providerKeys, settings.providerModels, settings.detectedProviderModels]);
-
-  // Dynamic AI Model Discovery according to API Key usage
-  const handleDetectModels = async (provider: string, apiKeyOverride?: string) => {
-    setDetectingProvider(provider);
-    try {
-      const keyToUse = apiKeyOverride !== undefined ? apiKeyOverride : (
-        provider === 'gemini' ? geminiKey :
-        provider === 'openai' ? openaiKey :
-        provider === 'claude' ? claudeKey :
-        provider === 'perplexity' ? perplexityKey :
-        provider === 'deepseek' ? deepseekKey :
-        provider === 'groq' ? groqKey : ''
-      );
-      const res = await fetch('/api/ai/detect-models', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provider,
-          apiKey: (keyToUse || '').trim(),
-          userEmail: user.email,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok && data.valid && Array.isArray(data.accessibleModels)) {
-        setDiscoveredModels((prev) => ({
-          ...prev,
-          [provider]: data.accessibleModels,
-        }));
-        if (data.detectedModel) {
-          setProviderModels((prev) => ({
-            ...prev,
-            [provider]: data.detectedModel,
-          }));
-          if (settings.activeProvider === provider) {
-            updateSettings({
-              activeModelVersion: data.detectedModel,
-              providerModels: { ...(settings.providerModels || providerModels), [provider]: data.detectedModel },
-              detectedProviderModels: {
-                ...(settings.detectedProviderModels || {}),
-                [provider]: data.accessibleModels,
-              },
-            });
-          }
-        }
-        return data;
-      }
-    } catch (err) {
-      console.warn('Model discovery error:', err);
-    } finally {
-      setDetectingProvider(null);
-    }
-  };
-
-  // Initial automatic scan for the active provider
-  useEffect(() => {
-    if (settings.activeProvider) {
-      handleDetectModels(settings.activeProvider);
-    }
-  }, [settings.activeProvider]);
-
-  const handleTestKey = async (provider: string, rawKey: string) => {
-    if (!rawKey || !rawKey.trim()) {
-      setKeyTestResults((prev) => ({
-        ...prev,
-        [provider]: { error: 'Please enter an API key to test validation.' },
-      }));
-      return;
-    }
-    setTestingProvider(provider);
-    setKeyTestResults((prev) => ({ ...prev, [provider]: undefined as any }));
-
-    try {
-      const res = await fetch('/api/ai/validate-key', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provider,
-          apiKey: rawKey.trim(),
-          modelVersion: providerModels[provider],
-          userEmail: user.email,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok && data.valid) {
-        if (Array.isArray(data.accessibleModels) && data.accessibleModels.length > 0) {
-          setDiscoveredModels((prev) => ({
-            ...prev,
-            [provider]: data.accessibleModels,
-          }));
-        }
-        if (data.model) {
-          setProviderModels((prev) => ({
-            ...prev,
-            [provider]: data.model,
-          }));
-          if (settings.activeProvider === provider) {
-            updateSettings({
-              activeModelVersion: data.model,
-              providerModels: { ...(settings.providerModels || providerModels), [provider]: data.model },
-              detectedProviderModels: {
-                ...(settings.detectedProviderModels || {}),
-                [provider]: data.accessibleModels || [],
-              },
-            });
-          }
-        }
-        setKeyTestResults((prev) => ({
-          ...prev,
-          [provider]: {
-            valid: true,
-            message: data.message || `API key verified! Auto-selected model variant: ${data.model}`,
-            warning: data.warning,
-          },
-        }));
-      } else {
-        setKeyTestResults((prev) => ({
-          ...prev,
-          [provider]: { valid: false, error: data.error || 'API Key validation failed.' },
-        }));
-      }
-    } catch (err: any) {
-      setKeyTestResults((prev) => ({
-        ...prev,
-        [provider]: { valid: false, error: 'Connection error while testing key.' },
-      }));
-    } finally {
-      setTestingProvider(null);
-    }
-  };
 
   // Logo & Branding state for User Profile
   const logoFileInputRef = useRef<HTMLInputElement>(null);
@@ -627,53 +452,21 @@ export const SettingsView: React.FC = () => {
     setTimeout(() => setSavedSuccess(false), 2500);
   };
 
-  const handleSaveProviders = async () => {
-    setValidatingKeys(true);
-    setKeyErrorMsg(null);
-    setSavedSuccess(false);
-
-    const activeModel = providerModels[settings.activeProvider] || 'gemini-3.7-flash';
-
-    const res = await updateSettings({
-      providerKeys: {
-        gemini: geminiKey,
-        openai: openaiKey,
-        claude: claudeKey,
-        perplexity: perplexityKey,
-        deepseek: deepseekKey,
-        groq: groqKey,
-        opus: opusKey,
-        cursor: cursorKey,
-        grok: grokKey,
-        googleMaps: googleMapsKey,
-        google_maps: googleMapsKey,
-        pageSpeed: pageSpeedKey,
-        pagespeed: pageSpeedKey,
-        hunter: hunterKey,
-        apollo: apolloKey,
-      },
-      providerModels,
-      activeModelVersion: activeModel,
-    });
-
-    setValidatingKeys(false);
-
-    if (res && !res.success) {
-      setKeyErrorMsg(res.error || 'Invalid API key provided. Key was not saved.');
-    } else {
-      setSavedSuccess(true);
-      setTimeout(() => setSavedSuccess(false), 2500);
-    }
-  };
-
-  const handleUpcomingClick = (modelName: string) => {
-    setUpcomingNotice(`🚀 ${modelName} is tagged as an Upcoming Feature! It will be enabled in a future release.`);
-    setTimeout(() => setUpcomingNotice(null), 4000);
-  };
-
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     updateBusinessProfile(profileForm);
+    if (updateActiveBusiness) {
+      updateActiveBusiness({
+        name: profileForm.name,
+        category: profileForm.industry,
+        website: profileForm.website,
+        address: profileForm.address,
+        city: profileForm.city,
+        state: profileForm.state,
+        zip: profileForm.zip,
+        phone: profileForm.phone,
+      });
+    }
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2500);
   };
@@ -684,25 +477,15 @@ export const SettingsView: React.FC = () => {
       <div>
         <h2 className="text-2xl font-extrabold font-heading text-slate-900 tracking-tight flex items-center gap-2.5">
           <Settings className="w-6 h-6 text-[#059669]" />
-          <span>Settings & AI Configurations</span>
+          <span>Profile & Workspace Settings</span>
         </h2>
         <p className="text-xs text-slate-500 font-sans">
-          Switch active AI models, choose exact model versions, manage private BYOK API keys, and customize your business profile.
+          Manage your Business Brain, company profile, subscription billing, and account security.
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
-        <button
-          onClick={() => setSettingsTab('providers')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'providers' ? 'bg-[#059669] text-white shadow-2xs font-heading' : 'text-slate-600 hover:text-slate-900 font-sans'
-          }`}
-        >
-          <Cpu className="w-3.5 h-3.5" />
-          <span>AI Model Providers</span>
-        </button>
-
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
         <button
           onClick={() => setSettingsTab('profile')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
@@ -710,17 +493,17 @@ export const SettingsView: React.FC = () => {
           }`}
         >
           <Building className="w-3.5 h-3.5" />
-          <span>Business Profile Context</span>
+          <span>Business Profile & Brain</span>
         </button>
 
         <button
-          onClick={() => setSettingsTab('team')}
+          onClick={() => setSettingsTab('integrations')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-            activeTab === 'team' ? 'bg-[#059669] text-white shadow-2xs font-heading' : 'text-slate-600 hover:text-slate-900 font-sans'
+            activeTab === 'integrations' ? 'bg-[#059669] text-white shadow-2xs font-heading' : 'text-slate-600 hover:text-slate-900 font-sans'
           }`}
         >
-          <Users className="w-3.5 h-3.5" />
-          <span>Team Members & Invites</span>
+          <BarChart3 className="w-3.5 h-3.5" />
+          <span>Google Analytics (GA4)</span>
         </button>
 
         <button
@@ -742,581 +525,19 @@ export const SettingsView: React.FC = () => {
           <KeyRound className="w-3.5 h-3.5" />
           <span>Account & Security</span>
         </button>
+
+        {(user.planTier === 'pro' || user.planTier === 'agency' || isAdmin) && (
+          <button
+            onClick={() => setSettingsTab('team')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeTab === 'team' ? 'bg-[#059669] text-white shadow-2xs font-heading' : 'text-slate-600 hover:text-slate-900 font-sans'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>Team Members</span>
+          </button>
+        )}
       </div>
-
-      {/* TAB 1: AI PROVIDERS */}
-      {activeTab === 'providers' && (
-        <div className="space-y-6">
-          {/* User Isolation Security Banner */}
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-emerald-950 font-sans shadow-2xs">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-emerald-600 text-white rounded-xl shrink-0 mt-0.5">
-                <ShieldCheck className="w-4 h-4" />
-              </div>
-              <div className="space-y-0.5">
-                <h4 className="font-bold text-slate-900 font-heading">
-                  Private User Key Isolation & System Default Quota
-                </h4>
-                <p className="text-slate-600 text-[11px] leading-relaxed">
-                  API keys entered here are stored strictly in your personal account (<strong>{user.email || 'Current User'}</strong>). They are never shared or visible to other users. Key fields remain empty by default, routing through the system starter plan / pay-as-you-go quota until you provide your own personal key.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0 self-start sm:self-center">
-              <span className="px-2.5 py-1 bg-white text-emerald-800 border border-emerald-300 rounded-lg text-[11px] font-bold font-mono">
-                {user.email || 'Isolated User'}
-              </span>
-            </div>
-          </div>
-
-          {/* Region Policy Resilient Notice */}
-          <div className="p-3.5 bg-blue-50/80 border border-blue-200/80 rounded-2xl flex items-start gap-3 text-xs text-blue-950 font-sans">
-            <Globe2 className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
-            <div className="space-y-0.5">
-              <span className="font-bold text-blue-900">Automatic Region Resilience & Location Support</span>
-              <p className="text-blue-800 text-[11px] leading-relaxed">
-                If cloud AI providers return a region error (e.g. <em>User location is not supported</em>), Locora’s multi-region intelligence engine synthesizes your request with zero downtime.
-              </p>
-            </div>
-          </div>
-
-          {/* Upcoming Notice Banner */}
-          {upcomingNotice && (
-            <div className="p-3 bg-purple-50 border border-purple-200 text-purple-900 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-2xs animate-fade-in font-sans">
-              <Sparkles className="w-4 h-4 text-purple-600 shrink-0" />
-              <span>{upcomingNotice}</span>
-            </div>
-          )}
-
-          {/* ACTIVE AI PROVIDERS & MODEL VERSION SELECTION */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
-                  <Cpu className="w-4 h-4 text-[#059669]" />
-                  <span>Active AI Engines & Model Versions</span>
-                </h3>
-                <p className="text-xs text-slate-500 font-sans mt-0.5">
-                  Select which AI engine powers your dashboard and choose the specific model version for optimal reasoning and speed.
-                </p>
-              </div>
-              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 font-mono shrink-0">
-                {ACTIVE_PROVIDERS.length} Providers Ready
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {ACTIVE_PROVIDERS.map((prov) => {
-                const isSelected = settings.activeProvider === prov.id;
-                const isLockedForFree = user.planTier === 'free' && prov.id !== 'groq';
-                const accessibleVariants = getProviderModelsWithFallback(prov.id, discoveredModels);
-                const currentSubModel = providerModels[prov.id] || accessibleVariants[0]?.id || prov.model || '';
-
-                return (
-                  <div
-                    key={prov.id}
-                    className={`p-4 rounded-xl border transition-all flex flex-col justify-between ${
-                      isSelected
-                        ? 'bg-emerald-50/40 border-[#059669] text-slate-900 shadow-2xs ring-1 ring-[#059669]/20'
-                        : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'
-                    }`}
-                  >
-                    <div className="space-y-2.5">
-                      <div className="flex items-center justify-between">
-                        <div
-                          onClick={() => {
-                            if (isLockedForFree) {
-                              alert(`Accessing ${prov.name} requires a Pro Growth ($19/mo) or Agency Elite plan. Free Starter includes Groq (Meta Llama 3.3 70B & 3.1 8B).`);
-                              setCheckoutModalPlan('pro');
-                              return;
-                            }
-                            updateSettings({
-                              activeProvider: prov.id,
-                              activeModelVersion: currentSubModel,
-                            });
-                          }}
-                          className="font-bold text-sm text-slate-900 font-heading flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <span>{prov.name}</span>
-                          {isLockedForFree && (
-                            <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">
-                              PRO
-                            </span>
-                          )}
-                        </div>
-
-                        {isSelected ? (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#059669] text-white font-bold font-sans flex items-center gap-1 shadow-2xs">
-                            <Check className="w-3 h-3" /> ACTIVE
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              if (isLockedForFree) {
-                                setCheckoutModalPlan('pro');
-                                return;
-                              }
-                              updateSettings({
-                                activeProvider: prov.id,
-                                activeModelVersion: currentSubModel,
-                              });
-                            }}
-                            className="text-[10px] px-2 py-0.5 rounded-lg border border-slate-300 hover:border-slate-400 text-slate-600 font-semibold cursor-pointer"
-                          >
-                            {isLockedForFree ? 'Unlock in Pro' : 'Set as Active'}
-                          </button>
-                        )}
-                      </div>
-
-                      <p className="text-xs text-slate-500 font-sans leading-relaxed">
-                        {prov.description}
-                      </p>
-
-                      {/* Dynamic Model Version Dropdown (Auto-Selected & Locked according to API Key) */}
-                      {accessibleVariants && accessibleVariants.length > 0 && (
-                        <div className="pt-2.5 border-t border-slate-100 space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <label className="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                              <span>Model Variant:</span>
-                              <span className="text-[10px] font-mono font-semibold bg-emerald-100/90 text-emerald-800 px-1.5 py-0.5 rounded border border-emerald-300/80">
-                                Auto-Selected
-                              </span>
-                            </label>
-                            <span
-                              className="text-[10px] text-slate-500 font-mono flex items-center gap-1"
-                              title="Dynamic model detection automatically discovers and locks the optimal compatible variant for this key."
-                            >
-                              <Lock className="w-3 h-3 text-slate-400" />
-                              <span>Key-Locked</span>
-                            </span>
-                          </div>
-
-                          <div className="relative">
-                            <select
-                              value={currentSubModel}
-                              disabled={true}
-                              title="Model version is dynamically detected & auto-configured based on your API key capabilities. Manual override is locked to prevent incompatibility."
-                              className="w-full bg-slate-100/90 border border-slate-200 rounded-lg p-2 text-xs text-slate-800 font-semibold cursor-not-allowed opacity-90 select-none pr-8"
-                            >
-                              {accessibleVariants.map((m) => (
-                                <option key={m.id} value={m.id}>
-                                  {m.name} {m.badge ? `(${m.badge})` : ''} {m.id === currentSubModel ? '★ Active' : ''}
-                                </option>
-                              ))}
-                            </select>
-                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center gap-1">
-                              <Lock className="w-3.5 h-3.5 text-slate-400" />
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between text-[10px] text-slate-500 pt-0.5">
-                            <span className="flex items-center gap-1 text-slate-600 truncate max-w-[210px]">
-                              <Sparkles className="w-3 h-3 text-emerald-600 shrink-0" />
-                              <span className="truncate">{accessibleVariants.find((m) => m.id === currentSubModel)?.description || 'Dynamically verified for key usage'}</span>
-                            </span>
-                            <span className="font-mono text-slate-400 font-medium shrink-0">
-                              {accessibleVariants.length} variant{accessibleVariants.length > 1 ? 's' : ''}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-3 pt-2 text-[10px] text-slate-400 font-mono flex items-center justify-between">
-                      <span>Category: {prov.category}</span>
-                      <span className="font-semibold text-slate-600">
-                        {prov.statusTag}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* PER-USER API KEY MANAGER WITH LIVE VALIDATION */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
-                  <Key className="w-4 h-4 text-[#059669]" />
-                  <span>Bring Your Own Keys (BYOK) & Validation</span>
-                </h3>
-                <p className="text-xs text-slate-500 font-sans mt-0.5">
-                  Optionally paste your personal API keys for each provider. Leaving fields empty will use the platform starter plan / pay-as-you-go quota.
-                </p>
-              </div>
-            </div>
-
-            {user.planTier === 'free' && (
-              <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl text-xs font-sans space-y-1">
-                <p className="font-bold flex items-center gap-1.5 text-amber-900">
-                  <Lock className="w-3.5 h-3.5 text-amber-700" />
-                  <span>Pro Plan Model Activation Notice</span>
-                </p>
-                <p className="text-[11px] text-amber-800">
-                  You are currently on the Free Starter plan (powered by <strong>Groq Ultra-Fast LPU & Meta Llama 3.3 / 3.1</strong>). You can paste and test custom keys below, while switching active platform generation to OpenAI GPT-5.6/4o, Claude 3.7 Sonnet, DeepSeek, or Gemini is available with a <strong>Pro Growth ($19/mo)</strong> or <strong>Agency Elite ($49/mo)</strong> plan.
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-4 text-xs font-sans">
-              {/* 1. Google Gemini */}
-              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-1">
-                  <label className="block text-slate-800 font-bold">
-                    Google Gemini API Key
-                  </label>
-                  <span className="text-[10px] text-slate-600 font-mono flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-200">
-                    <Sparkles className="w-3 h-3 text-emerald-600" />
-                    <span>Auto-Selected: <strong>{providerModels.gemini || 'gemini-3.7-flash'}</strong></span>
-                  </span>
-                </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                  <input
-                    type="password"
-                    placeholder="Empty = Uses system starter quota (AI Studio Server)"
-                    value={geminiKey}
-                    onChange={(e) => setGeminiKey(e.target.value)}
-                    className="flex-1 bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-[#059669]"
-                  />
-                  <button
-                    type="button"
-                    disabled={testingProvider === 'gemini'}
-                    onClick={() => handleTestKey('gemini', geminiKey)}
-                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
-                  >
-                    {testingProvider === 'gemini' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
-                    <span>{testingProvider === 'gemini' ? 'Detecting Models...' : 'Test & Auto-Select Model'}</span>
-                  </button>
-                </div>
-                {keyTestResults.gemini && (
-                  <div className={`p-2.5 rounded-lg text-xs flex items-center gap-2 font-medium ${keyTestResults.gemini.valid ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
-                    {keyTestResults.gemini.valid ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />}
-                    <span>{keyTestResults.gemini.valid ? (keyTestResults.gemini.message || 'Key verified successfully!') : keyTestResults.gemini.error}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* 2. OpenAI */}
-              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-1">
-                  <label className="block text-slate-800 font-bold">
-                    OpenAI API Key (GPT-5.6 / GPT-4o)
-                  </label>
-                  <span className="text-[10px] text-slate-600 font-mono flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-200">
-                    <Sparkles className="w-3 h-3 text-emerald-600" />
-                    <span>Auto-Selected: <strong>{providerModels.openai || 'gpt-4o'}</strong></span>
-                  </span>
-                </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                  <input
-                    type="password"
-                    placeholder="sk-... (Empty = Uses system quota)"
-                    value={openaiKey}
-                    onChange={(e) => setOpenaiKey(e.target.value)}
-                    className="flex-1 bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-[#059669]"
-                  />
-                  <button
-                    type="button"
-                    disabled={testingProvider === 'openai'}
-                    onClick={() => handleTestKey('openai', openaiKey)}
-                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
-                  >
-                    {testingProvider === 'openai' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
-                    <span>{testingProvider === 'openai' ? 'Detecting Models...' : 'Test & Auto-Select Model'}</span>
-                  </button>
-                </div>
-                {keyTestResults.openai && (
-                  <div className={`p-2.5 rounded-lg text-xs flex items-center gap-2 font-medium ${keyTestResults.openai.valid ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
-                    {keyTestResults.openai.valid ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />}
-                    <span>{keyTestResults.openai.valid ? (keyTestResults.openai.message || 'Key verified successfully!') : keyTestResults.openai.error}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* 3. Anthropic Claude */}
-              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-1">
-                  <label className="block text-slate-800 font-bold">
-                    Anthropic Claude API Key (Claude 3.7 Sonnet / Opus / Haiku)
-                  </label>
-                  <span className="text-[10px] text-slate-600 font-mono flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-200">
-                    <Sparkles className="w-3 h-3 text-emerald-600" />
-                    <span>Auto-Selected: <strong>{providerModels.claude || 'claude-3-7-sonnet-20250219'}</strong></span>
-                  </span>
-                </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                  <input
-                    type="password"
-                    placeholder="sk-ant-... (Empty = Uses system quota)"
-                    value={claudeKey}
-                    onChange={(e) => setClaudeKey(e.target.value)}
-                    className="flex-1 bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-[#059669]"
-                  />
-                  <button
-                    type="button"
-                    disabled={testingProvider === 'claude'}
-                    onClick={() => handleTestKey('claude', claudeKey)}
-                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
-                  >
-                    {testingProvider === 'claude' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
-                    <span>{testingProvider === 'claude' ? 'Detecting Models...' : 'Test & Auto-Select Model'}</span>
-                  </button>
-                </div>
-                {keyTestResults.claude && (
-                  <div className={`p-2.5 rounded-lg text-xs flex items-center gap-2 font-medium ${keyTestResults.claude.valid ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
-                    {keyTestResults.claude.valid ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />}
-                    <span>{keyTestResults.claude.valid ? (keyTestResults.claude.message || 'Key verified successfully!') : keyTestResults.claude.error}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* 4. Perplexity AI */}
-              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-1">
-                  <label className="block text-slate-800 font-bold">
-                    Perplexity API Key (Sonar Pro Search)
-                  </label>
-                  <span className="text-[10px] text-slate-600 font-mono flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-200">
-                    <Sparkles className="w-3 h-3 text-emerald-600" />
-                    <span>Auto-Selected: <strong>{providerModels.perplexity || 'sonar-pro'}</strong></span>
-                  </span>
-                </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                  <input
-                    type="password"
-                    placeholder="pplx-... (Empty = Uses system quota)"
-                    value={perplexityKey}
-                    onChange={(e) => setPerplexityKey(e.target.value)}
-                    className="flex-1 bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-[#059669]"
-                  />
-                  <button
-                    type="button"
-                    disabled={testingProvider === 'perplexity'}
-                    onClick={() => handleTestKey('perplexity', perplexityKey)}
-                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
-                  >
-                    {testingProvider === 'perplexity' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
-                    <span>{testingProvider === 'perplexity' ? 'Detecting Models...' : 'Test & Auto-Select Model'}</span>
-                  </button>
-                </div>
-                {keyTestResults.perplexity && (
-                  <div className={`p-2.5 rounded-lg text-xs flex items-center gap-2 font-medium ${keyTestResults.perplexity.valid ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
-                    {keyTestResults.perplexity.valid ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />}
-                    <span>{keyTestResults.perplexity.valid ? (keyTestResults.perplexity.message || 'Key verified successfully!') : keyTestResults.perplexity.error}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* 5. DeepSeek */}
-              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-1">
-                  <label className="block text-slate-800 font-bold">
-                    DeepSeek API Key (DeepSeek-V3 / R1)
-                  </label>
-                  <span className="text-[10px] text-slate-600 font-mono flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-200">
-                    <Sparkles className="w-3 h-3 text-emerald-600" />
-                    <span>Auto-Selected: <strong>{providerModels.deepseek || 'deepseek-chat'}</strong></span>
-                  </span>
-                </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                  <input
-                    type="password"
-                    placeholder="sk-... (Empty = Uses system quota)"
-                    value={deepseekKey}
-                    onChange={(e) => setDeepseekKey(e.target.value)}
-                    className="flex-1 bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-[#059669]"
-                  />
-                  <button
-                    type="button"
-                    disabled={testingProvider === 'deepseek'}
-                    onClick={() => handleTestKey('deepseek', deepseekKey)}
-                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
-                  >
-                    {testingProvider === 'deepseek' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
-                    <span>{testingProvider === 'deepseek' ? 'Detecting Models...' : 'Test & Auto-Select Model'}</span>
-                  </button>
-                </div>
-                {keyTestResults.deepseek && (
-                  <div className={`p-2.5 rounded-lg text-xs flex items-center gap-2 font-medium ${keyTestResults.deepseek.valid ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
-                    {keyTestResults.deepseek.valid ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />}
-                    <span>{keyTestResults.deepseek.valid ? (keyTestResults.deepseek.message || 'Key verified successfully!') : keyTestResults.deepseek.error}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* 6. Groq */}
-              <div className="p-4 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-1">
-                  <label className="block text-slate-800 font-bold">
-                    Groq API Key (Meta Llama 3.3 70B & 3.1)
-                  </label>
-                  <span className="text-[10px] text-slate-600 font-mono flex items-center gap-1 bg-white px-2 py-0.5 rounded border border-slate-200">
-                    <Sparkles className="w-3 h-3 text-emerald-600" />
-                    <span>Auto-Selected: <strong>{providerModels.groq || 'llama-3.3-70b-versatile'}</strong></span>
-                  </span>
-                </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                  <input
-                    type="password"
-                    placeholder="gsk_... (Empty = Uses system quota)"
-                    value={groqKey}
-                    onChange={(e) => setGroqKey(e.target.value)}
-                    className="flex-1 bg-white border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:border-[#059669]"
-                  />
-                  <button
-                    type="button"
-                    disabled={testingProvider === 'groq'}
-                    onClick={() => handleTestKey('groq', groqKey)}
-                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
-                  >
-                    {testingProvider === 'groq' ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
-                    <span>{testingProvider === 'groq' ? 'Detecting Models...' : 'Test & Auto-Select Model'}</span>
-                  </button>
-                </div>
-                {keyTestResults.groq && (
-                  <div className={`p-2.5 rounded-lg text-xs flex items-center gap-2 font-medium ${keyTestResults.groq.valid ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}`}>
-                    {keyTestResults.groq.valid ? <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />}
-                    <span>{keyTestResults.groq.valid ? (keyTestResults.groq.message || 'Key verified successfully!') : keyTestResults.groq.error}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Upcoming Roadmap Reservations */}
-              <div className="pt-2 border-t border-slate-100">
-                <span className="text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded font-mono">
-                  Upcoming Model API Keys (Roadmap Reservations)
-                </span>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
-                  <div>
-                    <label className="block text-slate-500 text-[11px] font-medium mb-1">xAI Grok Key (Grok 3 Reasoning)</label>
-                    <input
-                      type="password"
-                      placeholder="Reserved for upcoming release"
-                      value={grokKey}
-                      onChange={(e) => setGrokKey(e.target.value)}
-                      className="w-full bg-slate-50/80 border border-slate-200 rounded-xl p-2 text-slate-700 text-[11px] focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-500 text-[11px] font-medium mb-1">Cursor Agent Key (v2 Protocol)</label>
-                    <input
-                      type="password"
-                      placeholder="Reserved for upcoming release"
-                      value={cursorKey}
-                      onChange={(e) => setCursorKey(e.target.value)}
-                      className="w-full bg-slate-50/80 border border-slate-200 rounded-xl p-2 text-slate-700 text-[11px] focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-500 text-[11px] font-medium mb-1">Meta Llama 4 Key (Frontier 400B+)</label>
-                    <input
-                      type="password"
-                      placeholder="Reserved for upcoming release"
-                      value={opusKey}
-                      onChange={(e) => setOpusKey(e.target.value)}
-                      className="w-full bg-slate-50/80 border border-slate-200 rounded-xl p-2 text-slate-700 text-[11px] focus:outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-slate-100">
-              <div ref={settingsMsgRef} className="flex-1">
-                {savedSuccess && (
-                  <span className="text-xs text-[#059669] font-bold flex items-center gap-1 font-sans">
-                    <CheckCircle2 className="w-4 h-4 text-[#059669]" /> All provider settings and keys saved securely!
-                  </span>
-                )}
-                {keyErrorMsg && (
-                  <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-bold flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                    <span>{keyErrorMsg}</span>
-                  </div>
-                )}
-              </div>
-
-              <button
-                onClick={handleSaveProviders}
-                disabled={validatingKeys}
-                className="px-6 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] disabled:bg-slate-400 text-white font-bold text-xs shadow-2xs flex items-center justify-center gap-2 transition-all cursor-pointer font-sans shrink-0"
-              >
-                <RefreshCw className={`w-4 h-4 ${validatingKeys ? 'animate-spin' : 'hidden'}`} />
-                <Save className={`w-4 h-4 ${validatingKeys ? 'hidden' : 'block'}`} />
-                <span>{validatingKeys ? 'Saving & Validating...' : 'Save Settings & Keys'}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* UPCOMING / COMING SOON AI MODELS BANNER */}
-          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white rounded-2xl p-6 space-y-4 shadow-md border border-slate-700 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-              <Sparkles className="w-32 h-32 text-indigo-300" />
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-700/80 pb-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-400/30 text-[10px] font-bold uppercase tracking-wider font-mono">
-                    Roadmap Features
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-medium">Coming Soon</span>
-                </div>
-                <h3 className="text-base font-bold font-heading text-white mt-1 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-purple-400" />
-                  <span>Upcoming AI Models & Engines</span>
-                </h3>
-              </div>
-              <p className="text-xs text-slate-300 max-w-sm">
-                Next-generation models tagged for upcoming release. These premium models will be unlocked in upcoming platform versions.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-              {UPCOMING_PROVIDERS.map((prov) => (
-                <div
-                  key={prov.id}
-                  onClick={() => handleUpcomingClick(prov.name)}
-                  className="bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-purple-500/50 rounded-xl p-4 transition-all cursor-pointer group relative flex flex-col justify-between shadow-xs"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-indigo-900/60 text-indigo-300 border border-indigo-700/50 font-mono">
-                        {prov.category || 'Upcoming'}
-                      </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500 text-white shadow-xs font-sans flex items-center gap-1">
-                        <Lock className="w-2.5 h-2.5" />
-                        <span>COMING SOON</span>
-                      </span>
-                    </div>
-
-                    <div>
-                      <h4 className="font-bold text-sm text-white font-heading group-hover:text-purple-300 transition-colors">
-                        {prov.name}
-                      </h4>
-                      <p className="text-[11px] text-slate-300 leading-relaxed font-sans mt-1">
-                        {prov.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t border-slate-700/60 mt-3 flex items-center justify-between text-[10px] font-semibold text-slate-400">
-                    <span className="flex items-center gap-1 font-mono text-purple-300">
-                      <Sparkles className="w-3 h-3 text-purple-400" />
-                      <span>
-                        {user.planTier === 'agency' ? 'Priority Waitlist Access' : 'Upcoming Feature Tag'}
-                      </span>
-                    </span>
-                    <span className="text-slate-400 group-hover:text-white transition-colors">View Info →</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* TAB 2: BUSINESS PROFILE CONTEXT */}
       {activeTab === 'profile' && (
@@ -1578,6 +799,90 @@ export const SettingsView: React.FC = () => {
               />
             </div>
 
+            {/* Core Business Brain Section */}
+            <div className="sm:col-span-2 pt-4 border-t border-slate-100 space-y-4">
+              <div className="flex items-center gap-2">
+                <Brain className="w-4 h-4 text-[#059669]" />
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">
+                  Business Brain & Local Growth Context
+                </h4>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-600 mb-1 font-medium">
+                    Services Catalog (comma-separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={Array.isArray(profileForm.services) ? profileForm.services.join(', ') : ''}
+                    onChange={(e) =>
+                      setProfileForm({
+                        ...profileForm,
+                        services: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                      })
+                    }
+                    placeholder="e.g. Emergency Repair, Installation, Diagnostics, Maintenance"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-600 mb-1 font-medium">
+                    Target Locations & Service Areas
+                  </label>
+                  <input
+                    type="text"
+                    value={Array.isArray(profileForm.targetLocations) ? profileForm.targetLocations.join(', ') : ''}
+                    onChange={(e) =>
+                      setProfileForm({
+                        ...profileForm,
+                        targetLocations: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                      })
+                    }
+                    placeholder="e.g. Austin, TX, Round Rock, TX, Westlake, TX"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-600 mb-1 font-medium">
+                    Top Local Competitors (tracked by AI)
+                  </label>
+                  <input
+                    type="text"
+                    value={Array.isArray(profileForm.primaryCompetitors) ? profileForm.primaryCompetitors.join(', ') : ''}
+                    onChange={(e) =>
+                      setProfileForm({
+                        ...profileForm,
+                        primaryCompetitors: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                      })
+                    }
+                    placeholder="e.g. Capital City Pro Services, Apex Masters"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-600 mb-1 font-medium">
+                    Current Offers & Promotions
+                  </label>
+                  <input
+                    type="text"
+                    value={Array.isArray(profileForm.currentOffers) ? profileForm.currentOffers.join(', ') : ''}
+                    onChange={(e) =>
+                      setProfileForm({
+                        ...profileForm,
+                        currentOffers: e.target.value.split(',').map((s) => s.trim()).filter(Boolean),
+                      })
+                    }
+                    placeholder="e.g. 15% Off First Service, Free Diagnostic Inspection"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div>
               <label className="block text-slate-600 mb-1 font-medium">Email</label>
               <input
@@ -1648,6 +953,9 @@ export const SettingsView: React.FC = () => {
         </div>
       )}
 
+      {/* TAB: CONNECTED APIS & FEEDS (GA4, GBP, DATAFORSEO, LOCORA DB) */}
+      {activeTab === 'integrations' && <IntegrationsSettingsTab />}
+
       {/* TAB 3: TEAM MEMBERS */}
       {activeTab === 'team' && <TeamManagementSection />}
 
@@ -1713,10 +1021,10 @@ export const SettingsView: React.FC = () => {
                 </div>
                 <p className="text-xs text-slate-500 mt-1 font-sans">
                   {user.planTier === 'free'
-                    ? '10 AI Copilot starter credits. Upgrade to unlock all premium AI engines (OpenAI, Claude, Perplexity) and high-volume limits.'
+                    ? 'Free Explorer tier. Upgrade to unlock full Business Brain, proactive growth detection, and Claude 3.7 models.'
                     : user.planTier === 'pro'
-                    ? '$19.00 / month ($180 / year) • 250 AI Copilot credits monthly • All AI models unlocked'
-                    : '$49.00 / month ($468 / year) • Unlimited AI Copilot credits • Priority dedicated AI engines & white-labeling'}
+                    ? '$29.00 / month ($249 / year) • Full Business Brain • AI Local SEO Copilot'
+                    : '$99.00 / month ($790 / year) • 10 Businesses • AI Client Manager • White-label PDFs'}
                 </p>
               </div>
 
@@ -1727,7 +1035,7 @@ export const SettingsView: React.FC = () => {
                     className="px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>Upgrade to Pro ($19/mo)</span>
+                    <span>Upgrade to Pro ($29/mo)</span>
                   </button>
                 ) : (
                   <button

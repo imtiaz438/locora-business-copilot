@@ -85,14 +85,15 @@ export const FRESHNESS_WINDOWS = {
   AI_OVERVIEW_MS: 7 * 24 * 60 * 60 * 1000, // 7 days
 } as const;
 
-/** Lookup Costs for Metering */
+/** Lookup Costs for Metering (Proportionally Weighted by Real API Cost) */
 export const SEO_LOOKUP_COSTS = {
-  DOMAIN_OVERVIEW: 1,
-  BACKLINK_SUMMARY: 1,
-  KEYWORD_BATCH: 1, // Batch up to 700 keywords = 1 lookup
-  SERP_CHECK_PER_KEYWORD: 1,
-  AI_OVERVIEW_CHECK: 1,
-  FULL_AUDIT_BASE: 1,
+  DOMAIN_OVERVIEW: 1, // Domain rank overview = 1 unit
+  KEYWORD_BATCH: 1, // Keyword overview (batch up to 700 keywords) = 1 unit
+  AI_OVERVIEW_CHECK: 1, // AI Overview presence check = 1 unit
+  SERP_CHECK_PER_KEYWORD: 1, // Live SERP position = 1 unit
+  BACKLINK_SUMMARY: 2, // Backlink summary = 2 units (costs 2x live API fee)
+  BACKLINK_LIST: 2, // Full backlink list = 2 units (costs 2x live API fee)
+  FULL_AUDIT_BASE: 6, // Combined fresh audit = 6 units (1+1+1+1+2)
 } as const;
 
 export interface AiVisibilityCheckItem {

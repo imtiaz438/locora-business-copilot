@@ -329,7 +329,7 @@ export const AdminView: React.FC = () => {
   const [scaleSerpKeyInput, setScaleSerpKeyInput] = useState('');
   const [valueSerpKeyInput, setValueSerpKeyInput] = useState('');
   const [aiModelSearch, setAiModelSearch] = useState('');
-  const [aiProviderFilter, setAiProviderFilter] = useState<'all' | 'openai' | 'anthropic' | 'gemini' | 'deepseek' | 'perplexity' | 'groq'>('all');
+  const [aiProviderFilter, setAiProviderFilter] = useState<'all' | 'anthropic' | 'groq'>('all');
   const [editingQuotaModelId, setEditingQuotaModelId] = useState<string | null>(null);
   const [customQuotaInput, setCustomQuotaInput] = useState<number | string>('');
 
@@ -1002,8 +1002,8 @@ export const AdminView: React.FC = () => {
   const agencyCount = usersTable.filter((u) => u.planTier === 'agency').length;
   const freeCount = usersTable.filter((u) => u.planTier === 'free' || !u.planTier).length;
 
-  const proMRR = usersTable.filter((u) => u.planTier === 'pro').reduce((acc, u) => acc + (u.billingCycle === 'yearly' ? 15 : 19), 0);
-  const agencyMRR = usersTable.filter((u) => u.planTier === 'agency').reduce((acc, u) => acc + (u.billingCycle === 'yearly' ? 39 : 49), 0);
+  const proMRR = usersTable.filter((u) => u.planTier === 'pro').reduce((acc, u) => acc + (u.billingCycle === 'yearly' ? 20.75 : 29), 0);
+  const agencyMRR = usersTable.filter((u) => u.planTier === 'agency').reduce((acc, u) => acc + (u.billingCycle === 'yearly' ? 65.8 : 99), 0);
   const totalMRR = proMRR + agencyMRR;
 
   // Invoice Payment Stats
@@ -1556,8 +1556,8 @@ export const AdminView: React.FC = () => {
                             className="px-2 py-1 bg-white border border-slate-200 rounded text-[11px] font-bold uppercase text-slate-800 focus:outline-none focus:border-[#059669] cursor-pointer"
                           >
                             <option value="free">Free ($0)</option>
-                            <option value="pro">Pro ($19/mo)</option>
-                            <option value="agency">Agency ($49/mo)</option>
+                            <option value="pro">Pro ($29/mo)</option>
+                            <option value="agency">Agency ($99/mo)</option>
                           </select>
                           {/* Billing Cycle Select */}
                           <div className="text-[10px]">
@@ -2237,7 +2237,7 @@ export const AdminView: React.FC = () => {
                   Live AI Models & Token Monitoring System
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5 font-sans">
-                  Real-time token allocation, utilization tracking, and live API key management for GPT-5.6, Claude 3.7/Opus 4.8, Gemini 2.5/3.7, DeepSeek, Groq, and Perplexity.
+                  Real-time token allocation, utilization tracking, and live API key management for Anthropic Claude 3.7 / 3.5 and Groq LPUs (Llama 3.3 70B & Mixtral).
                 </p>
               </div>
 
@@ -2337,35 +2337,7 @@ export const AdminView: React.FC = () => {
                     onClick={() => setAiProviderFilter('all')}
                     className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${aiProviderFilter === 'all' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'hover:text-slate-900'}`}
                   >
-                    All
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAiProviderFilter('openai')}
-                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${aiProviderFilter === 'openai' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'hover:text-slate-900'}`}
-                  >
-                    OpenAI
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAiProviderFilter('anthropic')}
-                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${aiProviderFilter === 'anthropic' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'hover:text-slate-900'}`}
-                  >
-                    Claude
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAiProviderFilter('gemini')}
-                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${aiProviderFilter === 'gemini' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'hover:text-slate-900'}`}
-                  >
-                    Gemini
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAiProviderFilter('deepseek')}
-                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${aiProviderFilter === 'deepseek' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'hover:text-slate-900'}`}
-                  >
-                    DeepSeek
+                    All (Groq & Claude)
                   </button>
                   <button
                     type="button"
@@ -2376,10 +2348,10 @@ export const AdminView: React.FC = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setAiProviderFilter('perplexity')}
-                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${aiProviderFilter === 'perplexity' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'hover:text-slate-900'}`}
+                    onClick={() => setAiProviderFilter('anthropic')}
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${aiProviderFilter === 'anthropic' ? 'bg-white text-slate-900 shadow-2xs font-bold' : 'hover:text-slate-900'}`}
                   >
-                    Perplexity
+                    Claude (Anthropic)
                   </button>
                 </div>
               </div>
@@ -2603,102 +2575,14 @@ export const AdminView: React.FC = () => {
                   <span>{validatingKeys ? 'Testing Providers...' : 'Test All Live Keys'}</span>
                 </button>
                 <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-200 font-mono">
-                  6 Providers Configured
+                  Groq &amp; Claude LLM Engines Configured
                 </span>
               </div>
             </div>
 
             <form onSubmit={handleSaveAiKeys} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* 1. Google Gemini */}
-                <div className="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-800">
-                      Google Gemini API Key
-                    </label>
-                    <span className="text-[10px] font-mono text-slate-500 font-bold">
-                      GEMINI_API_KEY
-                    </span>
-                  </div>
-                  <input
-                    type="password"
-                    value={geminiKeyInput}
-                    onChange={(e) => setGeminiKeyInput(e.target.value)}
-                    placeholder="AIzaSy... (Empty = Uses server key)"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
-                  />
-                  <p className="text-[10px] text-slate-400">
-                    Powers Gemini 2.5 Flash, 2.5 Pro, 3.7 Flash & 3.1 Pro Preview.
-                  </p>
-                </div>
-
-                {/* 2. OpenAI */}
-                <div className="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-800">
-                      OpenAI API Key
-                    </label>
-                    <span className="text-[10px] font-mono text-slate-500 font-bold">
-                      OPENAI_API_KEY
-                    </span>
-                  </div>
-                  <input
-                    type="password"
-                    value={openaiKeyInput}
-                    onChange={(e) => setOpenaiKeyInput(e.target.value)}
-                    placeholder="sk-proj-... (Empty = Uses server key)"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
-                  />
-                  <p className="text-[10px] text-slate-400">
-                    Powers GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, GPT-4o & o3-mini.
-                  </p>
-                </div>
-
-                {/* 3. Anthropic Claude */}
-                <div className="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-800">
-                      Anthropic Claude Key
-                    </label>
-                    <span className="text-[10px] font-mono text-slate-500 font-bold">
-                      ANTHROPIC_API_KEY
-                    </span>
-                  </div>
-                  <input
-                    type="password"
-                    value={claudeKeyInput}
-                    onChange={(e) => setClaudeKeyInput(e.target.value)}
-                    placeholder="sk-ant-... (Empty = Uses server key)"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
-                  />
-                  <p className="text-[10px] text-slate-400">
-                    Powers Claude 3.7 Sonnet, Claude Opus 4.8 & Claude Haiku 4.5.
-                  </p>
-                </div>
-
-                {/* 4. DeepSeek */}
-                <div className="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-800">
-                      DeepSeek API Key
-                    </label>
-                    <span className="text-[10px] font-mono text-slate-500 font-bold">
-                      DEEPSEEK_API_KEY
-                    </span>
-                  </div>
-                  <input
-                    type="password"
-                    value={deepseekKeyInput}
-                    onChange={(e) => setDeepseekKeyInput(e.target.value)}
-                    placeholder="sk-ds-... (Empty = Uses server key)"
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
-                  />
-                  <p className="text-[10px] text-slate-400">
-                    Powers DeepSeek V3 (671B MoE) & DeepSeek R1 Reasoning.
-                  </p>
-                </div>
-
-                {/* 5. Groq LPU */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 1. Groq LPU */}
                 <div className="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="block text-xs font-bold text-slate-800">
@@ -2716,29 +2600,29 @@ export const AdminView: React.FC = () => {
                     className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
                   />
                   <p className="text-[10px] text-slate-400">
-                    Powers Meta Llama 3.3 70B running at 300+ tokens/sec on LPUs.
+                    Powers Meta Llama 3.3 70B & 3.1 8B on high-speed LPUs (300+ t/s).
                   </p>
                 </div>
 
-                {/* 6. Perplexity AI */}
+                {/* 2. Anthropic Claude */}
                 <div className="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="block text-xs font-bold text-slate-800">
-                      Perplexity API Key
+                      Anthropic Claude API Key
                     </label>
                     <span className="text-[10px] font-mono text-slate-500 font-bold">
-                      PERPLEXITY_API_KEY
+                      ANTHROPIC_API_KEY
                     </span>
                   </div>
                   <input
                     type="password"
-                    value={perplexityKeyInput}
-                    onChange={(e) => setPerplexityKeyInput(e.target.value)}
-                    placeholder="pplx-... (Empty = Uses server key)"
+                    value={claudeKeyInput}
+                    onChange={(e) => setClaudeKeyInput(e.target.value)}
+                    placeholder="sk-ant-... (Empty = Uses server key)"
                     className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
                   />
                   <p className="text-[10px] text-slate-400">
-                    Powers Perplexity Sonar Pro & Sonar Fast search-grounded models.
+                    Powers Claude 3.7 Sonnet, Claude 3.5 Sonnet & Claude 3.5 Haiku.
                   </p>
                 </div>
               </div>
@@ -3006,98 +2890,13 @@ export const AdminView: React.FC = () => {
                     />
                     <p className="text-[10px] text-slate-500">DataForSEO API secret generated from the DataForSEO customer dashboard.</p>
                   </div>
+                </div>
 
-                  {/* Serper.dev API */}
-                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${serperKeyInput || aiStats?.apiKeysConfigured?.serper ? 'bg-emerald-50/50 border-emerald-300' : 'bg-slate-50/70 border-slate-200'}`}>
-                    <div className="flex items-center justify-between">
-                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                        <span>Serper.dev Search API</span>
-                        {serperKeyInput || aiStats?.apiKeysConfigured?.serper ? (
-                          <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">ACTIVE</span>
-                        ) : (
-                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">WATERFALL TIER 1</span>
-                        )}
-                      </label>
-                      <span className="text-[10px] font-mono text-slate-500 font-bold">SERPER_API_KEY</span>
-                    </div>
-                    <input
-                      type="password"
-                      value={serperKeyInput}
-                      onChange={(e) => setSerperKeyInput(e.target.value)}
-                      placeholder="serper_... (Free 2,500 monthly queries)"
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
-                    />
-                    <p className="text-[10px] text-slate-500">Primary zero-cost Google Search engine API with ultra-low latency organic SERP extraction.</p>
-                  </div>
-
-                  {/* SerpApi API */}
-                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${serpApiKeyInput || aiStats?.apiKeysConfigured?.serpapi ? 'bg-emerald-50/50 border-emerald-300' : 'bg-slate-50/70 border-slate-200'}`}>
-                    <div className="flex items-center justify-between">
-                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                        <span>SerpApi Engine</span>
-                        {serpApiKeyInput || aiStats?.apiKeysConfigured?.serpapi ? (
-                          <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">ACTIVE</span>
-                        ) : (
-                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">WATERFALL TIER 2</span>
-                        )}
-                      </label>
-                      <span className="text-[10px] font-mono text-slate-500 font-bold">SERPAPI_API_KEY</span>
-                    </div>
-                    <input
-                      type="password"
-                      value={serpApiKeyInput}
-                      onChange={(e) => setSerpApiKeyInput(e.target.value)}
-                      placeholder="serpapi_... (Free 250 monthly queries)"
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
-                    />
-                    <p className="text-[10px] text-slate-500">Secondary waterfall failover provider for comprehensive Google SERP scrape & PAA extraction.</p>
-                  </div>
-
-                  {/* ScaleSERP API */}
-                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${scaleSerpKeyInput || aiStats?.apiKeysConfigured?.scaleserp ? 'bg-emerald-50/50 border-emerald-300' : 'bg-slate-50/70 border-slate-200'}`}>
-                    <div className="flex items-center justify-between">
-                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                        <span>ScaleSERP API</span>
-                        {scaleSerpKeyInput || aiStats?.apiKeysConfigured?.scaleserp ? (
-                          <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">ACTIVE</span>
-                        ) : (
-                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">WATERFALL TIER 3</span>
-                        )}
-                      </label>
-                      <span className="text-[10px] font-mono text-slate-500 font-bold">SCALESERP_API_KEY</span>
-                    </div>
-                    <input
-                      type="password"
-                      value={scaleSerpKeyInput}
-                      onChange={(e) => setScaleSerpKeyInput(e.target.value)}
-                      placeholder="ScaleSERP API Key"
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
-                    />
-                    <p className="text-[10px] text-slate-500">Tertiary waterfall fallback for Google SERP data extraction.</p>
-                  </div>
-
-                  {/* ValueSERP API */}
-                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${valueSerpKeyInput || aiStats?.apiKeysConfigured?.valueserp ? 'bg-emerald-50/50 border-emerald-300' : 'bg-slate-50/70 border-slate-200'}`}>
-                    <div className="flex items-center justify-between">
-                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                        <span>ValueSERP API</span>
-                        {valueSerpKeyInput || aiStats?.apiKeysConfigured?.valueserp ? (
-                          <span className="text-[9px] font-mono font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded border border-emerald-300">ACTIVE</span>
-                        ) : (
-                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">WATERFALL TIER 4</span>
-                        )}
-                      </label>
-                      <span className="text-[10px] font-mono text-slate-500 font-bold">VALUESERP_API_KEY</span>
-                    </div>
-                    <input
-                      type="password"
-                      value={valueSerpKeyInput}
-                      onChange={(e) => setValueSerpKeyInput(e.target.value)}
-                      placeholder="ValueSERP API Key"
-                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
-                    />
-                    <p className="text-[10px] text-slate-500">Final waterfall backup for Google search engine data scraping.</p>
-                  </div>
+                <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs text-slate-600">
+                  <span className="font-semibold">Active Live Feeds:</span>
+                  <span className="font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    Official Google APIs (Places, Maps, GSC, GA4) + DataForSEO Enterprise
+                  </span>
                 </div>
               </div>
 
@@ -3135,22 +2934,22 @@ export const AdminView: React.FC = () => {
             <div className="bg-white border border-emerald-200 rounded-2xl p-6 shadow-2xs space-y-4 relative overflow-hidden">
               <div className="flex items-center justify-between">
                 <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-lg uppercase">Pro Copilot Plan</span>
-                <span className="text-xs font-mono text-emerald-700 font-bold">$19 / mo</span>
+                <span className="text-xs font-mono text-emerald-700 font-bold">$29 / mo</span>
               </div>
               <div>
                 <p className="text-3xl font-bold font-heading text-slate-900">{proCount}</p>
-                <p className="text-xs text-emerald-700 font-medium mt-1">MRR: ${proMRR.toLocaleString()} / mo ($180/yr)</p>
+                <p className="text-xs text-emerald-700 font-medium mt-1">MRR: ${proMRR.toLocaleString()} / mo ($249/yr)</p>
               </div>
             </div>
 
             <div className="bg-white border border-purple-200 rounded-2xl p-6 shadow-2xs space-y-4 relative overflow-hidden">
               <div className="flex items-center justify-between">
                 <span className="px-2.5 py-1 bg-purple-100 text-purple-800 text-[11px] font-bold rounded-lg uppercase">Agency Unlimited</span>
-                <span className="text-xs font-mono text-purple-700 font-bold">$49 / mo</span>
+                <span className="text-xs font-mono text-purple-700 font-bold">$99 / mo</span>
               </div>
               <div>
                 <p className="text-3xl font-bold font-heading text-slate-900">{agencyCount}</p>
-                <p className="text-xs text-purple-700 font-medium mt-1">MRR: ${agencyMRR.toLocaleString()} / mo ($468/yr)</p>
+                <p className="text-xs text-purple-700 font-medium mt-1">MRR: ${agencyMRR.toLocaleString()} / mo ($790/yr)</p>
               </div>
             </div>
           </div>
