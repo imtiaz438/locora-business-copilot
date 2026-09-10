@@ -1,0 +1,104 @@
+/**
+ * Domain & Subdomain Routing Configuration for Locora AI
+ * 
+ * Supports:
+ * - Public Marketing Site: https://locoraai.com (and www.locoraai.com)
+ * - Dashboard / App Subdomain: https://app.locoraai.com
+ * - Development / Preview: Seamless operation on localhost and Cloud Run containers (.run.app),
+ *   with optional testing override via ?domain=app or ?domain=main.
+ */
+
+export const PRODUCTION_MAIN_DOMAIN = 'locoraai.com';
+export const PRODUCTION_APP_DOMAIN = 'app.locoraai.com';
+
+/**
+ * Checks if the current client session is running on the app subdomain (app.locoraai.com).
+ */
+export const isAppSubdomain = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location.hostname.toLowerCase();
+  const searchParams = new URLSearchParams(window.location.search);
+
+  // Testing override for development / preview environments
+  if (searchParams.get('domain') === 'app') return true;
+  if (searchParams.get('domain') === 'main') return false;
+
+  return (
+    hostname === PRODUCTION_APP_DOMAIN ||
+    hostname.startsWith('app.') ||
+    hostname.includes('app-')
+  );
+};
+
+/**
+ * Checks if the current environment is running on the production custom domain.
+ */
+export const isProductionCustomDomain = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location.hostname.toLowerCase();
+  return (
+    hostname === PRODUCTION_MAIN_DOMAIN ||
+    hostname === `www.${PRODUCTION_MAIN_DOMAIN}` ||
+    hostname === PRODUCTION_APP_DOMAIN
+  );
+};
+
+/**
+ * Returns the target URL for the public marketing site.
+ * In production custom domain, points to https://locoraai.com
+ * In dev/preview, returns relative path so developers aren't navigated away.
+ */
+export const getMainSiteUrl = (path: string = '/'): string => {
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  if (typeof window === 'undefined') return cleanPath;
+
+  if (isProductionCustomDomain()) {
+    return `https://${PRODUCTION_MAIN_DOMAIN}${cleanPath}`;
+  }
+  return cleanPath;
+};
+
+/**
+ * Returns the target URL for the app/dashboard site.
+ * In production custom domain, points to https://app.locoraai.com
+ * In dev/preview, returns relative path.
+ */
+export const getAppSiteUrl = (path: string = '/dashboard'): string => {
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  if (typeof window === 'undefined') return cleanPath;
+
+  if (isProductionCustomDomain()) {
+    return `https://${PRODUCTION_APP_DOMAIN}${cleanPath}`;
+  }
+  return cleanPath;
+};
+
+/**
+ * Navigates to the app dashboard / login.
+ */
+export const navigateToApp = (path: string = '/dashboard', inAppFallback?: () => void) => {
+  if (typeof window === 'undefined') return;
+
+  if (isProductionCustomDomain() && !isAppSubdomain()) {
+    window.location.href = `https://${PRODUCTION_APP_DOMAIN}${path.startsWith('/') ? path : `/${path}`}`;
+  } else if (inAppFallback) {
+    inAppFallback();
+  } else {
+    window.history.pushState({}, '', path.startsWith('/') ? path : `/${path}`);
+  }
+};
+
+/**
+ * Navigates to the public marketing site.
+ */
+export const navigateToMain = (path: string = '/', inAppFallback?: () => void) => {
+  if (typeof window === 'undefined') return;
+
+  if (isProductionCustomDomain() && isAppSubdomain()) {
+    window.location.href = `https://${PRODUCTION_MAIN_DOMAIN}${path.startsWith('/') ? path : `/${path}`}`;
+  } else if (inAppFallback) {
+    inAppFallback();
+  } else {
+    window.history.pushState({}, '', path.startsWith('/') ? path : `/${path}`);
+  }
+};

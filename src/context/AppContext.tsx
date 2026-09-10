@@ -27,6 +27,7 @@ import {
   AIAction,
 } from '../types';
 import { INITIAL_BUSINESSES, INITIAL_PRIORITY_ACTIONS } from '../data/mockBusinesses';
+import { isAppSubdomain } from '../utils/domain';
 
 interface AppContextType {
   user: UserProfile;
@@ -462,7 +463,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [activeTab, setActiveTabState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
+      const isApp = isAppSubdomain();
       const path = window.location.pathname.replace(/^\//, '').trim();
+
+      // On app subdomain (app.locoraai.com), default root '/' or '/home' or '/app' directly to dashboard
+      if (isApp) {
+        if (path === '' || path === 'home' || path === 'app' || path === 'dashboard') {
+          return 'dashboard';
+        }
+        if (path === 'pricing' || path === 'pricing-plans') {
+          return 'subscription';
+        }
+      }
+
       if (path === '' || path === 'home') return 'home';
       if (path && PATH_TO_TAB[path]) return PATH_TO_TAB[path];
       if (path === 'admin') return 'admin';

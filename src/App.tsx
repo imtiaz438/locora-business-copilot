@@ -8,6 +8,7 @@ import { FirstTimeOnboardingModal } from './components/FirstTimeOnboardingModal'
 import { AIActionApprovalModal } from './components/AIActionApprovalModal';
 import { GrowthStoreModal } from './components/GrowthStoreModal';
 import { SubscriptionInvoice } from './types';
+import { isAppSubdomain, navigateToMain } from './utils/domain';
 
 // View Modules
 import { DashboardView } from './components/DashboardView';
@@ -147,13 +148,28 @@ const MainContent: React.FC = () => {
       const rawPath = window.location.pathname;
       const path = rawPath.replace(/^\//, '').trim();
 
-      const isAppSubdomain =
-        typeof window !== 'undefined' &&
-        (window.location.hostname.startsWith('app.') || window.location.hostname === 'app.locoraai.com');
+      const isApp = isAppSubdomain();
 
-      if (isAppSubdomain && (path === '' || path === 'app' || path === 'dashboard')) {
-        setActiveTab('dashboard');
-        return;
+      if (isApp) {
+        if (path === '' || path === 'app' || path === 'dashboard' || path === 'home') {
+          setActiveTab('dashboard');
+          return;
+        }
+        if (path === 'pricing' || path === 'pricing-plans') {
+          setActiveTab('subscription');
+          return;
+        }
+        // Redirect marketing routes on app subdomain to main website
+        if (
+          rawPath.startsWith('/features/') ||
+          rawPath.startsWith('/use-cases/') ||
+          rawPath.startsWith('/resources/') ||
+          rawPath.startsWith('/blog/') ||
+          rawPath.startsWith('/for/')
+        ) {
+          navigateToMain(rawPath);
+          return;
+        }
       }
 
       if (path === '' || path === 'home') {

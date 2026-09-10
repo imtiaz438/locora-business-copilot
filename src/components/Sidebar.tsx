@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import { LocoraLogo } from './LocoraLogo';
+import { navigateToMain } from '../utils/domain';
 import {
   Home,
   LayoutDashboard,
@@ -240,9 +241,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
 
           {/* Switch to Public Site Link */}
           <button
-            onClick={() => handleNavClick('home')}
+            onClick={() => navigateToMain('/', () => handleNavClick('home'))}
             className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:text-[#059669] hover:bg-emerald-50/60 transition-all cursor-pointer group"
-            title="Go to Locora Public Website"
+            title="Go to Locora Public Website (locoraai.com)"
           >
             <div className="flex items-center gap-2">
               <Globe className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#059669] transition-colors" />

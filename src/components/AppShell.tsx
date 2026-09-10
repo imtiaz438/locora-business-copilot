@@ -7,11 +7,13 @@ import { AuthModal } from './AuthModal';
 import { CheckoutModal } from './CheckoutModal';
 import { FuelPackModal } from './FuelPackModal';
 import { RightAiPanel } from './RightAiPanel';
-import { Lock, Sparkles, ArrowRight } from 'lucide-react';
+import { Lock, Sparkles, ArrowRight, ExternalLink } from 'lucide-react';
 import { LocoraLogo } from './LocoraLogo';
 import { PublicNavbar } from './public/PublicNavbar';
 import { PublicFooter } from './public/PublicFooter';
 import { CookieConsentBanner } from './CookieConsentBanner';
+import { AuthView } from './public/AuthView';
+import { isAppSubdomain, getMainSiteUrl } from '../utils/domain';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -44,6 +46,39 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  const isApp = isAppSubdomain();
+
+  // App Subdomain (app.locoraai.com) Authentication Guard & Layout
+  if (isApp && (!user.isAuthenticated || activeTab === 'login' || activeTab === 'signup')) {
+    return (
+      <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-emerald-600 selection:text-white">
+        <header className="h-16 px-6 border-b border-slate-200 bg-white/95 backdrop-blur-md flex items-center justify-between z-10 sticky top-0">
+          <div className="flex items-center gap-3">
+            <LocoraLogo className="w-8 h-8" />
+            <span className="font-heading font-black text-slate-900 text-lg tracking-tight">Locora</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">App</span>
+          </div>
+          <a
+            href={getMainSiteUrl('/')}
+            className="text-xs font-semibold text-slate-600 hover:text-[#059669] flex items-center gap-1.5 transition-colors"
+          >
+            <span>Visit Website (locoraai.com)</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </header>
+
+        <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
+          <AuthView initialMode={activeTab === 'signup' ? 'signup' : 'login'} />
+        </main>
+
+        <footer className="py-4 px-6 text-center text-xs text-slate-400 border-t border-slate-100">
+          © {new Date().getFullYear()} Locora AI Inc. All rights reserved. Secure Cloud Dashboard.
+        </footer>
+        <CookieConsentBanner />
+      </div>
+    );
+  }
 
   const isPublicRoute =
     activeTab === 'home' ||

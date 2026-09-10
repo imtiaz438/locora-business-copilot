@@ -20,6 +20,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { LocoraLogo } from '../LocoraLogo';
+import { navigateToApp } from '../../utils/domain';
 
 export const PublicNavbar: React.FC = () => {
   const { activeTab, setActiveTab, user, logout } = useApp();
@@ -314,7 +315,7 @@ export const PublicNavbar: React.FC = () => {
           {user.isAuthenticated ? (
             <>
               <button
-                onClick={() => navigateTo('dashboard', '/dashboard')}
+                onClick={() => navigateToApp('/dashboard', () => navigateTo('dashboard', '/dashboard'))}
                 className="px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer font-sans"
               >
                 <LayoutDashboard className="w-4 h-4" />
@@ -335,7 +336,7 @@ export const PublicNavbar: React.FC = () => {
           ) : (
             <>
               <button
-                onClick={() => navigateTo('login', '/login')}
+                onClick={() => navigateToApp('/login', () => navigateTo('login', '/login'))}
                 className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer font-sans"
               >
                 <LogIn className="w-3.5 h-3.5 text-[#059669]" />
@@ -429,7 +430,7 @@ export const PublicNavbar: React.FC = () => {
           <div className="pt-4 border-t border-slate-200 flex flex-col gap-2">
             {user.isAuthenticated ? (
               <button
-                onClick={() => navigateTo('dashboard', '/dashboard')}
+                onClick={() => navigateToApp('/dashboard', () => navigateTo('dashboard', '/dashboard'))}
                 className="w-full py-3 bg-[#059669] text-white font-bold text-xs rounded-xl shadow-md text-center flex items-center justify-center gap-2 cursor-pointer"
               >
                 <LayoutDashboard className="w-4 h-4" />
@@ -446,7 +447,7 @@ export const PublicNavbar: React.FC = () => {
             )}
             {!user.isAuthenticated ? (
               <button
-                onClick={() => navigateTo('login', '/login')}
+                onClick={() => navigateToApp('/login', () => navigateTo('login', '/login'))}
                 className="w-full py-2.5 bg-slate-100 text-slate-800 font-semibold text-xs rounded-xl text-center"
               >
                 Sign In

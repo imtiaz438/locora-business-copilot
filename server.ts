@@ -67,6 +67,27 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+
+  // Subdomain & Hostname Routing for locoraai.com and app.locoraai.com
+  const host = ((req.headers['x-forwarded-host'] as string) || req.headers.host || '').toLowerCase();
+  const isAppHost = host.startsWith('app.locoraai.com') || host.startsWith('app.');
+
+  // If visitor is accessing marketing-only content on the app subdomain, 301 redirect to main website
+  if (
+    isAppHost &&
+    !req.path.startsWith('/api/') &&
+    !req.path.startsWith('/assets/') &&
+    !req.path.includes('.') &&
+    (req.path === '/home' ||
+      req.path.startsWith('/features') ||
+      req.path.startsWith('/use-cases') ||
+      req.path.startsWith('/resources') ||
+      req.path.startsWith('/blog') ||
+      req.path.startsWith('/for/'))
+  ) {
+    return res.redirect(301, `https://locoraai.com${req.originalUrl}`);
+  }
+
   next();
 });
 
@@ -4412,6 +4433,7 @@ app.get(['/auth/callback', '/auth/callback/'], async (req, res) => {
       const possibleRedirectUris = Array.from(new Set([
         passedRedirectUri,
         `${host}/auth/callback`,
+        'https://app.locoraai.com/auth/callback',
         'https://www.locoraai.com/auth/callback',
         'https://locoraai.com/auth/callback',
       ])).filter(Boolean);
