@@ -1,11 +1,12 @@
 {
   "id": "settings_main",
   "activeProvider": "gemini",
+  "activeModelVersion": "llama-3.3-70b-versatile",
   "providerKeys": {
     "groq": "",
     "apollo": "",
     "claude": "",
-    "gemini": "AQ.Ab8RN6JDxo2oIFLILYqBLAomlFk6NtK0U8CMcD4Y3ukuuRGm0A",
+    "gemini": "",
     "hunter": "",
     "openai": "",
     "deepseek": "",
@@ -20,5 +21,5 @@
   "autoSave": true,
   "defaultCurrency": "USD",
   "defaultTaxRate": 0,
-  "updatedAt": "2026-09-03T15:00:37.620Z"
+  "updatedAt": "2026-09-08T16:27:30.447Z"
 }

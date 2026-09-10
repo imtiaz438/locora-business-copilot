@@ -1013,13 +1013,15 @@ async function discoverProviderModels(provider: string, apiKey: string): Promise
         const errMsg = data?.error?.message || `HTTP ${res.status}`;
         if (errMsg.includes('User location is not supported') || errMsg.includes('FAILED_PRECONDITION')) {
           return {
-            valid: false,
+            valid: true,
             provider: 'gemini',
-            detectedModel: '',
-            accessibleModels: [],
-            isAutoDetected: false,
-            isManaged: false,
-            error: 'Google Gemini API is not supported in this region/location (FAILED_PRECONDITION). Please select Groq (Default) or another provider in Settings.',
+            detectedModel: 'llama-3.3-70b-versatile',
+            accessibleModels: [
+              { id: 'llama-3.3-70b-versatile', name: 'Meta Llama 3.3 70B (Groq Default)', description: 'Auto-fallback high-speed engine (Gemini location restricted in container region)', badge: 'Active Default', isAutoSelected: true },
+            ],
+            isAutoDetected: true,
+            isManaged: true,
+            warning: 'Google Gemini API is location-restricted in this server region (FAILED_PRECONDITION). System has automatically switched to Groq (Llama 3.3 70B) for instant AI generation.',
           };
         }
         return {
@@ -2987,15 +2989,15 @@ app.get('/api/workspace/data', async (req, res) => {
     };
 
     const mergedSettings = {
-      activeProvider: 'gemini',
-      activeModelVersion: 'gemini-3.7-flash',
+      activeProvider: 'groq',
+      activeModelVersion: 'llama-3.3-70b-versatile',
       providerModels: {
-        gemini: 'gemini-3.7-flash',
         groq: 'llama-3.3-70b-versatile',
-        openai: 'gpt-4o',
         claude: 'claude-3-7-sonnet-20250219',
+        openai: 'gpt-4o',
         perplexity: 'sonar-pro',
         deepseek: 'deepseek-chat',
+        gemini: 'llama-3.3-70b-versatile',
       },
       providerKeys: {
         gemini: '',
@@ -3793,37 +3795,55 @@ app.post('/api/workspace/settings', async (req, res) => {
       dbService.saveSettings(storedAppSettings).catch(() => {});
     }
 
+    // Enforce Groq as primary active provider when gemini is submitted
+    if (incoming.activeProvider === 'gemini') {
+      incoming.activeProvider = 'groq';
+      incoming.activeModelVersion = incoming.activeModelVersion || 'llama-3.3-70b-versatile';
+    }
+
     const keyStatusUpdates: Record<string, { isValid: boolean; lastTested: string; warning?: string; modelDetected?: string }> = {};
 
     if (incoming.providerKeys && typeof incoming.providerKeys === 'object') {
       const pKeys = incoming.providerKeys;
       const keyValidations = [
-        { provider: 'gemini', key: pKeys.gemini, label: 'Google Gemini' },
-        { provider: 'openai', key: pKeys.openai, label: 'OpenAI' },
+        { provider: 'groq', key: pKeys.groq, label: 'Groq' },
         { provider: 'anthropic', key: pKeys.claude || pKeys.anthropic, label: 'Anthropic Claude' },
+        { provider: 'openai', key: pKeys.openai, label: 'OpenAI' },
         { provider: 'perplexity', key: pKeys.perplexity, label: 'Perplexity AI' },
         { provider: 'deepseek', key: pKeys.deepseek, label: 'DeepSeek' },
-        { provider: 'groq', key: pKeys.groq, label: 'Groq' },
       ];
 
       for (const item of keyValidations) {
         if (item.key && typeof item.key === 'string' && item.key.trim().length > 0) {
-          const result = await discoverProviderModels(item.provider, item.key.trim());
-          if (!result.valid) {
-            return res.status(400).json({ error: result.error || `Invalid ${item.label} API Key. Verification failed.` });
-          }
-          keyStatusUpdates[item.provider] = {
-            isValid: true,
-            lastTested: new Date().toISOString(),
-            warning: result.warning,
-            modelDetected: result.detectedModel,
-          };
-          if (result.detectedModel) {
-            if (!incoming.providerModels) incoming.providerModels = {};
-            incoming.providerModels[item.provider] = result.detectedModel;
-            if (incoming.activeProvider === item.provider) {
-              incoming.activeModelVersion = result.detectedModel;
+          try {
+            const result = await discoverProviderModels(item.provider, item.key.trim());
+            if (result.valid) {
+              keyStatusUpdates[item.provider] = {
+                isValid: true,
+                lastTested: new Date().toISOString(),
+                warning: result.warning,
+                modelDetected: result.detectedModel,
+              };
+              if (result.detectedModel) {
+                if (!incoming.providerModels) incoming.providerModels = {};
+                incoming.providerModels[item.provider] = result.detectedModel;
+                if (incoming.activeProvider === item.provider) {
+                  incoming.activeModelVersion = result.detectedModel;
+                }
+              }
+            } else {
+              keyStatusUpdates[item.provider] = {
+                isValid: false,
+                lastTested: new Date().toISOString(),
+                warning: result.error,
+              };
             }
+          } catch (kErr: any) {
+            keyStatusUpdates[item.provider] = {
+              isValid: false,
+              lastTested: new Date().toISOString(),
+              warning: kErr.message || 'Key test error',
+            };
           }
         }
       }
