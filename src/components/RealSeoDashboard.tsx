@@ -33,6 +33,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { LockedSeoFeatureView } from './LockedSeoFeatureView.tsx';
+import { AiVisibilityObservationsPanel } from './AiVisibilityObservationsPanel.tsx';
 
 interface RealSeoDashboardProps {
   domain?: string;
@@ -782,125 +783,14 @@ export const RealSeoDashboard: React.FC<RealSeoDashboardProps> = ({
             </div>
           )}
 
-          {/* TAB 6: MULTI-LLM BRAND VISIBILITY BENCHMARK (Phase E #2) */}
+          {/* TAB 6: MULTI-LLM BRAND VISIBILITY BENCHMARK (Empirical Observations) */}
           {activeTab === 'ai_visibility' && (
-            <div className="space-y-6">
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-6">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Bot className="w-5 h-5 text-emerald-600" />
-                      <h3 className="text-sm font-bold text-slate-900">
-                        Multi-LLM Brand Visibility Benchmark (Phase E)
-                      </h3>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Tests ChatGPT, Claude, Gemini, and Perplexity for direct brand citations across representative prompts.
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    {/* Runs Allotment Meter */}
-                    <div className="text-right text-xs">
-                      <div className="text-slate-400 font-medium">Monthly Runs</div>
-                      <div className="font-bold text-slate-900">
-                        {user?.aiVisibilityRunsUsed || 0} / {user?.aiVisibilityRunsPerMonth || 1}
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={handleRunAiBenchmark}
-                      disabled={aiBenchmarkLoading}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl transition shadow-xs disabled:opacity-60 cursor-pointer"
-                    >
-                      <Sparkles className={`w-3.5 h-3.5 ${aiBenchmarkLoading ? 'animate-spin' : ''}`} />
-                      {aiBenchmarkLoading ? 'Querying LLMs...' : 'Run Multi-Model Benchmark'}
-                    </button>
-                  </div>
-                </div>
-
-                {aiBenchmarkError && (
-                  <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
-                    <span>{aiBenchmarkError}</span>
-                  </div>
-                )}
-
-                {/* Score Card if Run Complete */}
-                {aiBenchmarkResults && (
-                  <div className="mb-6 p-5 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <div className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
-                        Overall AI Brand Visibility Score
-                      </div>
-                      <div className="text-3xl font-extrabold text-emerald-900 mt-1">
-                        {aiBenchmarkResults.score}%
-                      </div>
-                      <p className="text-xs text-emerald-700 mt-1">
-                        Cited in {aiBenchmarkResults.totalMentions} out of {aiBenchmarkResults.totalChecks} tested prompts across 4 frontier models.
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {['OpenAI', 'Claude', 'Gemini', 'Perplexity'].map((prov) => (
-                        <span key={prov} className="px-2.5 py-1 bg-white text-slate-700 font-bold text-[10px] rounded-lg border border-emerald-200">
-                          {prov}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Checks List */}
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    Tested Prompts & Citations
-                  </h4>
-
-                  {((aiBenchmarkResults?.checks || aiHistory) || []).length === 0 ? (
-                    <div className="text-center py-10 text-slate-400 text-xs">
-                      No AI visibility benchmark executed yet. Click &ldquo;Run Multi-Model Benchmark&rdquo; to test ChatGPT, Claude, Gemini &amp; Perplexity.
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {(aiBenchmarkResults?.checks || aiHistory).map((check, idx) => (
-                        <div
-                          key={idx}
-                          className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2 text-xs"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-bold text-slate-800 uppercase text-[10px] px-2 py-0.5 bg-slate-200 rounded-md">
-                              {check.provider}
-                            </span>
-                            <span
-                              className={`inline-flex items-center gap-1 font-bold text-[10px] px-2 py-0.5 rounded-full ${
-                                check.mentioned
-                                  ? 'bg-emerald-100 text-emerald-800'
-                                  : 'bg-slate-200 text-slate-600'
-                              }`}
-                            >
-                              {check.mentioned ? 'Mentioned' : 'Not Cited'}
-                            </span>
-                          </div>
-
-                          <div className="font-semibold text-slate-900">&ldquo;{check.prompt}&rdquo;</div>
-
-                          {check.responseSnippet && (
-                            <div className="text-slate-600 text-[11px] italic bg-white p-2.5 rounded-lg border border-slate-100">
-                              {check.responseSnippet}
-                            </div>
-                          )}
-
-                          <div className="text-[10px] text-slate-400">
-                            Checked on {formatFreshness(check.checkedAt)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            <AiVisibilityObservationsPanel
+              userEmail={user?.email}
+              businessProfile={{
+                name: targetDomain,
+              }}
+            />
           )}
         </>
       )}

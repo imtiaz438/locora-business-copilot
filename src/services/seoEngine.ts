@@ -83,58 +83,36 @@ export async function executeSeoIntelligence(params: SeoEngineRequest): Promise<
     monthlyVisits: audit.domainOverview.estimatedTraffic,
     organicKeywordsCount: audit.domainOverview.organicKeywordsCount,
     paidKeywordsCount: audit.domainOverview.paidKeywordsCount,
-    averagePosition: audit.domainOverview.rank ? Math.max(1, Math.round(100 - audit.domainOverview.rank)) : 14,
+    averagePosition: audit.domainOverview.rank ? Math.max(1, Math.round(100 - audit.domainOverview.rank)) : 0,
     trafficCostUsd: Math.round(audit.domainOverview.estimatedTraffic * 1.8),
     domainRank: audit.domainOverview.rank,
-    channels: {
+    channels: audit.domainOverview.estimatedTraffic > 0 ? {
       organic: 65,
       direct: 22,
       referral: 8,
       social: 5,
       paid: 0,
+    } : {
+      organic: 0,
+      direct: 0,
+      referral: 0,
+      social: 0,
+      paid: 0,
     },
-    topPages: [
-      {
-        path: '/',
-        url: `https://${cleanDomain}/`,
-        title: `${cleanDomain} - Homepage`,
-        estimatedVisits: Math.round(audit.domainOverview.estimatedTraffic * 0.45),
-        trafficSharePercent: 45,
-        keywordsCount: Math.round(audit.domainOverview.organicKeywordsCount * 0.35),
-        changeRate: 4.2,
-      },
-      {
-        path: '/services',
-        url: `https://${cleanDomain}/services`,
-        title: `Services & Solutions | ${cleanDomain}`,
-        estimatedVisits: Math.round(audit.domainOverview.estimatedTraffic * 0.28),
-        trafficSharePercent: 28,
-        keywordsCount: Math.round(audit.domainOverview.organicKeywordsCount * 0.25),
-        changeRate: 2.1,
-      },
-      {
-        path: '/about',
-        url: `https://${cleanDomain}/about`,
-        title: `About Us | ${cleanDomain}`,
-        estimatedVisits: Math.round(audit.domainOverview.estimatedTraffic * 0.15),
-        trafficSharePercent: 15,
-        keywordsCount: Math.round(audit.domainOverview.organicKeywordsCount * 0.12),
-        changeRate: 1.0,
-      },
-    ],
+    topPages: [], // In accordance with strict API failure policy: never fabricate fake URLs or sample records
     aiVisibility: {
-      score: Math.round(audit.aiOverview.totalCitations > 0 ? 70 : 40),
-      sentiment: 'Positive',
-      citationsCount: audit.aiOverview.totalCitations,
-      aiReadinessScore: 78,
-      topMentionSources: ['Google AI Overview', 'Perplexity', 'ChatGPT'],
+      score: 0,
+      sentiment: 'Neutral',
+      citationsCount: audit.aiOverview.totalCitations || 0,
+      aiReadinessScore: 0,
+      topMentionSources: [],
     },
     brandTrust: {
       trustScore: Math.round(audit.backlinks.rank / 10),
       domainAuthority: audit.domainOverview.rank,
       spamScore: audit.backlinks.spamScore,
-      indexedPages: audit.domainOverview.organicKeywordsCount * 2,
-      brandSearchShare: 24,
+      indexedPages: audit.domainOverview.organicKeywordsCount,
+      brandSearchShare: 0,
     },
     rankingDistribution: {
       top3: Math.round(audit.domainOverview.organicKeywordsCount * 0.08),
@@ -145,37 +123,24 @@ export async function executeSeoIntelligence(params: SeoEngineRequest): Promise<
     },
   };
 
-  // Map normalized backlinks to BacklinkProfile
+  // Map normalized backlinks to BacklinkProfile (no synthetic sample records)
   const backlinks: BacklinkProfile = {
     totalBacklinks: audit.backlinks.total,
     referringDomains: audit.backlinks.referringDomains,
-    dofollowBacklinks: audit.backlinks.dofollowCount,
-    nofollowBacklinks: Math.max(0, audit.backlinks.total - audit.backlinks.dofollowCount),
-    referringIps: Math.round(audit.backlinks.referringDomains * 0.9),
+    dofollowBacklinks: audit.backlinks.dofollowCount || 0,
+    nofollowBacklinks: Math.max(0, audit.backlinks.total - (audit.backlinks.dofollowCount || 0)),
+    referringIps: audit.backlinks.referringDomains > 0 ? Math.round(audit.backlinks.referringDomains * 0.9) : 0,
     domainTrustScore: Math.round(audit.backlinks.rank / 10), // Convert 0-1,000 DataForSEO scale to 0-100 display
-    historicalBacklinks: [
-      { month: '3m ago', backlinks: Math.round(audit.backlinks.total * 0.85), refDomains: Math.round(audit.backlinks.referringDomains * 0.85) },
-      { month: '2m ago', backlinks: Math.round(audit.backlinks.total * 0.92), refDomains: Math.round(audit.backlinks.referringDomains * 0.92) },
-      { month: 'Last month', backlinks: audit.backlinks.total, refDomains: audit.backlinks.referringDomains },
-    ],
-    links: [
-      {
-        sourceUrl: `https://industrynews.org/reviews/${cleanDomain}`,
-        sourceDomain: 'industrynews.org',
-        targetUrl: `https://${cleanDomain}/`,
-        anchorText: cleanDomain,
-        linkType: 'dofollow',
-        isDofollow: true,
-        domainRating: 82,
-        firstSeen: audit.fetchedAt,
-      },
-    ],
+    historicalBacklinks: audit.backlinks.historical || [], // Strict policy: NEVER generate fake sample records
+    links: [], // Strict policy: NEVER generate fake sample links like industrynews.org
   };
 
   return {
     tier: userTier,
     provider: 'dataforseo',
     providerName: audit.attribution,
+    provider_status: audit.provider_status || (keywords.length > 0 || traffic.monthlyVisits > 0 || backlinks.totalBacklinks > 0 ? 'success' : 'connected_no_data'),
+    providerStatusMessage: audit.providerStatusMessage,
     isCached: audit.isCached,
     cachedAt: audit.fetchedAt,
     cacheTtlHours: 168,
@@ -184,8 +149,8 @@ export async function executeSeoIntelligence(params: SeoEngineRequest): Promise<
     traffic,
     backlinks,
     serpFeatures: ['ai_overview', 'people_also_ask', 'local_pack', 'sitelinks'],
-    relatedSearches: audit.serpDetails.relatedSearches,
-    peopleAlsoAsk: audit.serpDetails.peopleAlsoAsk,
+    relatedSearches: audit.serpDetails?.relatedSearches || [],
+    peopleAlsoAsk: audit.serpDetails?.peopleAlsoAsk || [],
     isDnsResolved: true,
     dnsStatus: 'active',
     indexStatus: 'indexed',

@@ -57,8 +57,10 @@ export const ProductView: React.FC = () => {
   // Interactive State for Product 03: AI Query Simulator
   const [selectedGeoQuery, setSelectedGeoQuery] = useState<number>(0);
 
-  // Interactive State for Product 04: Review Reply Generator
-  const [selectedReviewSample, setSelectedReviewSample] = useState<number>(0);
+  // Interactive State for Product 04: Review Reply Generator (Zero hardcoded sample reviews)
+  const [testReviewText, setTestReviewText] = useState<string>('Technician arrived on time, completed the repair cleanly, and clearly explained the warranty. Very pleased with the service.');
+  const [testAuthor, setTestAuthor] = useState<string>('Alex Morgan');
+  const [testRating, setTestRating] = useState<number>(5);
   const [selectedTone, setSelectedTone] = useState<string>('seo');
   const [generatedReply, setGeneratedReply] = useState<string | null>(null);
   const [isGeneratingReply, setIsGeneratingReply] = useState(false);
@@ -259,46 +261,23 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
     }, 550);
   };
 
-  const sampleReviews = [
-    {
-      author: 'Mark Henderson',
-      rating: 5,
-      date: 'Yesterday',
-      service: 'Emergency Water Heater',
-      text: 'Water heater burst on Sunday night. Called them in a panic and Mike was at our house in 45 minutes with a replacement tank. Lifesavers!',
-    },
-    {
-      author: 'Samantha Brooks',
-      rating: 4,
-      date: '3 days ago',
-      service: 'Main Sewer Line Snaking',
-      text: 'Great technician and cleared the clog fast, but the arrival window was delayed by an hour without a heads up. Good work overall though.',
-    },
-    {
-      author: 'David Torres',
-      rating: 3,
-      date: '1 week ago',
-      service: 'Commercial Fixture Inspection',
-      text: 'Work was fine but had a hard time getting a hold of the dispatcher on the phone for scheduling confirmation.',
-    },
-  ];
-
   const generateSampleReply = () => {
     setIsGeneratingReply(true);
-    const rev = sampleReviews[selectedReviewSample];
+    const authorName = testAuthor.trim() || 'Valued Customer';
+    const cleanFirstName = authorName.split(' ')[0];
     setTimeout(() => {
       setIsGeneratingReply(false);
       if (selectedTone === 'seo') {
         setGeneratedReply(
-          `"Thank you so much, ${rev.author.split(' ')[0]}! Providing fast, 24/7 emergency water heater repair in Austin is our top priority. We're thrilled Mike was able to replace your tankless unit same-day and get your hot water restored safely. Don't hesitate to call our Austin plumbing team whenever you need us!"`
+          `"Thank you so much, ${cleanFirstName}! Providing prompt, 5-star professional service is our highest priority. We are thrilled our team could resolve your request quickly and safely. Don't hesitate to reach out whenever you need us!"`
         );
       } else if (selectedTone === 'recovery') {
         setGeneratedReply(
-          `"Hello ${rev.author.split(' ')[0]}, thank you for your candid feedback. While we are glad the plumbing work met your standards, our communication fell short on arrival windows. We have now integrated automated dispatch SMS alerts so this never happens again. I would love to credit $50 toward your next service checkup — please call me directly."`
+          `"Hello ${cleanFirstName}, thank you for your candid feedback. While we are glad the service was completed, our communication fell short of our standard. We have updated our dispatch notifications to ensure this does not happen again. Please reach out to our management directly so we can ensure you are 100% taken care of."`
         );
       } else {
         setGeneratedReply(
-          `"Hi ${rev.author.split(' ')[0]}, we truly appreciate you taking the time to share your experience with our team! We take great pride in delivering honest, reliable plumbing services to our local Austin community. We look forward to serving you again in the future!"`
+          `"Hi ${cleanFirstName}, thank you for taking the time to share your feedback with our team! We take great pride in delivering courteous, high-quality work to our local community. We look forward to serving you again!"`
         );
       }
     }, 450);
@@ -1443,32 +1422,64 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             <span className="text-[10px] text-slate-500">Pick review &amp; tone below</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {sampleReviews.map((rev, idx) => (
-              <div
-                key={idx}
-                onClick={() => {
-                  setSelectedReviewSample(idx);
-                  setGeneratedReply(null);
-                }}
-                className={`p-3.5 rounded-2xl border transition-all cursor-pointer space-y-2 ${
-                  selectedReviewSample === idx
-                    ? 'border-emerald-500 bg-emerald-50/50 shadow-2xs'
-                    : 'border-slate-200 bg-slate-50/60 hover:bg-slate-100/80'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-slate-900">{rev.author}</span>
-                  <div className="flex text-amber-400">
-                    {[...Array(rev.rating)].map((_, i) => (
-                      <Star key={i} className="w-3 h-3 fill-amber-400" />
+          <div className="bg-slate-50/80 rounded-2xl border border-slate-200/90 p-4 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="space-y-0.5">
+                  <label className="text-[11px] font-bold text-slate-700">Reviewer Name:</label>
+                  <input
+                    type="text"
+                    value={testAuthor}
+                    onChange={(e) => {
+                      setTestAuthor(e.target.value);
+                      setGeneratedReply(null);
+                    }}
+                    placeholder="e.g. Alex Morgan"
+                    className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-800 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <div className="space-y-0.5">
+                  <label className="text-[11px] font-bold text-slate-700 block">Rating:</label>
+                  <div className="flex items-center gap-1 pt-0.5">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => {
+                          setTestRating(s);
+                          setGeneratedReply(null);
+                        }}
+                        className="cursor-pointer"
+                      >
+                        <Star
+                          className={`w-4 h-4 ${
+                            s <= testRating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'
+                          }`}
+                        />
+                      </button>
                     ))}
+                    <span className="text-xs font-bold text-slate-700 ml-1.5">{testRating} Stars</span>
                   </div>
                 </div>
-                <div className="text-[10px] font-bold text-emerald-700">{rev.service}</div>
-                <p className="text-xs text-slate-600 line-clamp-2 italic">"{rev.text}"</p>
               </div>
-            ))}
+              <span className="text-[11px] text-slate-500 italic">
+                Test with any customer feedback
+              </span>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-700">Customer Review Text:</label>
+              <textarea
+                rows={2}
+                value={testReviewText}
+                onChange={(e) => {
+                  setTestReviewText(e.target.value);
+                  setGeneratedReply(null);
+                }}
+                placeholder="Enter or paste customer feedback to test response generation..."
+                className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-emerald-500 leading-relaxed"
+              />
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">

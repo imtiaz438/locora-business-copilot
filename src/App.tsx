@@ -357,7 +357,7 @@ const MainContent: React.FC = () => {
     if (activeTab === 'work' || activeTab === 'proposals' || activeTab === 'invoices') return <WorkHubView />;
     if (activeTab === 'reports' || activeTab === 'growth_report' || activeTab === 'monthly_report') return <MonthlyReportView />;
     if (activeTab === 'clients' || activeTab === 'agency_clients') return <AgencyClientsView />;
-    if (activeTab === 'website_review' || activeTab === 'audit') return <WebsiteReviewView />;
+    if (activeTab === 'website_review' || activeTab === 'audit' || activeTab === 'seo' || activeTab === 'seo_audit') return <WebsiteReviewView />;
     if (activeTab === 'projects') return <WorkHubView initialTab="projects" />;
     if (activeTab === 'lead_prospector' || activeTab === 'lead_vault' || activeTab === 'b2b_vault' || activeTab === 'leads' || activeTab === 'lead-prospector') return <LeadProspectorView />;
     if (activeTab === 'invoices') return <InvoiceView />;

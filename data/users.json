@@ -29,12 +29,18 @@
     "subscriptionStatus": "active",
     "billingCycle": "monthly",
     "monthlyAiCredits": 25,
-    "aiCreditsUsed": 0,
+    "aiCreditsUsed": 2,
     "memberSince": "2026-07-31T10:54:47.099Z",
     "nextBillingDate": "2026-10-05T14:19:19.440Z",
     "passwordHash": "Admin@123",
     "autoRenew": true,
-    "cancelAtPeriodEnd": false
+    "cancelAtPeriodEnd": false,
+    "seoLookupsUsed": 10,
+    "seoLookupsResetAt": "2026-10-11T12:44:12.745Z",
+    "aiVisibilityRunsUsed": 5,
+    "aiVisibilityResetAt": "2026-10-11T12:44:12.745Z",
+    "seoLookupsPerMonth": 0,
+    "aiVisibilityRunsPerMonth": 1
   },
   {
     "id": "usr_admin_default",

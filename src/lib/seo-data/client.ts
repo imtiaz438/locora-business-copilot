@@ -151,25 +151,12 @@ export async function getDomainOverview(
           // Normalized 0–100 domain rank metric
           const normalizedRank = Math.min(99, Math.max(12, Math.round(Math.log10(Math.max(10, etv * 10 + organicKeywords * 5)) * 18)));
 
-          // Historical trend if present or generate realistic smooth trajectory
+          // Historical trend if present from live provider
           const trend = (item.historical || []).map((h: any) => ({
             date: h.date || h.month || '',
             traffic: h.etv || h.traffic || 0,
             keywords: h.count || h.keywords || 0,
           }));
-
-          if (trend.length === 0) {
-            const now = new Date();
-            for (let i = 5; i >= 0; i--) {
-              const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-              const variance = 0.85 + (5 - i) * 0.03 + ((cleanDomain.length % 5) * 0.02);
-              trend.push({
-                date: d.toISOString().slice(0, 7),
-                traffic: Math.round(etv * variance),
-                keywords: Math.round(organicKeywords * variance),
-              });
-            }
-          }
 
           return {
             rank: normalizedRank,
@@ -186,31 +173,14 @@ export async function getDomainOverview(
     }
   }
 
-  // Deterministic normalized fallback when live keys are unavailable or API rate limits
-  const hash = cleanDomain.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const normalizedRank = Math.min(85, Math.max(25, 30 + (hash % 45)));
-  const trafficBase = 1200 + (hash % 18000);
-  const keywordsBase = Math.round(trafficBase / 6.5);
-
-  const trend: Array<{ date: string; traffic: number; keywords: number }> = [];
-  const now = new Date();
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const growth = 0.80 + ((5 - i) * 0.04);
-    trend.push({
-      date: d.toISOString().slice(0, 7),
-      traffic: Math.round(trafficBase * growth),
-      keywords: Math.round(keywordsBase * growth),
-    });
-  }
-
+  // Clean empty structure when live keys are unavailable or API rate limits
   return {
-    rank: normalizedRank,
-    rawRank: normalizedRank * 8,
-    estimatedTraffic: trafficBase,
-    organicKeywordsCount: keywordsBase,
-    paidKeywordsCount: Math.round(keywordsBase * 0.08),
-    trend,
+    rank: 0,
+    rawRank: 0,
+    estimatedTraffic: 0,
+    organicKeywordsCount: 0,
+    paidKeywordsCount: 0,
+    trend: [],
   };
 }
 
@@ -250,8 +220,8 @@ export async function getBacklinkSummary(
           const totalBacklinks = item.total_backlinks || item.backlinks || 0;
           const refDomains = item.referring_domains || item.referring_main_domains || 0;
           const dfsRank = item.rank || 0; // 0–1,000 DataForSEO rank
-          const spamScore = item.spam_score || Math.min(10, Math.round((item.broken_backlinks || 0) / Math.max(1, totalBacklinks) * 100));
-          const dofollow = item.dofollow || Math.round(totalBacklinks * 0.72);
+          const spamScore = item.spam_score || 0;
+          const dofollow = item.dofollow || item.dofollow_backlinks || 0;
 
           return {
             total: totalBacklinks,
@@ -267,18 +237,13 @@ export async function getBacklinkSummary(
     }
   }
 
-  // Normalized fallback
-  const hash = cleanDomain.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const total = 420 + (hash % 12500);
-  const referringDomains = Math.max(12, Math.round(total / 6.2));
-  const rank = Math.min(850, Math.max(120, 200 + (hash % 500)));
-
+  // Clean empty state when live API is unavailable
   return {
-    total,
-    referringDomains,
-    spamScore: 1 + (hash % 4),
-    rank,
-    dofollowCount: Math.round(total * 0.74),
+    total: 0,
+    referringDomains: 0,
+    spamScore: 0,
+    rank: 0,
+    dofollowCount: 0,
   };
 }
 
@@ -338,7 +303,7 @@ export async function getKeywordData(
               cpc: Number(kwInfo.cpc || 0),
               competition: comp,
               intent: intentInfo.main_intent || 'commercial',
-              difficulty: props.keyword_difficulty || Math.round(Number(kwInfo.cpc || 1) * 15),
+              difficulty: props.keyword_difficulty || 0,
             };
           });
         }
@@ -348,23 +313,8 @@ export async function getKeywordData(
     }
   }
 
-  // Normalized fallback keywords
-  return cleanKeywords.map((kw, idx) => {
-    const hash = kw.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) + idx * 37;
-    const vol = [450, 880, 1200, 2400, 3600, 5400, 8100, 14000][hash % 8];
-    const cpc = parseFloat((0.85 + (hash % 1200) / 100).toFixed(2));
-    const comp = ['LOW', 'MEDIUM', 'HIGH'][hash % 3];
-    const intent = ['informational', 'commercial', 'transactional', 'navigational'][hash % 4];
-
-    return {
-      keyword: kw,
-      volume: vol,
-      cpc,
-      competition: comp,
-      intent,
-      difficulty: 20 + (hash % 60),
-    };
-  });
+  // Clean empty array when live API is unavailable
+  return [];
 }
 
 /**
@@ -453,39 +403,12 @@ export async function getSerpResults(
     }
   }
 
-  // Normalized fallback SERP output
+  // Clean empty SERP output when live API is unavailable
   return {
     keyword: cleanKeyword,
-    results: [
-      {
-        position: 1,
-        title: `Comprehensive Guide & Top Services for ${cleanKeyword}`,
-        url: `https://www.topresults.com/${encodeURIComponent(cleanKeyword.replace(/\s+/g, '-'))}`,
-        snippet: `Discover top ranked solutions, industry benchmarks and verified local reviews for ${cleanKeyword}.`,
-      },
-      {
-        position: 2,
-        title: `Best Rated Providers & Pricing for ${cleanKeyword}`,
-        url: `https://www.localexperts.org/${encodeURIComponent(cleanKeyword.replace(/\s+/g, '-'))}`,
-        snippet: `Compare verified specialists, customer ratings, and comprehensive service portfolios.`,
-      },
-      {
-        position: 3,
-        title: `${cleanKeyword} - Industry Analysis & Directory`,
-        url: `https://www.directoryhub.net/${encodeURIComponent(cleanKeyword.replace(/\s+/g, '-'))}`,
-        snippet: `Explore top companies, client case studies, and standard service quotes.`,
-      },
-    ],
-    peopleAlsoAsk: [
-      { question: `How much does ${cleanKeyword} typically cost?`, snippet: `Pricing varies depending on project scope, location and service tier.` },
-      { question: `What should I look for when selecting a provider for ${cleanKeyword}?`, snippet: `Look for verified customer reviews, clear portfolios, and transparent contracts.` },
-    ],
-    relatedSearches: [
-      `${cleanKeyword} near me`,
-      `best ${cleanKeyword} reviews`,
-      `${cleanKeyword} pricing guide`,
-      `top rated ${cleanKeyword} companies`,
-    ],
+    results: [],
+    peopleAlsoAsk: [],
+    relatedSearches: [],
   };
 }
 
@@ -541,30 +464,14 @@ export async function getAiOverviewPresence(
         };
       }
     } catch (err) {
-      console.warn('[SeoData] DataForSEO AI Overview check failed, using normalized result:', err);
+      console.warn('[SeoData] DataForSEO AI Overview check failed:', err);
     }
   }
 
-  // Normalized fallback
-  const hash = cleanDomain.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const sampleKeywords = [
-    `${cleanDomain.split('.')[0]} reviews`,
-    `best ${cleanDomain.split('.')[0]} services`,
-    `${cleanDomain.split('.')[0]} pricing`,
-  ];
-
-  const citationsCount = hash % 3 === 0 ? 2 : 1;
-  const citedKeywords = sampleKeywords.slice(0, citationsCount).map((kw, i) => ({
-    keyword: kw,
-    position: i + 1,
-    url: `https://${cleanDomain}/${kw.replace(/\s+/g, '-')}`,
-    searchVolume: 320 + i * 180,
-    citedInAiOverview: true,
-  }));
-
+  // Clean empty AI Overview result when live DataForSEO is unavailable
   return {
     domain: cleanDomain,
-    totalCitations: citedKeywords.length,
-    citedKeywords,
+    totalCitations: 0,
+    citedKeywords: [],
   };
 }

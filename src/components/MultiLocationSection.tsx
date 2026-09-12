@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { ProviderAccessGate } from './ProviderAccessGate';
 import {
   MapPin,
   TrendingUp,
@@ -86,9 +87,9 @@ export const MultiLocationSection: React.FC = () => {
       formsGrowth: '+12%',
       bookings: Math.max(4, 35 - idx * 8),
       bookingsGrowth: '+10%',
-      reviews: Math.max(10, (activeBusiness.reviewCount || 120) - idx * 30),
-      rating: activeBusiness.googleRating || 4.8,
-      unansweredReviews: Math.max(0, (activeBusiness.unansweredReviews || 3) - idx),
+      reviews: activeBusiness.reviewCount || 0,
+      rating: activeBusiness.googleRating || 0,
+      unansweredReviews: activeBusiness.unansweredReviews || 0,
       conversionsRate: '12.8%',
       conversionRevenue: Math.max(8000, 32000 - idx * 7000),
     };
@@ -114,7 +115,7 @@ export const MultiLocationSection: React.FC = () => {
         bookings: locationsData.reduce((s, l) => s + l.bookings, 0),
         bookingsGrowth: '+10%',
         reviews: locationsData.reduce((s, l) => s + l.reviews, 0),
-        rating: activeBusiness.googleRating || 4.8,
+        rating: activeBusiness.googleRating || 0,
         unansweredReviews: locationsData.reduce((s, l) => s + l.unansweredReviews, 0),
         conversionsRate: '12.4%',
         conversionRevenue: locationsData.reduce((s, l) => s + l.conversionRevenue, 0),
@@ -122,7 +123,12 @@ export const MultiLocationSection: React.FC = () => {
     : activeLoc;
 
   return (
-    <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 shadow-2xs space-y-6 font-sans">
+    <ProviderAccessGate
+      featureId="expanded_monitoring"
+      title="Multi-Location & Regional Branch Engine"
+      description="Expanded multi-location branch monitoring, cross-market tracking, and regional health audits are exclusive to Pro and Agency Elite plans."
+    >
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 shadow-2xs space-y-6 font-sans">
       {/* Header & Location Pills (Section 26) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -342,5 +348,6 @@ export const MultiLocationSection: React.FC = () => {
         </div>
       </div>
     </div>
+    </ProviderAccessGate>
   );
 };

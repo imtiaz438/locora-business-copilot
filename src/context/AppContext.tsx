@@ -8,6 +8,9 @@ import {
   Invoice,
   Proposal,
   DocumentItem,
+  WorkTask,
+  WorkTemplate,
+  ContentRecord,
   AIConversation,
   AIMessage,
   LocalSeoItem,
@@ -25,11 +28,18 @@ import {
   FixItDraft,
   LocoraNotification,
   AIAction,
+  BusinessTruth,
 } from '../types';
-import { INITIAL_BUSINESSES, INITIAL_PRIORITY_ACTIONS } from '../data/mockBusinesses';
+import { getBusinessTruth, invalidateBusinessTruth } from '../services/businessTruthService';
+import { INITIAL_BUSINESSES, INITIAL_PRIORITY_ACTIONS } from '../data/initialBusinesses';
 import { isAppSubdomain } from '../utils/domain';
+import { dashboardService } from '../services/dashboardService';
+import type { NormalizedDashboardData } from '../types/production';
 
 interface AppContextType {
+  // Production Data Architecture
+  productionDashboard: NormalizedDashboardData | null;
+  refreshProductionDashboard: (businessId?: string) => Promise<NormalizedDashboardData | null>;
   user: UserProfile;
   updateUser: (data: Partial<UserProfile>) => void;
   login: (email: string, name?: string, company?: string, plan?: UserPlan, initialCreditsUsed?: number, role?: UserRole, userId?: string) => void;
@@ -80,6 +90,17 @@ interface AppContextType {
   documents: DocumentItem[];
   addDocument: (doc: Omit<DocumentItem, 'id' | 'createdAt'>) => void;
   deleteDocument: (id: string) => void;
+  workTasks: WorkTask[];
+  addWorkTask: (task: Omit<WorkTask, 'id' | 'createdAt'>) => Promise<WorkTask>;
+  updateWorkTask: (id: string, task: Partial<WorkTask>) => Promise<WorkTask>;
+  deleteWorkTask: (id: string) => Promise<void>;
+  workTemplates: WorkTemplate[];
+  addWorkTemplate: (template: Omit<WorkTemplate, 'id' | 'createdAt' | 'updatedAt'>) => Promise<WorkTemplate>;
+  deleteWorkTemplate: (id: string) => Promise<void>;
+  contentRecords: ContentRecord[];
+  addContentRecord: (record: Omit<ContentRecord, 'id' | 'created_at' | 'updated_at'>) => Promise<ContentRecord>;
+  updateContentRecord: (id: string, updates: Partial<ContentRecord>) => Promise<ContentRecord>;
+  deleteContentRecord: (id: string) => Promise<void>;
   conversations: AIConversation[];
   activeConversationId: string | null;
   setActiveConversationId: (id: string | null) => void;
@@ -131,6 +152,12 @@ interface AppContextType {
   setOnboardingModalOpen: (open: boolean) => void;
   growthStoreModalOpen: boolean;
   setGrowthStoreModalOpen: (open: boolean) => void;
+
+  // Canonical Business Truth Service
+  businessTruth: BusinessTruth | null;
+  isLoadingBusinessTruth: boolean;
+  getBusinessTruth: (businessId: string, forceFresh?: boolean) => Promise<BusinessTruth | null>;
+  refreshBusinessTruth: (businessId?: string) => Promise<BusinessTruth | null>;
 }
 
 const getInitialCachedProfile = (): BusinessProfile => {
@@ -244,98 +271,22 @@ const DEFAULT_USER: UserProfile = {
 
 const DEFAULT_SUBSCRIPTION_INVOICES: SubscriptionInvoice[] = [];
 
+// Production Mode: Empty / Setup initial notifications only
 const DEFAULT_NOTIFICATIONS: LocoraNotification[] = [
   {
-    id: 'notif_1',
+    id: 'notif_welcome',
     type: 'action_needed',
-    title: 'Your rating dropped from 4.9 → 4.7',
-    message: '2 recent negative reviews on Google Maps regarding wait times require response.',
-    evidence: 'Unanswered reviews by Marcus T. and Elena R. on Google Maps',
-    actionLabel: '[ Investigate ]',
+    title: 'Workspace Initialized',
+    message: 'Connect your Google Business Profile and run a technical website crawl to begin tracking live metrics.',
+    evidence: 'Onboarding step pending',
+    actionLabel: 'Connect Listing',
     actionTargetTab: 'reputation',
     isRead: false,
-    createdAt: '10m ago',
-  },
-  {
-    id: 'notif_2',
-    type: 'opportunity',
-    title: 'Target high-intent local search queries.',
-    message: 'New local search keyword gaps identified for your primary service area.',
-    evidence: 'High monthly local search interest with accessible competitor positions',
-    actionLabel: '[ View ]',
-    actionTargetTab: 'visibility',
-    isRead: false,
-    createdAt: '2h ago',
-  },
-  {
-    id: 'notif_3',
-    type: 'completed',
-    title: 'Weekly growth analysis is ready.',
-    message: 'Locora evaluated your digital presence and identified your highest-leverage growth actions.',
-    evidence: 'Locora Growth Health calculated across core operational components',
-    actionLabel: '[ View Report ]',
-    actionTargetTab: 'reports',
-    isRead: false,
-    createdAt: '1d ago',
+    createdAt: 'Just now',
   },
 ];
 
-const DEFAULT_AI_ACTIONS: AIAction[] = [
-  {
-    id: 'action_1',
-    type: 'CREATE_REVIEW_REPLY',
-    title: 'Reply to Customer Review: Timeliness and service clarity',
-    business_id: 'demo-growth-workspace',
-    input: { reviewId: 'rev_101', rating: 4, author: 'Marcus T.' },
-    output: 'Thank you for your feedback Marcus. We take pride in delivering efficient, high-quality service and clear communication. Our team has reviewed your notes to ensure continuous improvement for all future engagements.',
-    status: 'draft',
-    created_by: 'ai',
-    isSafeInternal: false,
-    explanation: {
-      diagnosis: 'Marcus T. posted a review that has not yet received an owner response.',
-      whyItMatters: 'Reviews with prompt owner replies boost Google Local 3-Pack conversion by up to 35%.',
-      previewSummary: 'Drafted professional owner response acknowledging the feedback and reinforcing customer satisfaction.',
-      expectedImpact: 'Improves review response rate and customer trust indicators.',
-    },
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'action_2',
-    type: 'CREATE_GBP_POST',
-    title: 'Publish Google Post: Highlight Core Capabilities',
-    business_id: 'demo-growth-workspace',
-    input: { offer: 'High-Intent Service Highlight', targetLocation: 'Local Area' },
-    output: 'Looking for proven local solutions? We provide dependable expertise and personalized care tailored to your specific needs. Contact our team today or explore our website for direct inquiries.',
-    status: 'draft',
-    created_by: 'ai',
-    isSafeInternal: false,
-    explanation: {
-      diagnosis: 'No Google Business Profile update published in the last 14 days.',
-      whyItMatters: 'Regular GBP posts signal active business status to local search ranking algorithms.',
-      previewSummary: 'Created a Google Business post highlighting core offerings with a clear call-to-action.',
-      expectedImpact: '+15% local search impressions and elevated local map visibility.',
-    },
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'action_3',
-    type: 'CREATE_SERVICE_PAGE',
-    title: 'Generate Dedicated Geo-Targeted Service Page',
-    business_id: 'demo-growth-workspace',
-    input: { service: 'Specialized Service', targetKeyword: 'local service expert' },
-    output: 'Drafted dedicated service landing page with localized heading hierarchy, proof points, FAQ schema, and lead capture form.',
-    status: 'draft',
-    created_by: 'ai',
-    isSafeInternal: false,
-    explanation: {
-      diagnosis: 'Search volume exists for high-intent local queries without a dedicated landing page.',
-      whyItMatters: 'A dedicated URL with LocalBusiness schema and targeted copy allows ranking in top organic positions.',
-      previewSummary: 'Drafted high-converting landing page targeting local consumer search queries.',
-      expectedImpact: 'Improves search prominence and captures organic discovery leads.',
-    },
-    createdAt: new Date().toISOString(),
-  },
-];
+const DEFAULT_AI_ACTIONS: AIAction[] = [];
 
 const TAB_TO_PATH: Record<string, string> = {
   home: '/',
@@ -446,6 +397,35 @@ const PATH_TO_TAB: Record<string, string> = {
   'subscription': 'subscription',
   'settings': 'settings',
   'admin': 'admin',
+};
+
+export const UNCONFIGURED_BUSINESS: ClientBusiness = {
+  id: 'workspace_pending',
+  name: 'My Business',
+  category: 'Local Business',
+  tagline: 'Connect your Google Business Profile to track real-time metrics',
+  locationName: 'Primary Location',
+  address: '',
+  city: '',
+  state: '',
+  zip: '',
+  phone: '',
+  website: '',
+  healthScore: 0,
+  healthDelta: 0,
+  highImpactCount: 0,
+  opportunityCount: 0,
+  healthyAreaCount: 0,
+  isMainLocation: true,
+  locations: [],
+  services: [],
+  competitors: [],
+  googleRating: 0,
+  reviewCount: 0,
+  unansweredReviews: 0,
+  gbpCompleteness: 0,
+  gbpConnected: false,
+  reviews: [],
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -817,13 +797,74 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Initialize clean user business profile & fresh workspace if non-demo account
     if (!isDemo) {
+      let pendingAuditData: any = null;
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem('locora_pending_public_audit');
+          if (raw) pendingAuditData = JSON.parse(raw);
+        } catch {}
+      }
+
       setBusinessProfile((prev) => ({
         ...prev,
         id: `bp_${newUser.id}`,
-        name: companyName || prev.name,
+        name: pendingAuditData?.businessName || companyName || prev.name,
         email: userEmail,
+        website: pendingAuditData?.domain || pendingAuditData?.url || prev.website,
+        phone: pendingAuditData?.detectedBusinessData?.phone || prev.phone,
+        address: pendingAuditData?.detectedBusinessData?.address || prev.address,
+        tagline: pendingAuditData?.detectedBusinessData?.metaDescription || prev.tagline,
         updatedAt: new Date().toISOString(),
       }));
+
+      if (pendingAuditData?.auditId) {
+        fetch('/api/public/claim-audit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            auditId: pendingAuditData.auditId,
+            userEmail,
+          }),
+        }).catch(() => {});
+      }
+
+      // Initialize business record from claimed audit without demo mock data
+      const newBizId = `biz_${newUser.id}`;
+      const newBiz: ClientBusiness = {
+        id: newBizId,
+        name: pendingAuditData?.businessName || companyName || 'My Business',
+        category: pendingAuditData?.detectedBusinessData?.schemaTypes?.[0] || 'Local Business',
+        tagline: pendingAuditData?.detectedBusinessData?.metaDescription || '',
+        locationName: 'Main Location',
+        address: pendingAuditData?.detectedBusinessData?.address || '',
+        city: '',
+        state: '',
+        country: 'United States',
+        zip: '',
+        phone: pendingAuditData?.detectedBusinessData?.phone || '',
+        website: pendingAuditData?.domain || pendingAuditData?.url || '',
+        healthScore: pendingAuditData?.overallScore || 70,
+        healthDelta: 0,
+        highImpactCount: 2,
+        opportunityCount: 3,
+        healthyAreaCount: 5,
+        isMainLocation: true,
+        services: [],
+        competitors: [],
+        googleRating: 0,
+        reviewCount: 0,
+        unansweredReviews: 0,
+        gbpCompleteness: 0,
+      };
+      setBusinesses([newBiz]);
+      setActiveBusinessId(newBizId);
+
+      if (pendingAuditData) {
+        setTimeout(() => {
+          setOnboardingModalOpen(true);
+        }, 400);
+      }
+
       setCustomers([]);
       setProjects([]);
       setNotes([]);
@@ -1040,6 +1081,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const [workTasks, setWorkTasks] = useState<WorkTask[]>([]);
+  const [workTemplates, setWorkTemplates] = useState<WorkTemplate[]>([]);
+  const [contentRecords, setContentRecords] = useState<ContentRecord[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('locora_content_records');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch {}
+    }
+    return [];
+  });
   const [conversations, setConversations] = useState<AIConversation[]>([]);
   const [activityLogs, setActivityLogs] = useState<ActivityLogItem[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
@@ -1055,7 +1110,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const cached = localStorage.getItem('locora_businesses_list');
         if (cached) {
           const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && !parsed.some((b: any) => b.id === 'austin-dental' || b.id === 'smith-plumbing' || String(b.name).toLowerCase().includes('austin') || String(b.city).toLowerCase().includes('austin'))) {
+          if (Array.isArray(parsed) && !parsed.some((b: any) => b.id === 'austin-dental' || b.id === 'smith-plumbing' || b.id === 'demo-growth-workspace' || String(b.name).toLowerCase().includes('austin') || String(b.city).toLowerCase().includes('austin'))) {
             return parsed;
           }
           localStorage.removeItem('locora_businesses_list');
@@ -1069,13 +1124,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (typeof window !== 'undefined') {
       try {
         const cached = localStorage.getItem('locora_active_business_id');
-        if (cached && cached !== 'austin-dental' && cached !== 'smith-plumbing') {
+        if (cached && cached !== 'austin-dental' && cached !== 'smith-plumbing' && cached !== 'demo-growth-workspace') {
           return cached;
         }
         localStorage.removeItem('locora_active_business_id');
       } catch {}
     }
-    return 'demo-growth-workspace';
+    return '';
   });
 
   const [priorityActions, setPriorityActions] = useState<PriorityAction[]>(() => {
@@ -1094,12 +1149,72 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return INITIAL_PRIORITY_ACTIONS;
   });
 
+  const [productionDashboard, setProductionDashboard] = useState<NormalizedDashboardData | null>(null);
+
+  const refreshProductionDashboard = useCallback(async (businessId?: string) => {
+    try {
+      const data = await dashboardService.getDashboard(businessId, true);
+      setProductionDashboard(data);
+      return data;
+    } catch (err) {
+      console.warn('Could not refresh production dashboard:', err);
+      return null;
+    }
+  }, []);
+
+  // Canonical Business Truth State
+  const [businessTruth, setBusinessTruth] = useState<BusinessTruth | null>(null);
+  const [isLoadingBusinessTruth, setIsLoadingBusinessTruth] = useState<boolean>(false);
+
+  const refreshBusinessTruth = useCallback(async (businessId?: string) => {
+    const id = (businessId || activeBusinessId || '').trim();
+    if (!id) {
+      setBusinessTruth(null);
+      return null;
+    }
+    setIsLoadingBusinessTruth(true);
+    try {
+      const truth = await getBusinessTruth(id, true);
+      setBusinessTruth(truth);
+      return truth;
+    } catch (err) {
+      console.error('[BusinessTruth] Error loading canonical business truth:', err);
+      return null;
+    } finally {
+      setIsLoadingBusinessTruth(false);
+    }
+  }, [activeBusinessId]);
+
+  const refreshBusinessCustomers = useCallback(async (bId: string) => {
+    if (!bId) return;
+    try {
+      const res = await fetch(`/api/workspace/customers?businessId=${encodeURIComponent(bId)}&email=${encodeURIComponent(user.email || '')}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.customers)) {
+          setCustomers(data.customers);
+        }
+      }
+    } catch (err) {
+      console.warn('Error fetching business customers:', err);
+    }
+  }, [user.email]);
+
+  useEffect(() => {
+    if (activeBusinessId) {
+      refreshBusinessTruth(activeBusinessId);
+      refreshBusinessCustomers(activeBusinessId);
+    } else {
+      setBusinessTruth(null);
+    }
+  }, [activeBusinessId, refreshBusinessTruth, refreshBusinessCustomers]);
+
   const [rightAiPanelOpen, setRightAiPanelOpen] = useState<boolean>(false);
   const toggleRightAiPanel = useCallback(() => setRightAiPanelOpen((prev) => !prev), []);
 
   const [isGbpSyncModalOpen, setIsGbpSyncModalOpen] = useState<boolean>(false);
 
-  const activeBusiness = businesses.find((b) => b.id === activeBusinessId) || businesses[0] || INITIAL_BUSINESSES[0];
+  const activeBusiness = businesses.find((b) => b.id === activeBusinessId) || businesses[0] || UNCONFIGURED_BUSINESS;
 
   const switchBusiness = useCallback((id: string) => {
     const target = businesses.find((b) => b.id === id);
@@ -1125,11 +1240,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       primaryCompetitors: target.competitors,
       googleBusiness: {
         ...prev.googleBusiness,
-        connected: true,
-        listingName: `${target.name} (Google Maps)`,
-        rating: target.googleRating,
-        reviewCount: target.reviewCount,
-        unansweredReviews: target.unansweredReviews,
+        connected: Boolean(target.gbpConnected),
+        listingName: target.gbpConnected ? `${target.name} (Google Maps)` : '',
+        rating: target.googleRating || 0,
+        reviewCount: target.reviewCount || 0,
+        unansweredReviews: target.unansweredReviews || 0,
         category: target.category,
       },
     }));
@@ -1203,7 +1318,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: newId,
       name: data.name || 'New Client Business',
       category: data.category || 'General Local Business',
-      tagline: data.tagline || 'Local Business & Customer Care',
+      tagline: data.tagline || '',
       locationName: data.locationName || 'Main Location',
       address: data.address || '',
       city: data.city || '',
@@ -1212,11 +1327,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       zip: data.zip || '',
       phone: data.phone || '',
       website: data.website || '',
-      healthScore: 75,
-      healthDelta: 3,
-      highImpactCount: 2,
-      opportunityCount: 4,
-      healthyAreaCount: 8,
+      healthScore: data.healthScore || 0,
+      healthDelta: 0,
+      highImpactCount: 0,
+      opportunityCount: 0,
+      healthyAreaCount: 0,
       isMainLocation: true,
       locations: [
         {
@@ -1231,12 +1346,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           phone: data.phone || '',
         },
       ],
-      services: data.services || ['Primary Service', 'Secondary Service'],
-      competitors: data.competitors || ['Local Competitor'],
+      services: data.services || [],
+      competitors: data.competitors || [],
       googleRating: data.googleRating || 0,
       reviewCount: data.reviewCount || 0,
       unansweredReviews: 0,
-      gbpCompleteness: 85,
+      gbpCompleteness: data.gbpCompleteness || 0,
+      gbpConnected: data.gbpConnected || false,
+      reviews: data.reviews || [],
     };
     setBusinesses((prev) => {
       const next = [...prev, newBiz];
@@ -1487,8 +1604,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Fetch PostgreSQL Live Data on Mount, User Change, and Focus
   const fetchWorkspaceData = useCallback(async () => {
     try {
-      const queryEmail = user.email ? encodeURIComponent(user.email) : '';
-      const res = await fetch(`/api/workspace/data${queryEmail ? `?email=${queryEmail}` : ''}`, {
+      const params = new URLSearchParams();
+      if (user.email) params.append('email', user.email);
+      if (activeBusinessId) params.append('businessId', activeBusinessId);
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+      const res = await fetch(`/api/workspace/data${queryString}`, {
         headers: { 'Cache-Control': 'no-cache' },
       });
       if (res.ok) {
@@ -1555,6 +1675,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         });
         if (Array.isArray(data.proposals)) setProposals(data.proposals);
         if (Array.isArray(data.documents)) setDocuments(data.documents);
+        if (Array.isArray(data.workTasks)) setWorkTasks(data.workTasks);
+        if (Array.isArray(data.workTemplates)) setWorkTemplates(data.workTemplates);
+        if (Array.isArray(data.contentRecords)) {
+          setContentRecords(data.contentRecords);
+          try {
+            localStorage.setItem('locora_content_records', JSON.stringify(data.contentRecords));
+          } catch {}
+        }
         if (Array.isArray(data.conversations)) {
           const normalizedConvs = data.conversations.map((c: any) => ({
             ...c,
@@ -1566,10 +1694,99 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (Array.isArray(data.activityLogs)) setActivityLogs(data.activityLogs);
       }
 
+      // Sync from Production Data Architecture Service Layer (SINGLE SOURCE OF TRUTH)
+      try {
+        const prodData = await dashboardService.getDashboard();
+        if (prodData && prodData.business) {
+          setProductionDashboard(prodData);
+
+          const primaryLoc = prodData.primaryLocation || prodData.locations[0];
+          const calculated = prodData.calculatedMetrics;
+
+          const mappedBiz: ClientBusiness = {
+            id: prodData.business.id,
+            name: prodData.business.name,
+            category: prodData.business.category || 'Local Services',
+            tagline: prodData.business.tagline || '',
+            locationName: primaryLoc?.name || 'Main Location',
+            address: primaryLoc?.address || '',
+            city: primaryLoc?.city || '',
+            state: primaryLoc?.state || '',
+            country: primaryLoc?.country || 'United States',
+            zip: primaryLoc?.zip || '',
+            phone: prodData.business.phone || primaryLoc?.phone || '',
+            website: prodData.business.website || '',
+            healthScore: calculated.healthScore,
+            healthDelta: 0,
+            highImpactCount: prodData.opportunities.filter((o) => o.urgency === 'high').length,
+            opportunityCount: prodData.opportunities.filter((o) => o.urgency === 'opportunity').length,
+            healthyAreaCount: prodData.opportunities.filter((o) => o.status === 'completed').length,
+            isMainLocation: true,
+            locations: prodData.locations.map((l) => ({
+              id: l.id,
+              name: l.name,
+              isMain: l.isPrimary,
+              address: l.address || '',
+              city: l.city || '',
+              state: l.state || '',
+              zip: l.zip || '',
+              phone: l.phone || '',
+            })),
+            services: [],
+            competitors: prodData.collectedData.competitors.map((c) => c.name),
+            googleRating: calculated.averageRating,
+            reviewCount: calculated.reviewCount,
+            unansweredReviews: calculated.unansweredReviewsCount,
+            gbpCompleteness: prodData.collectedData.googleProfile?.completenessScore || (prodData.collectedData.googleProfile ? 90 : 0),
+            rankingAvg: calculated.averageMapRank,
+          };
+
+          setBusinesses([mappedBiz]);
+          setActiveBusinessId(mappedBiz.id);
+
+          setBusinessProfile((prev) => ({
+            ...prev,
+            name: prodData.business.name,
+            website: prodData.business.website || prev.website,
+            city: primaryLoc?.city || prev.city,
+            phone: prodData.business.phone || prev.phone,
+            address: primaryLoc?.address || prev.address,
+          }));
+
+          // Sync database opportunities directly into priorityActions
+          if (Array.isArray(prodData.opportunities)) {
+            const mappedActions: PriorityAction[] = prodData.opportunities.map((opp) => ({
+              id: opp.id,
+              urgency: opp.urgency,
+              urgencyLabel: opp.urgency === 'high' ? 'HIGH IMPACT' : opp.urgency === 'opportunity' ? 'OPPORTUNITY' : 'GOOD',
+              title: opp.title,
+              recommendationTitle: opp.title,
+              actionLabel: opp.urgency === 'high' ? '[ Fix This ]' : '[ Take Action ]',
+              category: (opp.metadata?.category as any) || 'local_seo',
+              problem: opp.description,
+              whyItMatters: opp.whyItMatters || 'Strengthens presence and engagement',
+              evidence: opp.evidence || 'Identified by AI Business Brain synthesis',
+              expectedImpact: opp.expectedImpact || 'Increase local rank & leads',
+              actionType: (opp.actionType as any) || 'custom',
+              isFixed: opp.status === 'completed',
+              fixedAt: opp.metadata?.completedAt || undefined,
+              source: opp.source,
+              severity: opp.severity,
+              confidence: opp.confidence,
+              createdAt: opp.createdAt,
+              businessId: opp.businessId,
+            }));
+            setPriorityActions(mappedActions);
+          }
+        }
+      } catch (prodErr) {
+        console.warn('Could not sync production dashboard data:', prodErr);
+      }
+
       // Sync isolated business record from Locora Database (SINGLE SOURCE OF TRUTH)
       if (user.email) {
         try {
-          const bizRes = await fetch(`/api/data-engine/businesses?email=${queryEmail}`);
+          const bizRes = await fetch(`/api/data-engine/businesses?email=${encodeURIComponent(user.email)}`);
           if (bizRes.ok) {
             const bizData = await bizRes.json();
             if (Array.isArray(bizData.businesses) && bizData.businesses.length > 0) {
@@ -1586,11 +1803,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 zip: r.identity?.zip || '',
                 phone: r.identity?.phone || '',
                 website: r.identity?.website || '',
-                healthScore: r.businessBrain?.score || 82,
-                healthDelta: 5,
+                healthScore: r.businessBrain?.score || (r.gbpData?.connected ? 65 : 0),
+                healthDelta: 0,
                 highImpactCount: (r.businessBrain?.priorityActions || []).filter((a: any) => a.urgency === 'high').length,
                 opportunityCount: (r.businessBrain?.priorityActions || []).filter((a: any) => a.urgency === 'opportunity').length,
-                healthyAreaCount: 10,
+                healthyAreaCount: (r.businessBrain?.priorityActions || []).filter((a: any) => a.isFixed).length,
                 isMainLocation: true,
                 locations: [
                   {
@@ -1606,15 +1823,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 ],
                 services: r.identity?.services || [],
                 competitors: (r.competitors || []).map((c: any) => c.name || c),
-                googleRating: r.gbpData?.rating || 4.8,
-                reviewCount: r.gbpData?.reviewCount || 34,
+                googleRating: r.gbpData?.rating || 0,
+                reviewCount: r.gbpData?.reviewCount || 0,
                 unansweredReviews: r.gbpData?.unansweredReviews || 0,
-                gbpCompleteness: 92,
-                rankingAvg: r.localPack?.averageRank || 3.2,
-                monthlySearches: r.traffic?.sessions || 1200,
-                opportunitiesCount: r.businessBrain?.swot?.opportunities?.length || 4,
-                monthlyOrganicTraffic: r.traffic?.sessions || 1200,
-                aiReadinessScore: r.businessBrain?.readinessScore || 85,
+                gbpCompleteness: r.gbpData?.connected ? (r.gbpData?.reviewCount > 0 ? 95 : 70) : 0,
+                rankingAvg: r.localPack?.averageRank || 0,
+                monthlySearches: r.traffic?.sessions || 0,
+                opportunitiesCount: r.businessBrain?.swot?.opportunities?.length || 0,
+                monthlyOrganicTraffic: r.traffic?.sessions || 0,
+                aiReadinessScore: r.businessBrain?.readinessScore || 0,
               }));
 
               setBusinesses(mappedBusinesses);
@@ -1749,78 +1966,174 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addCustomer = (customerData: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const bizId = customerData.businessId || activeBusiness?.id || '';
+    const source = customerData.source || customerData.leadSource || 'manual';
     const newCust: Customer = {
       ...customerData,
       id: `cust_${Date.now()}`,
+      businessId: bizId,
+      source,
+      leadSource: source,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      lastContactAt: customerData.lastContactAt || new Date().toISOString(),
     };
     setCustomers((prev) => [newCust, ...prev]);
-    fetch(`/api/workspace/customers?email=${encodeURIComponent(user.email || '')}`, {
+    fetch(`/api/workspace/customers?email=${encodeURIComponent(user.email || '')}&businessId=${encodeURIComponent(bizId)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...newCust, userEmail: user.email }),
+      body: JSON.stringify({ ...newCust, businessId: bizId, userEmail: user.email }),
     }).catch(() => {});
-    logActivity('customer', `Customer Added: ${newCust.name}`, `Added customer record for ${newCust.company || newCust.name}`);
+    logActivity('customer', `Customer Added: ${newCust.name}`, `Added customer record for ${newCust.company || newCust.name} [Source: ${source}]`);
   };
 
   const updateCustomer = (id: string, updatedData: Partial<Customer>) => {
+    const bizId = updatedData.businessId || activeBusiness?.id || '';
     setCustomers((prev) => {
-      const list = prev.map((c) => (c.id === id ? { ...c, ...updatedData, updatedAt: new Date().toISOString() } : c));
+      const list = prev.map((c) => (c.id === id ? { ...c, ...updatedData, businessId: c.businessId || bizId, updatedAt: new Date().toISOString() } : c));
       const target = list.find((c) => c.id === id);
       if (target) {
-        fetch(`/api/workspace/customers?email=${encodeURIComponent(user.email || '')}`, {
+        fetch(`/api/workspace/customers?email=${encodeURIComponent(user.email || '')}&businessId=${encodeURIComponent(bizId)}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...target, userEmail: user.email }),
+          body: JSON.stringify({ ...target, businessId: bizId, userEmail: user.email }),
         }).catch(() => {});
-        logActivity('customer', `Client Updated: ${target.name}`, `Pipeline status: ${target.status}`);
+        logActivity('customer', `Client Updated: ${target.name}`, `Status: ${target.status}`);
       }
       return list;
     });
   };
 
   const deleteCustomer = (id: string) => {
+    const bizId = activeBusiness?.id || '';
     setCustomers((prev) => prev.filter((c) => c.id !== id));
-    fetch(`/api/workspace/customers/${id}?email=${encodeURIComponent(user.email || '')}`, { method: 'DELETE' }).catch(() => {});
+    fetch(`/api/workspace/customers/${id}?email=${encodeURIComponent(user.email || '')}&businessId=${encodeURIComponent(bizId)}`, { method: 'DELETE' }).catch(() => {});
     logActivity('customer', 'Client Removed', `Deleted customer record (${id})`);
   };
 
   const addProject = (projData: Omit<Project, 'id' | 'createdAt'>) => {
+    const currentBizId = projData.businessId || activeBusinessId || activeBusiness?.id || 'biz_1';
+    const calculatedProgress = projData.tasks && projData.tasks.length > 0
+      ? Math.round((projData.tasks.filter((t) => t.completed).length / projData.tasks.length) * 100)
+      : (projData.progress || 0);
+
     const newProj: Project = {
       ...projData,
+      businessId: currentBizId,
+      name: projData.name || projData.title || 'Untitled Project',
+      title: projData.title || projData.name || 'Untitled Project',
+      progress: calculatedProgress,
       id: `proj_${Date.now()}`,
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
     setProjects((prev) => [newProj, ...prev]);
-    fetch(`/api/workspace/projects?email=${encodeURIComponent(user.email || '')}`, {
+    fetch(`/api/workspace/projects?email=${encodeURIComponent(user.email || '')}&businessId=${encodeURIComponent(currentBizId)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...newProj, userEmail: user.email }),
+      body: JSON.stringify({ ...newProj, businessId: currentBizId, userEmail: user.email }),
     }).catch(() => {});
-    logActivity('project', `New Project: ${newProj.title}`, `Project assigned to ${newProj.customerName || 'Workspace'}`);
+    logActivity('project', `New Project: ${newProj.title || newProj.name}`, `Assigned to ${newProj.customerName || 'Workspace'}`);
   };
 
   const updateProject = (id: string, projData: Partial<Project>) => {
     setProjects((prev) => {
-      const list = prev.map((p) => (p.id === id ? { ...p, ...projData } : p));
+      const list = prev.map((p) => {
+        if (p.id === id) {
+          const merged = { ...p, ...projData, updatedAt: new Date().toISOString() };
+          if (merged.tasks && merged.tasks.length > 0) {
+            merged.progress = Math.round((merged.tasks.filter((t) => t.completed).length / merged.tasks.length) * 100);
+          }
+          return merged;
+        }
+        return p;
+      });
       const target = list.find((p) => p.id === id);
       if (target) {
-        fetch(`/api/workspace/projects?email=${encodeURIComponent(user.email || '')}`, {
-          method: 'POST',
+        const currentBizId = target.businessId || activeBusinessId || activeBusiness?.id || 'biz_1';
+        fetch(`/api/workspace/projects/${id}?email=${encodeURIComponent(user.email || '')}&businessId=${encodeURIComponent(currentBizId)}`, {
+          method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...target, userEmail: user.email }),
+          body: JSON.stringify({ ...target, businessId: currentBizId, userEmail: user.email }),
         }).catch(() => {});
-        logActivity('project', `Project Updated: ${target.title}`, `Status: ${target.status}`);
+        logActivity('project', `Project Updated: ${target.title || target.name}`, `Status: ${target.status}`);
       }
       return list;
     });
   };
 
   const deleteProject = (id: string) => {
+    const currentBizId = activeBusinessId || activeBusiness?.id || 'biz_1';
     setProjects((prev) => prev.filter((p) => p.id !== id));
-    fetch(`/api/workspace/projects/${id}?email=${encodeURIComponent(user.email || '')}`, { method: 'DELETE' }).catch(() => {});
+    fetch(`/api/workspace/projects/${id}?email=${encodeURIComponent(user.email || '')}&businessId=${encodeURIComponent(currentBizId)}`, { method: 'DELETE' }).catch(() => {});
     logActivity('project', 'Project Deleted', `Removed project record (${id})`);
+  };
+
+  const addWorkTask = async (taskData: Omit<WorkTask, 'id' | 'createdAt'>): Promise<WorkTask> => {
+    const currentBizId = taskData.businessId || activeBusinessId || activeBusiness?.id || 'biz_1';
+    const newTask: WorkTask = {
+      ...taskData,
+      businessId: currentBizId,
+      id: `task_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setWorkTasks((prev) => [newTask, ...prev]);
+    try {
+      const res = await fetch('/api/workspace/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTask),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.task) {
+          setWorkTasks((prev) => prev.map((t) => (t.id === newTask.id ? data.task : t)));
+          return data.task;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to create task:', err);
+    }
+    return newTask;
+  };
+
+  const updateWorkTask = async (id: string, taskData: Partial<WorkTask>): Promise<WorkTask> => {
+    let updated: WorkTask | null = null;
+    setWorkTasks((prev) => {
+      return prev.map((t) => {
+        if (t.id === id) {
+          updated = { ...t, ...taskData };
+          return updated;
+        }
+        return t;
+      });
+    });
+    try {
+      const res = await fetch(`/api/workspace/tasks/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(taskData),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.task) {
+          setWorkTasks((prev) => prev.map((t) => (t.id === id ? data.task : t)));
+          return data.task;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to update task:', err);
+    }
+    return updated || ({ id, ...taskData } as any);
+  };
+
+  const deleteWorkTask = async (id: string): Promise<void> => {
+    setWorkTasks((prev) => prev.filter((t) => t.id !== id));
+    try {
+      await fetch(`/api/workspace/tasks/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete task:', err);
+    }
   };
 
   const addNote = (noteData: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -1838,8 +2151,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addInvoice = (invoiceData: Omit<Invoice, 'id' | 'createdAt'>) => {
+    const currentBizId = invoiceData.businessId || activeBusinessId || activeBusiness?.id || 'biz_1';
     const newInv: Invoice = {
       ...invoiceData,
+      businessId: currentBizId,
       id: `inv_${Date.now()}`,
       createdAt: new Date().toISOString(),
     };
@@ -1848,23 +2163,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const updatedCreatedCount = Math.max(user.invoicesCreatedCount || 0, invoices.length) + 1;
     setUser((prev) => ({ ...prev, invoicesCreatedCount: updatedCreatedCount }));
 
-    fetch(`/api/workspace/invoices?email=${encodeURIComponent(user.email || '')}`, {
+    fetch(`/api/workspace/invoices?email=${encodeURIComponent(user.email || '')}&businessId=${encodeURIComponent(currentBizId)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...newInv, userEmail: user.email }),
+      body: JSON.stringify({ ...newInv, businessId: currentBizId, userEmail: user.email }),
     }).catch(() => {});
     logActivity('invoice', `Invoice Created: ${newInv.invoiceNumber}`, `Total: $${newInv.total} for ${newInv.customerName}`);
   };
 
   const updateInvoiceStatus = (id: string, status: Invoice['status']) => {
+    const currentBizId = activeBusinessId || activeBusiness?.id || 'biz_1';
     setInvoices((prev) => {
       const list = prev.map((inv) => (inv.id === id ? { ...inv, status } : inv));
       const target = list.find((i) => i.id === id);
       if (target) {
-        fetch(`/api/workspace/invoices/${id}/status?email=${encodeURIComponent(user.email || '')}`, {
+        fetch(`/api/workspace/invoices/${id}/status?email=${encodeURIComponent(user.email || '')}&businessId=${encodeURIComponent(currentBizId)}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status, userEmail: user.email }),
+          body: JSON.stringify({ status, businessId: currentBizId, userEmail: user.email }),
         }).catch(() => {});
         logActivity('invoice', `Invoice Status: ${status.toUpperCase()}`, `Invoice ${target.invoiceNumber} marked as ${status}`);
       }
@@ -1873,35 +2189,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteInvoice = (id: string) => {
+    const currentBizId = activeBusinessId || activeBusiness?.id || 'biz_1';
     setInvoices((prev) => prev.filter((i) => i.id !== id));
-    fetch(`/api/workspace/invoices/${id}?email=${encodeURIComponent(user.email || '')}`, { method: 'DELETE' }).catch(() => {});
+    fetch(`/api/workspace/invoices/${id}?email=${encodeURIComponent(user.email || '')}&businessId=${encodeURIComponent(currentBizId)}`, { method: 'DELETE' }).catch(() => {});
     logActivity('invoice', 'Invoice Deleted', `Invoice (${id}) removed`);
   };
 
   const addProposal = (proposalData: Omit<Proposal, 'id' | 'createdAt'>) => {
+    const currentBizId = proposalData.businessId || activeBusinessId || activeBusiness?.id || 'biz_1';
     const newProp: Proposal = {
       ...proposalData,
+      businessId: currentBizId,
       id: `prop_${Date.now()}`,
       createdAt: new Date().toISOString(),
     };
     setProposals((prev) => [newProp, ...prev]);
-    fetch(`/api/workspace/proposals?email=${encodeURIComponent(user.email || '')}`, {
+    fetch(`/api/workspace/proposals?email=${encodeURIComponent(user.email || '')}&businessId=${encodeURIComponent(currentBizId)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...newProp, userEmail: user.email }),
+      body: JSON.stringify({ ...newProp, businessId: currentBizId, userEmail: user.email }),
     }).catch(() => {});
     logActivity('proposal', `AI Proposal Created: ${newProp.title}`, `For ${newProp.customerName}`);
   };
 
   const updateProposalStatus = (id: string, status: Proposal['status']) => {
+    const currentBizId = activeBusinessId || activeBusiness?.id || 'biz_1';
     setProposals((prev) => {
       const list = prev.map((p) => (p.id === id ? { ...p, status } : p));
       const target = list.find((p) => p.id === id);
       if (target) {
-        fetch(`/api/workspace/proposals/${id}/status?email=${encodeURIComponent(user.email || '')}`, {
+        fetch(`/api/workspace/proposals/${id}/status?email=${encodeURIComponent(user.email || '')}&businessId=${encodeURIComponent(currentBizId)}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status, userEmail: user.email }),
+          body: JSON.stringify({ status, businessId: currentBizId, userEmail: user.email }),
         }).catch(() => {});
         logActivity('proposal', `Proposal Status: ${status.toUpperCase()}`, `Proposal "${target.title}" updated to ${status}`);
       }
@@ -1910,28 +2230,130 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteProposal = (id: string) => {
+    const currentBizId = activeBusinessId || activeBusiness?.id || 'biz_1';
     setProposals((prev) => prev.filter((p) => p.id !== id));
-    fetch(`/api/workspace/proposals/${id}?email=${encodeURIComponent(user.email || '')}`, { method: 'DELETE' }).catch(() => {});
+    fetch(`/api/workspace/proposals/${id}?email=${encodeURIComponent(user.email || '')}&businessId=${encodeURIComponent(currentBizId)}`, { method: 'DELETE' }).catch(() => {});
   };
 
   const addDocument = (docData: Omit<DocumentItem, 'id' | 'createdAt'>) => {
+    const currentBizId = docData.businessId || activeBusinessId || activeBusiness?.id || 'biz_1';
     const newDoc: DocumentItem = {
       ...docData,
+      businessId: currentBizId,
       id: `doc_${Date.now()}`,
       createdAt: new Date().toISOString(),
     };
     setDocuments((prev) => [newDoc, ...prev]);
-    fetch(`/api/workspace/documents?email=${encodeURIComponent(user.email || '')}`, {
+    fetch(`/api/workspace/documents?email=${encodeURIComponent(user.email || '')}&businessId=${encodeURIComponent(currentBizId)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...newDoc, userEmail: user.email }),
+      body: JSON.stringify({ ...newDoc, businessId: currentBizId, userEmail: user.email }),
     }).catch(() => {});
     logActivity('document', `Document Generated: ${newDoc.title}`, `Type: ${newDoc.type}`);
   };
 
   const deleteDocument = (id: string) => {
+    const currentBizId = activeBusinessId || activeBusiness?.id || 'biz_1';
     setDocuments((prev) => prev.filter((d) => d.id !== id));
-    fetch(`/api/workspace/documents/${id}?email=${encodeURIComponent(user.email || '')}`, { method: 'DELETE' }).catch(() => {});
+    fetch(`/api/workspace/documents/${id}?email=${encodeURIComponent(user.email || '')}&businessId=${encodeURIComponent(currentBizId)}`, { method: 'DELETE' }).catch(() => {});
+  };
+
+  const addWorkTemplate = async (templateData: Omit<WorkTemplate, 'id' | 'createdAt' | 'updatedAt'>): Promise<WorkTemplate> => {
+    const currentBizId = templateData.businessId || activeBusinessId || activeBusiness?.id || 'biz_1';
+    const newTemplate: WorkTemplate = {
+      ...templateData,
+      businessId: currentBizId,
+      id: `tmpl_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setWorkTemplates((prev) => [newTemplate, ...prev]);
+    try {
+      const res = await fetch('/api/workspace/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTemplate),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.template) {
+          setWorkTemplates((prev) => prev.map((t) => (t.id === newTemplate.id ? data.template : t)));
+          return data.template;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to create template:', err);
+    }
+    return newTemplate;
+  };
+
+  const deleteWorkTemplate = async (id: string): Promise<void> => {
+    setWorkTemplates((prev) => prev.filter((t) => t.id !== id));
+    try {
+      await fetch(`/api/workspace/templates/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Failed to delete template:', err);
+    }
+  };
+
+  const addContentRecord = async (recordData: Omit<ContentRecord, 'id' | 'created_at' | 'updated_at'>): Promise<ContentRecord> => {
+    const newRecord: ContentRecord = {
+      ...recordData,
+      id: `cnt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setContentRecords((prev) => {
+      const updated = [newRecord, ...prev];
+      try { localStorage.setItem('locora_content_records', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+
+    fetch(`/api/workspace/content?email=${encodeURIComponent(user.email || '')}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...newRecord, userEmail: user.email }),
+    }).catch(() => {});
+
+    logActivity('content', `Content Created: ${newRecord.title}`, `Type: ${newRecord.content_type} • Status: ${newRecord.status}`);
+    return newRecord;
+  };
+
+  const updateContentRecord = async (id: string, updates: Partial<ContentRecord>): Promise<ContentRecord> => {
+    let updatedRecord: ContentRecord | null = null;
+    setContentRecords((prev) => {
+      const updated = prev.map((item) => {
+        if (item.id === id) {
+          updatedRecord = { ...item, ...updates, updated_at: new Date().toISOString() };
+          return updatedRecord;
+        }
+        return item;
+      });
+      try { localStorage.setItem('locora_content_records', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+
+    if (updatedRecord) {
+      fetch(`/api/workspace/content?email=${encodeURIComponent(user.email || '')}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...updatedRecord, userEmail: user.email }),
+      }).catch(() => {});
+    }
+
+    return updatedRecord || ({} as ContentRecord);
+  };
+
+  const deleteContentRecord = async (id: string) => {
+    setContentRecords((prev) => {
+      const updated = prev.filter((item) => item.id !== id);
+      try { localStorage.setItem('locora_content_records', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+
+    fetch(`/api/workspace/content/${id}?email=${encodeURIComponent(user.email || '')}`, {
+      method: 'DELETE',
+    }).catch(() => {});
   };
 
   const createConversation = (title?: string) => {
@@ -2072,6 +2494,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         documents,
         addDocument,
         deleteDocument,
+        workTasks,
+        addWorkTask,
+        updateWorkTask,
+        deleteWorkTask,
+        workTemplates,
+        addWorkTemplate,
+        deleteWorkTemplate,
+        contentRecords,
+        addContentRecord,
+        updateContentRecord,
+        deleteContentRecord,
         conversations,
         activeConversationId,
         setActiveConversationId,
@@ -2107,6 +2540,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setRightAiPanelOpen,
         toggleRightAiPanel,
 
+        // Production Data Architecture
+        productionDashboard,
+        refreshProductionDashboard,
+
         // SECTION 28, 32, 33, 35, 38, 40 capabilities
         notifications,
         markNotificationAsRead,
@@ -2123,6 +2560,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setOnboardingModalOpen,
         growthStoreModalOpen,
         setGrowthStoreModalOpen,
+
+        // Canonical Business Truth Service
+        businessTruth,
+        isLoadingBusinessTruth,
+        getBusinessTruth,
+        refreshBusinessTruth,
       }}
     >
       {children}

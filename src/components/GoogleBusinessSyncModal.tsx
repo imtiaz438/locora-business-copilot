@@ -202,7 +202,7 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
         category: place.primaryType || 'Local Business',
         rating: place.rating || 0,
         reviewCount: place.reviewCount || 0,
-        unansweredReviews: Math.min(place.reviewCount || 0, 3),
+        unansweredReviews: detailedReviews.filter((r: any) => !r.replyText && !r.isAnswered).length,
         businessHours: detailedHours,
         reviews: detailedReviews,
         services: [place.primaryType || 'Core Service'],

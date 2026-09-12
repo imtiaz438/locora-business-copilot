@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { openWhopOneTimeCheckout } from '../lib/whopService';
+import { ProviderStatusDisplay } from './ProviderStatusDisplay';
+import type { ProviderStatus } from '../types';
 import {
   Database,
   Search,
@@ -89,8 +91,23 @@ export const LeadProspectorView: React.FC = () => {
     hasSsl: boolean;
     hasSchema: boolean;
     responseTimeMs: number;
-    mobileScore: number;
+    mobileScore: number | null;
     detectedIssues: string[];
+    pagespeed_status?: ProviderStatus;
+    pagespeed_message?: string;
+  } | null>(null);
+
+  const [prospectStatus, setProspectStatus] = useState<{
+    status: ProviderStatus;
+    message?: string;
+  }>({
+    status: 'success',
+    message: '',
+  });
+
+  const [enrichmentStatus, setEnrichmentStatus] = useState<{
+    status: ProviderStatus;
+    message?: string;
   } | null>(null);
 
   const [enrichingContact, setEnrichingContact] = useState(false);
@@ -178,6 +195,29 @@ export const LeadProspectorView: React.FC = () => {
           setSelectedLead(null);
         }
       }
+
+      if (data.provider_status) {
+        setProspectStatus({
+          status: data.provider_status,
+          message: data.providerStatusMessage || data.placesError,
+        });
+      } else if (!data.hasGooglePlacesKey) {
+        setProspectStatus({
+          status: 'not_configured',
+          message: 'Google Maps & Places API key is not configured. Add credentials in Settings to search real businesses.',
+        });
+      } else if (data.leads && data.leads.length === 0) {
+        setProspectStatus({
+          status: 'connected_no_data',
+          message: `Connected to Google Places, but no businesses were found for "${industry}" in "${city}".`,
+        });
+      } else {
+        setProspectStatus({
+          status: 'success',
+          message: '',
+        });
+      }
+
       setFeedMeta({
         dataSource: data.dataSource || 'live_google_places',
         hasGooglePlacesKey: Boolean(data.hasGooglePlacesKey),
@@ -188,8 +228,12 @@ export const LeadProspectorView: React.FC = () => {
         apiMessage: data.message || '',
         placesError: data.placesError || null,
       });
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to fetch prospect leads:', e);
+      setProspectStatus({
+        status: 'unavailable',
+        message: e?.message || 'Network error connecting to Google Places API.',
+      });
     } finally {
       setLoading(false);
     }
@@ -205,6 +249,7 @@ export const LeadProspectorView: React.FC = () => {
 
     setLiveDomainAudit(null);
     setEnrichedExecutive(null);
+    setEnrichmentStatus(null);
 
     const runLiveAudits = async () => {
       setManualVerificationResult(null);
@@ -226,6 +271,8 @@ export const LeadProspectorView: React.FC = () => {
               responseTimeMs: auditData.responseTimeMs,
               mobileScore: auditData.mobileScore,
               detectedIssues: auditData.detectedIssues || [],
+              pagespeed_status: auditData.pagespeed_status,
+              pagespeed_message: auditData.pagespeed_message,
             });
           }
         } catch (err) {
@@ -247,11 +294,21 @@ export const LeadProspectorView: React.FC = () => {
           }),
         });
         const enrichData = await enrichRes.json();
+        if (enrichData.provider_status) {
+          setEnrichmentStatus({
+            status: enrichData.provider_status,
+            message: enrichData.providerStatusMessage,
+          });
+        }
         if (enrichData.success && enrichData.decisionMaker) {
           setEnrichedExecutive(enrichData.decisionMaker);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.warn('Contact enrichment error:', err);
+        setEnrichmentStatus({
+          status: 'unavailable',
+          message: err?.message || 'Network error reaching contact enrichment services.',
+        });
       } finally {
         setEnrichingContact(false);
       }
@@ -631,34 +688,29 @@ export const LeadProspectorView: React.FC = () => {
               </table>
             </div>
           ) : (
-            <div className="p-8 sm:p-12 text-center space-y-4">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shadow-xs">
-                <Globe className="w-7 h-7" />
-              </div>
-              <div className="max-w-md mx-auto space-y-1.5">
-                <h4 className="text-base font-extrabold font-heading text-slate-900">
-                  {loading ? 'Fetching Real-Time Live Google Places Leads...' : 'Live B2B Data Feeds Only'}
-                </h4>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  {loading ? (
-                    'Querying Google Maps & Places API for authentic local businesses in ' + city + '...'
-                  ) : feedMeta.placesError ? (
-                    `Google Places API Notice: ${feedMeta.placesError}. Please ensure the Places API is enabled in your Google Cloud Console.`
-                  ) : (
-                    'To stream 100% authentic, verified business listings with real Google reviews, websites, and phone numbers, please configure your Google Maps API key in the Admin Panel.'
-                  )}
-                </p>
-              </div>
-              {!loading && (
-                <div className="pt-2 flex justify-center">
-                  <button
-                    onClick={() => setActiveTab('admin')}
-                    className="px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-2 cursor-pointer transition-all font-sans"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Open Admin Panel & Configure Google Maps Key</span>
-                  </button>
+            <div className="p-6 sm:p-10">
+              {loading ? (
+                <div className="text-center space-y-4 py-8">
+                  <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shadow-xs">
+                    <RefreshCw className="w-7 h-7 animate-spin text-emerald-600" />
+                  </div>
+                  <div className="max-w-md mx-auto space-y-1.5">
+                    <h4 className="text-base font-extrabold font-heading text-slate-900">
+                      Querying Live Google Places API...
+                    </h4>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      Scanning live local businesses for {industry} in {city} via Google Places...
+                    </p>
+                  </div>
                 </div>
+              ) : (
+                <ProviderStatusDisplay
+                  status={prospectStatus.status}
+                  providerName="Google Places API"
+                  customMessage={prospectStatus.message}
+                  onConfigureClick={() => setActiveTab('admin')}
+                  onRetryClick={fetchLeads}
+                />
               )}
             </div>
           )}
@@ -814,6 +866,18 @@ export const LeadProspectorView: React.FC = () => {
                       </div>
                     </div>
                   )}
+
+                  {enrichmentStatus && enrichmentStatus.status !== 'success' && (
+                    <div className="pt-2">
+                      <ProviderStatusDisplay
+                        status={enrichmentStatus.status}
+                        providerName="Contact Intelligence (Apollo.io / Hunter.io)"
+                        customMessage={enrichmentStatus.message}
+                        compact
+                        onConfigureClick={() => setActiveTab('admin')}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -839,6 +903,18 @@ export const LeadProspectorView: React.FC = () => {
                       <span>Schema: {liveDomainAudit.hasSchema ? 'Found' : 'Missing'}</span>
                     </div>
                   </div>
+
+                  {liveDomainAudit.pagespeed_status && liveDomainAudit.pagespeed_status !== 'success' && (
+                    <div className="pt-2">
+                      <ProviderStatusDisplay
+                        status={liveDomainAudit.pagespeed_status}
+                        providerName="Google PageSpeed Insights"
+                        customMessage={liveDomainAudit.pagespeed_message}
+                        compact
+                        onConfigureClick={() => setActiveTab('admin')}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 

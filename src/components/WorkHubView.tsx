@@ -3,6 +3,11 @@ import { useApp } from '../context/AppContext';
 import { Proposal, Invoice, Project, DocumentItem } from '../types';
 import jsPDF from 'jspdf';
 import { TierLockGate } from './TierLockGate';
+import { DeleteConfirmModal } from './common/DeleteConfirmModal';
+import { WorkTasksTab } from './work/WorkTasksTab';
+import { WorkProjectsTab } from './work/WorkProjectsTab';
+import { WorkTemplatesTab } from './work/WorkTemplatesTab';
+import { WorkDocumentsTab } from './work/WorkDocumentsTab';
 import {
   Briefcase,
   FileText,
@@ -45,6 +50,8 @@ export const WorkHubView: React.FC<WorkHubViewProps> = ({ initialTab = 'proposal
     documents,
     projects,
     addProject,
+    workTasks,
+    workTemplates,
     customers,
     activeBusiness,
     priorityActions,
@@ -58,6 +65,14 @@ export const WorkHubView: React.FC<WorkHubViewProps> = ({ initialTab = 'proposal
     setActiveTab,
   } = useApp();
 
+  // Filter all work entities strictly by businessId
+  const businessProposals = proposals.filter((p) => p.businessId === activeBusiness.id);
+  const businessInvoices = invoices.filter((i) => i.businessId === activeBusiness.id);
+  const businessDocuments = documents.filter((d) => d.businessId === activeBusiness.id);
+  const businessTasks = workTasks.filter((t) => t.businessId === activeBusiness.id);
+  const businessProjects = projects.filter((p) => p.businessId === activeBusiness.id);
+  const businessTemplates = workTemplates.filter((t) => !t.businessId || t.businessId === activeBusiness.id);
+
   // Tab selector inside Work Hub (Section 20: Proposals, Invoices, Documents, Tasks, Projects, Templates)
   const [activeWorkTab, setActiveWorkTab] = useState<
     'proposals' | 'invoices' | 'documents' | 'tasks' | 'projects' | 'templates'
@@ -70,27 +85,65 @@ export const WorkHubView: React.FC<WorkHubViewProps> = ({ initialTab = 'proposal
   const [proposalTitle, setProposalTitle] = useState(`${activeBusiness.name} — Local Growth & High-Impact Opportunity Retainer`);
   const [proposalBudget, setProposalBudget] = useState(4800);
   const [isGeneratingProposal, setIsGeneratingProposal] = useState(false);
-  const [selectedProposalPreview, setSelectedProposalPreview] = useState<Proposal | null>(proposals[0] || null);
+  const [selectedProposalPreview, setSelectedProposalPreview] = useState<Proposal | null>(businessProposals[0] || null);
   const [copiedProposal, setCopiedProposal] = useState(false);
 
   // Invoice State (Section 22)
   const [showNewInvoiceModal, setShowNewInvoiceModal] = useState(false);
-  const [invoicePreview, setInvoicePreview] = useState<Invoice | null>(invoices[0] || null);
+  const [invoicePreview, setInvoicePreview] = useState<Invoice | null>(businessInvoices[0] || null);
   const [invCustomer, setInvCustomer] = useState(customers[0]?.id || '');
   const [invAmount, setInvAmount] = useState(1500);
   const [invDesc, setInvDesc] = useState('Local SEO & Growth Strategy Retainer — Monthly Fee');
 
-  // Counts for Invoices (Section 22: Draft 3, Sent 12, Paid 28, Overdue 2)
-  const draftCount = Math.max(3, invoices.filter((i) => i.status === 'draft').length);
-  const sentCount = Math.max(12, invoices.filter((i) => i.status === 'sent').length);
-  const paidCount = Math.max(28, invoices.filter((i) => i.status === 'paid').length);
-  const overdueCount = Math.max(2, invoices.filter((i) => i.status === 'overdue').length);
+  // Counts and Totals for Invoices
+  const draftInvoices = businessInvoices.filter((i) => i.status === 'draft');
+  const sentInvoices = businessInvoices.filter((i) => i.status === 'sent');
+  const paidInvoices = businessInvoices.filter((i) => i.status === 'paid');
+  const overdueInvoices = businessInvoices.filter((i) => i.status === 'overdue');
+
+  const draftCount = draftInvoices.length;
+  const sentCount = sentInvoices.length;
+  const paidCount = paidInvoices.length;
+  const overdueCount = overdueInvoices.length;
+
+  const draftTotal = draftInvoices.reduce((sum, i) => sum + (i.total || 0), 0);
+  const sentTotal = sentInvoices.reduce((sum, i) => sum + (i.total || 0), 0);
+  const paidTotal = paidInvoices.reduce((sum, i) => sum + (i.total || 0), 0);
+  const overdueTotal = overdueInvoices.reduce((sum, i) => sum + (i.total || 0), 0);
+
+  // In-app Delete Target State
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: 'proposal' | 'invoice';
+    id: string;
+    name: string;
+  } | null>(null);
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    if (deleteTarget.type === 'proposal') {
+      deleteProposal(deleteTarget.id);
+      if (selectedProposalPreview?.id === deleteTarget.id) {
+        const remaining = businessProposals.filter((p) => p.id !== deleteTarget.id);
+        setSelectedProposalPreview(remaining[0] || null);
+      }
+      logActivity('work', 'Deleted Proposal', `Removed proposal: ${deleteTarget.name}`);
+    } else if (deleteTarget.type === 'invoice') {
+      deleteInvoice(deleteTarget.id);
+      if (invoicePreview?.id === deleteTarget.id) {
+        const remaining = businessInvoices.filter((i) => i.id !== deleteTarget.id);
+        setInvoicePreview(remaining[0] || null);
+      }
+      logActivity('work', 'Deleted Invoice', `Removed invoice: ${deleteTarget.name}`);
+    }
+    setDeleteTarget(null);
+  };
 
   // Section 21: Handle Generate Proposal from 7 Growth Opportunities
   const handleGenerateProposalFromOpportunities = async (sourceType: 'audit' | 'growth_plan' | 'service' | 'lead' = 'growth_plan') => {
     setIsGeneratingProposal(true);
     const client = customers.find((c) => c.id === proposalClient) || customers[0];
     const clientName = client ? `${client.name} (${activeBusiness.name})` : activeBusiness.name;
+    const primaryService = activeBusiness.services?.[0] || activeBusiness.category || 'High-Impact Local Service';
 
     // Simulate AI generation crafted around the 7 growth opportunities
     setTimeout(() => {
@@ -100,7 +153,7 @@ export const WorkHubView: React.FC<WorkHubViewProps> = ({ initialTab = 'proposal
 Locora AI analyzed your digital footprint and identified core high-impact growth opportunities across ${activeBusiness.city || 'your target market'}.
 
 ### SOW & Deliverables:
-1. **Targeted Service Landing Page & Schema Optimization**: Capture high-intent searches with dedicated localized service pages and clear conversion triggers.
+1. **Targeted Service Landing Page & Schema Optimization**: Capture high-intent searches for ${primaryService} with dedicated localized service pages and clear conversion triggers.
 2. **Review Acceleration & Reputation Funnel**: Deploy automated review request workflows to increase review volume and customer trust signals.
 3. **LocalBusiness Schema & Local Pack Optimization**: Sync verified NAP, Google Maps coordinates, and accurate category attributes.
 4. **Competitor Counter-Strategy**: Target competitor gaps with specialized content addressing under-served search queries.
@@ -112,6 +165,7 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
 - Term: 6-month performance agreement`;
 
       const newProp: Omit<Proposal, 'id' | 'createdAt'> = {
+        businessId: activeBusiness.id,
         title: `${activeBusiness.name} — 7 Growth Opportunities Retainer`,
         type: 'proposal',
         customerId: client?.id || 'c1',
@@ -120,8 +174,8 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
         summary: `Strategic growth proposal targeting 7 high-impact opportunities identified by Locora AI.`,
         scopeOfWork: generatedScope,
         deliverables: [
-          'Emergency Dentist Landing Page + MedicalBusiness Schema',
-          'Review Velocity SMS Automation (Target: +25 Reviews/mo)',
+          `${primaryService} Landing Page + LocalBusiness Schema`,
+          'Review Velocity SMS Automation & Trust Verification',
           'Local 3-Pack Prominence Campaign',
           'Competitor Keyword Counter-Campaign',
           'Monthly Executive ROI & Growth Diagnostic Reports',
@@ -154,6 +208,7 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
     };
 
     addInvoice({
+      businessId: activeBusiness.id,
       invoiceNumber: `INV-${Date.now().toString().slice(-4)}`,
       customerId: cust.name,
       customerName: cust.name,
@@ -276,7 +331,7 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
           {activeWorkTab === 'invoices' && (
             <button
               onClick={() => {
-                if (user.planTier === 'free') {
+                if (user.planTier === 'free' && businessInvoices.length >= 2) {
                   setCheckoutModalPlan('pro');
                 } else {
                   setShowNewInvoiceModal(true);
@@ -284,8 +339,44 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
               }}
               className="px-4 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-xs flex items-center gap-2 transition-all cursor-pointer"
             >
+              {user.planTier === 'free' && businessInvoices.length >= 2 ? (
+                <Lock className="w-3.5 h-3.5 text-amber-300" />
+              ) : (
+                <Plus className="w-4 h-4" />
+              )}
+              <span>
+                {user.planTier === 'free' && businessInvoices.length >= 2
+                  ? 'Unlock Unlimited Invoices (Pro)'
+                  : '+ Create Invoice'}
+              </span>
+            </button>
+          )}
+
+          {activeWorkTab === 'projects' && (
+            <button
+              onClick={() => {
+                if (user.planTier !== 'agency') {
+                  setCheckoutModalPlan('agency');
+                }
+              }}
+              className="px-4 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+            >
+              {user.planTier !== 'agency' ? <Lock className="w-3.5 h-3.5 text-amber-300" /> : <Plus className="w-4 h-4" />}
+              <span>{user.planTier !== 'agency' ? 'Unlock Projects (Agency)' : '+ New Project'}</span>
+            </button>
+          )}
+
+          {activeWorkTab === 'templates' && (
+            <button
+              onClick={() => {
+                if (user.planTier === 'free') {
+                  setCheckoutModalPlan('pro');
+                }
+              }}
+              className="px-4 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+            >
               {user.planTier === 'free' ? <Lock className="w-3.5 h-3.5 text-amber-300" /> : <Plus className="w-4 h-4" />}
-              <span>{user.planTier === 'free' ? 'Unlock Invoicing' : '+ Create Invoice'}</span>
+              <span>{user.planTier === 'free' ? 'Unlock Templates' : '+ New Template'}</span>
             </button>
           )}
         </div>
@@ -294,12 +385,12 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
       {/* Section 20 Navigation Tabs: Proposals | Invoices | Documents | Tasks | Projects | Templates */}
       <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100/80 rounded-2xl border border-slate-200">
         {[
-          { id: 'proposals', label: 'Proposals', icon: FileText, count: proposals.length, plan: 'pro' },
-          { id: 'invoices', label: 'Invoices', icon: FileSpreadsheet, count: invoices.length, plan: 'pro' },
-          { id: 'documents', label: 'Documents', icon: FileEdit, count: documents.length, plan: 'free' },
-          { id: 'tasks', label: 'Tasks', icon: CheckSquare, count: 8, plan: 'free' },
-          { id: 'projects', label: 'Projects', icon: FolderKanban, count: projects.length, plan: 'agency' },
-          { id: 'templates', label: 'Templates', icon: LayoutTemplate, count: 6, plan: 'pro' },
+          { id: 'proposals', label: 'Proposals', icon: FileText, count: businessProposals.length, plan: 'pro' },
+          { id: 'invoices', label: 'Invoices', icon: FileSpreadsheet, count: businessInvoices.length, plan: 'pro' },
+          { id: 'documents', label: 'Documents', icon: FileEdit, count: businessDocuments.length, plan: 'free' },
+          { id: 'tasks', label: 'Tasks', icon: CheckSquare, count: businessTasks.length, plan: 'free' },
+          { id: 'projects', label: 'Projects', icon: FolderKanban, count: businessProjects.length, plan: 'agency' },
+          { id: 'templates', label: 'Templates', icon: LayoutTemplate, count: businessTemplates.length, plan: 'pro' },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeWorkTab === tab.id;
@@ -358,7 +449,7 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
                   AI found 7 growth opportunities
                 </h3>
                 <p className="text-xs text-slate-600 max-w-2xl">
-                  Locora detected 3 missing high-value service pages, 17 unanswered patient reviews, and 2 competitor ranking gaps. Create a complete, high-converting client proposal in one click.
+                  Locora synthesized high-value local service gaps and technical optimizations across {activeBusiness.name}. Create a complete, high-converting client proposal in one click.
                 </p>
               </div>
 
@@ -419,13 +510,13 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
             {/* Left: Proposals Selector */}
             <div className="lg:col-span-1 space-y-3">
               <div className="flex items-center justify-between text-xs text-slate-500 px-1">
-                <span>Active Proposals ({proposals.length})</span>
+                <span>Active Proposals ({businessProposals.length})</span>
                 <span className="text-emerald-950 font-bold">
-                  ${proposals.reduce((sum, p) => sum + (p.totalAmount || 0), 0).toLocaleString()} Value
+                  ${businessProposals.reduce((sum, p) => sum + (p.totalAmount || 0), 0).toLocaleString()} Value
                 </span>
               </div>
 
-              {proposals.length === 0 ? (
+              {businessProposals.length === 0 ? (
                 <div className="p-8 bg-white border border-slate-200 rounded-2xl text-center space-y-2">
                   <p className="text-xs text-slate-500">No proposals created yet.</p>
                   <button
@@ -436,7 +527,7 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
                   </button>
                 </div>
               ) : (
-                proposals.map((prop) => {
+                businessProposals.map((prop) => {
                   const isSelected = selectedProposalPreview?.id === prop.id;
                   return (
                     <div
@@ -460,9 +551,25 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
                         >
                           {prop.status}
                         </span>
-                        <span className="font-extrabold text-slate-900 font-mono text-xs">
-                          ${(prop.totalAmount || 4500).toLocaleString()}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-extrabold text-slate-900 font-mono text-xs">
+                            ${(prop.totalAmount || 4500).toLocaleString()}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteTarget({
+                                type: 'proposal',
+                                id: prop.id,
+                                name: prop.title,
+                              });
+                            }}
+                            className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Delete proposal"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
 
                       <h4 className="text-xs font-bold text-slate-900 font-heading line-clamp-1">{prop.title}</h4>
@@ -519,6 +626,21 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
                       >
                         <Download className="w-3.5 h-3.5" />
                         <span>Export PDF</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setDeleteTarget({
+                            type: 'proposal',
+                            id: selectedProposalPreview.id,
+                            name: selectedProposalPreview.title,
+                          });
+                        }}
+                        className="px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50/60 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                        title="Delete proposal"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete</span>
                       </button>
                     </div>
                   </div>
@@ -598,12 +720,27 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
       {/* SECTION 22: INVOICES */}
       {/* ========================================================= */}
       {activeWorkTab === 'invoices' && (
-        <TierLockGate
-          requiredPlan="pro"
-          featureName="Client Billing & Invoicing Engine"
-          description="Generate PDF invoices, track payment receipts, and manage accounts receivable with Stripe integration."
-        >
         <div className="space-y-6">
+          {/* Free Tier Quota Indicator Banner */}
+          {user.planTier === 'free' && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 text-xs">
+              <div className="flex items-center gap-2.5">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>
+                  <strong>Free Invoicing Quota:</strong> {businessInvoices.length} of 2 free invoices used. {businessInvoices.length >= 2 ? 'Free limit reached. Delete an invoice or upgrade to Pro for unlimited invoices & Stripe links.' : 'Free tier includes up to 2 active invoices.'}
+                </span>
+              </div>
+              {businessInvoices.length >= 2 && (
+                <button
+                  onClick={() => setCheckoutModalPlan('pro')}
+                  className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shrink-0 cursor-pointer shadow-2xs"
+                >
+                  Upgrade to Pro ($29/mo)
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Section 22 Counters: Draft 3 | Sent 12 | Paid 28 | Overdue 2 */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-1">
@@ -612,7 +749,7 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
               </span>
               <div className="flex items-baseline justify-between">
                 <span className="text-2xl font-extrabold text-slate-900 font-heading">{draftCount}</span>
-                <span className="text-xs text-slate-500">$3,400</span>
+                <span className="text-xs text-slate-500 font-mono">${draftTotal.toLocaleString()}</span>
               </div>
             </div>
 
@@ -622,7 +759,7 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
               </span>
               <div className="flex items-baseline justify-between">
                 <span className="text-2xl font-extrabold text-blue-600 font-heading">{sentCount}</span>
-                <span className="text-xs text-slate-500">$18,200</span>
+                <span className="text-xs text-slate-500 font-mono">${sentTotal.toLocaleString()}</span>
               </div>
             </div>
 
@@ -632,7 +769,7 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
               </span>
               <div className="flex items-baseline justify-between">
                 <span className="text-2xl font-extrabold text-[#059669] font-heading">{paidCount}</span>
-                <span className="text-xs text-emerald-950 font-bold">$42,850</span>
+                <span className="text-xs text-emerald-950 font-bold font-mono">${paidTotal.toLocaleString()}</span>
               </div>
             </div>
 
@@ -642,7 +779,7 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
               </span>
               <div className="flex items-baseline justify-between">
                 <span className="text-2xl font-extrabold text-rose-600 font-heading">{overdueCount}</span>
-                <span className="text-xs text-rose-600 font-bold">$2,800</span>
+                <span className="text-xs text-rose-600 font-bold font-mono">${overdueTotal.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -651,7 +788,7 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
           <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xs">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 font-heading">
-                Recent Invoices ({invoices.length})
+                Recent Invoices ({businessInvoices.length})
               </h4>
               <button
                 onClick={() => setShowNewInvoiceModal(true)}
@@ -676,14 +813,14 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {invoices.length === 0 ? (
+                  {businessInvoices.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="p-8 text-center text-slate-400">
                         No custom invoices created yet. Click "+ Create Invoice" to issue white-label billings.
                       </td>
                     </tr>
                   ) : (
-                    invoices.map((inv) => (
+                    businessInvoices.map((inv) => (
                       <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="p-3.5 font-mono font-bold text-slate-900">{inv.invoiceNumber}</td>
                         <td className="p-3.5 font-medium text-slate-800">{inv.customerName}</td>
@@ -725,6 +862,19 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
                             >
                               {inv.status === 'paid' ? 'Mark Sent' : 'Mark Paid'}
                             </button>
+                            <button
+                              onClick={() => {
+                                setDeleteTarget({
+                                  type: 'invoice',
+                                  id: inv.id,
+                                  name: `Invoice ${inv.invoiceNumber} ($${inv.total.toLocaleString()})`,
+                                });
+                              }}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                              title="Delete invoice"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -735,73 +885,17 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
             </div>
           </div>
         </div>
-        </TierLockGate>
       )}
 
       {/* ========================================================= */}
       {/* OTHER OPERATIONAL TABS: DOCUMENTS | TASKS | PROJECTS | TEMPLATES */}
       {/* ========================================================= */}
       {activeWorkTab === 'documents' && (
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-2xs">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h4 className="text-sm font-bold text-slate-900 font-heading">Workspace Documents & Deliverables</h4>
-            <button
-              onClick={() => setActiveTab('content')}
-              className="text-xs font-bold text-[#059669] hover:underline"
-            >
-              Open Content Studio →
-            </button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {documents.map((doc) => (
-              <div key={doc.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-900 line-clamp-1">{doc.title}</span>
-                  <span className="text-[10px] text-slate-400 font-mono">{doc.type}</span>
-                </div>
-                <p className="text-slate-600 line-clamp-2 text-[11px]">{doc.content}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        <WorkDocumentsTab businessId={activeBusiness.id} />
       )}
 
       {activeWorkTab === 'tasks' && (
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-3 shadow-2xs">
-          <h4 className="text-sm font-bold text-slate-900 font-heading">Operational Tasks & Milestones</h4>
-          <div className="space-y-2 text-xs">
-            {[
-              { title: `Deploy High-Impact Service Landing Page (${priorityActions[0]?.draft?.slug || '/services/priority'})`, priority: 'High', due: 'Tomorrow' },
-              { title: `Respond to ${activeBusiness.unansweredReviews || 0} unanswered Google reviews`, priority: 'Urgent', due: 'Today' },
-              { title: 'Verify LocalBusiness Schema coordinates with Google Maps API', priority: 'Medium', due: 'In 3 days' },
-              { title: 'Send monthly performance report to client stakeholders', priority: 'Medium', due: 'Friday' },
-            ].map((task, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between p-3.5 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white transition-colors"
-              >
-                <div className="flex items-center gap-2.5">
-                  <input type="checkbox" className="w-4 h-4 rounded text-[#059669] focus:ring-[#059669]" />
-                  <span className="font-medium text-slate-800">{task.title}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                      task.priority === 'Urgent'
-                        ? 'bg-rose-50 text-rose-700'
-                        : task.priority === 'High'
-                        ? 'bg-amber-50 text-amber-700'
-                        : 'bg-slate-200 text-slate-700'
-                    }`}
-                  >
-                    {task.priority}
-                  </span>
-                  <span className="text-[11px] text-slate-400">{task.due}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <WorkTasksTab businessId={activeBusiness.id} />
       )}
 
       {activeWorkTab === 'projects' && (
@@ -810,29 +904,7 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
           featureName="Multi-Client Project Pipeline"
           description="Manage client deliverables, milestones, and cross-client agency deadlines in one unified cockpit."
         >
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-3 shadow-2xs">
-          <h4 className="text-sm font-bold text-slate-900 font-heading">Active Projects</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-900">{activeBusiness.name} — Q3 Organic Growth Engine</span>
-                <span className="text-emerald-950 font-bold bg-emerald-50 px-2 py-0.5 rounded">In Progress</span>
-              </div>
-              <p className="text-slate-600 text-[11px]">
-                Target: Reach 3-Pack rank #1 for {activeBusiness.services?.[0]?.toLowerCase() || 'core service'} searches in {activeBusiness.city || 'local market'}.
-              </p>
-            </div>
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-900">Reputation Velocity Funnel Setup</span>
-                <span className="text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded">Deploying</span>
-              </div>
-              <p className="text-slate-600 text-[11px]">
-                Target: Automatic SMS review invite triggering 2 hours post-service completion.
-              </p>
-            </div>
-          </div>
-        </div>
+          <WorkProjectsTab businessId={activeBusiness.id} />
         </TierLockGate>
       )}
 
@@ -842,21 +914,7 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
           featureName="AI Document & Proposal Templates"
           description="Access pre-engineered local business contracts, SEO SOW templates, and retainer agreements."
         >
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-3 shadow-2xs">
-          <h4 className="text-sm font-bold text-slate-900 font-heading">Standard Operating Templates</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-            {[
-              { name: 'Local SEO Master Retainer Agreement', category: 'Legal / Contract' },
-              { name: 'Client Scope & Transparent Fee Estimate', category: 'Client Billing' },
-              { name: 'Quarterly Executive ROI Diagnostic', category: 'Agency Report' },
-            ].map((t, idx) => (
-              <div key={idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase">{t.category}</span>
-                <h5 className="font-bold text-slate-900">{t.name}</h5>
-              </div>
-            ))}
-          </div>
-        </div>
+          <WorkTemplatesTab businessId={activeBusiness.id} />
         </TierLockGate>
       )}
 
@@ -1018,6 +1076,16 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
           </div>
         </div>
       )}
+      {/* Global In-App Safe Deletion Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteTarget !== null}
+        title={`Delete ${deleteTarget?.type === 'proposal' ? 'Proposal' : 'Invoice'}`}
+        itemName={deleteTarget?.name}
+        message={`Are you sure you want to permanently delete this ${deleteTarget?.type}? This will remove it from your records and recalculate your totals.`}
+        confirmLabel="Delete Permanently"
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeleteTarget(null)}
+      />
     </div>
   );
 };

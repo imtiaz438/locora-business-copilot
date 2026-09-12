@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { triggerGoogleAnalyticsOAuth } from '../lib/oauthService';
+import { DeleteConfirmModal } from './common/DeleteConfirmModal';
 import {
   BarChart3,
   CheckCircle2,
@@ -14,7 +15,9 @@ import {
 } from 'lucide-react';
 
 export const IntegrationsSettingsTab: React.FC = () => {
-  const { user, activeBusiness, logActivity, setActiveTab, setCheckoutModalPlan } = useApp();
+  const { user, activeBusiness, businessTruth, logActivity, setActiveTab, setCheckoutModalPlan } = useApp();
+
+  const businessName = businessTruth?.name ?? activeBusiness?.name ?? 'Business Workspace';
 
   const [ga4Status, setGa4Status] = useState<{
     connected: boolean;
@@ -36,6 +39,7 @@ export const IntegrationsSettingsTab: React.FC = () => {
   const [syncing, setSyncing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [showDisconnectModal, setShowDisconnectModal] = useState(false);
 
   const isFreePlan = user.planTier === 'free';
 
@@ -112,7 +116,6 @@ export const IntegrationsSettingsTab: React.FC = () => {
   };
 
   const handleDisconnectGa4 = async () => {
-    if (!confirm('Disconnect Google Analytics 4 from this business?')) return;
     setIsLoading(true);
     try {
       const res = await fetch('/api/analytics/ga4/disconnect', {
@@ -129,6 +132,7 @@ export const IntegrationsSettingsTab: React.FC = () => {
       setErrorMsg('Failed to disconnect GA4.');
     } finally {
       setIsLoading(false);
+      setShowDisconnectModal(false);
     }
   };
 
@@ -183,7 +187,7 @@ export const IntegrationsSettingsTab: React.FC = () => {
                 <span className="text-xs font-bold text-slate-800">Google Analytics 4 Direct Sync</span>
               </div>
               <p className="text-xs text-slate-600 mt-1 max-w-lg">
-                Direct live synchronization with Google Analytics 4 is included on <strong>Pro Growth ($29/mo)</strong> and <strong>Agency Elite ($99/mo)</strong>. Free plan users can view synthetic benchmarks.
+                Direct live synchronization with Google Analytics 4 is included on <strong>Pro Growth ($29/mo)</strong> and <strong>Agency Elite ($99/mo)</strong>. Upgrade your plan to stream live Google Analytics data into Locora.
               </p>
             </div>
           </div>
@@ -222,7 +226,7 @@ export const IntegrationsSettingsTab: React.FC = () => {
                 )}
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Active Business: <strong>{activeBusiness.name}</strong> • Measurement ID & Web Stream
+                Active Business: <strong>{businessName}</strong> • Measurement ID & Web Stream
               </p>
             </div>
           </div>
@@ -240,7 +244,7 @@ export const IntegrationsSettingsTab: React.FC = () => {
                   <span>{syncing ? 'Syncing...' : 'Sync Now'}</span>
                 </button>
                 <button
-                  onClick={handleDisconnectGa4}
+                  onClick={() => setShowDisconnectModal(true)}
                   disabled={isLoading}
                   className="px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
                 >
@@ -285,7 +289,7 @@ export const IntegrationsSettingsTab: React.FC = () => {
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
                 <span className="text-[10px] uppercase font-bold text-slate-400">Stream Name</span>
                 <p className="text-xs font-bold text-slate-800 mt-0.5 truncate">
-                  {ga4Status.propertyName || `${activeBusiness.name} - Web Stream`}
+                  {ga4Status.propertyName || `${businessName} - Web Stream`}
                 </p>
               </div>
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
@@ -308,25 +312,25 @@ export const IntegrationsSettingsTab: React.FC = () => {
                   <div className="p-3 bg-emerald-50/50 rounded-xl border border-emerald-100">
                     <span className="text-slate-500 text-[11px] block">Total Sessions</span>
                     <span className="text-lg font-extrabold text-emerald-900 font-mono">
-                      {(ga4Status.metrics.sessions || 4280).toLocaleString()}
+                      {(ga4Status.metrics.sessions ?? 0).toLocaleString()}
                     </span>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                     <span className="text-slate-500 text-[11px] block">Pageviews</span>
                     <span className="text-lg font-extrabold text-slate-900 font-mono">
-                      {(ga4Status.metrics.pageviews || 11420).toLocaleString()}
+                      {(ga4Status.metrics.pageviews ?? 0).toLocaleString()}
                     </span>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                     <span className="text-slate-500 text-[11px] block">Bounce Rate</span>
                     <span className="text-lg font-extrabold text-slate-900 font-mono">
-                      {ga4Status.metrics.bounceRate || '38.4%'}
+                      {ga4Status.metrics.bounceRate ? `${ga4Status.metrics.bounceRate}%` : '—'}
                     </span>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                     <span className="text-slate-500 text-[11px] block">Avg Engagement</span>
                     <span className="text-lg font-extrabold text-slate-900 font-mono">
-                      {ga4Status.metrics.avgDurationSec ? `${ga4Status.metrics.avgDurationSec}s` : '2m 14s'}
+                      {ga4Status.metrics.avgDurationSec ? `${ga4Status.metrics.avgDurationSec}s` : '—'}
                     </span>
                   </div>
                 </div>
@@ -359,6 +363,17 @@ export const IntegrationsSettingsTab: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Disconnect GA4 Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={showDisconnectModal}
+        title="Disconnect Google Analytics 4"
+        itemName={ga4Status.propertyName || ga4Status.propertyId || 'GA4 Property'}
+        message="Are you sure you want to disconnect Google Analytics 4 from this business? Real-time organic session streaming will be paused."
+        confirmLabel="Disconnect GA4"
+        onConfirm={handleDisconnectGa4}
+        onClose={() => setShowDisconnectModal(false)}
+      />
     </div>
   );
 };

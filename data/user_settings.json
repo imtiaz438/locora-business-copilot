@@ -1,0 +1,31 @@
+{
+  "imtiazbaloch3322@gmail.com": {
+    "activeProvider": "groq",
+    "activeModelVersion": "llama-3.3-70b-versatile",
+    "providerModels": {
+      "groq": "llama-3.3-70b-versatile",
+      "gemini": "gemini-3.7-flash",
+      "openai": "gpt-4o",
+      "claude": "claude-3-7-sonnet-20250219",
+      "perplexity": "sonar-pro",
+      "deepseek": "deepseek-chat"
+    },
+    "providerKeys": {
+      "gemini": "AQ.Ab8RN6JDxo2oIFLILYqBLAomlFk6NtK0U8CMcD4Y3ukuuRGm0A",
+      "openai": "",
+      "claude": "",
+      "perplexity": "",
+      "deepseek": "",
+      "groq": "",
+      "opus": "",
+      "cursor": "",
+      "grok": ""
+    },
+    "theme": "dark",
+    "autoSave": true,
+    "defaultCurrency": "USD",
+    "defaultTaxRate": 0,
+    "userKeyStatus": {},
+    "userEmail": "imtiazbaloch3322@gmail.com"
+  }
+}

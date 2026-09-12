@@ -1,0 +1,860 @@
+{
+  "biz_imtiazbaloch3322_gmail_com": {
+    "id": "biz_imtiazbaloch3322_gmail_com",
+    "planTier": "agency",
+    "userEmail": "imtiazbaloch3322@gmail.com",
+    "createdAt": "2026-09-10T14:03:06.299Z",
+    "updatedAt": "2026-09-10T14:03:06.299Z",
+    "identity": {
+      "name": "Locora AI",
+      "tagline": "Software & AI Marketing",
+      "website": "locoraai.com",
+      "phone": "",
+      "address": "",
+      "city": "",
+      "state": "",
+      "zip": "",
+      "country": "United States",
+      "category": "Software & AI Marketing",
+      "industry": "Software & AI Marketing",
+      "targetLocations": [],
+      "services": []
+    },
+    "websiteAudit": {
+      "url": "locoraai.com",
+      "isSsl": false,
+      "httpStatus": 0,
+      "latencyMs": 0,
+      "performanceScore": 0,
+      "seoScore": 0,
+      "accessibilityScore": 0,
+      "mobileFriendly": false,
+      "wordCount": 0,
+      "hasSchema": false,
+      "schemaTypes": [],
+      "metaTitle": "",
+      "metaDescription": "",
+      "h1Matches": [],
+      "h2Matches": [],
+      "issues": [],
+      "lastCrawledAt": "",
+      "source": "own_crawler"
+    },
+    "gbpData": {
+      "connected": false,
+      "listingName": "",
+      "rating": 0,
+      "reviewCount": 0,
+      "unansweredReviews": 0,
+      "category": "Software & AI Marketing",
+      "businessHours": [],
+      "photosCount": 0,
+      "primaryPhone": "",
+      "address": "",
+      "attributes": [],
+      "lastSyncedAt": "",
+      "source": "google_places"
+    },
+    "reviews": [],
+    "localPack": {
+      "query": "Software & AI Marketing in Local Area",
+      "location": "",
+      "businessName": "Locora AI",
+      "rankPosition": 0,
+      "inThreePack": false,
+      "competitorsInPack": [],
+      "lastTrackedAt": "",
+      "source": "low_cost_serp"
+    },
+    "competitors": [],
+    "keywords": [],
+    "traffic": {
+      "sessions": 0,
+      "pageviews": 0,
+      "bounceRate": 0,
+      "avgDurationSec": 0,
+      "topChannels": [],
+      "gscClicks": 0,
+      "gscImpressions": 0,
+      "avgPosition": 0,
+      "lastSyncedAt": "",
+      "source": "ga4"
+    },
+    "aiVisibility": {
+      "score": 0,
+      "chatGptMentioned": false,
+      "perplexityRank": 0,
+      "geminiCitation": false,
+      "claudeRecommendation": false,
+      "brandSentimentScore": 0,
+      "samplePromptEvaluated": "Best Software & AI Marketing in local area",
+      "monitoringFrequency": "scheduled_weekly",
+      "lastCheckedAt": ""
+    },
+    "businessBrain": {
+      "score": 0,
+      "readinessScore": 0,
+      "swot": {
+        "strengths": [],
+        "weaknesses": [
+          "Website technical audit pending live crawl",
+          "Google Business Profile not yet connected"
+        ],
+        "opportunities": [
+          "Run a live website crawl to index meta tags and schema markup",
+          "Connect Google Business Profile to track reviews and rankings"
+        ],
+        "threats": []
+      },
+      "priorityActions": [
+        {
+          "id": "act_live_crawl",
+          "urgency": "high",
+          "urgencyLabel": "AUDIT PENDING",
+          "title": "Run Live Technical Website Crawl",
+          "problem": "Locora crawler has not yet audited your domain.",
+          "whyItMatters": "We inspect HTML, server response latency, SSL certificate, headings, and JSON-LD schema to benchmark search readiness.",
+          "evidence": "0 crawls recorded for this website.",
+          "expectedImpact": "Generates comprehensive on-page SEO health score and discovers crawl errors.",
+          "actionType": "schema_fix",
+          "actionLabel": "Run Website Audit",
+          "recommendationTitle": "Run Technical SEO Audit",
+          "isFixed": false
+        },
+        {
+          "id": "act_connect_gbp",
+          "urgency": "medium",
+          "urgencyLabel": "INTEGRATION",
+          "title": "Connect Google Business Profile",
+          "problem": "No Google Maps or Places listing linked.",
+          "whyItMatters": "Syncing live reviews and local 3-pack placement requires connecting your Google listing.",
+          "evidence": "GBP status: Unconnected.",
+          "expectedImpact": "Enables live review monitoring and automated review replies.",
+          "actionType": "respond_reviews",
+          "actionLabel": "Connect Google",
+          "recommendationTitle": "Link GBP Profile",
+          "isFixed": false
+        }
+      ],
+      "aiSynthesizedAt": "2026-09-10T14:03:06.299Z",
+      "source": "locora_db"
+    },
+    "history": [],
+    "leadCache": {
+      "totalFound": 0,
+      "verifiedCount": 0,
+      "highIntentCount": 0,
+      "lastProspectingRunAt": "",
+      "sampleLeads": []
+    },
+    "oneTimeProducts": {
+      "fuelPacksPurchased": 0,
+      "totalExtraCredits": 0,
+      "activeSprint": null,
+      "customOnboardingScheduled": false
+    },
+    "dataSources": {
+      "crawler": {
+        "status": "pending",
+        "lastSync": ""
+      },
+      "places": {
+        "status": "unconnected",
+        "lastSync": ""
+      },
+      "serp": {
+        "status": "unconnected",
+        "lastSync": ""
+      },
+      "analytics": {
+        "status": "unconnected",
+        "lastSync": ""
+      }
+    }
+  },
+  "biz_newuser_example_com": {
+    "id": "biz_newuser_example_com",
+    "planTier": "free",
+    "userEmail": "newuser@example.com",
+    "createdAt": "2026-09-12T14:51:08.612Z",
+    "updatedAt": "2026-09-12T14:51:08.613Z",
+    "identity": {
+      "name": "Example Domain",
+      "tagline": "Local Services",
+      "website": "example.com",
+      "phone": "",
+      "address": "",
+      "city": "",
+      "state": "",
+      "zip": "",
+      "country": "United States",
+      "category": "Local Services",
+      "industry": "Local Services",
+      "targetLocations": [],
+      "services": []
+    },
+    "websiteAudit": {
+      "url": "https://example.com/",
+      "analyzedAt": "2026-09-12T14:51:02.148Z",
+      "overallScore": 57,
+      "seoScore": 65,
+      "performanceScore": 96,
+      "latencyMs": 51,
+      "isSsl": true,
+      "metaTitle": "Example Domain",
+      "metaDescription": "",
+      "h1Matches": [
+        "Example Domain"
+      ],
+      "hasSchema": false,
+      "schemaTypes": [],
+      "wordCount": 0,
+      "issues": [
+        {
+          "id": "iss_schema",
+          "type": "critical",
+          "category": "performance",
+          "title": "Missing LocalBusiness Structured Data (JSON-LD)",
+          "description": "Your website lacks Schema.org LocalBusiness markup. Google Search, Apple Maps, and AI assistants (ChatGPT, Perplexity) cannot unambiguously identify your business category, address, or operating hours.",
+          "recommendation": "0 LocalBusiness schema blocks detected in HTML document."
+        },
+        {
+          "id": "iss_desc",
+          "type": "warning",
+          "category": "seo",
+          "title": "Missing Meta Description Tag",
+          "description": "Google must guess what snippet to show searchers. A missing meta description directly lowers click-through rates in organic local search results.",
+          "recommendation": "No <meta name=\"description\"> tag found in header."
+        },
+        {
+          "id": "iss_phone",
+          "type": "warning",
+          "category": "performance",
+          "title": "No Direct Phone (tel:) Link Detected",
+          "description": "Mobile visitors and local search bots look for a clickable tel: link to immediately call your office.",
+          "recommendation": "No href=\"tel:...\" found on the crawled homepage."
+        }
+      ]
+    },
+    "gbpData": {
+      "connected": false,
+      "listingName": "",
+      "rating": 0,
+      "reviewCount": 0,
+      "unansweredReviews": 0,
+      "category": "Local Services",
+      "businessHours": [],
+      "photosCount": 0,
+      "primaryPhone": "",
+      "address": "",
+      "attributes": [],
+      "lastSyncedAt": "",
+      "source": "google_places"
+    },
+    "reviews": [],
+    "localPack": {
+      "query": "Local Services in Local Area",
+      "location": "",
+      "businessName": "Example Domain",
+      "rankPosition": 0,
+      "inThreePack": false,
+      "competitorsInPack": [],
+      "lastTrackedAt": "",
+      "source": "low_cost_serp"
+    },
+    "competitors": [],
+    "keywords": [],
+    "traffic": {
+      "sessions": 0,
+      "pageviews": 0,
+      "bounceRate": 0,
+      "avgDurationSec": 0,
+      "topChannels": [],
+      "gscClicks": 0,
+      "gscImpressions": 0,
+      "avgPosition": 0,
+      "lastSyncedAt": "",
+      "source": "ga4"
+    },
+    "aiVisibility": {
+      "score": 0,
+      "chatGptMentioned": false,
+      "perplexityRank": 0,
+      "geminiCitation": false,
+      "claudeRecommendation": false,
+      "brandSentimentScore": 0,
+      "samplePromptEvaluated": "Best Local Services in local area",
+      "monitoringFrequency": "scheduled_weekly",
+      "lastCheckedAt": ""
+    },
+    "businessBrain": {
+      "score": 79,
+      "readinessScore": 85,
+      "swot": {
+        "strengths": [
+          "Fast and secure web foundation (51ms response time, active SSL)."
+        ],
+        "weaknesses": [
+          "Missing LocalBusiness Schema.org JSON-LD structured data.",
+          "Currently outside the Google Maps 3-Pack (Ranking #4)."
+        ],
+        "opportunities": [
+          "Publishing dedicated geo-targeted service pages for primary service area to capture high-intent searchers.",
+          "Injecting verified Schema markup to unlock AI search assistant citations in ChatGPT and Perplexity."
+        ],
+        "threats": [
+          "Competitors with active schema markup are capturing AI search queries."
+        ]
+      },
+      "priorityActions": [
+        {
+          "id": "act_schema_1789224668614",
+          "urgency": "high",
+          "urgencyLabel": "HIGH IMPACT",
+          "title": "Inject Missing LocalBusiness Schema",
+          "problem": "Website has no JSON-LD structured data detected by crawlers.",
+          "whyItMatters": "Search engines require Schema markup to verify business NAP (Name, Address, Phone) and operating hours.",
+          "evidence": "0 schema tags found during crawler scan.",
+          "expectedImpact": "+10% to +15% lift in local Maps ranking signals.",
+          "actionType": "schema_fix",
+          "actionLabel": "Fix Schema Now",
+          "recommendationTitle": "Inject LocalBusiness Schema.org",
+          "isFixed": false
+        },
+        {
+          "id": "act_geo_1789224668614",
+          "urgency": "opportunity",
+          "urgencyLabel": "OPPORTUNITY",
+          "title": "Generate Geo-Targeted Service Landing Page",
+          "problem": "Missing dedicated URL targeting primary commercial keywords.",
+          "whyItMatters": "Targeted location pages rank significantly faster for neighborhood-specific queries.",
+          "evidence": "Competitors are capturing traffic for service in .",
+          "expectedImpact": "Win top 3 organic ranking and increase direct inbound calls.",
+          "actionType": "create_page",
+          "actionLabel": "Create Geo Page",
+          "recommendationTitle": "Generate High-Intent Geo Page",
+          "isFixed": false
+        }
+      ],
+      "targetKeywords": [],
+      "activeOffers": [
+        "New Customer Special: Contact Example Domain Today",
+        "Emergency & Same-Day Priority Scheduling"
+      ],
+      "voicePersona": "Authoritative, caring, and locally rooted",
+      "executiveSummary": "Example Domain holds a 79/100 Business Brain health score. With 0 customer reviews (0★) and a 65/100 SEO score, the fastest pathway to Google 3-Pack supremacy is resolving the 0 unanswered reviews and injecting LocalBusiness schema.",
+      "lastSynthesizedAt": "2026-09-12T14:51:08.614Z"
+    },
+    "history": [],
+    "leadCache": {
+      "totalCount": 0,
+      "leads": [],
+      "exports": []
+    },
+    "oneTimeProducts": {
+      "businessAudit": {
+        "available": true,
+        "price": 19,
+        "purchasedCount": 0
+      },
+      "whiteLabelAudit": {
+        "available": true,
+        "price": 29,
+        "purchasedCount": 0
+      },
+      "leadPacks": {
+        "pack250Purchased": 0,
+        "pack500Purchased": 0,
+        "pack1000Purchased": 0
+      },
+      "aiActionTopUps": {
+        "actions50Purchased": 0,
+        "actions150Purchased": 0,
+        "actions500Purchased": 0,
+        "remainingBalance": 50
+      }
+    },
+    "dataSources": {
+      "crawler": {
+        "provider": "own_crawler",
+        "last_sync": "",
+        "data_freshness": "fresh",
+        "cost": 0,
+        "confidence": 0,
+        "status": "warning"
+      },
+      "places": {
+        "provider": "google_places",
+        "last_sync": "",
+        "data_freshness": "cached",
+        "cost": 0,
+        "confidence": 0,
+        "status": "warning"
+      },
+      "serp": {
+        "provider": "low_cost_serp",
+        "last_sync": "",
+        "data_freshness": "cached",
+        "cost": 0,
+        "confidence": 0,
+        "status": "warning"
+      },
+      "analytics": {
+        "provider": "ga4",
+        "last_sync": "",
+        "data_freshness": "fresh",
+        "cost": 0,
+        "confidence": 0,
+        "status": "warning"
+      }
+    }
+  },
+  "biz_testaudituser_locora_test": {
+    "id": "biz_testaudituser_locora_test",
+    "planTier": "free",
+    "userEmail": "testaudituser@locora.test",
+    "createdAt": "2026-09-12T14:59:26.857Z",
+    "updatedAt": "2026-09-12T14:59:26.858Z",
+    "identity": {
+      "name": "Example Domain",
+      "tagline": "Local Services",
+      "website": "example.com",
+      "phone": "",
+      "address": "",
+      "city": "",
+      "state": "",
+      "zip": "",
+      "country": "United States",
+      "category": "Local Services",
+      "industry": "Local Services",
+      "targetLocations": [],
+      "services": []
+    },
+    "websiteAudit": {
+      "url": "https://example.com/",
+      "lastCrawledAt": "2026-09-12T14:59:24.651Z",
+      "httpStatus": 200,
+      "latencyMs": 36,
+      "isSsl": true,
+      "performanceScore": 96,
+      "seoScore": 65,
+      "accessibilityScore": 85,
+      "mobileFriendly": true,
+      "wordCount": 0,
+      "hasSchema": false,
+      "schemaTypes": [],
+      "metaTitle": "Example Domain",
+      "metaDescription": "",
+      "h1Matches": [
+        "Example Domain"
+      ],
+      "h2Matches": [],
+      "issues": [
+        {
+          "id": "iss_schema",
+          "type": "critical",
+          "category": "performance",
+          "title": "Missing LocalBusiness Structured Data (JSON-LD)",
+          "description": "Your website lacks Schema.org LocalBusiness markup. Google Search, Apple Maps, and AI assistants (ChatGPT, Perplexity) cannot unambiguously identify your business category, address, or operating hours.",
+          "recommendation": "0 LocalBusiness schema blocks detected in HTML document."
+        },
+        {
+          "id": "iss_desc",
+          "type": "warning",
+          "category": "seo",
+          "title": "Missing Meta Description Tag",
+          "description": "Google must guess what snippet to show searchers. A missing meta description directly lowers click-through rates in organic local search results.",
+          "recommendation": "No <meta name=\"description\"> tag found in header."
+        },
+        {
+          "id": "iss_phone",
+          "type": "warning",
+          "category": "performance",
+          "title": "No Direct Phone (tel:) Link Detected",
+          "description": "Mobile visitors and local search bots look for a clickable tel: link to immediately call your office.",
+          "recommendation": "No href=\"tel:...\" found on the crawled homepage."
+        }
+      ],
+      "source": "own_crawler"
+    },
+    "gbpData": {
+      "connected": false,
+      "listingName": "",
+      "rating": 0,
+      "reviewCount": 0,
+      "unansweredReviews": 0,
+      "category": "Local Services",
+      "businessHours": [],
+      "photosCount": 0,
+      "primaryPhone": "",
+      "address": "",
+      "attributes": [],
+      "lastSyncedAt": "",
+      "source": "google_places"
+    },
+    "reviews": [],
+    "localPack": {
+      "query": "Local Services in Local Area",
+      "location": "",
+      "businessName": "Example Domain",
+      "rankPosition": 0,
+      "inThreePack": false,
+      "competitorsInPack": [],
+      "lastTrackedAt": "",
+      "source": "low_cost_serp"
+    },
+    "competitors": [],
+    "keywords": [],
+    "traffic": {
+      "sessions": 0,
+      "pageviews": 0,
+      "bounceRate": 0,
+      "avgDurationSec": 0,
+      "topChannels": [],
+      "gscClicks": 0,
+      "gscImpressions": 0,
+      "avgPosition": 0,
+      "lastSyncedAt": "",
+      "source": "ga4"
+    },
+    "aiVisibility": {
+      "score": 0,
+      "chatGptMentioned": false,
+      "perplexityRank": 0,
+      "geminiCitation": false,
+      "claudeRecommendation": false,
+      "brandSentimentScore": 0,
+      "samplePromptEvaluated": "Best Local Services in local area",
+      "monitoringFrequency": "scheduled_weekly",
+      "lastCheckedAt": ""
+    },
+    "businessBrain": {
+      "score": 79,
+      "readinessScore": 85,
+      "swot": {
+        "strengths": [
+          "Fast and secure web foundation (36ms response time, active SSL)."
+        ],
+        "weaknesses": [
+          "Missing LocalBusiness Schema.org JSON-LD structured data.",
+          "Currently outside the Google Maps 3-Pack (Ranking #4)."
+        ],
+        "opportunities": [
+          "Publishing dedicated geo-targeted service pages for primary service area to capture high-intent searchers.",
+          "Injecting verified Schema markup to unlock AI search assistant citations in ChatGPT and Perplexity."
+        ],
+        "threats": [
+          "Competitors with active schema markup are capturing AI search queries."
+        ]
+      },
+      "priorityActions": [
+        {
+          "id": "act_schema_1789225166858",
+          "urgency": "high",
+          "urgencyLabel": "HIGH IMPACT",
+          "title": "Inject Missing LocalBusiness Schema",
+          "problem": "Website has no JSON-LD structured data detected by crawlers.",
+          "whyItMatters": "Search engines require Schema markup to verify business NAP (Name, Address, Phone) and operating hours.",
+          "evidence": "0 schema tags found during crawler scan.",
+          "expectedImpact": "+10% to +15% lift in local Maps ranking signals.",
+          "actionType": "schema_fix",
+          "actionLabel": "Fix Schema Now",
+          "recommendationTitle": "Inject LocalBusiness Schema.org",
+          "isFixed": false
+        },
+        {
+          "id": "act_geo_1789225166858",
+          "urgency": "opportunity",
+          "urgencyLabel": "OPPORTUNITY",
+          "title": "Generate Geo-Targeted Service Landing Page",
+          "problem": "Missing dedicated URL targeting primary commercial keywords.",
+          "whyItMatters": "Targeted location pages rank significantly faster for neighborhood-specific queries.",
+          "evidence": "Competitors are capturing traffic for service in .",
+          "expectedImpact": "Win top 3 organic ranking and increase direct inbound calls.",
+          "actionType": "create_page",
+          "actionLabel": "Create Geo Page",
+          "recommendationTitle": "Generate High-Intent Geo Page",
+          "isFixed": false
+        }
+      ],
+      "targetKeywords": [],
+      "activeOffers": [
+        "New Customer Special: Contact Example Domain Today",
+        "Emergency & Same-Day Priority Scheduling"
+      ],
+      "voicePersona": "Authoritative, caring, and locally rooted",
+      "executiveSummary": "Example Domain holds a 79/100 Business Brain health score. With 0 customer reviews (0★) and a 65/100 SEO score, the fastest pathway to Google 3-Pack supremacy is resolving the 0 unanswered reviews and injecting LocalBusiness schema.",
+      "lastSynthesizedAt": "2026-09-12T14:59:26.858Z"
+    },
+    "history": [],
+    "leadCache": {
+      "totalCount": 0,
+      "leads": [],
+      "exports": []
+    },
+    "oneTimeProducts": {
+      "businessAudit": {
+        "available": true,
+        "price": 19,
+        "purchasedCount": 0
+      },
+      "whiteLabelAudit": {
+        "available": true,
+        "price": 29,
+        "purchasedCount": 0
+      },
+      "leadPacks": {
+        "pack250Purchased": 0,
+        "pack500Purchased": 0,
+        "pack1000Purchased": 0
+      },
+      "aiActionTopUps": {
+        "actions50Purchased": 0,
+        "actions150Purchased": 0,
+        "actions500Purchased": 0,
+        "remainingBalance": 50
+      }
+    },
+    "dataSources": {
+      "crawler": {
+        "provider": "own_crawler",
+        "last_sync": "",
+        "data_freshness": "fresh",
+        "cost": 0,
+        "confidence": 0,
+        "status": "warning"
+      },
+      "places": {
+        "provider": "google_places",
+        "last_sync": "",
+        "data_freshness": "cached",
+        "cost": 0,
+        "confidence": 0,
+        "status": "warning"
+      },
+      "serp": {
+        "provider": "low_cost_serp",
+        "last_sync": "",
+        "data_freshness": "cached",
+        "cost": 0,
+        "confidence": 0,
+        "status": "warning"
+      },
+      "analytics": {
+        "provider": "ga4",
+        "last_sync": "",
+        "data_freshness": "fresh",
+        "cost": 0,
+        "confidence": 0,
+        "status": "warning"
+      }
+    }
+  },
+  "biz_secondbusiness_locora_test": {
+    "id": "biz_secondbusiness_locora_test",
+    "planTier": "free",
+    "userEmail": "secondbusiness@locora.test",
+    "createdAt": "2026-09-12T15:00:07.562Z",
+    "updatedAt": "2026-09-12T15:00:07.562Z",
+    "identity": {
+      "name": "My Local Business",
+      "tagline": "Professional Services",
+      "website": "locora.test",
+      "phone": "",
+      "address": "",
+      "city": "",
+      "state": "",
+      "zip": "",
+      "country": "United States",
+      "category": "Professional Services",
+      "industry": "Professional Services",
+      "targetLocations": [],
+      "services": []
+    },
+    "websiteAudit": {
+      "url": "locora.test",
+      "isSsl": false,
+      "httpStatus": 0,
+      "latencyMs": 0,
+      "performanceScore": 0,
+      "seoScore": 0,
+      "accessibilityScore": 0,
+      "mobileFriendly": false,
+      "wordCount": 0,
+      "hasSchema": false,
+      "schemaTypes": [],
+      "metaTitle": "",
+      "metaDescription": "",
+      "h1Matches": [],
+      "h2Matches": [],
+      "issues": [],
+      "lastCrawledAt": "",
+      "source": "own_crawler"
+    },
+    "gbpData": {
+      "connected": false,
+      "listingName": "",
+      "rating": 0,
+      "reviewCount": 0,
+      "unansweredReviews": 0,
+      "category": "Professional Services",
+      "businessHours": [],
+      "photosCount": 0,
+      "primaryPhone": "",
+      "address": "",
+      "attributes": [],
+      "lastSyncedAt": "",
+      "source": "google_places"
+    },
+    "reviews": [],
+    "localPack": {
+      "query": "Professional Services in Local Area",
+      "location": "",
+      "businessName": "My Local Business",
+      "rankPosition": 0,
+      "inThreePack": false,
+      "competitorsInPack": [],
+      "lastTrackedAt": "",
+      "source": "low_cost_serp"
+    },
+    "competitors": [],
+    "keywords": [],
+    "traffic": {
+      "sessions": 0,
+      "pageviews": 0,
+      "bounceRate": 0,
+      "avgDurationSec": 0,
+      "topChannels": [],
+      "gscClicks": 0,
+      "gscImpressions": 0,
+      "avgPosition": 0,
+      "lastSyncedAt": "",
+      "source": "ga4"
+    },
+    "aiVisibility": {
+      "score": 0,
+      "chatGptMentioned": false,
+      "perplexityRank": 0,
+      "geminiCitation": false,
+      "claudeRecommendation": false,
+      "brandSentimentScore": 0,
+      "samplePromptEvaluated": "Best Professional Services in local area",
+      "monitoringFrequency": "scheduled_weekly",
+      "lastCheckedAt": ""
+    },
+    "businessBrain": {
+      "score": 0,
+      "readinessScore": 0,
+      "swot": {
+        "strengths": [],
+        "weaknesses": [
+          "Website technical audit pending live crawl",
+          "Google Business Profile not yet connected"
+        ],
+        "opportunities": [
+          "Run a live website crawl to index meta tags and schema markup",
+          "Connect Google Business Profile to track reviews and rankings"
+        ],
+        "threats": []
+      },
+      "priorityActions": [
+        {
+          "id": "act_live_crawl",
+          "urgency": "high",
+          "urgencyLabel": "AUDIT PENDING",
+          "title": "Run Live Technical Website Crawl",
+          "problem": "Locora crawler has not yet audited your domain.",
+          "whyItMatters": "We inspect HTML, server response latency, SSL certificate, headings, and JSON-LD schema to benchmark search readiness.",
+          "evidence": "0 crawls recorded for this website.",
+          "expectedImpact": "Generates comprehensive on-page SEO health score and discovers crawl errors.",
+          "actionType": "schema_fix",
+          "actionLabel": "Run Website Audit",
+          "recommendationTitle": "Run Technical SEO Audit",
+          "isFixed": false
+        },
+        {
+          "id": "act_connect_gbp",
+          "urgency": "opportunity",
+          "urgencyLabel": "INTEGRATION",
+          "title": "Connect Google Business Profile",
+          "problem": "No Google Maps or Places listing linked.",
+          "whyItMatters": "Syncing live reviews and local 3-pack placement requires connecting your Google listing.",
+          "evidence": "GBP status: Unconnected.",
+          "expectedImpact": "Enables live review monitoring and automated review replies.",
+          "actionType": "respond_reviews",
+          "actionLabel": "Connect Google",
+          "recommendationTitle": "Link GBP Profile",
+          "isFixed": false
+        }
+      ],
+      "targetKeywords": [],
+      "activeOffers": [],
+      "voicePersona": "Authoritative, strategic, and growth-focused",
+      "executiveSummary": "Ready to analyze My Local Business performance and optimize local ranking.",
+      "lastSynthesizedAt": "2026-09-12T15:00:07.562Z"
+    },
+    "history": [],
+    "leadCache": {
+      "totalCount": 0,
+      "leads": [],
+      "exports": []
+    },
+    "oneTimeProducts": {
+      "businessAudit": {
+        "available": true,
+        "price": 19,
+        "purchasedCount": 0
+      },
+      "whiteLabelAudit": {
+        "available": true,
+        "price": 29,
+        "purchasedCount": 0
+      },
+      "leadPacks": {
+        "pack250Purchased": 0,
+        "pack500Purchased": 0,
+        "pack1000Purchased": 0
+      },
+      "aiActionTopUps": {
+        "actions50Purchased": 0,
+        "actions150Purchased": 0,
+        "actions500Purchased": 0,
+        "remainingBalance": 50
+      }
+    },
+    "dataSources": {
+      "crawler": {
+        "provider": "own_crawler",
+        "last_sync": "",
+        "data_freshness": "fresh",
+        "cost": 0,
+        "confidence": 0,
+        "status": "warning"
+      },
+      "places": {
+        "provider": "google_places",
+        "last_sync": "",
+        "data_freshness": "cached",
+        "cost": 0,
+        "confidence": 0,
+        "status": "warning"
+      },
+      "serp": {
+        "provider": "low_cost_serp",
+        "last_sync": "",
+        "data_freshness": "cached",
+        "cost": 0,
+        "confidence": 0,
+        "status": "warning"
+      },
+      "analytics": {
+        "provider": "ga4",
+        "last_sync": "",
+        "data_freshness": "fresh",
+        "cost": 0,
+        "confidence": 0,
+        "status": "warning"
+      }
+    }
+  }
+}

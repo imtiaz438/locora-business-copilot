@@ -185,23 +185,33 @@ export const BrandVoiceWizardModal: React.FC<Props> = ({ isOpen, onClose }) => {
           )}
 
           {step < 4 ? (
-            <button
-              onClick={() => {
-                if (user.planTier === 'free' && step >= 1) {
-                  if (confirm('Full 4-Step Brand Voice Wizard (Audience, Differentiators, Negative Words) is unlocked on Pro Growth ($29/mo) and Agency Elite.\n\nClick OK to Save your Step 1 Tone, or Cancel to upgrade.')) {
-                    handleSave();
-                  } else {
+            <div className="flex items-center gap-2">
+              {user.planTier === 'free' && step === 1 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
                     setCheckoutModalPlan('pro');
+                  }}
+                  className="px-3.5 py-2 rounded-xl border border-emerald-200 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 text-xs font-bold transition-all cursor-pointer"
+                >
+                  Unlock 4 Steps (Pro)
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  if (user.planTier === 'free' && step >= 1) {
+                    handleSave();
+                    return;
                   }
-                  return;
-                }
-                setStep(step + 1);
-              }}
-              className="px-5 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-sm"
-            >
-              <span>{user.planTier === 'free' ? 'Save Tone (Basic Free)' : 'Next Step'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+                  setStep(step + 1);
+                }}
+                className="px-5 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shadow-sm"
+              >
+                <span>{user.planTier === 'free' ? 'Save Tone (Free)' : 'Next Step'}</span>
+                {user.planTier !== 'free' && <ArrowRight className="w-3.5 h-3.5" />}
+              </button>
+            </div>
           ) : (
             <button
               onClick={handleSave}

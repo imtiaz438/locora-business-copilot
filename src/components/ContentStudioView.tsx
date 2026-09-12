@@ -1,21 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
+import { ContentRecord, ContentType, ContentStatus, ContentPlatform } from '../types';
+import { DeleteConfirmModal } from './common/DeleteConfirmModal';
+import { DataProvenanceBadge } from './common/DataProvenanceBadge';
 import {
   FileText,
   Sparkles,
   CheckCircle2,
   Copy,
-  Download,
   Edit3,
   Save,
-  Brain,
-  Share2,
   ExternalLink,
-  ChevronRight,
-  TrendingUp,
-  Search,
-  Zap,
-  ArrowRight,
   MapPin,
   Briefcase,
   Send,
@@ -24,792 +19,1085 @@ import {
   Instagram,
   HelpCircle,
   BookOpen,
+  Trash2,
+  Clock,
+  AlertCircle,
+  Filter,
+  Plus,
+  Search,
+  Tag,
+  Globe,
+  Building2,
+  Eye,
+  Check,
+  Calendar,
+  Layers,
+  ArrowRight,
+  ShieldCheck,
+  X,
+  Share2,
 } from 'lucide-react';
 
-type ContentType =
-  | 'google_post'
-  | 'service_page'
-  | 'location_page'
-  | 'faq'
-  | 'blog_guide'
-  | 'review_response'
-  | 'email'
-  | 'social_post';
+const CONTENT_TYPE_LABELS: Record<ContentType, { label: string; icon: React.ElementType; color: string }> = {
+  google_post: { label: 'Google Post', icon: Sparkles, color: 'text-blue-600 bg-blue-50 border-blue-200' },
+  service_page: { label: 'Service Page', icon: Briefcase, color: 'text-indigo-600 bg-indigo-50 border-indigo-200' },
+  location_page: { label: 'Location Page', icon: MapPin, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+  website_content: { label: 'Website Content', icon: Globe, color: 'text-teal-600 bg-teal-50 border-teal-200' },
+  faq: { label: 'Local FAQ', icon: HelpCircle, color: 'text-amber-600 bg-amber-50 border-amber-200' },
+  blog_guide: { label: 'Blog / Guide', icon: BookOpen, color: 'text-purple-600 bg-purple-50 border-purple-200' },
+  review_reply: { label: 'Review Reply', icon: MessageSquare, color: 'text-rose-600 bg-rose-50 border-rose-200' },
+  social_post: { label: 'Social Post', icon: Instagram, color: 'text-pink-600 bg-pink-50 border-pink-200' },
+  offer: { label: 'Special Offer', icon: Tag, color: 'text-orange-600 bg-orange-50 border-orange-200' },
+  email: { label: 'Email Campaign', icon: Mail, color: 'text-sky-600 bg-sky-50 border-sky-200' },
+  draft: { label: 'Content Draft', icon: FileText, color: 'text-slate-600 bg-slate-50 border-slate-200' },
+};
 
-interface GeneratedContentOutput {
-  titleTag: string;
-  h1: string;
-  mainValueProp: string;
-  keySections: { title: string; content: string }[];
-  faq: { question: string; answer: string }[];
-  cta: { buttonText: string; subtext: string };
-  internalLinking: { targetUrl: string; anchorText: string; reason: string }[];
-  // Metrics specified in Section 17
-  metrics: {
-    seoScore: number;
-    searchIntent: string;
-    localRelevance: number;
-    conversionRating: string;
-  };
-}
+const STATUS_BADGES: Record<ContentStatus, { label: string; color: string }> = {
+  draft: { label: 'Draft', color: 'bg-slate-100 text-slate-700 border-slate-200' },
+  review: { label: 'In Review', color: 'bg-amber-100 text-amber-800 border-amber-200' },
+  approved: { label: 'Approved', color: 'bg-blue-100 text-blue-800 border-blue-200' },
+  scheduled: { label: 'Scheduled', color: 'bg-purple-100 text-purple-800 border-purple-200' },
+  published: { label: 'Published', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
+  failed: { label: 'Publish Failed', color: 'bg-rose-100 text-rose-800 border-rose-200' },
+  archived: { label: 'Archived', color: 'bg-gray-100 text-gray-600 border-gray-200' },
+};
 
 export const ContentStudioView: React.FC = () => {
   const {
     activeBusiness,
     businessProfile,
-    setActiveTab,
+    contentRecords,
+    addContentRecord,
+    updateContentRecord,
+    deleteContentRecord,
     logActivity,
-    addDocument,
+    user,
+    setActiveTab,
   } = useApp();
 
-  const servicesList = useMemo(() => {
-    if (activeBusiness.services && activeBusiness.services.length > 0) {
-      return activeBusiness.services;
-    }
-    const cat = activeBusiness.category || 'Professional Services';
-    return [
-      `${cat} Solutions`,
-      `Emergency / Priority Support`,
-      `Consultation & Assessment`,
-      `Premium Custom Services`,
-      `Preventative Maintenance`,
-      `General ${cat}`,
-    ];
-  }, [activeBusiness]);
+  const brandVoice = businessProfile?.brandVoice || businessProfile?.toneOfVoice || (activeBusiness as any)?.brandVoice || 'Professional & Consultative';
+  const businessDescription = businessProfile?.description || (activeBusiness as any)?.description || '';
+  const targetCustomers = businessProfile?.targetCustomers || businessProfile?.targetAudience || (activeBusiness as any)?.targetCustomers || '';
+  const activeOffers = (businessProfile?.currentOffers && businessProfile.currentOffers.join(', ')) || (activeBusiness as any)?.offers || '';
 
-  const locationsList = useMemo(() => {
-    const locs: string[] = [];
-    if (activeBusiness.locations && activeBusiness.locations.length > 0) {
-      activeBusiness.locations.forEach((l) => {
-        if (l.city && !locs.includes(l.city)) locs.push(l.city);
-        if (l.name && !locs.includes(l.name)) locs.push(l.name);
+  // Filters & Search
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('all');
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // Modals & Active Record
+  const [isGeneratorOpen, setIsGeneratorOpen] = useState(false);
+  const [activeEditingRecord, setActiveEditingRecord] = useState<ContentRecord | null>(null);
+  const [recordToDelete, setRecordToDelete] = useState<ContentRecord | null>(null);
+  const [copiedToast, setCopiedToast] = useState(false);
+  const [publishActionLoading, setPublishActionLoading] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+
+  // Generator State
+  const [genType, setGenType] = useState<ContentType>('google_post');
+  const [genService, setGenService] = useState<string>('');
+  const [genCustomService, setGenCustomService] = useState<string>('');
+  const [genLocation, setGenLocation] = useState<string>('');
+  const [genCustomLocation, setGenCustomLocation] = useState<string>('');
+  const [genGoal, setGenGoal] = useState<string>('Drive inbound phone calls and service requests');
+  const [genKeyword, setGenKeyword] = useState<string>('');
+  const [genNotes, setGenNotes] = useState<string>('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
+
+  // Extract real services and locations from activeBusiness
+  const availableServices = useMemo(() => {
+    return Array.isArray(activeBusiness.services) && activeBusiness.services.length > 0
+      ? activeBusiness.services
+      : [];
+  }, [activeBusiness.services]);
+
+  const availableLocations = useMemo(() => {
+    const list: string[] = [];
+    if (Array.isArray(activeBusiness.locations)) {
+      activeBusiness.locations.forEach((loc) => {
+        if (loc.city && !list.includes(loc.city)) list.push(loc.city);
+        else if (loc.name && !list.includes(loc.name)) list.push(loc.name);
       });
     }
-    if (activeBusiness.city && !locs.includes(activeBusiness.city)) {
-      locs.push(activeBusiness.city);
+    if (activeBusiness.city && !list.includes(activeBusiness.city)) {
+      list.push(activeBusiness.city);
     }
-    if (locs.length === 0) locs.push('Metro Area', 'Downtown', 'North District');
-    return locs;
-  }, [activeBusiness]);
+    return list;
+  }, [activeBusiness.locations, activeBusiness.city]);
 
-  const [selectedType, setSelectedType] = useState<ContentType>('service_page');
-  const [selectedService, setSelectedService] = useState<string>(servicesList[0] || 'Core Services');
-  const [selectedLocation, setSelectedLocation] = useState<string>(locationsList[0] || 'Metro Area');
-  const [targetAngle, setTargetAngle] = useState<string>('Same-Day Response & Guaranteed Quality');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [savedSuccess, setSavedSuccess] = useState(false);
+  // Set initial generator selections when available
+  React.useEffect(() => {
+    if (!genService && availableServices.length > 0) {
+      setGenService(availableServices[0]);
+    }
+    if (!genLocation && availableLocations.length > 0) {
+      setGenLocation(availableLocations[0]);
+    }
+  }, [availableServices, availableLocations, genService, genLocation]);
 
-  // Default initial output dynamic to activeBusiness
-  const [output, setOutput] = useState<GeneratedContentOutput>(() => {
-    const sName = activeBusiness.name || 'Our Company';
-    const sCity = activeBusiness.city || 'Metro Area';
-    const sState = activeBusiness.state || 'TX';
-    const sService = activeBusiness.services?.[0] || 'Professional Services';
-    const sPhone = activeBusiness.phone || '(512) 555-0199';
+  // Multi-tenant business content scoping: Never allow Business A content in Business B!
+  const businessScopedRecords = useMemo(() => {
+    if (!activeBusiness?.id) return [];
+    return contentRecords.filter((rec) => {
+      return rec.business_id === activeBusiness.id || (rec as any).businessId === activeBusiness.id;
+    });
+  }, [contentRecords, activeBusiness?.id]);
 
-    return {
-      titleTag: `${sService} in ${sCity}, ${sState} | Top Rated & Same-Day | ${sName}`,
-      h1: `Premier ${sService} in ${sCity}, ${sState}`,
-      mainValueProp: `High-quality, reliable ${sService.toLowerCase()} tailored for lasting value, prompt turnaround, and 100% upfront pricing from ${sName}.`,
-      keySections: [
-        {
-          title: `1. Instant Response & Dedicated Expertise`,
-          content: `We understand the importance of timely service. ${sName} maintains reserved capacity specifically for urgent client needs, providing prompt dispatch and certified attention.`,
-        },
-        {
-          title: `2. What Sets Our ${sService} Apart in ${sCity}?`,
-          content: `We bring licensed professionals, modern diagnostic equipment, and honest estimates to every single project, ensuring peace of mind from start to finish.`,
-        },
-        {
-          title: '3. Guaranteed Quality & Workmanship',
-          content: `All services are executed using high-grade standards and tested protocols, delivering durable results without temporary band-aids.`,
-        },
-        {
-          title: '4. Transparent Estimates & Simple Invoicing',
-          content: `We believe in honest, clear pricing before any work starts. Flexible payment options and transparent quotes mean zero hidden fees.`,
-        },
-      ],
-      faq: [
-        {
-          question: `Can I request same-day service in ${sCity}?`,
-          answer: `Yes. Calling directly at ${sPhone} connects you immediately with our dispatch and consultation team for priority appointments.`,
-        },
-        {
-          question: `How do you calculate pricing for ${sService.toLowerCase()}?`,
-          answer: `We provide clear, upfront cost estimates based on your specific requirements before work commences.`,
-        },
-        {
-          question: `Do you guarantee customer satisfaction?`,
-          answer: `${sName} stands behind all work with our comprehensive client satisfaction guarantee.`,
-        },
-      ],
-      cta: {
-        buttonText: `Call ${sPhone} for Priority Booking`,
-        subtext: 'Fast Response • Certified Specialists • Satisfaction Guaranteed',
-      },
-      internalLinking: [
-        {
-          targetUrl: '/services',
-          anchorText: `${sService.toLowerCase()} in ${sCity}`,
-          reason: 'Boosts topical authority for primary service offerings',
-        },
-        {
-          targetUrl: '/contact',
-          anchorText: `contact ${sName}`,
-          reason: 'Passes link juice to high-intent conversion pathways',
-        },
-        {
-          targetUrl: '/locations',
-          anchorText: `${sCity} service center`,
-          reason: 'Reinforces geo-relevance for Google Local Search',
-        },
-      ],
-      metrics: {
-        seoScore: 88,
-        searchIntent: 'High (Commercial / Urgent)',
-        localRelevance: 94,
-        conversionRating: 'High',
-      },
-    };
-  });
+  // Filtered Content Records
+  const filteredRecords = useMemo(() => {
+    return businessScopedRecords.filter((rec) => {
+      if (selectedStatusFilter !== 'all' && rec.status !== selectedStatusFilter) return false;
+      if (selectedTypeFilter !== 'all' && rec.content_type !== selectedTypeFilter) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchesTitle = rec.title.toLowerCase().includes(q);
+        const matchesService = (rec.target_service || '').toLowerCase().includes(q);
+        const matchesLoc = (rec.target_location || '').toLowerCase().includes(q);
+        const matchesBody = rec.body.toLowerCase().includes(q);
+        if (!matchesTitle && !matchesService && !matchesLoc && !matchesBody) return false;
+      }
+      return true;
+    });
+  }, [businessScopedRecords, selectedStatusFilter, selectedTypeFilter, searchQuery]);
 
-  const contentTypes: { id: ContentType; label: string; icon: React.ElementType }[] = [
-    { id: 'google_post', label: 'Google Post', icon: Sparkles },
-    { id: 'service_page', label: 'Service Page', icon: Briefcase },
-    { id: 'location_page', label: 'Location Page', icon: MapPin },
-    { id: 'faq', label: 'FAQ', icon: HelpCircle },
-    { id: 'blog_guide', label: 'Blog/Guide', icon: BookOpen },
-    { id: 'review_response', label: 'Review Response', icon: MessageSquare },
-    { id: 'email', label: 'Email', icon: Mail },
-    { id: 'social_post', label: 'Social Post', icon: Instagram },
-  ];
-
-  const handleGenerate = () => {
+  // Handle AI Content Generation
+  const handleGenerateContent = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsGenerating(true);
-    setSavedSuccess(false);
+    setGenError(null);
 
-    setTimeout(() => {
+    const targetSvc = genService === '__custom__' || !genService ? genCustomService : genService;
+    const targetLoc = genLocation === '__custom__' || !genLocation ? genCustomLocation : genLocation;
+
+    if (!targetSvc && availableServices.length === 0 && !genCustomService) {
+      setGenError('Please specify a target service for content generation.');
       setIsGenerating(false);
+      return;
+    }
 
-      const sName = activeBusiness.name || 'Our Company';
-      const sPhone = activeBusiness.phone || '(512) 555-0199';
-      const sWebsite = activeBusiness.website || 'our website';
-      const sAddress = activeBusiness.address || 'Central Office';
-      const sCat = activeBusiness.category || 'Professional Services';
+    try {
+      const res = await fetch('/api/content/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId: activeBusiness.id,
+          contentType: genType,
+          targetService: targetSvc || 'General Services',
+          targetLocation: targetLoc || activeBusiness.city || 'Local Service Area',
+          targetGoal: genGoal,
+          targetKeyword: genKeyword,
+          customNotes: genNotes,
+          userEmail: user.email,
+          businessTruth: {
+            name: activeBusiness.name,
+            category: activeBusiness.category,
+            description: businessDescription,
+            services: activeBusiness.services,
+            locations: activeBusiness.locations,
+            brandVoice: brandVoice,
+            targetCustomers: targetCustomers,
+            phone: activeBusiness.phone,
+            website: activeBusiness.website,
+            offers: activeOffers,
+          },
+        }),
+      });
 
-      if (selectedType === 'google_post') {
-        setOutput({
-          titleTag: `${selectedLocation} Google Post: ${selectedService} Offer`,
-          h1: `🚨 Looking for dependable ${selectedService.toLowerCase()} in ${selectedLocation}? Priority slots open today!`,
-          mainValueProp: `${sName} is offering priority consultations and evaluations. Don't delay your critical ${sCat.toLowerCase()} needs.`,
-          keySections: [
-            {
-              title: 'Offer Details',
-              content: 'Upfront consultations with comprehensive assessments and honest estimates provided immediately on-site.',
-            },
-            {
-              title: 'Location & Timing',
-              content: `Serving ${selectedLocation} and surrounding areas. Located at ${sAddress}. Direct service with rapid turnaround.`,
-            },
-          ],
-          faq: [
-            {
-              question: 'Do you provide upfront pricing for this offer?',
-              answer: 'Yes, we provide 100% transparent pricing before any work commences.',
-            },
-          ],
-          cta: {
-            buttonText: 'Book Priority Slot Now',
-            subtext: `Call ${sPhone} or book online at ${sWebsite}`,
-          },
-          internalLinking: [
-            {
-              targetUrl: '/services',
-              anchorText: `${selectedService.toLowerCase()} ${selectedLocation}`,
-              reason: 'Directs Google Business Post viewers to fast booking',
-            },
-          ],
-          metrics: {
-            seoScore: 92,
-            searchIntent: 'Immediate Action',
-            localRelevance: 98,
-            conversionRating: 'High',
-          },
-        });
-      } else if (selectedType === 'location_page') {
-        setOutput({
-          titleTag: `Top Rated ${selectedService} in ${selectedLocation}, ${activeBusiness.state || 'TX'} | ${sName}`,
-          h1: `Comprehensive & Priority ${selectedService} in ${selectedLocation}`,
-          mainValueProp: `Serving clients and businesses across ${selectedLocation} with responsive, high-quality ${sCat.toLowerCase()}, modern equipment, and convenient appointment scheduling.`,
-          keySections: [
-            {
-              title: `Why ${selectedLocation} Clients Choose ${sName}`,
-              content: `Over ${activeBusiness.reviewCount || 100}+ five-star reviews praise our punctuality, transparent fee schedules, and courteous team.`,
-            },
-            {
-              title: 'Full Range of Service Solutions',
-              content: `From routine maintenance and preventative checkups to urgent same-day interventions and turnkey installations.`,
-            },
-          ],
-          faq: [
-            {
-              question: `How quickly can you dispatch a specialist to ${selectedLocation}?`,
-              answer: 'We maintain dedicated teams in the area with same-day emergency response times often under 60 minutes.',
-            },
-          ],
-          cta: {
-            buttonText: `Schedule Your ${selectedLocation} Consultation`,
-            subtext: 'Free Estimates Available • Fast Turnaround • Top Rated',
-          },
-          internalLinking: [
-            {
-              targetUrl: '/services',
-              anchorText: `comprehensive ${sCat.toLowerCase()} in ${selectedLocation}`,
-              reason: 'Builds location-to-service hub architecture',
-            },
-          ],
-          metrics: {
-            seoScore: 90,
-            searchIntent: 'Local High-Intent',
-            localRelevance: 96,
-            conversionRating: 'High',
-          },
-        });
-      } else {
-        // Service Page regeneration
-        setOutput({
-          titleTag: `${selectedService} in ${selectedLocation}, ${activeBusiness.state || 'TX'} | ${sName}`,
-          h1: `Advanced ${selectedService} in ${selectedLocation}`,
-          mainValueProp: `Experience top-tier ${selectedService.toLowerCase()} tailored for lasting quality, dependable reliability, and transparent pricing by ${sName}.`,
-          keySections: [
-            {
-              title: `1. Certified Expertise in ${selectedService}`,
-              content: `Our certified team utilizes state-of-the-art tools and proven protocols to deliver predictable, exceptional results every time.`,
-            },
-            {
-              title: '2. Client-First Communication & Guarantees',
-              content: 'Clear communication, prompt arrivals, and satisfaction guarantees throughout your entire project lifecycle.',
-            },
-            {
-              title: '3. Transparent Estimates & Honest Billing',
-              content: 'No hidden invoices. We outline your full scope and fees upfront so you have total clarity from the start.',
-            },
-          ],
-          faq: [
-            {
-              question: `How long does a typical ${selectedService.toLowerCase()} consultation take?`,
-              answer: 'Initial assessments take roughly 30-45 minutes, including on-site evaluation and your customized estimate.',
-            },
-            {
-              question: 'Do you offer flexible payment options for this service?',
-              answer: 'Yes, we provide flexible financing options and structured payment plans for major projects.',
-            },
-          ],
-          cta: {
-            buttonText: `Book ${selectedService} Consultation`,
-            subtext: 'Online Scheduling • Instant Confirmation • Friendly Professional Team',
-          },
-          internalLinking: [
-            {
-              targetUrl: '/contact',
-              anchorText: `schedule ${selectedService.toLowerCase()} in ${selectedLocation}`,
-              reason: 'Direct conversion path from high-intent service page',
-            },
-            {
-              targetUrl: '/pricing',
-              anchorText: `transparent ${sCat.toLowerCase()} pricing`,
-              reason: 'Reassures pricing-sensitive visitors',
-            },
-          ],
-          metrics: {
-            seoScore: 88,
-            searchIntent: 'High (Transactional)',
-            localRelevance: 94,
-            conversionRating: 'High',
-          },
-        });
+      const data = await res.json();
+      if (!res.ok || !data.record) {
+        throw new Error(data.error || 'Failed to generate content');
       }
 
-      logActivity('content', 'Content Studio Generated', `${selectedType.toUpperCase()}: ${selectedService} for ${selectedLocation}`);
-    }, 700);
+      await addContentRecord(data.record);
+      setIsGeneratorOpen(false);
+      setActiveEditingRecord(data.record);
+      logActivity('content', `Draft Generated: ${data.record.title}`, `Grounded in Business Brain for ${data.record.target_service}`);
+    } catch (err: any) {
+      setGenError(err.message || 'Generation failed. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  const handleCopyContent = () => {
-    const fullText = `
-# ${output.h1}
-Meta Title: ${output.titleTag}
-
-${output.mainValueProp}
-
-## Sections
-${output.keySections.map((s) => `### ${s.title}\n${s.content}\n`).join('\n')}
-
-## FAQs
-${output.faq.map((f) => `**Q: ${f.question}**\nA: ${f.answer}\n`).join('\n')}
-
-## CTA
-${output.cta.buttonText} (${output.cta.subtext})
-
-## Internal Linking
-${output.internalLinking.map((l) => `- [${l.anchorText}](${l.targetUrl}) (${l.reason})`).join('\n')}
-    `.trim();
-
-    navigator.clipboard.writeText(fullText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  // Handle Copy to Clipboard
+  const handleCopyContent = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedToast(true);
+    setTimeout(() => setCopiedToast(false), 2200);
   };
 
-  const handleSaveToWorkspace = () => {
-    const docType =
-      selectedType === 'service_page'
-        ? ('service_description' as const)
-        : selectedType === 'location_page'
-        ? ('landing_page_copy' as const)
-        : selectedType === 'google_post'
-        ? ('google_business_post' as const)
-        : selectedType === 'review_response'
-        ? ('review_reply' as const)
-        : selectedType === 'faq'
-        ? ('faq_page' as const)
-        : selectedType === 'email'
-        ? ('email' as const)
-        : ('blog_post' as const);
+  // Handle GBP Publication
+  const handlePublishToGbp = async (record: ContentRecord) => {
+    setPublishActionLoading(true);
+    setPublishError(null);
 
-    addDocument({
-      title: `${output.h1} (${selectedLocation})`,
-      type: docType,
-      content: `${output.titleTag}\n\n${output.mainValueProp}\n\n${output.keySections.map((s) => `${s.title}\n${s.content}`).join('\n\n')}`,
-      prompt: `${selectedService} in ${selectedLocation}`,
-    });
+    try {
+      const res = await fetch('/api/content/publish-gbp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contentId: record.id,
+          content: record.body,
+          googleLocationId: record.google_location_id,
+          userEmail: user.email,
+          businessId: activeBusiness.id,
+        }),
+      });
 
-    setSavedSuccess(true);
-    logActivity('content', 'Document Saved', `Saved "${output.h1}" to workspace documents library`);
-    setTimeout(() => setSavedSuccess(false), 3000);
-  };
+      const data = await res.json();
 
-  const handleExport = () => {
-    const htmlContent = `<!DOCTYPE html>
-<html>
-<head>
-  <title>${output.titleTag}</title>
-  <meta name="description" content="${output.mainValueProp}">
-</head>
-<body style="font-family: sans-serif; max-width: 800px; margin: 40px auto; line-height: 1.6; color: #1e293b;">
-  <h1>${output.h1}</h1>
-  <p style="font-size: 18px; color: #475569;"><strong>${output.mainValueProp}</strong></p>
-  <hr style="margin: 30px 0; border: 0; border-top: 1px solid #e2e8f0;" />
-  ${output.keySections.map((s) => `<h2>${s.title}</h2><p>${s.content}</p>`).join('')}
-  <h2>Frequently Asked Questions</h2>
-  ${output.faq.map((f) => `<div style="margin-bottom: 20px;"><h3>${f.question}</h3><p>${f.answer}</p></div>`).join('')}
-  <div style="margin-top: 40px; padding: 25px; background: #f8fafc; border-radius: 12px; border: 1px solid #cbd5e1;">
-    <a href="${activeBusiness.website || '#'}" style="display: inline-block; background: #059669; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-      ${output.cta.buttonText}
-    </a>
-    <p style="font-size: 12px; color: #64748b; margin-top: 8px;">${output.cta.subtext}</p>
-  </div>
-</body>
-</html>`;
+      if (!res.ok || !data.success) {
+        const errorMsg = data.error || 'Google Business Profile rejected post publication.';
+        setPublishError(errorMsg);
+        await updateContentRecord(record.id, {
+          status: 'failed',
+          errorMessage: errorMsg,
+        });
+        if (activeEditingRecord?.id === record.id) {
+          setActiveEditingRecord((prev) => prev ? { ...prev, status: 'failed', errorMessage: errorMsg } : null);
+        }
+        return;
+      }
 
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${output.h1.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
-    logActivity('content', 'Content Exported', `Exported "${output.h1}" as standalone HTML asset`);
+      const updated = await updateContentRecord(record.id, {
+        status: 'published',
+        published_at: data.published_at || new Date().toISOString(),
+        platform: 'gbp',
+        external_id: data.external_id,
+        google_location_id: data.google_location_id,
+        errorMessage: null,
+      });
+
+      if (activeEditingRecord?.id === record.id) {
+        setActiveEditingRecord(updated);
+      }
+      logActivity('content', `Published GBP Post`, `Live on Google Business Profile location`);
+    } catch (err: any) {
+      const msg = err.message || 'Network error while attempting GBP publication.';
+      setPublishError(msg);
+      await updateContentRecord(record.id, { status: 'failed', errorMessage: msg });
+    } finally {
+      setPublishActionLoading(false);
+    }
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto font-sans text-slate-900 space-y-8 pb-20">
-      {/* 1. HEADER (Section 16 Mandate: Don't call it 'AI Content Generator'. Call it: Content Studio) */}
-      <section className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+    <div id="content-cms-root" className="min-h-screen bg-slate-50 p-6 md:p-8 space-y-6">
+      {/* Header Banner */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+              <FileText className="w-5 h-5" />
+            </span>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Content Studio & CMS</h1>
+          </div>
+          <p className="text-sm text-slate-600 mt-1 max-w-2xl">
+            Ground and publish Google Business posts, service pages, FAQs, and local guides directly from{' '}
+            <span className="font-semibold text-slate-800">{activeBusiness.name || 'your Business Brain'}</span>.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            id="btn-create-manual-content"
+            onClick={() => {
+              const newRec: Omit<ContentRecord, 'id' | 'created_at' | 'updated_at'> = {
+                business_id: activeBusiness.id || 'primary',
+                content_type: 'draft',
+                title: 'New Content Entry',
+                body: '',
+                status: 'draft',
+                target_service: availableServices[0] || 'General',
+                target_location: availableLocations[0] || activeBusiness.city || 'Metro',
+                target_keyword: '',
+                created_by: user.email || 'user',
+                source: 'manual',
+                AI_generated: false,
+                published_at: null,
+                scheduled_at: null,
+                platform: 'website',
+                external_id: null,
+                google_location_id: null,
+                errorMessage: null,
+                performance: {
+                  available: false,
+                  message: 'Performance data is not available yet.',
+                },
+              };
+              addContentRecord(newRec).then((rec) => setActiveEditingRecord(rec));
+            }}
+            className="px-3.5 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors inline-flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Manual Entry
+          </button>
+
+          <button
+            id="btn-open-content-generator"
+            onClick={() => {
+              setGenError(null);
+              setIsGeneratorOpen(true);
+            }}
+            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 shadow-sm transition-colors inline-flex items-center gap-2"
+          >
+            <Sparkles className="w-4 h-4" />
+            Generate with Business Brain
+          </button>
+        </div>
+      </div>
+
+      {/* Business Brain Guardrail Notice */}
+      <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs md:text-sm text-indigo-950">
+        <div className="flex items-center gap-2.5">
+          <ShieldCheck className="w-5 h-5 text-indigo-600 flex-shrink-0" />
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#059669] font-heading">
-                Search-To-Customer Studio
-              </span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 tracking-tight flex items-center gap-2.5">
-              <FileText className="w-7 h-7 text-[#059669]" />
-              Content Studio
-            </h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Zero repetitive form filling. Locora already knows your business, services, locations, audience, and brand voice.
+            <span className="font-semibold text-indigo-900">Zero-Hallucination Policy: </span>
+            Content is generated strictly from verified business facts. Services, locations, hours, and claims are never invented.
+          </div>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-indigo-700 font-medium">
+          <span>Brand Voice: <strong className="text-indigo-900">{brandVoice}</strong></span>
+          <span>•</span>
+          <span>Services: <strong className="text-indigo-900">{availableServices.length} verified</strong></span>
+        </div>
+      </div>
+
+      {/* Filter and Search Controls */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+        {/* Search */}
+        <div className="relative w-full md:w-80">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            id="content-search-input"
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by title, service, or keyword..."
+            className="w-full pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+          />
+        </div>
+
+        {/* Status Filters */}
+        <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
+          {['all', 'draft', 'review', 'approved', 'scheduled', 'published', 'failed'].map((st) => (
+            <button
+              key={st}
+              onClick={() => setSelectedStatusFilter(st)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors capitalize ${
+                selectedStatusFilter === st
+                  ? 'bg-slate-900 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {st === 'all' ? 'All Statuses' : st}
+            </button>
+          ))}
+        </div>
+
+        {/* Type Filter */}
+        <div className="w-full md:w-48">
+          <select
+            id="content-type-filter-select"
+            value={selectedTypeFilter}
+            onChange={(e) => setSelectedTypeFilter(e.target.value)}
+            aria-label="Filter content by type"
+            className="w-full text-xs py-2 px-3 bg-white border border-slate-200 rounded-lg text-slate-700 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+          >
+            <option value="all">All Content Types</option>
+            {Object.entries(CONTENT_TYPE_LABELS).map(([k, v]) => (
+              <option key={k} value={k}>{v.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Content Records Grid or Empty State */}
+      {filteredRecords.length === 0 ? (
+        <div id="content-empty-state" className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-xs space-y-4">
+          <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl border border-indigo-200 flex items-center justify-center mx-auto mb-2">
+            <FileText className="w-8 h-8" />
+          </div>
+          <div className="max-w-md mx-auto space-y-1">
+            <h2 className="text-xl font-bold text-slate-900">
+              {businessScopedRecords.length === 0
+                ? 'No content created yet.'
+                : 'No content matching filters.'}
+            </h2>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              {businessScopedRecords.length === 0
+                ? 'Create your first AI-assisted content piece.'
+                : 'Try adjusting your search query or status filter.'}
             </p>
           </div>
 
-          {/* Business Brain Memory Indicator */}
-          <div
-            onClick={() => setActiveTab('business_brain')}
-            className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs flex items-center gap-3 cursor-pointer hover:bg-emerald-100/80 transition-all self-start sm:self-auto shadow-2xs group"
-          >
-            <div className="w-8 h-8 rounded-xl bg-[#059669] text-white flex items-center justify-center">
-              <Brain className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 font-heading block">
-                Connected Business Brain
-              </span>
-              <span className="font-bold text-slate-900 block truncate max-w-[200px]">
-                {businessProfile.name || activeBusiness.name}
-              </span>
-            </div>
-            <ChevronRight className="w-4 h-4 text-emerald-600 group-hover:translate-x-0.5 transition-transform" />
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => {
+                setGenType('google_post');
+                setIsGeneratorOpen(true);
+              }}
+              className="px-4 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Generate Google Post
+            </button>
+            <button
+              onClick={() => {
+                setGenType('service_page');
+                setIsGeneratorOpen(true);
+              }}
+              className="px-4 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              <Briefcase className="w-3.5 h-3.5" />
+              Generate Service Page
+            </button>
+            <button
+              onClick={() => {
+                setGenType('faq');
+                setIsGeneratorOpen(true);
+              }}
+              className="px-4 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              Generate Local FAQs
+            </button>
           </div>
         </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredRecords.map((record) => {
+            const typeConfig = CONTENT_TYPE_LABELS[record.content_type] || CONTENT_TYPE_LABELS.draft;
+            const statusConfig = STATUS_BADGES[record.status] || STATUS_BADGES.draft;
+            const TypeIcon = typeConfig.icon;
 
-        {/* 2. CREATION CATEGORY BUTTONS (The 8 requested options in Section 16) */}
-        <div className="space-y-2 pt-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-600 font-heading block">
-            What would you like to create?
-          </label>
+            return (
+              <div
+                key={record.id}
+                id={`content-card-${record.id}`}
+                className="bg-white rounded-xl border border-slate-200 shadow-xs hover:shadow-md transition-shadow flex flex-col justify-between overflow-hidden"
+              >
+                <div className="p-5">
+                  {/* Card Header Tags & Provenance */}
+                  <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${typeConfig.color}`}>
+                        <TypeIcon className="w-3.5 h-3.5" />
+                        {typeConfig.label}
+                      </span>
+                      <DataProvenanceBadge
+                        type="AI_RECOMMENDATION"
+                        customText="✦ AI Recommendation"
+                        size="xs"
+                      />
+                    </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-            {contentTypes.map((type) => {
-              const Icon = type.icon;
-              const isSelected = selectedType === type.id;
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${statusConfig.color}`}>
+                      {statusConfig.label}
+                    </span>
+                  </div>
 
-              return (
-                <button
-                  key={type.id}
-                  onClick={() => {
-                    setSelectedType(type.id);
-                  }}
-                  className={`p-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer text-center ${
-                    isSelected
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                      : 'bg-slate-50 hover:bg-white text-slate-700 border-slate-200'
-                  }`}
+                  {/* Title & Preview */}
+                  <h3 className="text-base font-semibold text-slate-900 line-clamp-1 mb-2">
+                    {record.title}
+                  </h3>
+
+                  <p className="text-xs text-slate-600 line-clamp-3 mb-4 whitespace-pre-line">
+                    {record.body || 'No content drafted yet. Click to write or generate.'}
+                  </p>
+
+                  {/* Meta Tags */}
+                  <div className="flex flex-wrap gap-1.5 text-[11px] text-slate-500 mb-3">
+                    {record.target_service && (
+                      <span className="bg-slate-100 px-2 py-0.5 rounded flex items-center gap-1">
+                        <Briefcase className="w-3 h-3 text-slate-400" />
+                        {record.target_service}
+                      </span>
+                    )}
+                    {record.target_location && (
+                      <span className="bg-slate-100 px-2 py-0.5 rounded flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-slate-400" />
+                        {record.target_location}
+                      </span>
+                    )}
+                    {record.platform && (
+                      <span className="bg-slate-100 px-2 py-0.5 rounded uppercase tracking-wider text-[10px] font-bold text-slate-600">
+                        {record.platform}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Grounding Source */}
+                  {record.AI_generated && (
+                    <div className="text-[11px] text-indigo-700 bg-indigo-50/70 border border-indigo-100 rounded px-2 py-1 flex items-center gap-1.5">
+                      <Sparkles className="w-3 h-3 text-indigo-500" />
+                      <span>Generated from your Business Brain</span>
+                    </div>
+                  )}
+
+                  {/* Error Notification if publish failed */}
+                  {record.status === 'failed' && record.errorMessage && (
+                    <div className="mt-2 text-[11px] text-rose-700 bg-rose-50 border border-rose-200 rounded p-2 flex items-start gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 text-rose-500 flex-shrink-0 mt-0.5" />
+                      <span className="line-clamp-2">{record.errorMessage}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Card Actions */}
+                <div className="bg-slate-50 px-5 py-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                  <span className="text-slate-400 text-[11px]">
+                    {record.published_at ? `Published ${new Date(record.published_at).toLocaleDateString()}` : `Updated ${new Date(record.updated_at).toLocaleDateString()}`}
+                  </span>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleCopyContent(record.body)}
+                      title="Copy text"
+                      className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded transition-colors"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveEditingRecord(record);
+                        setPublishError(null);
+                      }}
+                      className="px-3 py-1 bg-white border border-slate-300 font-medium text-slate-700 rounded-md hover:bg-slate-100 transition-colors inline-flex items-center gap-1"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      Edit / Review
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ================= GENERATION MODAL ================= */}
+      {isGeneratorOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 relative my-8">
+            <button
+              onClick={() => setIsGeneratorOpen(false)}
+              className="absolute right-5 top-5 text-slate-400 hover:text-slate-700"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-1">
+              <span className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">
+                <Sparkles className="w-5 h-5" />
+              </span>
+              <h2 className="text-xl font-bold text-slate-900">Generate Content Draft</h2>
+            </div>
+            <p className="text-xs text-slate-500 mb-5">
+              Powered exclusively by your Business Brain. Locora retrieves verified facts and writes ready-to-use content.
+            </p>
+
+            {genError && (
+              <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-500" />
+                <span>{genError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleGenerateContent} className="space-y-4 text-xs">
+              {/* Content Type */}
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Content Type</label>
+                <select
+                  value={genType}
+                  onChange={(e) => setGenType(e.target.value as ContentType)}
+                  aria-label="Select content type to generate"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 font-medium focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 >
-                  <Icon className={`w-4 h-4 ${isSelected ? 'text-emerald-400' : 'text-slate-500'}`} />
-                  <span className="truncate w-full">{type.label}</span>
+                  <option value="google_post">Google Business Profile Post (Update/Promo)</option>
+                  <option value="service_page">Targeted Service Page (SEO Landing)</option>
+                  <option value="location_page">Geo-Targeted Location Landing Page</option>
+                  <option value="faq">Local Client FAQs Architecture</option>
+                  <option value="blog_guide">Informational Blog / Local Authority Guide</option>
+                  <option value="offer">Special Offer / Promotion Post</option>
+                  <option value="email">Email Outreach / Client Follow-up</option>
+                  <option value="social_post">Social Media Engagement Post</option>
+                </select>
+              </div>
+
+              {/* Service Selection */}
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Target Service (from Business Brain)</label>
+                {availableServices.length > 0 ? (
+                  <div className="space-y-2">
+                    <select
+                      value={genService}
+                      onChange={(e) => setGenService(e.target.value)}
+                      aria-label="Select target service from business brain"
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    >
+                      {availableServices.map((svc) => (
+                        <option key={svc} value={svc}>{svc}</option>
+                      ))}
+                      <option value="__custom__">+ Enter other specific service</option>
+                    </select>
+
+                    {genService === '__custom__' && (
+                      <input
+                        type="text"
+                        placeholder="Enter verified service name..."
+                        value={genCustomService}
+                        onChange={(e) => setGenCustomService(e.target.value)}
+                        className="w-full p-2.5 border border-slate-200 rounded-lg text-slate-800"
+                        required
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <input
+                      type="text"
+                      placeholder="e.g. Commercial HVAC Inspection, Deep Cleaning..."
+                      value={genCustomService}
+                      onChange={(e) => setGenCustomService(e.target.value)}
+                      className="w-full p-2.5 border border-slate-200 rounded-lg text-slate-800"
+                      required
+                    />
+                    <span className="text-[11px] text-amber-600">
+                      No services saved in Business Brain yet. You can type one here or configure services in Profile.
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Location Selection */}
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Target Location</label>
+                {availableLocations.length > 0 ? (
+                  <div className="space-y-2">
+                    <select
+                      value={genLocation}
+                      onChange={(e) => setGenLocation(e.target.value)}
+                      aria-label="Select target location"
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    >
+                      {availableLocations.map((loc) => (
+                        <option key={loc} value={loc}>{loc}</option>
+                      ))}
+                      <option value="__custom__">+ Enter other verified location</option>
+                    </select>
+
+                    {genLocation === '__custom__' && (
+                      <input
+                        type="text"
+                        placeholder="Enter specific neighborhood or city..."
+                        value={genCustomLocation}
+                        onChange={(e) => setGenCustomLocation(e.target.value)}
+                        className="w-full p-2.5 border border-slate-200 rounded-lg text-slate-800"
+                        required
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    placeholder={activeBusiness.city || "e.g. Downtown, North Austin..."}
+                    value={genCustomLocation}
+                    onChange={(e) => setGenCustomLocation(e.target.value)}
+                    className="w-full p-2.5 border border-slate-200 rounded-lg text-slate-800"
+                  />
+                )}
+              </div>
+
+              {/* Goal */}
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Strategic Goal</label>
+                <select
+                  value={genGoal}
+                  onChange={(e) => setGenGoal(e.target.value)}
+                  aria-label="Select strategic goal"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                >
+                  <option value="Drive inbound phone calls and inquiries">Drive inbound phone calls & inquiries</option>
+                  <option value="Boost local search ranking and keyword relevance">Boost local search ranking & SEO</option>
+                  <option value="Highlight priority same-day emergency availability">Highlight same-day priority availability</option>
+                  <option value="Educate potential clients on quality standards">Educate prospective clients on quality</option>
+                  <option value="Promote seasonal special or honest consultation">Promote consultation or seasonal rate</option>
+                </select>
+              </div>
+
+              {/* Optional Keyword & Notes */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-medium text-slate-600 mb-1">Target Keyword (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. emergency roofing repair"
+                    value={genKeyword}
+                    onChange={(e) => setGenKeyword(e.target.value)}
+                    className="w-full p-2.5 border border-slate-200 rounded-lg text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium text-slate-600 mb-1">Special Notes / Angle (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. emphasize rapid response"
+                    value={genNotes}
+                    onChange={(e) => setGenNotes(e.target.value)}
+                    className="w-full p-2.5 border border-slate-200 rounded-lg text-slate-800"
+                  />
+                </div>
+              </div>
+
+              {/* Grounding Summary Box */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-slate-600 space-y-1">
+                <div className="font-semibold text-slate-800 flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+                  Verified Context Grounding:
+                </div>
+                <div>Business: <strong className="text-slate-800">{activeBusiness.name || 'Your Business'}</strong> ({activeBusiness.category || 'Local Business'})</div>
+                <div>Voice: <strong className="text-slate-800">{brandVoice}</strong></div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsGeneratorOpen(false)}
+                  className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium"
+                >
+                  Cancel
                 </button>
-              );
-            })}
+                <button
+                  id="btn-submit-generate"
+                  type="submit"
+                  disabled={isGenerating}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-sm transition-colors inline-flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Sparkles className="w-4 h-4 animate-spin" />
+                      Drafting from Business Brain...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Generate Draft
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
+      )}
 
-        {/* 3. STREAMLINED PICKERS (Section 17: User picks Service, Location - AI knows the rest) */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 font-heading">
-              Quick Focus (Locora already knows voice, competitors & audience)
-            </span>
-            <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-              ✓ Business Brain Active
-            </span>
-          </div>
+      {/* ================= FULL RECORD EDITOR MODAL ================= */}
+      {activeEditingRecord && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl border border-slate-100 relative my-8 max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                <span className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+                  <Edit3 className="w-5 h-5" />
+                </span>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">Edit & Publish Content</h2>
+                  <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                    <span>ID: {activeEditingRecord.id}</span>
+                    <span>•</span>
+                    <span className="capitalize font-semibold text-slate-700">{activeEditingRecord.content_type.replace(/_/g, ' ')}</span>
+                  </div>
+                </div>
+              </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-            {/* Pick Service */}
-            <div>
-              <label className="font-bold text-slate-700 block mb-1 flex items-center gap-1">
-                <Briefcase className="w-3.5 h-3.5 text-[#059669]" />
-                Target Service
-              </label>
-              <select
-                value={selectedService}
-                onChange={(e) => setSelectedService(e.target.value)}
-                className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 font-medium focus:outline-none focus:border-[#059669]"
-              >
-                {servicesList.map((svc) => (
-                  <option key={svc} value={svc}>
-                    {svc}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Pick Location */}
-            <div>
-              <label className="font-bold text-slate-700 block mb-1 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-[#059669]" />
-                Geographic Focus
-              </label>
-              <select
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-                className="w-full p-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 font-medium focus:outline-none focus:border-[#059669]"
-              >
-                {locationsList.map((loc) => (
-                  <option key={loc} value={loc}>
-                    {loc}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Generate Trigger */}
-            <div className="flex items-end">
               <button
-                onClick={handleGenerate}
-                disabled={isGenerating}
-                className="w-full p-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-2xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                onClick={() => {
+                  setActiveEditingRecord(null);
+                  setPublishError(null);
+                }}
+                className="text-slate-400 hover:text-slate-700 p-1"
               >
-                <Zap className={`w-3.5 h-3.5 ${isGenerating ? 'animate-bounce text-amber-300' : 'text-amber-300'}`} />
-                <span>{isGenerating ? 'Drafting from Brain...' : 'Generate with Locora'}</span>
+                <X className="w-5 h-5" />
               </button>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* 4. WORKFLOW OUTPUT & METRICS (Section 17 Specifications) */}
-      <section className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-        {/* Top Section 17 Metrics Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 border-b border-slate-100 pb-5">
-          <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 font-heading block">
-              SEO Score
-            </span>
-            <span className="text-2xl font-black font-heading text-emerald-950">
-              {output.metrics.seoScore}/100
-            </span>
-            <span className="text-[10px] text-[#059669] font-bold block mt-0.5">
-              Rank-Ready Meta & Headings
-            </span>
-          </div>
+            {/* Modal Scrollable Body */}
+            <div className="flex-1 overflow-y-auto py-5 space-y-4 text-xs">
+              {/* Publish Error Notification */}
+              {publishError && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-xs flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="font-semibold block">Publication Issue:</strong>
+                    <span>{publishError}</span>
+                  </div>
+                </div>
+              )}
 
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-heading block">
-              Search Intent
-            </span>
-            <span className="text-sm font-extrabold font-heading text-slate-900 block mt-1">
-              {output.metrics.searchIntent}
-            </span>
-            <span className="text-[10px] text-slate-500 block mt-0.5">
-              Targeted to urgent patient conversion
-            </span>
-          </div>
+              {/* Badges & Status Banner */}
+              <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <label className="font-semibold text-slate-700">Status:</label>
+                  <select
+                    value={activeEditingRecord.status}
+                    onChange={(e) => {
+                      const newStatus = e.target.value as ContentStatus;
+                      updateContentRecord(activeEditingRecord.id, { status: newStatus });
+                      setActiveEditingRecord({ ...activeEditingRecord, status: newStatus });
+                    }}
+                    aria-label="Content record status"
+                    className="py-1 px-2.5 bg-white border border-slate-300 rounded-md font-semibold text-slate-800"
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="review">In Review</option>
+                    <option value="approved">Approved</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="published">Published</option>
+                    <option value="failed">Failed</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
 
-          <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 font-heading block">
-              Local Relevance
-            </span>
-            <span className="text-2xl font-black font-heading text-emerald-950">
-              {output.metrics.localRelevance}%
-            </span>
-            <span className="text-[10px] text-[#059669] font-bold block mt-0.5">
-              Grounded in {selectedLocation} geo-entity
-            </span>
-          </div>
+                <div className="flex items-center gap-2">
+                  {activeEditingRecord.AI_generated && (
+                    <span className="bg-indigo-100 text-indigo-800 px-2.5 py-1 rounded-md font-semibold inline-flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Generated from your Business Brain
+                    </span>
+                  )}
+                  {activeEditingRecord.published_at && (
+                    <span className="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-md font-semibold inline-flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Published Live
+                    </span>
+                  )}
+                </div>
+              </div>
 
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 font-heading block">
-              Conversion
-            </span>
-            <span className="text-sm font-extrabold font-heading text-emerald-700 block mt-1">
-              {output.metrics.conversionRating}
-            </span>
-            <span className="text-[10px] text-slate-500 block mt-0.5">
-              Strong CTAs & frictionless intake
-            </span>
-          </div>
-        </div>
-
-        {/* Section 17 Actions: [ Edit ] [ Save ] [ Export ] */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-700">Actions:</span>
-            {savedSuccess && (
-              <span className="text-[11px] font-bold text-[#059669] flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Saved to Workspace
-              </span>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                isEditing
-                  ? 'bg-[#059669] text-white shadow-2xs'
-                  : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
-              }`}
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>{isEditing ? 'Done Editing' : 'Edit'}</span>
-            </button>
-
-            <button
-              onClick={handleSaveToWorkspace}
-              className="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-            >
-              <Save className="w-3.5 h-3.5 text-[#059669]" />
-              <span>Save</span>
-            </button>
-
-            <button
-              onClick={handleExport}
-              className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
-            >
-              <Download className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Export</span>
-            </button>
-
-            <button
-              onClick={handleCopyContent}
-              className="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 text-xs font-medium cursor-pointer"
-              title="Copy markdown to clipboard"
-            >
-              <Copy className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Generated Structured Fields (Section 17 Workflow) */}
-        <div className="space-y-6 text-xs text-slate-800">
-          {/* Title Tag & H1 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-heading">
-                Title Tag (Meta Title)
-              </span>
-              {isEditing ? (
+              {/* Title Field */}
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Content Title / Headline</label>
                 <input
                   type="text"
-                  value={output.titleTag}
-                  onChange={(e) => setOutput({ ...output, titleTag: e.target.value })}
-                  className="w-full p-2 rounded-lg border border-slate-300 bg-white text-xs font-mono"
+                  value={activeEditingRecord.title}
+                  onChange={(e) => {
+                    const newTitle = e.target.value;
+                    setActiveEditingRecord({ ...activeEditingRecord, title: newTitle });
+                  }}
+                  className="w-full p-2.5 text-sm font-semibold border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
-              ) : (
-                <p className="font-mono text-slate-900 font-bold text-xs">{output.titleTag}</p>
-              )}
-            </div>
+              </div>
 
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-heading">
-                H1 Heading
-              </span>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={output.h1}
-                  onChange={(e) => setOutput({ ...output, h1: e.target.value })}
-                  className="w-full p-2 rounded-lg border border-slate-300 bg-white text-xs font-bold"
+              {/* Metadata Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-medium text-slate-600 mb-1">Target Service</label>
+                  <input
+                    type="text"
+                    value={activeEditingRecord.target_service || ''}
+                    onChange={(e) => setActiveEditingRecord({ ...activeEditingRecord, target_service: e.target.value })}
+                    className="w-full p-2 border border-slate-200 rounded-lg text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium text-slate-600 mb-1">Target Location</label>
+                  <input
+                    type="text"
+                    value={activeEditingRecord.target_location || ''}
+                    onChange={(e) => setActiveEditingRecord({ ...activeEditingRecord, target_location: e.target.value })}
+                    className="w-full p-2 border border-slate-200 rounded-lg text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium text-slate-600 mb-1">Target SEO Keyword</label>
+                  <input
+                    type="text"
+                    value={activeEditingRecord.target_keyword || ''}
+                    onChange={(e) => setActiveEditingRecord({ ...activeEditingRecord, target_keyword: e.target.value })}
+                    className="w-full p-2 border border-slate-200 rounded-lg text-slate-800"
+                  />
+                </div>
+              </div>
+
+              {/* Body Content */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-semibold text-slate-700">Content Body (Markdown supported)</label>
+                  <button
+                    onClick={() => handleCopyContent(activeEditingRecord.body)}
+                    className="text-xs text-indigo-600 hover:text-indigo-800 font-medium inline-flex items-center gap-1"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    {copiedToast ? 'Copied to clipboard!' : 'Copy Text'}
+                  </button>
+                </div>
+                <textarea
+                  rows={12}
+                  value={activeEditingRecord.body}
+                  onChange={(e) => {
+                    const newBody = e.target.value;
+                    setActiveEditingRecord({ ...activeEditingRecord, body: newBody });
+                  }}
+                  className="w-full p-3 font-mono text-xs border border-slate-300 rounded-lg text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none leading-relaxed"
                 />
-              ) : (
-                <h3 className="font-extrabold text-slate-900 text-sm font-heading">{output.h1}</h3>
-              )}
-            </div>
-          </div>
+              </div>
 
-          {/* Main Value Prop */}
-          <div className="p-5 rounded-2xl bg-emerald-50/50 border border-emerald-200/80 space-y-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#059669] font-heading">
-              Main Value Proposition
-            </span>
-            {isEditing ? (
-              <textarea
-                rows={3}
-                value={output.mainValueProp}
-                onChange={(e) => setOutput({ ...output, mainValueProp: e.target.value })}
-                className="w-full p-2.5 rounded-xl border border-emerald-300 bg-white text-xs leading-relaxed"
-              />
-            ) : (
-              <p className="text-slate-800 leading-relaxed font-medium text-[13px]">
-                {output.mainValueProp}
-              </p>
-            )}
-          </div>
-
-          {/* Key Sections */}
-          <div className="space-y-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-700 font-heading block">
-              Key Sections
-            </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {output.keySections.map((sec, idx) => (
-                <div
-                  key={idx}
-                  className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-1.5"
-                >
-                  <h4 className="font-extrabold text-slate-900 font-heading text-xs">
-                    {sec.title}
-                  </h4>
-                  <p className="text-slate-600 leading-relaxed text-xs">
-                    {sec.content}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* FAQ */}
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-700 font-heading block">
-              Frequently Asked Questions (FAQ Schema-Ready)
-            </span>
-
-            <div className="space-y-2.5">
-              {output.faq.map((item, idx) => (
-                <div key={idx} className="p-3.5 rounded-xl bg-white border border-slate-200/80 space-y-1">
-                  <p className="font-bold text-slate-900 text-xs">
-                    Q: {item.question}
-                  </p>
-                  <p className="text-slate-600 leading-relaxed text-xs">
-                    A: {item.answer}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* CTA */}
-          <div className="p-5 rounded-2xl bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 font-heading block">
-                Primary Call To Action (CTA)
-              </span>
-              <p className="font-extrabold text-sm text-white">
-                {output.cta.buttonText}
-              </p>
-              <p className="text-xs text-slate-300">
-                {output.cta.subtext}
-              </p>
-            </div>
-
-            <button
-              onClick={() => alert(`Activated CTA destination: ${activeBusiness.phone || '(512) 555-0199'}`)}
-              className="px-5 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-md transition-colors cursor-pointer shrink-0"
-            >
-              Test CTA Action →
-            </button>
-          </div>
-
-          {/* Internal Linking Suggestions */}
-          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-700 font-heading block">
-              Internal Linking Suggestions
-            </span>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {output.internalLinking.map((link, idx) => (
-                <div
-                  key={idx}
-                  className="p-3.5 rounded-xl bg-white border border-slate-200/80 space-y-1 text-xs"
-                >
-                  <span className="font-mono text-[11px] text-[#059669] font-bold block">
-                    {link.targetUrl}
+              {/* Performance Section (Honest Metrics Rule) */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                <div className="font-semibold text-slate-800 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Eye className="w-4 h-4 text-slate-500" />
+                    Live Content Performance
                   </span>
-                  <p className="font-bold text-slate-800">
-                    Anchor: "{link.anchorText}"
-                  </p>
-                  <p className="text-[11px] text-slate-500">
-                    {link.reason}
-                  </p>
+                  {activeEditingRecord.performance?.available ? (
+                    <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      Connected Live
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      No Live Stream
+                    </span>
+                  )}
                 </div>
-              ))}
+
+                {activeEditingRecord.performance?.available ? (
+                  <div className="grid grid-cols-3 gap-3 pt-2">
+                    <div className="bg-white p-2.5 rounded border border-slate-200 text-center">
+                      <div className="text-lg font-bold text-slate-900">{activeEditingRecord.performance.impressions || 0}</div>
+                      <div className="text-[10px] text-slate-500">Impressions</div>
+                    </div>
+                    <div className="bg-white p-2.5 rounded border border-slate-200 text-center">
+                      <div className="text-lg font-bold text-slate-900">{activeEditingRecord.performance.clicks || 0}</div>
+                      <div className="text-[10px] text-slate-500">Clicks</div>
+                    </div>
+                    <div className="bg-white p-2.5 rounded border border-slate-200 text-center">
+                      <div className="text-lg font-bold text-slate-900">{(activeEditingRecord.performance.ctr || 0).toFixed(1)}%</div>
+                      <div className="text-[10px] text-slate-500">CTR</div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 italic">
+                    Performance data is not available yet. Connect Google Search Console or Google Business Profile in Settings to stream live organic impressions and clicks.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer Controls */}
+            <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <button
+                onClick={() => setRecordToDelete(activeEditingRecord)}
+                className="px-3 py-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Save Local Edits */}
+                <button
+                  onClick={async () => {
+                    await updateContentRecord(activeEditingRecord.id, {
+                      title: activeEditingRecord.title,
+                      body: activeEditingRecord.body,
+                      target_service: activeEditingRecord.target_service,
+                      target_location: activeEditingRecord.target_location,
+                      target_keyword: activeEditingRecord.target_keyword,
+                    });
+                    setActiveEditingRecord(null);
+                  }}
+                  className="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors inline-flex items-center gap-1.5"
+                >
+                  <Save className="w-4 h-4" />
+                  Save Changes
+                </button>
+
+                {/* Approve Draft */}
+                {activeEditingRecord.status !== 'approved' && activeEditingRecord.status !== 'published' && (
+                  <button
+                    onClick={async () => {
+                      const updated = await updateContentRecord(activeEditingRecord.id, {
+                        title: activeEditingRecord.title,
+                        body: activeEditingRecord.body,
+                        status: 'approved',
+                      });
+                      setActiveEditingRecord(updated);
+                    }}
+                    className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 font-semibold rounded-lg hover:bg-blue-100 transition-colors inline-flex items-center gap-1.5"
+                  >
+                    <Check className="w-4 h-4" />
+                    Approve Draft
+                  </button>
+                )}
+
+                {/* Publish to GBP Button (For GBP posts / offers) */}
+                {(activeEditingRecord.content_type === 'google_post' || activeEditingRecord.content_type === 'offer' || activeEditingRecord.platform === 'gbp') && (
+                  <button
+                    id="btn-publish-to-gbp"
+                    disabled={publishActionLoading}
+                    onClick={() => handlePublishToGbp(activeEditingRecord)}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-sm transition-colors inline-flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    {publishActionLoading ? (
+                      <>
+                        <Sparkles className="w-4 h-4 animate-spin" />
+                        Validating Google Location...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        Publish to Google Business Profile
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {/* General Mark as Published */}
+                {activeEditingRecord.status !== 'published' && (
+                  <button
+                    onClick={async () => {
+                      const updated = await updateContentRecord(activeEditingRecord.id, {
+                        title: activeEditingRecord.title,
+                        body: activeEditingRecord.body,
+                        status: 'published',
+                        published_at: new Date().toISOString(),
+                      });
+                      setActiveEditingRecord(updated);
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition-colors inline-flex items-center gap-1.5"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Mark as Published
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      )}
+      {/* Safe In-App Content Deletion Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={recordToDelete !== null}
+        title="Delete Content Post"
+        itemName={recordToDelete?.title}
+        message="Are you sure you want to permanently delete this content item? This action cannot be undone."
+        confirmLabel="Delete Post"
+        onConfirm={() => {
+          if (recordToDelete) {
+            deleteContentRecord(recordToDelete.id);
+            if (activeEditingRecord?.id === recordToDelete.id) {
+              setActiveEditingRecord(null);
+            }
+            setRecordToDelete(null);
+          }
+        }}
+        onClose={() => setRecordToDelete(null)}
+      />
     </div>
   );
 };
+export default ContentStudioView;

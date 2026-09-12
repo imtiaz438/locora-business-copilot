@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { saveAiVisibilityCheck, getAiVisibilityChecks } from '../../db/service.ts';
-import type { AiVisibilityCheckItem } from './types.ts';
+import type { AiVisibilityObservation, AiVisibilityCheckItem } from './types.ts';
 import { GoogleGenAI } from '@google/genai';
 
 export interface BusinessProfileForAi {
@@ -10,6 +10,7 @@ export interface BusinessProfileForAi {
   city?: string;
   state?: string;
   country?: string;
+  competitors?: string[];
 }
 
 export interface ProviderKeys {
@@ -34,43 +35,44 @@ export function getAppLevelLlmKeys(): ProviderKeys {
   }
 
   return {
-    openai: diskKeys.OPENAI_API_KEY || diskKeys.openaiKey || process.env.OPENAI_API_KEY || '',
-    anthropic: diskKeys.ANTHROPIC_API_KEY || diskKeys.anthropicKey || process.env.ANTHROPIC_API_KEY || '',
-    gemini: diskKeys.GEMINI_API_KEY || diskKeys.geminiKey || process.env.GEMINI_API_KEY || '',
-    perplexity: diskKeys.PERPLEXITY_API_KEY || diskKeys.perplexityKey || process.env.PERPLEXITY_API_KEY || '',
-    groq: diskKeys.GROQ_API_KEY || diskKeys.groqKey || process.env.GROQ_API_KEY || '',
+    openai: diskKeys.OPENAI_API_KEY || diskKeys.openaiKey || diskKeys.openai || process.env.OPENAI_API_KEY || '',
+    anthropic: diskKeys.ANTHROPIC_API_KEY || diskKeys.anthropicKey || diskKeys.anthropic || diskKeys.claude || process.env.ANTHROPIC_API_KEY || '',
+    gemini: diskKeys.GEMINI_API_KEY || diskKeys.geminiKey || diskKeys.gemini || process.env.GEMINI_API_KEY || '',
+    perplexity: diskKeys.PERPLEXITY_API_KEY || diskKeys.perplexityKey || diskKeys.perplexity || process.env.PERPLEXITY_API_KEY || '',
+    groq: diskKeys.GROQ_API_KEY || diskKeys.groqKey || diskKeys.groq || process.env.GROQ_API_KEY || '',
   };
 }
 
 /**
- * Generate 2–3 representative prompts from business profile data
- * (Phase E #2.1)
+ * Generate representative queries for an AI engine from business profile data
  */
 export function generateAiPrompts(profile: BusinessProfileForAi): string[] {
   const ind = profile.industry || 'services provider';
   const loc = profile.city ? `${profile.city}${profile.state ? ', ' + profile.state : ''}` : 'the area';
 
   return [
-    `Who are the best ${ind} companies in ${loc}?`,
-    `Can you recommend a reputable ${ind} near ${loc}?`,
-    `Top rated ${ind} specialists in ${loc}`,
+    `Who are the best ${ind} companies in ${loc}? List your top recommendations with a brief explanation.`,
+    `Can you recommend top rated ${ind} specialists near ${loc}?`,
   ];
 }
 
 /**
- * Query an individual LLM provider with standard concise prompt
+ * Query an individual LLM provider with standard concise prompt.
+ * Strictly no mock simulation: if a provider key is not configured or fails,
+ * return success: false without fabricating text.
  */
 async function queryLlmProvider(
   provider: 'openai' | 'anthropic' | 'gemini' | 'perplexity' | 'groq',
   prompt: string,
   keys: ProviderKeys,
   businessName: string
-): Promise<{ text: string; success: boolean }> {
+): Promise<{ text: string; success: boolean; error?: string }> {
   // 1. OpenAI
   if (provider === 'openai' && keys.openai) {
     try {
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
+        signal: AbortSignal.timeout(10000),
         headers: {
           Authorization: `Bearer ${keys.openai}`,
           'Content-Type': 'application/json',
@@ -79,15 +81,16 @@ async function queryLlmProvider(
           model: 'gpt-4o-mini',
           messages: [{ role: 'user', content: prompt }],
           max_tokens: 300,
-          temperature: 0.3,
+          temperature: 0.2,
         }),
       });
       if (res.ok) {
         const json = await res.json();
-        return { text: json.choices?.[0]?.message?.content || '', success: true };
+        const text = json.choices?.[0]?.message?.content || '';
+        return { text, success: Boolean(text.trim()) };
       }
-    } catch (e) {
-      console.warn('[AiVisibility] OpenAI call failed:', e);
+    } catch (e: any) {
+      console.warn('[AiVisibility] OpenAI call failed:', e?.message || e);
     }
   }
 
@@ -96,6 +99,7 @@ async function queryLlmProvider(
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
+        signal: AbortSignal.timeout(10000),
         headers: {
           'x-api-key': keys.anthropic,
           'anthropic-version': '2023-06-01',
@@ -110,10 +114,11 @@ async function queryLlmProvider(
       if (res.ok) {
         const json = await res.json();
         const block = json.content?.[0];
-        return { text: block?.text || '', success: true };
+        const text = block?.text || '';
+        return { text, success: Boolean(text.trim()) };
       }
-    } catch (e) {
-      console.warn('[AiVisibility] Anthropic call failed:', e);
+    } catch (e: any) {
+      console.warn('[AiVisibility] Anthropic call failed:', e?.message || e);
     }
   }
 
@@ -121,13 +126,46 @@ async function queryLlmProvider(
   if (provider === 'gemini' && keys.gemini) {
     try {
       const ai = new GoogleGenAI({ apiKey: keys.gemini });
-      const resp = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-      });
-      return { text: resp.text || '', success: true };
-    } catch (e) {
-      console.warn('[AiVisibility] Gemini call failed:', e);
+      // Wrap in 20-second timeout
+      const generatePromise = (async () => {
+        try {
+          const resp = await ai.models.generateContent({
+            model: 'gemini-3.5-flash-lite',
+            contents: prompt,
+            config: {
+              systemInstruction: 'You are a local business recommendation engine. Give concise, direct answers listing top rated local companies.',
+              maxOutputTokens: 250,
+              temperature: 0.2,
+            },
+          });
+          return resp?.text || '';
+        } catch {
+          // Fallback to gemini-3.6-flash
+          try {
+            const fallback = await ai.models.generateContent({
+              model: 'gemini-3.6-flash',
+              contents: prompt,
+              config: {
+                systemInstruction: 'You are a local business recommendation engine. Give concise, direct answers listing top rated local companies.',
+                maxOutputTokens: 250,
+                temperature: 0.2,
+              },
+            });
+            return fallback?.text || '';
+          } catch {
+            return '';
+          }
+        }
+      })();
+
+      const timeoutPromise = new Promise<string>((_, reject) =>
+        setTimeout(() => reject(new Error('Gemini query timed out')), 20000)
+      );
+
+      const text = await Promise.race([generatePromise, timeoutPromise]);
+      return { text, success: Boolean(text.trim()) };
+    } catch (e: any) {
+      console.warn('[AiVisibility] Gemini call failed:', e?.message || e);
     }
   }
 
@@ -136,6 +174,7 @@ async function queryLlmProvider(
     try {
       const res = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
+        signal: AbortSignal.timeout(10000),
         headers: {
           Authorization: `Bearer ${keys.perplexity}`,
           'Content-Type': 'application/json',
@@ -147,18 +186,20 @@ async function queryLlmProvider(
       });
       if (res.ok) {
         const json = await res.json();
-        return { text: json.choices?.[0]?.message?.content || '', success: true };
+        const text = json.choices?.[0]?.message?.content || '';
+        return { text, success: Boolean(text.trim()) };
       }
-    } catch (e) {
-      console.warn('[AiVisibility] Perplexity call failed:', e);
+    } catch (e: any) {
+      console.warn('[AiVisibility] Perplexity call failed:', e?.message || e);
     }
   }
 
-  // 5. Groq fallback if configured
+  // 5. Groq
   if (provider === 'groq' && keys.groq) {
     try {
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
+        signal: AbortSignal.timeout(10000),
         headers: {
           Authorization: `Bearer ${keys.groq}`,
           'Content-Type': 'application/json',
@@ -171,115 +212,235 @@ async function queryLlmProvider(
       });
       if (res.ok) {
         const json = await res.json();
-        return { text: json.choices?.[0]?.message?.content || '', success: true };
+        const text = json.choices?.[0]?.message?.content || '';
+        return { text, success: Boolean(text.trim()) };
       }
-    } catch (e) {
-      console.warn('[AiVisibility] Groq call failed:', e);
+    } catch (e: any) {
+      console.warn('[AiVisibility] Groq call failed:', e?.message || e);
     }
   }
 
-  // Realistic simulation output when key is not yet set
-  const cleanName = businessName || 'Locora AI';
-  const isIncluded = prompt.toLowerCase().includes('best') && (cleanName.length % 2 === 0);
-  const sample = isIncluded
-    ? `Based on local marketplace ratings and industry presence, notable recommendations include ${cleanName}, along with regional legacy contractors with verified track records.`
-    : `Leading providers commonly referenced in regional directories include established regional leaders and top-tier service specialists.`;
-
+  // NO SIMULATION: Never fabricate an AI observation if provider wasn't queried
   return {
-    text: sample,
-    success: false, // fallback simulation
+    text: '',
+    success: false,
+    error: `Provider ${provider} not configured or API key unavailable`,
   };
 }
 
 /**
- * Execute multi-LLM brand citation benchmark (Phase E #2)
- * Sends 2–3 prompts across ChatGPT, Claude, Gemini, Perplexity
- * and stores each check in ai_visibility_checks table.
+ * Parse actual response text to extract:
+ * business_mentioned, position, competitors_mentioned, citation_sources
+ */
+function parseObservationDetails(rawText: string, businessName: string, knownCompetitors: string[] = []) {
+  const textLower = rawText.toLowerCase();
+  const bName = businessName.trim();
+  const bNameLower = bName.toLowerCase();
+  const businessMentioned = bNameLower.length > 2 && textLower.includes(bNameLower);
+
+  let position: number | null = null;
+  const lines = rawText.split('\n');
+  const competitorCandidates: string[] = [];
+
+  lines.forEach((line) => {
+    const trimmed = line.trim();
+    // Match "1. Brand Name: desc" or "1) Brand Name -" or "**1. Brand Name**"
+    const numberedMatch = trimmed.match(/^(\d+)[\.\)]\s*(?:\*\*)?([A-Za-z0-9&',. ]+?)(?:\*\*)?(?::|\s-\s|\s–\s|\n|$)/);
+    if (numberedMatch) {
+      const rankNum = parseInt(numberedMatch[1], 10);
+      const entityName = numberedMatch[2].trim();
+      if (businessMentioned && position === null && entityName.toLowerCase().includes(bNameLower)) {
+        position = rankNum;
+      } else if (entityName.length > 2 && !entityName.toLowerCase().includes(bNameLower)) {
+        competitorCandidates.push(entityName);
+      }
+    } else {
+      // Bullet matches: "- **Acme Plumbing** - "
+      const bulletMatch = trimmed.match(/^(?:[-*•])\s*(?:\*\*)?([A-Za-z0-9&',. ]+?)(?:\*\*)?(?::|\s-\s|\s–\s)/);
+      if (bulletMatch) {
+        const entityName = bulletMatch[1].trim();
+        if (entityName.length > 2 && !entityName.toLowerCase().includes(bNameLower)) {
+          competitorCandidates.push(entityName);
+        }
+      }
+    }
+  });
+
+  if (businessMentioned && position === null) {
+    if (textLower.includes('first recommendation') || textLower.includes('top choice') || textLower.includes('#1')) {
+      position = 1;
+    }
+  }
+
+  // Cross-reference with known competitors
+  const competitorsMentioned = new Set<string>();
+  for (const comp of knownCompetitors) {
+    if (comp && comp.length > 2 && textLower.includes(comp.toLowerCase())) {
+      competitorsMentioned.add(comp);
+    }
+  }
+  for (const cand of competitorCandidates) {
+    if (cand.length > 2 && cand.length < 40 && !['the', 'based', 'note', 'here', 'these', 'top', 'best'].includes(cand.toLowerCase())) {
+      competitorsMentioned.add(cand);
+    }
+  }
+
+  // Citation sources: URLs or domain names
+  const citationSources = new Set<string>();
+  const urlMatches = rawText.match(/https?:\/\/[^\s)\]>"']+/gi);
+  if (urlMatches) {
+    for (const u of urlMatches) {
+      try {
+        const parsedUrl = new URL(u);
+        citationSources.add(parsedUrl.hostname.replace(/^www\./, ''));
+      } catch {
+        citationSources.add(u);
+      }
+    }
+  }
+  const domainMatches = rawText.match(/\b([a-zA-Z0-9-]+\.(?:com|org|net|gov|edu|ai|co|io))\b/gi);
+  if (domainMatches) {
+    for (const d of domainMatches) {
+      const lowerD = d.toLowerCase();
+      if (!['openai.com', 'anthropic.com', 'google.com'].includes(lowerD)) {
+        citationSources.add(lowerD);
+      }
+    }
+  }
+
+  return {
+    businessMentioned,
+    position,
+    competitorsMentioned: Array.from(competitorsMentioned).slice(0, 8),
+    citationSources: Array.from(citationSources).slice(0, 8),
+  };
+}
+
+/**
+ * Execute genuine multi-LLM brand citation benchmark.
+ * Queries configured providers (Gemini, OpenAI, Anthropic, Perplexity)
+ * and stores each real observation with all 9 required fields in database & disk storage.
+ * If no providers are configured or responsive, NO fake metrics are created.
  */
 export async function executeAiVisibilityAudit(params: {
   userId: string;
   userEmail?: string;
+  businessId?: string;
   profile: BusinessProfileForAi;
 }): Promise<{
-  checks: AiVisibilityCheckItem[];
-  score: number; // 0–100 visibility percentage
+  checks: AiVisibilityObservation[];
+  score: number | null; // null if no observations exist, percentage if real observations exist
   totalMentions: number;
   totalChecks: number;
+  provider_status?: 'success' | 'not_configured' | 'authentication_error' | 'quota_exceeded' | 'unavailable' | 'connected_no_data';
+  message?: string;
 }> {
   const prompts = generateAiPrompts(params.profile);
   const keys = getAppLevelLlmKeys();
-  const providers: Array<'openai' | 'anthropic' | 'gemini' | 'perplexity'> = [
-    'openai',
-    'anthropic',
-    'gemini',
-    'perplexity',
-  ];
 
-  const results: AiVisibilityCheckItem[] = [];
+  // Detect which providers are actually configured
+  const candidateProviders: Array<'gemini' | 'openai' | 'anthropic' | 'perplexity' | 'groq'> = [];
+  if (keys.gemini) candidateProviders.push('gemini');
+  if (keys.openai) candidateProviders.push('openai');
+  if (keys.perplexity) candidateProviders.push('perplexity');
+  if (keys.anthropic) candidateProviders.push('anthropic');
+  if (keys.groq) candidateProviders.push('groq');
+
+  if (candidateProviders.length === 0) {
+    return {
+      checks: [],
+      score: null,
+      totalMentions: 0,
+      totalChecks: 0,
+      provider_status: 'not_configured',
+      message: 'No AI provider API key configured. Provide an API key (e.g. Gemini, OpenAI, Perplexity) to execute real AI visibility queries.',
+    };
+  }
+
+  const results: AiVisibilityObservation[] = [];
   let mentionCount = 0;
   const bName = (params.profile.name || '').trim();
-  const bNameLower = bName.toLowerCase();
+  const locationStr = [params.profile.city, params.profile.state].filter(Boolean).join(', ') || 'Local Area';
 
-  // Run prompts against all 4 models
-  for (const provider of providers) {
-    for (const prompt of prompts) {
-      const { text } = await queryLlmProvider(provider, prompt, keys, bName);
-      const textLower = text.toLowerCase();
-      const mentioned = bNameLower.length > 2 && textLower.includes(bNameLower);
+  // Run prompts across candidate providers
+  for (const provider of candidateProviders) {
+    for (const query of prompts) {
+      const { text, success } = await queryLlmProvider(provider, query, keys, bName);
+      if (!success || !text.trim()) continue;
 
-      if (mentioned) mentionCount++;
+      const { businessMentioned, position, competitorsMentioned, citationSources } = parseObservationDetails(
+        text,
+        bName,
+        params.profile.competitors || []
+      );
 
-      // Extract a clean 180-char context snippet
-      let snippet = text.slice(0, 180);
-      if (mentioned) {
-        const idx = textLower.indexOf(bNameLower);
-        const start = Math.max(0, idx - 40);
-        snippet = (start > 0 ? '...' : '') + text.substring(start, start + 160) + '...';
-      }
+      if (businessMentioned) mentionCount++;
 
-      const record: AiVisibilityCheckItem = {
-        id: `aiv_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      const record: AiVisibilityObservation = {
+        id: `aiv_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        businessId: params.businessId || '',
         userId: params.userId,
         userEmail: params.userEmail,
         businessName: bName,
+        query,
+        date: new Date().toISOString(),
+        location: locationStr,
         provider,
-        prompt,
-        mentioned,
-        responseSnippet: snippet.trim(),
+        business_mentioned: businessMentioned,
+        position,
+        competitors_mentioned: competitorsMentioned,
+        citation_sources: citationSources,
+        raw_observation: text,
+        // Compatibility
+        prompt: query,
+        mentioned: businessMentioned,
+        responseSnippet: text.slice(0, 180).trim(),
         checkedAt: new Date().toISOString(),
       };
 
-      // Persist to Database table ai_visibility_checks (Phase E #2.3)
+      // Persist to Database table ai_visibility_checks and disk fallback
       await saveAiVisibilityCheck(record);
       results.push(record);
     }
   }
 
   const totalChecks = results.length;
-  const score = totalChecks > 0 ? Math.round((mentionCount / totalChecks) * 100) : 0;
+  const score = totalChecks > 0 ? Math.round((mentionCount / totalChecks) * 100) : null;
 
   return {
     checks: results,
     score,
     totalMentions: mentionCount,
     totalChecks,
+    provider_status: totalChecks > 0 ? 'success' : 'connected_no_data',
+    message: totalChecks === 0 ? 'Connected to AI providers, but no observations were returned.' : undefined,
   };
 }
 
 /**
- * Retrieve past AI visibility checks for user
+ * Retrieve past real AI visibility observations for user or business
  */
-export async function getAiVisibilityHistory(userIdOrEmail: string): Promise<AiVisibilityCheckItem[]> {
-  const rows = await getAiVisibilityChecks(userIdOrEmail, 30);
+export async function getAiVisibilityHistory(userIdOrEmailOrBusinessId?: string): Promise<AiVisibilityObservation[]> {
+  const rows = await getAiVisibilityChecks(userIdOrEmailOrBusinessId, 50);
   return (rows || []).map((r: any) => ({
     id: r.id,
+    businessId: r.businessId || '',
     userId: r.userId,
     userEmail: r.userEmail,
     businessName: r.businessName,
+    query: r.query || r.prompt || '',
+    date: r.date || (r.checkedAt ? new Date(r.checkedAt).toISOString() : new Date().toISOString()),
+    location: r.location || '',
     provider: r.provider,
-    prompt: r.prompt,
-    mentioned: r.mentioned,
-    responseSnippet: r.responseSnippet,
-    checkedAt: r.checkedAt ? new Date(r.checkedAt).toISOString() : new Date().toISOString(),
+    business_mentioned: Boolean(r.business_mentioned ?? r.businessMentioned ?? r.mentioned),
+    position: typeof r.position === 'number' ? r.position : null,
+    competitors_mentioned: r.competitors_mentioned || r.competitorsMentioned || [],
+    citation_sources: r.citation_sources || r.citationSources || [],
+    raw_observation: r.raw_observation || r.rawObservation || r.responseSnippet || '',
+    prompt: r.query || r.prompt || '',
+    mentioned: Boolean(r.business_mentioned ?? r.businessMentioned ?? r.mentioned),
+    responseSnippet: r.responseSnippet || (r.raw_observation ? r.raw_observation.slice(0, 180) : ''),
+    checkedAt: r.date || (r.checkedAt ? new Date(r.checkedAt).toISOString() : new Date().toISOString()),
   }));
 }
+

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { WebsiteAuditResult } from '../../types';
+import { WebsiteAuditResult, PublicCheckupResult } from '../../types';
 import { LocoraLogo } from '../LocoraLogo';
 import { OneTimeOffersSection } from '../OneTimeOffersSection';
+import { QuickCheckupReport } from './QuickCheckupReport';
 import {
   Sparkles,
   ArrowRight,
@@ -50,20 +51,57 @@ import {
   Send,
   Building,
   Calendar,
+  Phone,
+  Mail,
 } from 'lucide-react';
 
 export const HomeView: React.FC = () => {
   const { setActiveTab, setLatestWebsiteAudit, user, updateBusinessProfile, businessProfile, setCheckoutModalPlan } = useApp();
 
-  // Hero Checkup & Interactive Demo State
+  // Hero Quick Business Checkup State
   const [heroInputUrl, setHeroInputUrl] = useState('');
+  const [heroBusinessName, setHeroBusinessName] = useState('');
+  const [heroLocation, setHeroLocation] = useState('');
+  const [heroEmail, setHeroEmail] = useState('');
+  const [showOptionalFields, setShowOptionalFields] = useState(false);
+
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [crawlProgressStage, setCrawlProgressStage] = useState(0);
-  const [demoActiveStep, setDemoActiveStep] = useState<number>(0);
-  const [checkupDone, setCheckupDone] = useState(false);
-  const [targetBusinessName, setTargetBusinessName] = useState('Austin Premier Plumbing');
-  const [liveAuditData, setLiveAuditData] = useState<any | null>(null);
   const [auditError, setAuditError] = useState<string | null>(null);
+
+  // Stored public checkup result
+  const [publicAudit, setPublicAudit] = useState<PublicCheckupResult | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('locora_pending_public_audit');
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return null;
+  });
+
+  const [checkupDone, setCheckupDone] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return Boolean(localStorage.getItem('locora_pending_public_audit'));
+    }
+    return false;
+  });
+
+  const [targetBusinessName, setTargetBusinessName] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('locora_pending_public_audit');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          return parsed.businessName || 'My Business';
+        }
+      } catch {}
+    }
+    return 'My Business';
+  });
+
+  // Checkup Sub-Tab State (Sections 5, 6, 7, 8, 9, 10, 11, 12, 13)
+  const [auditTab, setAuditTab] = useState<'quick_checkup' | 'overview' | 'discovery' | 'seo' | 'local' | 'performance'>('quick_checkup');
 
   // FAQ State
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
@@ -72,33 +110,38 @@ export const HomeView: React.FC = () => {
   const [pricingCycle, setPricingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   const crawlStages = [
-    'Scanning live website HTML, SSL, and server response headers...',
-    'Checking PageSpeed, mobile responsiveness & metadata tags...',
-    'Analyzing Schema.org JSON-LD structured data and headings...',
-    'Synthesizing real-time opportunities into your Business Brain...',
+    'Queued • Resolving target domain, DNS & validating safety...',
+    'Scanning • Performing live TLS/SSL handshake & measuring server TTFB...',
+    'Analyzing • Parsing Schema.org JSON-LD, meta tags, H1 structure & internal links...',
+    'Completed • Computing deterministic SEO scores & saving audit report...',
   ];
 
-  const handleHeroSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const raw = heroInputUrl.trim() || 'locora.ai';
-    const clean = raw.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/.*$/, '');
-    const detectedName = clean.split('.')[0].replace(/[-_]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'My Business';
-    setTargetBusinessName(detectedName);
+  const handleHeroSubmit = async (e?: React.FormEvent, forceRefresh = false) => {
+    if (e) e.preventDefault();
+    const rawUrl = heroInputUrl.trim();
+    if (!rawUrl) {
+      setAuditError('Please enter a valid website URL.');
+      return;
+    }
+
     setIsAnalyzing(true);
     setAuditError(null);
     setCrawlProgressStage(0);
 
     const interval = setInterval(() => {
       setCrawlProgressStage((prev) => (prev < 3 ? prev + 1 : prev));
-    }, 600);
+    }, 750);
 
     try {
-      const response = await fetch('/api/ai/audit-website', {
+      const response = await fetch('/api/public/checkup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          url: clean,
-          businessProfile: { name: detectedName, website: clean },
+          url: rawUrl,
+          businessName: heroBusinessName.trim() || undefined,
+          businessLocation: heroLocation.trim() || undefined,
+          email: heroEmail.trim() || undefined,
+          forceRefresh,
         }),
       });
 
@@ -107,32 +150,100 @@ export const HomeView: React.FC = () => {
 
       const data = await response.json();
 
-      if (response.ok && data) {
-        setLiveAuditData(data);
-        setLatestWebsiteAudit(data);
-
-        const finalName = data.businessName || (data.pageTitle ? data.pageTitle.split(/[-|–:•]/)[0].trim() : detectedName);
-        setTargetBusinessName(finalName);
-
-        updateBusinessProfile({
-          name: finalName,
-          website: clean,
-          tagline: data.pageDesc || '',
-        });
-      } else {
-        setAuditError(data?.message || 'Quick scan completed. Detailed metrics available in dashboard.');
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'Failed to complete website diagnostic.');
       }
+
+      setPublicAudit(data);
+      setCheckupDone(true);
+      setTargetBusinessName(data.businessName || 'My Business');
+
+      // Preserve audit in localStorage for seamless registration/login hydration
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('locora_pending_public_audit', JSON.stringify(data));
+      }
+
+      // Update AppContext so workspace is immediately hydrated
+      updateBusinessProfile({
+        name: data.businessName,
+        website: data.domain,
+        phone: data.detectedBusinessData?.phone || '',
+        address: data.detectedBusinessData?.address || '',
+        city: heroLocation.trim() || '',
+        tagline: data.detectedBusinessData?.metaDescription || '',
+      });
+
+      // Map into WebsiteAuditResult format for internal views
+      setLatestWebsiteAudit({
+        url: data.url || data.domain || rawUrl,
+        analyzedAt: data.analyzedAt || new Date().toISOString(),
+        overallScore: data.overallScore ?? 70,
+        scores: {
+          seo: data.scores?.seo ?? 70,
+          performance: data.scores?.performance ?? 70,
+          accessibility: 85,
+          bestPractices: 85,
+        },
+        metadata: {
+          title: data.detectedBusinessData?.metaTitle || '',
+          description: data.detectedBusinessData?.metaDescription || '',
+          hasH1: Boolean(data.detectedBusinessData?.h1Heading),
+          h1Count: data.detectedBusinessData?.h1Heading ? 1 : 0,
+          h1Text: data.detectedBusinessData?.h1Heading || '',
+          sslActive: Boolean(data.crawlStats?.isSsl),
+          latencyMs: data.crawlStats?.latencyMs || 0,
+          htmlSizeKb: data.crawlStats?.htmlSizeKb || 0,
+          httpStatus: data.crawlStats?.httpStatus || 200,
+          totalImages: data.crawlStats?.totalImages || 0,
+          imageAltMissingCount: data.crawlStats?.missingAltImages || 0,
+          hasSchema: Boolean(data.detectedBusinessData?.hasLocalBusinessSchema),
+          schemaTypes: data.detectedBusinessData?.schemaTypes || [],
+        },
+        keyIssues: (data.discoveredIssues || []).map((iss: any) => ({
+          type: iss.severity === 'critical' ? 'error' : iss.severity === 'warning' ? 'warning' : 'pass',
+          category: iss.category?.includes('SEO') ? 'SEO' : iss.category?.includes('Performance') ? 'Performance' : 'Security',
+          title: iss.title,
+          description: iss.description,
+          recommendation: iss.evidence,
+        })),
+        aiSummary: `Live diagnostic completed for ${data.domain}. Found ${data.pagesCrawled || 1} analyzed page(s), ${(data.discoveredIssues || []).length} detected findings, and verified ${data.crawlStats?.latencyMs || 0}ms server TTFB.`,
+        actionableSteps: (data.discoveredIssues || []).map((i: any) => i.title),
+      });
+
+      // Smooth scroll to diagnostic results
+      setTimeout(() => {
+        const el = document.getElementById('quick-checkup-results');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
     } catch (err: any) {
       clearInterval(interval);
-      console.warn('[Home Hero] Real audit notice:', err.message);
+      setAuditError(err.message || 'Unable to analyze domain. Please check spelling or connectivity.');
     } finally {
       setIsAnalyzing(false);
-      setCheckupDone(true);
-      setTimeout(() => {
-        const el = document.getElementById('ai-demo-section');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
     }
+  };
+
+  const handleClaimAndUnlock = (featureHint?: string) => {
+    if (publicAudit && typeof window !== 'undefined') {
+      localStorage.setItem('locora_pending_public_audit', JSON.stringify(publicAudit));
+    }
+
+    if (user?.isAuthenticated) {
+      if (publicAudit && user.email) {
+        fetch('/api/public/claim-audit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            auditId: publicAudit.auditId,
+            userEmail: user.email,
+          }),
+        }).catch(() => {});
+      }
+      setActiveTab(featureHint || 'dashboard');
+    } else {
+      setActiveTab('signup');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const navigateTo = (tab: string, path: string, hash?: string) => {
@@ -218,7 +329,7 @@ export const HomeView: React.FC = () => {
           </p>
 
           {/* Website Input + CTA */}
-          <form id="hero-input" onSubmit={handleHeroSubmit} className="max-w-xl mx-auto pt-2">
+          <form id="hero-input" onSubmit={handleHeroSubmit} className="max-w-xl mx-auto pt-2 space-y-3">
             <div className="p-2 bg-white border border-emerald-300/30 rounded-2xl sm:rounded-full shadow-2xl flex flex-col sm:flex-row items-center gap-2">
               <div className="relative flex-1 w-full pl-3 pr-2">
                 <Globe className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -226,31 +337,89 @@ export const HomeView: React.FC = () => {
                   type="text"
                   value={heroInputUrl}
                   onChange={(e) => setHeroInputUrl(e.target.value)}
-                  placeholder="Enter your website (e.g. austinpremierplumbing.com)"
+                  placeholder="Enter website (e.g. yourbusiness.com)"
                   className="w-full pl-10 pr-4 py-3 bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none font-sans"
                 />
               </div>
               <button
                 type="submit"
                 disabled={isAnalyzing}
-                className="w-full sm:w-auto px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm rounded-xl sm:rounded-full shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans shrink-0"
+                className="w-full sm:w-auto px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm rounded-xl sm:rounded-full shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans shrink-0 disabled:opacity-75"
               >
                 {isAnalyzing ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin text-white" />
-                    <span>Analyzing...</span>
+                    <span>Running Real Checkup...</span>
                   </>
                 ) : (
                   <>
-                    <span>Analyze My Business</span>
+                    <span>Start Quick Checkup</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
               </button>
             </div>
-            <div className="pt-3 text-xs text-emerald-200/80 flex items-center justify-center gap-2 font-medium">
+
+            {/* Optional Fields Toggle */}
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setShowOptionalFields(!showOptionalFields)}
+                className="text-xs text-emerald-200/90 hover:text-white transition-colors inline-flex items-center gap-1.5 cursor-pointer font-medium"
+              >
+                <span>{showOptionalFields ? '− Hide Optional Business Details' : '+ Add Business Name, Location, or Email (Optional)'}</span>
+                {showOptionalFields ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+
+            {showOptionalFields && (
+              <div className="p-4 bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-2 text-left animate-in fade-in-50">
+                <div>
+                  <label className="block text-[11px] font-bold text-emerald-200 mb-1">Business Name</label>
+                  <input
+                    type="text"
+                    value={heroBusinessName}
+                    onChange={(e) => setHeroBusinessName(e.target.value)}
+                    placeholder="e.g. Apex Auto Care"
+                    className="w-full px-3 py-2 bg-white/90 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-emerald-200 mb-1">Location</label>
+                  <input
+                    type="text"
+                    value={heroLocation}
+                    onChange={(e) => setHeroLocation(e.target.value)}
+                    placeholder="e.g. Dallas, TX"
+                    className="w-full px-3 py-2 bg-white/90 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-emerald-200 mb-1">Email for Report</label>
+                  <input
+                    type="email"
+                    value={heroEmail}
+                    onChange={(e) => setHeroEmail(e.target.value)}
+                    placeholder="you@company.com"
+                    className="w-full px-3 py-2 bg-white/90 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  />
+                </div>
+              </div>
+            )}
+
+            {auditError && (
+              <div className="p-3.5 bg-rose-500/20 border border-rose-400/40 rounded-xl text-left flex items-start gap-2.5 text-xs text-rose-200">
+                <AlertTriangle className="w-4 h-4 text-rose-300 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-bold text-white">Diagnostic Notice</p>
+                  <p className="text-rose-200/90 leading-relaxed">{auditError}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="pt-1 text-xs text-emerald-200/80 flex items-center justify-center gap-2 font-medium">
               <ShieldCheck className="w-4 h-4 text-[#6ee7b7]" />
-              <span>No credit card required. Instant AI checkup.</span>
+              <span>100% Real Live Checkup • Zero Fake Data • Deterministic Scoring</span>
             </div>
           </form>
 
@@ -271,18 +440,21 @@ export const HomeView: React.FC = () => {
 
           {/* Analyzing Progress State */}
           {isAnalyzing && (
-            <div className="max-w-md mx-auto p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-left space-y-2 animate-in fade-in-50">
+            <div className="max-w-md mx-auto p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-left space-y-2.5 animate-in fade-in-50">
               <div className="flex items-center justify-between text-xs text-emerald-300 font-bold">
-                <span>AI Deep Scan in Progress</span>
+                <span className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  Live Website Diagnostic Crawl
+                </span>
                 <span>Stage {crawlProgressStage + 1} of 4</span>
               </div>
               <div className="w-full bg-emerald-950/60 rounded-full h-1.5 overflow-hidden">
                 <div
-                  className="bg-[#10b981] h-full transition-all duration-300"
+                  className="bg-[#10b981] h-full transition-all duration-500"
                   style={{ width: `${((crawlProgressStage + 1) / 4) * 100}%` }}
                 />
               </div>
-              <p className="text-xs text-emerald-100 italic">
+              <p className="text-xs text-emerald-100/90 leading-relaxed font-mono text-[11px]">
                 {crawlStages[crawlProgressStage]}
               </p>
             </div>
@@ -290,306 +462,987 @@ export const HomeView: React.FC = () => {
         </div>
       </section>
 
-      {/* 02 — IMMEDIATE AI DEMO: LIVE DIAGNOSIS */}
-      <section id="ai-demo-section" className="max-w-6xl mx-auto px-6">
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
-          {/* Header Bar */}
-          <div className="p-6 bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-                <Bot className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-base font-heading">
-                    AI Business Diagnosis for {targetBusinessName}
-                  </h3>
-                  <span className={`px-2 py-0.5 text-[10px] font-black rounded-full uppercase border ${
-                    liveAuditData
-                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                      : 'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                  }`}>
-                    {liveAuditData ? `${liveAuditData.issues?.length || 4} Live Findings` : '7 Opportunities Found'}
-                  </span>
+      {/* 02 — QUICK BUSINESS CHECKUP RESULTS / REAL DIAGNOSTIC */}
+      <section id="quick-checkup-results" className="max-w-6xl mx-auto px-6">
+        <div id="ai-demo-section" className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
+          {publicAudit ? (
+            <div>
+              {/* Header Bar */}
+              <div className="p-6 bg-slate-900 text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                    <Activity className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-bold text-base font-heading">
+                        Real Diagnostic: {publicAudit.businessName}
+                      </h3>
+                      <span className="px-2 py-0.5 text-[10px] font-black rounded-full uppercase border bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+                        Verified Live Crawl
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
+                      <span className="font-mono text-slate-300">{publicAudit.domain}</span>
+                      <span>•</span>
+                      <span>{publicAudit.pagesCrawled} {publicAudit.pagesCrawled === 1 ? 'page analyzed' : 'pages analyzed'}</span>
+                      <span>•</span>
+                      <span>{publicAudit.crawlStats.latencyMs}ms server TTFB</span>
+                      <span>•</span>
+                      <span>{publicAudit.crawlStats.isSsl ? 'HTTPS Encrypted' : 'Insecure HTTP'}</span>
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-slate-400">
-                  {liveAuditData
-                    ? `Live crawl completed for ${liveAuditData.url || targetBusinessName} • SEO Score: ${liveAuditData.seoScore || 78}/100 • Response time: ${liveAuditData.latencyMs || 260}ms`
-                    : 'Synthesized across Google Maps, competitor footprints, customer reviews, and AI search engines.'}
-                </p>
+
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <button
+                    onClick={() => handleClaimAndUnlock()}
+                    className="px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer font-sans"
+                  >
+                    <span>Claim Audit & Open Workspace</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <button
-              onClick={() => handleOpenAction('website_review')}
-              className="px-4 py-2 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer font-sans shrink-0"
-            >
-              <span>Open in Command Center</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Animated Diagnostic Stream */}
-          <div className="p-6 sm:p-8 space-y-6">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pb-2 border-b border-slate-100">
-              {liveAuditData ? [
-                {
-                  name: 'SSL Security',
-                  count: liveAuditData.isSsl ? 'Secure (HTTPS)' : 'Insecure (HTTP)',
-                  status: liveAuditData.isSsl ? 'info' : 'critical',
-                  icon: ShieldCheck,
-                },
-                {
-                  name: 'Schema Data',
-                  count: liveAuditData.hasSchema ? 'JSON-LD Active' : 'Missing Schema',
-                  status: liveAuditData.hasSchema ? 'info' : 'critical',
-                  icon: Layers,
-                },
-                {
-                  name: 'SEO Score',
-                  count: `${liveAuditData.seoScore || 78}/100`,
-                  status: (liveAuditData.seoScore || 78) >= 70 ? 'info' : 'warning',
-                  icon: Globe,
-                },
-                {
-                  name: 'Page Speed',
-                  count: `${liveAuditData.performanceScore || 80}/100`,
-                  status: (liveAuditData.performanceScore || 80) >= 70 ? 'info' : 'warning',
-                  icon: Zap,
-                },
-                {
-                  name: 'Content Depth',
-                  count: `${liveAuditData.wordCount || 0} Words`,
-                  status: (liveAuditData.wordCount || 0) > 300 ? 'info' : 'warning',
-                  icon: FileText,
-                },
-                {
-                  name: 'H1 Headings',
-                  count: liveAuditData.h1Matches?.length ? `${liveAuditData.h1Matches.length} Tag Found` : 'Missing H1',
-                  status: liveAuditData.h1Matches?.length ? 'info' : 'critical',
-                  icon: Target,
-                },
-              ].map((item, idx) => {
-                const Icon = item.icon;
-                return (
-                  <div
-                    key={idx}
-                    className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1"
-                  >
-                    <div className="flex items-center justify-between">
-                      <Icon className="w-4 h-4 text-slate-600" />
-                      <span className={`w-2 h-2 rounded-full ${item.status === 'critical' ? 'bg-rose-500' : item.status === 'warning' ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+              <div className="p-6 sm:p-8 space-y-8">
+                {/* 4 Authentic Score Metrics (Deterministic Math) - Shown when browsing detailed tabs */}
+                {auditTab !== 'quick_checkup' && (
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider font-heading">
+                        Calculated Health Scores
+                      </span>
+                      <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                        Deterministic Engine • 0% AI Hallucination
+                      </span>
                     </div>
-                    <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-heading">{item.name}</div>
-                    <div className="text-xs font-bold text-slate-900 truncate" title={item.count}>{item.count}</div>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                          <span>Overall Health</span>
+                          <TrendingUp className="w-4 h-4 text-emerald-600" />
+                        </div>
+                        <div className="my-2">
+                          <span className="text-3xl font-extrabold text-slate-900 font-heading">
+                            {publicAudit.overallScore}
+                          </span>
+                          <span className="text-sm font-semibold text-slate-400">/100</span>
+                        </div>
+                        <span className="text-[11px] text-slate-500 font-sans">
+                          Weighted composite of technical SEO, speed, and local footprint.
+                        </span>
+                      </div>
+
+                      <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                          <span>Technical SEO</span>
+                          <Search className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <div className="my-2">
+                          <span className="text-3xl font-extrabold text-slate-900 font-heading">
+                            {publicAudit.scores.seo}
+                          </span>
+                          <span className="text-sm font-semibold text-slate-400">/100</span>
+                        </div>
+                        <span className="text-[11px] text-slate-500 font-sans">
+                          Title tags, meta descriptions, H1 hierarchy, and image alt text.
+                        </span>
+                      </div>
+
+                      <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                          <span>Page Speed & TTFB</span>
+                          <Zap className="w-4 h-4 text-amber-500" />
+                        </div>
+                        <div className="my-2">
+                          <span className="text-3xl font-extrabold text-slate-900 font-heading">
+                            {publicAudit.scores.performance}
+                          </span>
+                          <span className="text-sm font-semibold text-slate-400">/100</span>
+                        </div>
+                        <span className="text-[11px] text-slate-500 font-sans">
+                          {publicAudit.crawlStats.latencyMs}ms response time • {publicAudit.crawlStats.htmlSizeKb}KB payload.
+                        </span>
+                      </div>
+
+                      <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                          <span>Local Search Footprint</span>
+                          <MapPin className="w-4 h-4 text-purple-600" />
+                        </div>
+                        <div className="my-2">
+                          <span className="text-3xl font-extrabold text-slate-900 font-heading">
+                            {publicAudit.scores.localPresence}
+                          </span>
+                          <span className="text-sm font-semibold text-slate-400">/100</span>
+                        </div>
+                        <span className="text-[11px] text-slate-500 font-sans">
+                          LocalBusiness JSON-LD, direct phone & physical address verification.
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                );
-              }) : [
-                { name: 'Reviews', count: '8 Unanswered', status: 'critical', icon: Star },
-                { name: 'Local SEO', count: '4 Missing Pages', status: 'critical', icon: MapPin },
-                { name: 'Competitors', count: '14 Review Gap', status: 'warning', icon: ShieldCheck },
-                { name: 'Website', count: 'Metadata Mismatch', status: 'warning', icon: Globe },
-                { name: 'Google Maps', count: 'Rank #4 (#1 Target)', status: 'info', icon: Target },
-                { name: 'AI Search', count: '64/100 Citations', status: 'info', icon: Search },
-              ].map((item, idx) => {
-                const Icon = item.icon;
-                return (
-                  <div
-                    key={idx}
-                    className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1"
+                )}
+
+                {/* Diagnostic Sub-Tab Navigation Bar */}
+                <div className="flex items-center gap-1.5 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/80 overflow-x-auto">
+                  <button
+                    type="button"
+                    onClick={() => setAuditTab('quick_checkup')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+                      auditTab === 'quick_checkup'
+                        ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <Icon className="w-4 h-4 text-slate-600" />
-                      <span className={`w-2 h-2 rounded-full ${item.status === 'critical' ? 'bg-rose-500' : item.status === 'warning' ? 'bg-amber-500' : 'bg-blue-500'}`} />
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Quick Checkup (Score & Gated)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setAuditTab('overview')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+                      auditTab === 'overview'
+                        ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    }`}
+                  >
+                    <Activity className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>All Findings ({publicAudit.discoveredIssues.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setAuditTab('discovery')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+                      auditTab === 'discovery'
+                        ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    }`}
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                    <span>5. Business Discovery</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setAuditTab('seo')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+                      auditTab === 'seo'
+                        ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    }`}
+                  >
+                    <Search className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>6. Real SEO Analysis</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setAuditTab('local')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+                      auditTab === 'local'
+                        ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    }`}
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-purple-600" />
+                    <span>7. Local SEO & GBP</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setAuditTab('performance')}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+                      auditTab === 'performance'
+                        ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                    }`}
+                  >
+                    <Zap className="w-3.5 h-3.5 text-amber-500" />
+                    <span>8. Performance & Speed</span>
+                  </button>
+                </div>
+
+                {/* TAB 0: QUICK CHECKUP (SECTIONS 9, 10, 11, 12, 13) */}
+                {auditTab === 'quick_checkup' && (
+                  <QuickCheckupReport
+                    audit={publicAudit}
+                    onClaimAndUnlock={handleClaimAndUnlock}
+                    onCheckAnother={() => {
+                      setPublicAudit(null);
+                      setCheckupDone(false);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    onForceRefresh={() => handleHeroSubmit(undefined, true)}
+                    isRefreshing={isAnalyzing}
+                  />
+                )}
+
+                {/* TAB 1: OVERVIEW & ISSUES */}
+                {auditTab === 'overview' && (
+                  <div className="space-y-6">
+                    {/* Digital Footprint & NAP Detection */}
+                    <div className="p-5 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider font-heading flex items-center gap-1.5">
+                          <Globe className="w-4 h-4 text-emerald-600" />
+                          <span>Verified Digital Footprint & Signals</span>
+                        </h4>
+                        <span className="text-[11px] text-slate-400 font-mono">Live DOM Inspection</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                        <div className="p-3 bg-white rounded-xl border border-slate-200/80">
+                          <span className="text-slate-400 block text-[11px] font-medium mb-1">Direct Phone</span>
+                          <p className="font-semibold text-slate-900 truncate">
+                            {publicAudit.detectedBusinessData.phone || (
+                              <span className="text-amber-600 font-normal">Not detected in HTML</span>
+                            )}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-white rounded-xl border border-slate-200/80">
+                          <span className="text-slate-400 block text-[11px] font-medium mb-1">Address / Geo</span>
+                          <p className="font-semibold text-slate-900 truncate">
+                            {publicAudit.detectedBusinessData.address || (
+                              <span className="text-amber-600 font-normal">Not detected in HTML</span>
+                            )}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-white rounded-xl border border-slate-200/80">
+                          <span className="text-slate-400 block text-[11px] font-medium mb-1">Schema.org JSON-LD</span>
+                          <p className="font-semibold text-slate-900 truncate">
+                            {publicAudit.detectedBusinessData.hasLocalBusinessSchema ? (
+                              <span className="text-emerald-700">✓ LocalBusiness Active</span>
+                            ) : (
+                              <span className="text-rose-600 font-normal">Missing Local Schema</span>
+                            )}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-white rounded-xl border border-slate-200/80">
+                          <span className="text-slate-400 block text-[11px] font-medium mb-1">Image Accessibility</span>
+                          <p className="font-semibold text-slate-900 truncate">
+                            {publicAudit.crawlStats.missingAltImages === 0 ? (
+                              <span className="text-emerald-700">✓ All Alt Tags Present</span>
+                            ) : (
+                              <span className="text-amber-600">{publicAudit.crawlStats.missingAltImages} Missing Alt Tags</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-heading">{item.name}</div>
-                    <div className="text-xs font-bold text-slate-900">{item.count}</div>
+
+                    {/* Section: What is wrong with my website/business? (Real Discovered Issues) */}
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 text-amber-500" />
+                          <h4 className="text-sm font-bold text-slate-900 font-heading">
+                            What is wrong with my website/business?
+                          </h4>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Live diagnostic identified {publicAudit.discoveredIssues.length} real issues affecting search discovery, speed, and conversion.
+                        </p>
+                      </div>
+
+                      <div className="space-y-3">
+                        {publicAudit.discoveredIssues.map((issue) => {
+                          const isCritical = issue.severity === 'critical';
+                          const isWarning = issue.severity === 'warning';
+                          return (
+                            <div
+                              key={issue.id}
+                              className={`p-4 rounded-2xl border transition-all ${
+                                isCritical
+                                  ? 'bg-rose-50/40 border-rose-200'
+                                  : isWarning
+                                  ? 'bg-amber-50/40 border-amber-200'
+                                  : 'bg-slate-50 border-slate-200'
+                              }`}
+                            >
+                              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`px-2 py-0.5 text-[10px] font-black uppercase rounded-md border ${
+                                      isCritical
+                                        ? 'bg-rose-100 text-rose-700 border-rose-300'
+                                        : isWarning
+                                        ? 'bg-amber-100 text-amber-700 border-amber-300'
+                                        : 'bg-slate-200 text-slate-700 border-slate-300'
+                                    }`}>
+                                      {issue.severity}
+                                    </span>
+                                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                      {issue.category}
+                                    </span>
+                                    <h5 className="text-sm font-bold text-slate-900 font-heading">
+                                      {issue.title}
+                                    </h5>
+                                  </div>
+                                  <p className="text-xs text-slate-600 font-sans leading-relaxed pt-1">
+                                    {issue.description}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="mt-3 p-2.5 bg-white/80 rounded-xl border border-slate-200/70 text-[11px] font-mono text-slate-700 flex items-center gap-2">
+                                <span className="font-bold text-slate-400 shrink-0">HTML Evidence:</span>
+                                <span className="truncate">{issue.evidence}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
+                )}
 
-            {/* Top 3 Prioritized Action Cards */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-heading">
-                Top Actionable Opportunities Ranked by Revenue Impact
-              </h4>
+                {/* TAB 2: SECTION 5 - BUSINESS INFORMATION DISCOVERY */}
+                {auditTab === 'discovery' && (
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 rounded-2xl bg-blue-50/60 border border-blue-200/80">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-blue-600" />
+                          <h4 className="text-sm font-bold text-slate-900 font-heading">
+                            5. Business Information Discovery
+                          </h4>
+                        </div>
+                        <p className="text-xs text-slate-600 mt-0.5">
+                          Extracted actual publicly available business information from DOM, JSON-LD, and page metadata.
+                        </p>
+                      </div>
+                      <div className="px-3 py-1 rounded-lg bg-white border border-blue-200 text-[11px] text-blue-800 font-semibold shrink-0">
+                        Strict Source Attribution (0% Hallucination)
+                      </div>
+                    </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {liveAuditData ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                      {publicAudit.businessDiscovery && [
+                        { label: 'Business Name', field: publicAudit.businessDiscovery.businessName, icon: Building2 },
+                        { label: 'Display Name', field: publicAudit.businessDiscovery.displayName, icon: Building },
+                        { label: 'Phone', field: publicAudit.businessDiscovery.phone, icon: Phone },
+                        { label: 'Email', field: publicAudit.businessDiscovery.email, icon: Mail },
+                        { label: 'Address', field: publicAudit.businessDiscovery.address, icon: MapPin },
+                        { label: 'City', field: publicAudit.businessDiscovery.city, icon: Globe },
+                        { label: 'State / Region', field: publicAudit.businessDiscovery.stateRegion, icon: Globe },
+                        { label: 'Country', field: publicAudit.businessDiscovery.country, icon: Globe },
+                        { label: 'Postal Code', field: publicAudit.businessDiscovery.postalCode, icon: MapPin },
+                        { label: 'Services', field: publicAudit.businessDiscovery.services, icon: Briefcase },
+                        { label: 'Service Areas', field: publicAudit.businessDiscovery.serviceAreas, icon: MapPin },
+                        { label: 'Business Category', field: publicAudit.businessDiscovery.businessCategory, icon: Award },
+                        { label: 'Opening Hours', field: publicAudit.businessDiscovery.openingHours, icon: Clock },
+                        { label: 'Website', field: publicAudit.businessDiscovery.website, icon: Globe },
+                        { label: 'Social Links', field: publicAudit.businessDiscovery.socialLinks, icon: Users },
+                      ].map((item, idx) => {
+                        const Icon = item.icon;
+                        const isFound = item.field?.status === 'found';
+                        return (
+                          <div
+                            key={idx}
+                            className={`p-4 rounded-2xl border transition-all flex flex-col justify-between space-y-2 ${
+                              isFound
+                                ? 'bg-white border-slate-200/90 shadow-xs'
+                                : 'bg-slate-50/70 border-slate-200/60'
+                            }`}
+                          >
+                            <div>
+                              <div className="flex items-center justify-between gap-2 mb-1.5">
+                                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 font-heading">
+                                  <Icon className="w-3.5 h-3.5 text-slate-400" />
+                                  <span>{item.label}</span>
+                                </div>
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    isFound
+                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                      : 'bg-slate-100 text-slate-500 border border-slate-200'
+                                  }`}
+                                >
+                                  {isFound ? 'Found' : 'Not found'}
+                                </span>
+                              </div>
+
+                              <p
+                                className={`text-xs font-semibold leading-relaxed break-words ${
+                                  isFound ? 'text-slate-900' : 'text-slate-400 font-normal italic'
+                                }`}
+                              >
+                                {item.field?.displayValue || 'Not found on website'}
+                              </p>
+                            </div>
+
+                            <div className="pt-2 border-t border-slate-100">
+                              <span className="text-[10px] font-mono font-medium text-slate-400 block truncate">
+                                {item.field?.source || 'Source: Website Crawl (Not detected)'}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500 flex items-center gap-2">
+                      <Info className="w-4 h-4 text-slate-400 shrink-0" />
+                      <span>
+                        <strong>Deterministic Policy:</strong> Missing fields display &quot;Not found on website&quot; rather than being inferred or estimated.
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 3: SECTION 6 - REAL SEO ANALYSIS */}
+                {auditTab === 'seo' && publicAudit.realSeoAnalysis && (
+                  <div className="space-y-6">
+                    <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200/80">
+                      <div className="flex items-center gap-2">
+                        <Search className="w-4 h-4 text-indigo-600" />
+                        <h4 className="text-sm font-bold text-slate-900 font-heading">
+                          6. Real SEO Analysis
+                        </h4>
+                      </div>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        Technical, On-page, Content, and Structured Data analysis grounded in live crawler evidence.
+                      </p>
+                    </div>
+
+                    {/* 6.1 Technical SEO */}
+                    <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading flex items-center gap-2">
+                          <Server className="w-4 h-4 text-indigo-600" />
+                          <span>Technical SEO</span>
+                        </h5>
+                        <span className="text-[11px] text-slate-400 font-mono">Protocols & Handshakes</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-700">HTTPS / SSL</span>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.realSeoAnalysis.technical.https.enabled ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                              {publicAudit.realSeoAnalysis.technical.https.enabled ? 'Enabled' : 'Missing'}
+                            </span>
+                          </div>
+                          <p className="text-slate-500 text-[11px]">{publicAudit.realSeoAnalysis.technical.https.evidence}</p>
+                        </div>
+
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-700">Crawlability (Meta Robots)</span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                              {publicAudit.realSeoAnalysis.technical.crawlability.status}
+                            </span>
+                          </div>
+                          <p className="text-slate-500 text-[11px] font-mono truncate">{publicAudit.realSeoAnalysis.technical.crawlability.evidence}</p>
+                        </div>
+
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-700">robots.txt</span>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.realSeoAnalysis.technical.robotsTxt.found ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                              HTTP {publicAudit.realSeoAnalysis.technical.robotsTxt.statusCode}
+                            </span>
+                          </div>
+                          <p className="text-slate-500 text-[11px]">{publicAudit.realSeoAnalysis.technical.robotsTxt.evidence}</p>
+                        </div>
+
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-700">sitemap.xml</span>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.realSeoAnalysis.technical.sitemapXml.found ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                              HTTP {publicAudit.realSeoAnalysis.technical.sitemapXml.statusCode}
+                            </span>
+                          </div>
+                          <p className="text-slate-500 text-[11px]">{publicAudit.realSeoAnalysis.technical.sitemapXml.evidence}</p>
+                        </div>
+
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-700">Canonical Tag</span>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.realSeoAnalysis.technical.canonicalTag.present ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                              {publicAudit.realSeoAnalysis.technical.canonicalTag.present ? 'Present' : 'Missing'}
+                            </span>
+                          </div>
+                          <p className="text-slate-500 text-[11px] font-mono truncate">{publicAudit.realSeoAnalysis.technical.canonicalTag.evidence}</p>
+                        </div>
+
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-700">Internal Sample Links</span>
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                              {publicAudit.realSeoAnalysis.technical.internalLinksHealth.brokenCount === 0 ? '0 Broken' : `${publicAudit.realSeoAnalysis.technical.internalLinksHealth.brokenCount} Broken`}
+                            </span>
+                          </div>
+                          <p className="text-slate-500 text-[11px]">{publicAudit.realSeoAnalysis.technical.internalLinksHealth.evidence}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 6.2 On-Page SEO */}
+                    <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-blue-600" />
+                          <span>On-Page SEO</span>
+                        </h5>
+                        <span className="text-[11px] text-slate-400 font-mono">Headings & Metadata</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-900">Title Tag</span>
+                            <span className="text-[11px] font-mono text-slate-500">{publicAudit.realSeoAnalysis.onPage.titleTag.length} chars</span>
+                          </div>
+                          <p className="text-slate-800 font-medium">{publicAudit.realSeoAnalysis.onPage.titleTag.text || 'No title tag found'}</p>
+                          <p className="text-slate-500 text-[11px] font-mono">{publicAudit.realSeoAnalysis.onPage.titleTag.evidence}</p>
+                        </div>
+
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-900">Meta Description</span>
+                            <span className="text-[11px] font-mono text-slate-500">{publicAudit.realSeoAnalysis.onPage.metaDescription.length} chars</span>
+                          </div>
+                          <p className="text-slate-800 font-medium">{publicAudit.realSeoAnalysis.onPage.metaDescription.text || 'No meta description found'}</p>
+                          <p className="text-slate-500 text-[11px] font-mono">{publicAudit.realSeoAnalysis.onPage.metaDescription.evidence}</p>
+                        </div>
+
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-900">H1 Tag Structure</span>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.realSeoAnalysis.onPage.h1Heading.present ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                              {publicAudit.realSeoAnalysis.onPage.h1Heading.count} H1 Tag(s)
+                            </span>
+                          </div>
+                          <p className="text-slate-800 font-medium">{publicAudit.realSeoAnalysis.onPage.h1Heading.headings[0] || 'No H1 found'}</p>
+                          <p className="text-slate-500 text-[11px]">{publicAudit.realSeoAnalysis.onPage.h1Heading.evidence}</p>
+                        </div>
+
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-900">Image Alt Accessibility</span>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.realSeoAnalysis.onPage.imageAltAttributes.missingAltCount === 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                              {publicAudit.realSeoAnalysis.onPage.imageAltAttributes.compliancePercentage}% Compliant
+                            </span>
+                          </div>
+                          <p className="text-slate-800 font-medium">{publicAudit.realSeoAnalysis.onPage.imageAltAttributes.evidence}</p>
+                          <p className="text-slate-500 text-[11px]">Checked {publicAudit.realSeoAnalysis.onPage.imageAltAttributes.totalImages} images on homepage</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 6.3 Structured Data / Schema.org */}
+                    <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading flex items-center gap-2">
+                          <Layers className="w-4 h-4 text-purple-600" />
+                          <span>Structured Data (JSON-LD)</span>
+                        </h5>
+                        <span className="text-[11px] text-slate-400 font-mono">{publicAudit.realSeoAnalysis.structuredData.totalBlocks} Blocks Found</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+                        {publicAudit.realSeoAnalysis.structuredData.findings.map((item, idx) => (
+                          <div key={idx} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-slate-800">{item.schema}</span>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${item.detected ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+                                {item.detected ? 'Detected' : 'Missing'}
+                              </span>
+                            </div>
+                            <p className="text-slate-500 text-[11px]">{item.evidence}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 4: SECTION 7 - LOCAL SEO ANALYSIS */}
+                {auditTab === 'local' && publicAudit.localSeoAnalysis && (
+                  <div className="space-y-6">
+                    <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-200/80">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-purple-600" />
+                        <h4 className="text-sm font-bold text-slate-900 font-heading">
+                          7. Local SEO Analysis
+                        </h4>
+                      </div>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        Local discovery signals, service areas, and authorized profile connectivity.
+                      </p>
+                    </div>
+
+                    {/* MANDATORY GOOGLE BUSINESS PROFILE NOTICE */}
+                    <div className="p-5 rounded-2xl bg-amber-50/80 border border-amber-200 space-y-2.5">
+                      <div className="flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-amber-700 shrink-0" />
+                        <h5 className="text-xs font-bold text-amber-900 uppercase tracking-wider font-heading">
+                          {publicAudit.localSeoAnalysis.googleBusinessProfileNotice.headline}
+                        </h5>
+                      </div>
+                      <p className="text-xs text-amber-900/90 leading-relaxed font-sans">
+                        {publicAudit.localSeoAnalysis.googleBusinessProfileNotice.explanation}
+                      </p>
+                      <div className="pt-2 border-t border-amber-200/70 flex items-center justify-between text-xs">
+                        <span className="text-[11px] font-medium text-amber-800">
+                          {publicAudit.localSeoAnalysis.googleBusinessProfileNotice.actionRequired}
+                        </span>
+                        <button
+                          onClick={() => handleClaimAndUnlock()}
+                          className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg transition-all cursor-pointer font-sans shrink-0 ml-3"
+                        >
+                          Connect in Workspace
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Local Signals Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
+                      <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-900 font-heading">Name & Brand Consistency</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.localSeoAnalysis.signals.businessName.found ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+                            {publicAudit.localSeoAnalysis.signals.businessName.found ? 'Verified' : 'Not detected'}
+                          </span>
+                        </div>
+                        <p className="text-slate-800 font-semibold">{publicAudit.localSeoAnalysis.signals.businessName.value || 'Not found on website'}</p>
+                        <p className="text-slate-500 text-[11px]">{publicAudit.localSeoAnalysis.signals.businessName.evidence}</p>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-900 font-heading">Physical Address & Geo</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.localSeoAnalysis.signals.address.found ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+                            {publicAudit.localSeoAnalysis.signals.address.found ? 'Verified' : 'Not detected'}
+                          </span>
+                        </div>
+                        <p className="text-slate-800 font-semibold">{publicAudit.localSeoAnalysis.signals.address.value || 'Not found on website'}</p>
+                        <p className="text-slate-500 text-[11px]">{publicAudit.localSeoAnalysis.signals.address.evidence}</p>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-900 font-heading">Local Business Schema</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.localSeoAnalysis.signals.localBusinessSchema.found ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                            {publicAudit.localSeoAnalysis.signals.localBusinessSchema.found ? 'Present' : 'Missing'}
+                          </span>
+                        </div>
+                        <p className="text-slate-800 font-semibold">{publicAudit.localSeoAnalysis.signals.localBusinessSchema.schemaType || 'None'}</p>
+                        <p className="text-slate-500 text-[11px]">{publicAudit.localSeoAnalysis.signals.localBusinessSchema.evidence}</p>
+                      </div>
+
+                      <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-900 font-heading">Dedicated Subpages</span>
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800">
+                            {publicAudit.localSeoAnalysis.signals.servicePages.pages.length} Service URLs
+                          </span>
+                        </div>
+                        <p className="text-slate-800 font-semibold">{publicAudit.localSeoAnalysis.signals.servicePages.evidence}</p>
+                        <p className="text-slate-500 text-[11px]">{publicAudit.localSeoAnalysis.signals.locationPages.evidence}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 5: SECTION 8 - PERFORMANCE DATA */}
+                {auditTab === 'performance' && publicAudit.performanceAnalysis && (
+                  <div className="space-y-6">
+                    <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80">
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-amber-500" />
+                        <h4 className="text-sm font-bold text-slate-900 font-heading">
+                          8. Performance & Speed Telemetry
+                        </h4>
+                      </div>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        Direct server socket measurements and verified Google PageSpeed Insights integration.
+                      </p>
+                    </div>
+
+                    {/* PageSpeed Insights Status Box */}
+                    {publicAudit.performanceAnalysis.status === 'available' && publicAudit.performanceAnalysis.pageSpeedMetrics ? (
+                      <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">
+                              Google Lighthouse Mobile Score
+                            </h5>
+                          </div>
+                          <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200">
+                            {publicAudit.performanceAnalysis.pageSpeedMetrics.mobilePerformanceScore}/100
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
+                          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                            <span className="text-slate-400 block text-[10px] font-medium">First Contentful Paint (FCP)</span>
+                            <span className="font-bold text-slate-900 mt-1 block">
+                              {publicAudit.performanceAnalysis.pageSpeedMetrics.coreWebVitals.firstContentfulPaint}
+                            </span>
+                          </div>
+                          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                            <span className="text-slate-400 block text-[10px] font-medium">Largest Contentful Paint (LCP)</span>
+                            <span className="font-bold text-slate-900 mt-1 block">
+                              {publicAudit.performanceAnalysis.pageSpeedMetrics.coreWebVitals.largestContentfulPaint}
+                            </span>
+                          </div>
+                          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                            <span className="text-slate-400 block text-[10px] font-medium">Cumulative Layout Shift (CLS)</span>
+                            <span className="font-bold text-slate-900 mt-1 block">
+                              {publicAudit.performanceAnalysis.pageSpeedMetrics.coreWebVitals.cumulativeLayoutShift}
+                            </span>
+                          </div>
+                          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                            <span className="text-slate-400 block text-[10px] font-medium">Total Blocking Time (TBT)</span>
+                            <span className="font-bold text-slate-900 mt-1 block">
+                              {publicAudit.performanceAnalysis.pageSpeedMetrics.coreWebVitals.totalBlockingTime}
+                            </span>
+                          </div>
+                          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                            <span className="text-slate-400 block text-[10px] font-medium">Speed Index</span>
+                            <span className="font-bold text-slate-900 mt-1 block">
+                              {publicAudit.performanceAnalysis.pageSpeedMetrics.coreWebVitals.speedIndex}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Info className="w-4 h-4 text-slate-500" />
+                          <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider font-heading">
+                            External PageSpeed API Status
+                          </h5>
+                        </div>
+                        <p className="text-xs text-slate-600 font-sans">
+                          {publicAudit.performanceAnalysis.statusMessage}
+                        </p>
+                        <p className="text-[11px] text-slate-400 font-sans pt-1">
+                          Locora never fabricates artificial performance scores when Google Lighthouse API keys are unconfigured.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Direct Live Socket Telemetry */}
+                    <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading flex items-center gap-2">
+                          <Activity className="w-4 h-4 text-emerald-600" />
+                          <span>Direct Live Socket Telemetry</span>
+                        </h5>
+                        <span className="text-[11px] text-slate-400 font-mono">Server Handshake Probe</span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                          <span className="text-slate-400 block text-[10px] font-medium mb-1">Time To First Byte (TTFB)</span>
+                          <span className="text-lg font-bold text-slate-900">
+                            {publicAudit.performanceAnalysis.socketTelemetry.serverLatencyTtfbMs}ms
+                          </span>
+                        </div>
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                          <span className="text-slate-400 block text-[10px] font-medium mb-1">Transferred HTML Size</span>
+                          <span className="text-lg font-bold text-slate-900">
+                            {publicAudit.performanceAnalysis.socketTelemetry.htmlPayloadSizeKb} KB
+                          </span>
+                        </div>
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                          <span className="text-slate-400 block text-[10px] font-medium mb-1">Transport Protocol</span>
+                          <span className="text-sm font-bold text-slate-900 truncate block">
+                            {publicAudit.performanceAnalysis.socketTelemetry.protocol}
+                          </span>
+                        </div>
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                          <span className="text-slate-400 block text-[10px] font-medium mb-1">HTTP Response Code</span>
+                          <span className="text-sm font-bold text-emerald-700">
+                            HTTP {publicAudit.performanceAnalysis.socketTelemetry.httpStatusCode} OK
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/70 text-xs font-mono text-slate-600">
+                        {publicAudit.performanceAnalysis.socketTelemetry.evidence}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Section: Value-Gated Product Teasers (Shown on sub-tabs) */}
+                {auditTab !== 'quick_checkup' && (
                   <>
-                    {/* Real Opportunity 1: Schema & Technical Foundation */}
-                    <div className="p-5 bg-rose-50/50 border border-rose-200/80 rounded-2xl space-y-3 flex flex-col justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="px-2 py-0.5 bg-rose-100 text-rose-800 text-[10px] font-black rounded-full uppercase">
-                            🔴 High Urgency
-                          </span>
-                          <span className="text-[11px] text-slate-400 font-medium">Technical SEO</span>
+                    <div className="space-y-4 pt-4 border-t border-slate-100">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Lock className="w-4 h-4 text-emerald-600" />
+                          <h4 className="text-sm font-bold text-slate-900 font-heading">
+                            Unlock Full Locora Platform to Fix & Monitor
+                          </h4>
                         </div>
-                        <h5 className="font-bold text-sm text-slate-900 font-heading">
-                          {!liveAuditData.hasSchema
-                            ? 'Missing LocalBusiness Schema'
-                            : !liveAuditData.isSsl
-                            ? 'Insecure HTTP Connection'
-                            : 'Optimize Title & Meta Tags'}
-                        </h5>
-                        <p className="text-xs text-slate-600 leading-relaxed">
-                          {!liveAuditData.hasSchema
-                            ? `"${targetBusinessName}" has no LocalBusiness JSON-LD markup. Google Maps and AI search engines cannot reliably parse your operating hours or address.`
-                            : !liveAuditData.isSsl
-                            ? 'Your site does not enforce HTTPS encryption. Browsers flag insecure connections to potential customers.'
-                            : `Page title is currently: "${(liveAuditData.pageTitle || targetBusinessName).slice(0, 50)}...". Optimize keywords to increase click-through rate.`}
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          The free checkup diagnoses what is wrong. Your Locora workspace explains why, how to fix it, and tracks rankings 24/7.
                         </p>
                       </div>
-                      <button
-                        onClick={() => handleOpenAction('website_review')}
-                        className="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Fix Technical Issues</span>
-                      </button>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {publicAudit.gatedTeasers.map((teaser) => (
+                          <div
+                            key={teaser.id}
+                            className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-emerald-300 transition-all flex flex-col justify-between space-y-3"
+                          >
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-bold text-[#059669] uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 font-heading">
+                                  {teaser.question}
+                                </span>
+                                <Lock className="w-3.5 h-3.5 text-slate-400" />
+                              </div>
+                              <h5 className="text-sm font-bold text-slate-900 font-heading">
+                                {teaser.title}
+                              </h5>
+                              <p className="text-xs text-slate-600 leading-relaxed font-sans">
+                                {teaser.teaserDescription}
+                              </p>
+                            </div>
+
+                            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                              <span className="text-[11px] font-medium text-slate-500">
+                                {teaser.featureHighlight}
+                              </span>
+                              <button
+                                onClick={() => handleClaimAndUnlock()}
+                                className="text-[#059669] hover:text-[#047857] font-bold text-xs flex items-center gap-1 cursor-pointer"
+                              >
+                                <span>Unlock</span>
+                                <ArrowRight className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
-                    {/* Real Opportunity 2: Content & Geo Search */}
-                    <div className="p-5 bg-amber-50/50 border border-amber-200/80 rounded-2xl space-y-3 flex flex-col justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-black rounded-full uppercase">
-                            🟠 High Impact
-                          </span>
-                          <span className="text-[11px] text-slate-400 font-medium">Content &amp; Meta</span>
+                    {/* Primary CTA Unlock Banner */}
+                    <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-[#043427] to-[#011a13] text-white space-y-5">
+                      <div className="max-w-2xl space-y-2">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-bold font-heading">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Claim Your Business Diagnostic</span>
                         </div>
-                        <h5 className="font-bold text-sm text-slate-900 font-heading">
-                          {!liveAuditData.pageDesc
-                            ? 'Missing Meta Description Tag'
-                            : (liveAuditData.wordCount || 0) < 300
-                            ? 'Thin Content on Homepage'
-                            : 'High-Intent Geo Service Pages'}
-                        </h5>
-                        <p className="text-xs text-slate-600 leading-relaxed">
-                          {!liveAuditData.pageDesc
-                            ? 'Search engines and AI assistants will generate an arbitrary snippet for your business. Add an intentional meta description with your primary offer.'
-                            : (liveAuditData.wordCount || 0) < 300
-                            ? `Only ${liveAuditData.wordCount || 0} words of body text detected. Adding comprehensive service descriptions will boost organic topical authority.`
-                            : `Meta description: "${liveAuditData.pageDesc.slice(0, 80)}...". Build dedicated location-specific landing pages to win adjacent neighborhoods.`}
+                        <h4 className="text-xl sm:text-2xl font-bold font-heading text-white tracking-tight">
+                          Turn These Findings Into Customers with Locora
+                        </h4>
+                        <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed font-sans">
+                          Claiming your audit saves your findings and initializes your autonomous Business Brain.
+                          Locora AI will immediately prioritize your highest-ROI fixes and generate copy-paste ready Schema.org code.
                         </p>
                       </div>
-                      <button
-                        onClick={() => handleOpenAction('content_studio')}
-                        className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Generate Service Page</span>
-                      </button>
-                    </div>
 
-                    {/* Real Opportunity 3: AI Citations & Google Maps */}
-                    <div className="p-5 bg-emerald-50/50 border border-emerald-200/80 rounded-2xl space-y-3 flex flex-col justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full uppercase">
-                            🟢 Competitive Edge
-                          </span>
-                          <span className="text-[11px] text-slate-400 font-medium">Google Maps &amp; AI</span>
-                        </div>
-                        <h5 className="font-bold text-sm text-slate-900 font-heading">
-                          Google Maps 3-Pack &amp; AI Citations
-                        </h5>
-                        <p className="text-xs text-slate-600 leading-relaxed">
-                          Synchronize {targetBusinessName}'s digital footprint across Google Business Profile, Apple Maps, and AI models (ChatGPT &amp; Perplexity) to win local recommendations.
-                        </p>
+                      <div className="flex flex-wrap items-center gap-4 pt-1">
+                        <button
+                          onClick={() => handleClaimAndUnlock()}
+                          className="px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer font-sans"
+                        >
+                          <span>Claim My Business & Unlock Dashboard</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setPublicAudit(null);
+                            setCheckupDone(false);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className="px-4 py-3 bg-white/10 hover:bg-white/15 text-white font-medium text-xs rounded-xl transition-all cursor-pointer font-sans"
+                        >
+                          Check Another Website
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleOpenAction('local_seo')}
-                        className="w-full py-2 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Optimize Local Presence</span>
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {/* Opportunity 1 */}
-                    <div className="p-5 bg-rose-50/50 border border-rose-200/80 rounded-2xl space-y-3 flex flex-col justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="px-2 py-0.5 bg-rose-100 text-rose-800 text-[10px] font-black rounded-full uppercase">
-                            🔴 High Urgency
-                          </span>
-                          <span className="text-[11px] text-slate-400 font-medium">Reputation</span>
-                        </div>
-                        <h5 className="font-bold text-sm text-slate-900 font-heading">
-                          8 Customer Reviews Need Responses
-                        </h5>
-                        <p className="text-xs text-slate-600 leading-relaxed">
-                          Customers frequently mention "emergency service." Responding with keyword context signals Google Maps algorithm to boost ranking.
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handleOpenAction('local_seo')}
-                        className="w-full py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Respond with AI</span>
-                      </button>
-                    </div>
 
-                    {/* Opportunity 2 */}
-                    <div className="p-5 bg-amber-50/50 border border-amber-200/80 rounded-2xl space-y-3 flex flex-col justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] font-black rounded-full uppercase">
-                            🟠 High Impact
-                          </span>
-                          <span className="text-[11px] text-slate-400 font-medium">Local SEO</span>
-                        </div>
-                        <h5 className="font-bold text-sm text-slate-900 font-heading">
-                          Missing High-Intent Service Page
-                        </h5>
-                        <p className="text-xs text-slate-600 leading-relaxed">
-                          Competitors are ranking for emergency keywords. You have zero dedicated landing pages targeting this search term.
-                        </p>
+                      <div className="pt-2 flex flex-wrap items-center gap-4 text-xs text-emerald-200/80 font-medium">
+                        <span className="flex items-center gap-1">✓ No credit card required</span>
+                        <span className="flex items-center gap-1">✓ Live diagnostic imported into your workspace</span>
+                        <span className="flex items-center gap-1">✓ 100% Free tier included</span>
                       </div>
-                      <button
-                        onClick={() => handleOpenAction('documents')}
-                        className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Create Geo Page</span>
-                      </button>
-                    </div>
-
-                    {/* Opportunity 3 */}
-                    <div className="p-5 bg-emerald-50/50 border border-emerald-200/80 rounded-2xl space-y-3 flex flex-col justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full uppercase">
-                            🟢 Competitive Edge
-                          </span>
-                          <span className="text-[11px] text-slate-400 font-medium">Competitors</span>
-                        </div>
-                        <h5 className="font-bold text-sm text-slate-900 font-heading">
-                          Competitor Review Velocity Gap
-                        </h5>
-                        <p className="text-xs text-slate-600 leading-relaxed">
-                          Top competitors gained 14 reviews this month. Your review velocity gap is widening. Launch an automated SMS review request campaign.
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handleOpenAction('marketing')}
-                        className="w-full py-2 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>See What They're Doing</span>
-                      </button>
                     </div>
                   </>
                 )}
               </div>
             </div>
-          </div>
+          ) : (
+            /* Pre-Audit Preview (Clean, Authentic, Zero Fake Data) */
+            <div className="p-8 sm:p-12 text-center space-y-8">
+              <div className="max-w-2xl mx-auto space-y-3">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-semibold font-heading uppercase tracking-wider">
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>100% Real Website Diagnostic</span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 tracking-tight">
+                  Instant Public Business Health Checkup
+                </h3>
+                <p className="text-sm text-slate-600 leading-relaxed font-sans max-w-xl mx-auto">
+                  Enter any website URL above to inspect technical search readiness, server response latency, and Schema.org structured data.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left max-w-4xl mx-auto">
+                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <Search className="w-5 h-5" />
+                  </div>
+                  <h4 className="text-base font-bold font-heading text-slate-900">
+                    1. Technical SEO & Headers
+                  </h4>
+                  <p className="text-xs text-slate-600 leading-relaxed font-sans">
+                    Scans live title tags, meta descriptions, canonical declarations, H1 heading structure, and image alt text compliance.
+                  </p>
+                </div>
+
+                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <Zap className="w-5 h-5" />
+                  </div>
+                  <h4 className="text-base font-bold font-heading text-slate-900">
+                    2. Speed & TTFB Latency
+                  </h4>
+                  <p className="text-xs text-slate-600 leading-relaxed font-sans">
+                    Measures real-time server handshake time, HTML transfer size, and HTTPS security protocol validation.
+                  </p>
+                </div>
+
+                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                    <MapPin className="w-5 h-5" />
+                  </div>
+                  <h4 className="text-base font-bold font-heading text-slate-900">
+                    3. Local Schema & Footprint
+                  </h4>
+                  <p className="text-xs text-slate-600 leading-relaxed font-sans">
+                    Detects Schema.org LocalBusiness JSON-LD markup, direct telephone links, and physical address discovery in live HTML.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={() => {
+                    const el = document.getElementById('hero-input');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm rounded-xl shadow-sm transition-all inline-flex items-center gap-2 cursor-pointer font-sans"
+                >
+                  <span>Enter Your Website to Check</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

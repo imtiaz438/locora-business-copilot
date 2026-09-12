@@ -93,12 +93,130 @@ export interface BusinessProfile {
   services?: string[];
   targetLocations?: string[];
   primaryCompetitors?: string[];
+  competitors?: string[];
   currentOffers?: string[];
   businessGoals?: string[];
   googleBusiness?: GoogleBusinessProfileInfo;
+  legalName?: string;
+  brandVoice?: string;
+  serviceAreas?: string[];
+  hours?: string;
+  targetCustomers?: string;
   brainReadinessScore?: number;
   lastBrainSyncAt?: string;
   updatedAt: string;
+}
+
+export interface OnboardingStep1Input {
+  websiteUrl: string;
+  businessName?: string;
+  country: string;
+  primaryLocation: string;
+}
+
+export interface DiscoveredBusinessInfo {
+  businessName: string | null;
+  legalName: string | null;
+  website: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  country: string;
+  postalCode: string | null;
+  businessCategory: string | null;
+  description: string | null;
+  hours: string | null;
+  services: string[];
+  googleBusinessProfile: {
+    connected: boolean;
+    statusText: 'Connected' | 'Not connected';
+    placeId?: string;
+    rating?: number;
+    reviewCount?: number;
+    googleMapsUri?: string;
+    formattedAddress?: string;
+    source: 'google_places' | 'website_crawl' | 'user_input' | 'not_found';
+  };
+  sources: {
+    businessName: 'google_places' | 'website_crawl' | 'user_input' | 'not_found';
+    address: 'google_places' | 'website_crawl' | 'user_input' | 'not_found';
+    phone: 'google_places' | 'website_crawl' | 'user_input' | 'not_found';
+    website: 'user_input' | 'google_places' | 'website_crawl';
+    category: 'google_places' | 'website_crawl' | 'user_input' | 'not_found';
+    hours: 'google_places' | 'website_crawl' | 'user_input' | 'not_found';
+  };
+  sourcesList: string[];
+  rawDiscoveredNotes?: string;
+}
+
+export interface OnboardingMissingInfoForm {
+  businessName: string;
+  legalName: string;
+  website: string;
+  phone: string;
+  email: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  postalCode: string;
+  services: string[];
+  serviceAreas: string[];
+  businessCategory: string;
+  description: string;
+  hours: string;
+  targetCustomers: string;
+  goals: string[];
+  brandVoice: string;
+  placeId?: string;
+  googleConnected?: boolean;
+}
+
+export interface BusinessTruthLocation {
+  id: string;
+  name: string | null;
+  isPrimary: boolean;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  country: string | null;
+  phone: string | null;
+  hours: string | string[] | null;
+}
+
+export interface BusinessTruthGoogleProfile {
+  connected: boolean;
+  placeId: string | null;
+  locationName: string | null;
+  address: string | null;
+  rating: number | null;
+  reviewCount: number | null;
+  isVerified: boolean;
+  status: string | null;
+}
+
+export interface BusinessTruth {
+  businessId: string;
+  name: string | null;
+  category: string | null;
+  website: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  locations: BusinessTruthLocation[];
+  services: string[] | null;
+  serviceAreas: string[] | null;
+  hours: string | null;
+  description: string | null;
+  targetCustomers: string | null;
+  goals: string[] | null;
+  brandVoice: string | null;
+  googleProfile: BusinessTruthGoogleProfile | null;
+  dataSources: string[];
+  lastUpdated: string | null;
 }
 
 export interface BusinessLocationItem {
@@ -136,10 +254,19 @@ export interface ClientBusiness {
   services: string[];
   competitors: string[];
   googleRating: number;
+  rankingAvg?: number;
   reviewCount: number;
   unansweredReviews: number;
   gbpCompleteness: number;
   gbpConnected?: boolean;
+  gbpLastSyncedAt?: string | null;
+  gscConnected?: boolean;
+  gscLastSyncedAt?: string | null;
+  gscError?: string | null;
+  localRankingsCheckedAt?: string | null;
+  keywordsLastCheckedAt?: string | null;
+  aiVisibilityLastCheckedAt?: string | null;
+  externalDatasets?: ExternalDataset[];
   placeId?: string;
   reviews?: any[];
   healthBreakdown?: {
@@ -148,6 +275,27 @@ export interface ClientBusiness {
     conversion: number;
     operations: number;
   };
+}
+
+export type DatasetFreshnessStatus =
+  | 'connected'
+  | 'not_connected'
+  | 'syncing'
+  | 'error'
+  | 'stale';
+
+export interface ExternalDataset {
+  id: string;
+  name: string;
+  source: string;
+  last_synced_at: string | null;
+  status: DatasetFreshnessStatus;
+  error: string | null;
+  category?: 'reputation' | 'search' | 'local' | 'technical' | 'ai' | 'competitors';
+  recordCount?: number;
+  description?: string;
+  actionLabel?: string;
+  actionTab?: string;
 }
 
 export interface FixItDraft {
@@ -184,7 +332,7 @@ export interface PriorityAction {
   aiReasoning?: string;
   itemsToCreate?: string[];
   draft?: FixItDraft;
-  aiExplanation: {
+  aiExplanation?: {
     rootCause: string;
     competitorEvidence: string;
     revenueImpact: string;
@@ -192,6 +340,11 @@ export interface PriorityAction {
   };
   isFixed?: boolean;
   fixedAt?: string;
+  source?: string;
+  severity?: 'critical' | 'high' | 'medium' | 'low';
+  confidence?: number;
+  createdAt?: string | Date;
+  businessId?: string;
 }
 
 export interface AppSettings {
@@ -209,19 +362,104 @@ export interface AppSettings {
   detectedProviderModels?: Record<string, AIModelOption[]>;
 }
 
-export type CustomerStatus = 'lead' | 'contacted' | 'proposal_sent' | 'client' | 'inactive';
+export type CustomerStatus = 'lead' | 'prospect' | 'customer' | 'inactive' | 'lost' | 'client' | 'contacted' | 'proposal_sent';
+export type CustomerSource = 'website_form' | 'manual' | 'imported' | 'connected_crm' | 'website_leads' | string;
 export type PipelineStage = 'new_lead' | 'contacted' | 'qualified' | 'proposal' | 'won';
+
+export type CustomerActivityType =
+  | 'lead_created'
+  | 'email_received'
+  | 'call_logged'
+  | 'note_added'
+  | 'status_changed'
+  | 'proposal_created'
+  | 'proposal_sent'
+  | 'invoice_created'
+  | 'invoice_paid'
+  | 'task_created'
+  | 'meeting_logged';
+
+export interface CustomerActivity {
+  id: string;
+  businessId: string;
+  customerId: string;
+  type: CustomerActivityType;
+  title: string;
+  description?: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+}
+
+export interface CustomerNote {
+  id: string;
+  businessId: string;
+  customerId: string;
+  author?: string;
+  content: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface CustomerTask {
+  id: string;
+  businessId: string;
+  customerId: string;
+  title: string;
+  dueDate?: string;
+  completed: boolean;
+  priority: 'low' | 'medium' | 'high';
+  createdAt: string;
+  completedAt?: string;
+}
+
+export interface CustomerTag {
+  id: string;
+  businessId: string;
+  customerId?: string;
+  name: string;
+  color?: string;
+  createdAt: string;
+}
+
+export interface CustomerSourceRecord {
+  id: string;
+  businessId: string;
+  name: string;
+  label: string;
+  createdAt: string;
+}
+
+export interface Lead {
+  id: string;
+  businessId: string;
+  customerId?: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  company?: string;
+  source: CustomerSource;
+  status: 'new' | 'contacted' | 'qualified' | 'converted' | 'lost' | string;
+  inquiryType?: string;
+  message?: string;
+  budget?: string;
+  value?: number;
+  metadata?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface Customer {
   id: string;
+  businessId?: string;
   name: string;
   company: string;
   email: string;
   phone: string;
   address: string;
+  source?: CustomerSource;
+  leadSource?: string;
   status: CustomerStatus;
   pipelineStage?: PipelineStage;
-  leadSource?: string;
   service?: string;
   value: number;
   lastActivity?: string;
@@ -230,6 +468,10 @@ export interface Customer {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  created_at?: string;
+  updated_at?: string;
+  lastContactAt?: string;
+  last_contact_at?: string;
 }
 
 export type AgencyHealthStatus = 'need_attention' | 'improving' | 'healthy';
@@ -263,20 +505,57 @@ export interface LocationPerformanceMetric {
   conversions: number;
 }
 
-export type ProjectStatus = 'planning' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
+export type ProjectStatus = 'planning' | 'active' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
 
 export interface Project {
   id: string;
-  title: string;
-  customerId: string;
-  customerName: string;
+  businessId?: string;
+  clientBusinessId?: string;
+  name?: string;
+  title?: string;
+  customerId?: string;
+  customerName?: string;
+  client?: string;
   status: ProjectStatus;
-  budget: number;
-  startDate: string;
-  targetDate: string;
-  description: string;
-  tasks: { id: string; title: string; completed: boolean }[];
+  priority?: 'low' | 'medium' | 'high';
+  budget?: number;
+  startDate?: string;
+  dueDate?: string;
+  targetDate?: string;
+  owner?: string;
+  progress?: number;
+  description?: string;
+  tasks?: { id: string; title: string; completed: boolean }[];
   createdAt: string;
+  updatedAt?: string;
+}
+
+export interface WorkTask {
+  id: string;
+  businessId: string;
+  clientBusinessId?: string;
+  projectId?: string;
+  title: string;
+  description?: string;
+  status: 'todo' | 'in_progress' | 'blocked' | 'completed';
+  priority: 'low' | 'medium' | 'high';
+  dueDate?: string;
+  assignedTo?: string;
+  createdAt: string;
+  completedAt?: string;
+}
+
+export interface WorkTemplate {
+  id: string;
+  businessId: string;
+  clientBusinessId?: string;
+  name: string;
+  type: 'proposal' | 'document' | 'invoice' | 'task_list' | string;
+  description?: string;
+  content?: string;
+  data?: any;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Note {
@@ -301,6 +580,8 @@ export interface InvoiceItem {
 
 export interface Invoice {
   id: string;
+  businessId?: string;
+  clientBusinessId?: string;
   invoiceNumber: string;
   customerId: string;
   customerName: string;
@@ -308,6 +589,7 @@ export interface Invoice {
   customerAddress: string;
   issueDate: string;
   dueDate: string;
+  currency?: string;
   status: InvoiceStatus;
   items: InvoiceItem[];
   subtotal: number;
@@ -321,14 +603,17 @@ export interface Invoice {
 }
 
 export type ProposalType = 'proposal' | 'quotation' | 'contract';
+export type ProposalStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'declined' | 'expired' | 'archived';
 
 export interface Proposal {
   id: string;
+  businessId?: string;
+  clientBusinessId?: string;
   title: string;
   type: ProposalType;
   customerId?: string;
   customerName: string;
-  status: 'draft' | 'sent' | 'accepted' | 'declined';
+  status: ProposalStatus;
   summary: string;
   scopeOfWork: string;
   deliverables: string[];
@@ -338,6 +623,7 @@ export interface Proposal {
   termsAndConditions: string;
   generatedContent: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export type DocumentType =
@@ -356,14 +642,87 @@ export type DocumentType =
   | 'landing_page_copy'
   | 'faq_page';
 
+export type ContentType =
+  | 'google_post'
+  | 'service_page'
+  | 'location_page'
+  | 'website_content'
+  | 'faq'
+  | 'blog_guide'
+  | 'review_reply'
+  | 'social_post'
+  | 'offer'
+  | 'email'
+  | 'draft';
+
+export type ContentStatus =
+  | 'draft'
+  | 'review'
+  | 'approved'
+  | 'scheduled'
+  | 'published'
+  | 'failed'
+  | 'archived';
+
+export type ContentPlatform =
+  | 'gbp'
+  | 'website'
+  | 'email'
+  | 'social'
+  | 'blog'
+  | 'internal';
+
+export interface ContentPerformance {
+  clicks?: number;
+  impressions?: number;
+  ctr?: number;
+  queries?: string[];
+  pageViews?: number;
+  available: boolean;
+  message?: string;
+  lastUpdated?: string;
+}
+
+export interface ContentRecord {
+  id: string;
+  business_id: string;
+  content_type: ContentType;
+  title: string;
+  body: string;
+  status: ContentStatus;
+  target_service: string;
+  target_location: string;
+  target_keyword?: string;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+  source: 'ai' | 'manual' | 'template' | 'business_brain';
+  AI_generated: boolean;
+  published_at?: string | null;
+  scheduled_at?: string | null;
+  platform: ContentPlatform;
+  external_id?: string | null;
+  google_location_id?: string | null;
+  errorMessage?: string | null;
+  performance?: ContentPerformance;
+}
+
 export interface DocumentItem {
   id: string;
+  businessId?: string;
+  clientBusinessId?: string;
+  customerId?: string;
+  leadId?: string;
+  projectId?: string;
+  proposalId?: string;
   title: string;
-  type: DocumentType;
+  type: DocumentType | string;
   content: string;
-  prompt: string;
+  prompt?: string;
   targetAudience?: string;
   tone?: string;
+  source?: 'manual' | 'ai_generated' | 'template' | 'report_export' | string;
+  metadata?: Record<string, any>;
   createdAt: string;
 }
 
@@ -442,7 +801,14 @@ export interface WebsiteAuditResult {
     hasAddress?: boolean;
     hasPhoneText?: boolean;
     robotsMeta?: string;
+    hasSitemap?: boolean;
+    sitemapUrl?: string;
+    sitemapStatus?: number;
+    testedLinksCount?: number;
+    brokenLinksCount?: number;
+    brokenLinks?: { url: string; status: number }[];
   };
+  technicalSeo?: TechnicalSeoBreakdown;
   audit?: any;
   keyIssues: {
     type: 'error' | 'warning' | 'pass';
@@ -455,6 +821,434 @@ export interface WebsiteAuditResult {
   seoMatrix?: SeoMatrixAuditData;
   aiSummary: string;
   actionableSteps: string[];
+}
+
+export interface DiscoveredField<T = string> {
+  value: T | null;
+  source: string | null;
+  status: 'found' | 'not_found';
+  displayValue: string;
+}
+
+export interface BusinessDiscoveryData {
+  businessName: DiscoveredField<string>;
+  displayName: DiscoveredField<string>;
+  phone: DiscoveredField<string>;
+  email: DiscoveredField<string>;
+  address: DiscoveredField<string>;
+  city: DiscoveredField<string>;
+  stateRegion: DiscoveredField<string>;
+  country: DiscoveredField<string>;
+  postalCode: DiscoveredField<string>;
+  services: DiscoveredField<string[]>;
+  serviceAreas: DiscoveredField<string[]>;
+  businessCategory: DiscoveredField<string>;
+  openingHours: DiscoveredField<string[]>;
+  website: DiscoveredField<string>;
+  socialLinks: DiscoveredField<Array<{ platform: string; url: string }>>;
+}
+
+export interface TechnicalSeoAnalysis {
+  https: {
+    enabled: boolean;
+    evidence: string;
+    details: string;
+  };
+  crawlability: {
+    status: 'crawlable' | 'restricted' | 'blocked';
+    metaRobots: string | null;
+    evidence: string;
+  };
+  robotsTxt: {
+    found: boolean;
+    statusCode: number;
+    hasDisallow: boolean;
+    sitemapFoundInRobots: boolean;
+    evidence: string;
+  };
+  sitemapXml: {
+    found: boolean;
+    statusCode: number;
+    evidence: string;
+  };
+  canonicalTag: {
+    present: boolean;
+    canonicalUrl: string | null;
+    matchesCurrentUrl: boolean;
+    evidence: string;
+  };
+  indexability: {
+    isIndexable: boolean;
+    evidence: string;
+  };
+  redirectBehavior: {
+    redirected: boolean;
+    finalUrl: string;
+    evidence: string;
+  };
+  internalLinksHealth: {
+    totalChecked: number;
+    brokenCount: number;
+    brokenLinks: Array<{ url: string; status: number }>;
+    evidence: string;
+  };
+  httpStatusCode: {
+    code: number;
+    evidence: string;
+  };
+}
+
+export interface OnPageSeoAnalysis {
+  titleTag: {
+    present: boolean;
+    text: string | null;
+    length: number;
+    isOptimalLength: boolean;
+    evidence: string;
+  };
+  metaDescription: {
+    present: boolean;
+    text: string | null;
+    length: number;
+    isOptimalLength: boolean;
+    evidence: string;
+  };
+  h1Heading: {
+    present: boolean;
+    count: number;
+    headings: string[];
+    evidence: string;
+  };
+  headingStructure: {
+    h1Count: number;
+    h2Count: number;
+    h3Count: number;
+    hierarchyValid: boolean;
+    evidence: string;
+  };
+  duplicateTitles: {
+    hasDuplicates: boolean;
+    evidence: string;
+  };
+  duplicateDescriptions: {
+    hasDuplicates: boolean;
+    evidence: string;
+  };
+  contentStructure: {
+    wordCount: number;
+    paragraphCount: number;
+    thinContent: boolean;
+    evidence: string;
+  };
+  imageAltAttributes: {
+    totalImages: number;
+    missingAltCount: number;
+    compliantCount: number;
+    compliancePercentage: number;
+    evidence: string;
+  };
+  internalLinking: {
+    totalLinks: number;
+    distinctPages: number;
+    evidence: string;
+  };
+  urlStructure: {
+    isClean: boolean;
+    hasSuspiciousParams: boolean;
+    evidence: string;
+  };
+}
+
+export interface ContentAnalysis {
+  thinContentSignal: {
+    detected: boolean;
+    wordCount: number;
+    verdict: string;
+    evidence: string;
+  };
+  missingImportantElements: Array<{
+    element: string;
+    missing: boolean;
+    importance: string;
+    evidence: string;
+  }>;
+  serviceInformation: {
+    detected: boolean;
+    sampleServices: string[];
+    evidence: string;
+  };
+  locationRelevance: {
+    detected: boolean;
+    locationsFound: string[];
+    evidence: string;
+  };
+  contactInformation: {
+    detected: boolean;
+    methodsFound: string[];
+    evidence: string;
+  };
+  usefulBusinessInformation: {
+    detected: boolean;
+    items: string[];
+    evidence: string;
+  };
+}
+
+export interface StructuredDataAnalysis {
+  hasJsonLd: boolean;
+  totalBlocks: number;
+  detectedSchemas: {
+    localBusiness: boolean;
+    organization: boolean;
+    webSite: boolean;
+    webPage: boolean;
+    service: boolean;
+    faqPage: boolean;
+    breadcrumbList: boolean;
+    otherDetectedSchemas: string[];
+  };
+  findings: Array<{
+    schema: string;
+    detected: boolean;
+    evidence: string;
+  }>;
+}
+
+export interface RealSeoAnalysisData {
+  technical: TechnicalSeoAnalysis;
+  onPage: OnPageSeoAnalysis;
+  content: ContentAnalysis;
+  structuredData: StructuredDataAnalysis;
+}
+
+export interface LocalSeoAnalysisData {
+  signals: {
+    businessName: { found: boolean; value: string | null; evidence: string };
+    address: { found: boolean; value: string | null; evidence: string };
+    phone: { found: boolean; value: string | null; evidence: string };
+    cityLocationReferences: { found: boolean; locations: string[]; evidence: string };
+    serviceAreas: { found: boolean; areas: string[]; evidence: string };
+    contactInformation: { found: boolean; channels: string[]; evidence: string };
+    localBusinessSchema: { found: boolean; schemaType: string | null; evidence: string };
+    organizationSchema: { found: boolean; evidence: string };
+    servicePages: { found: boolean; pages: string[]; evidence: string };
+    locationPages: { found: boolean; pages: string[]; evidence: string };
+    localRelevanceSignals: {
+      hasLocalPhone: boolean;
+      hasMapEmbed: boolean;
+      hasPhysicalAddressInFooter: boolean;
+      evidence: string;
+    };
+  };
+  googleBusinessProfileNotice: {
+    status: 'not_connected';
+    headline: string;
+    explanation: string;
+    actionRequired: string;
+  };
+}
+
+export interface PerformanceAnalysisData {
+  provider: 'google_pagespeed_insights' | 'socket_telemetry';
+  status: 'available' | 'not_configured' | 'auth_failed' | 'quota_exceeded';
+  statusMessage: string;
+  pageSpeedMetrics?: {
+    mobilePerformanceScore: number;
+    desktopPerformanceScore?: number | null;
+    strategy: 'mobile';
+    coreWebVitals: {
+      firstContentfulPaint: string;
+      largestContentfulPaint: string;
+      cumulativeLayoutShift: string;
+      totalBlockingTime: string;
+      speedIndex: string;
+    };
+  };
+  socketTelemetry: {
+    serverLatencyTtfbMs: number;
+    htmlPayloadSizeKb: number;
+    protocol: string;
+    httpStatusCode: number;
+    isSsl: boolean;
+    evidence: string;
+  };
+}
+
+export interface ScoreCheckItem {
+  id: string;
+  name: string;
+  passed: boolean;
+  evidence: string;
+  pointsAwarded: number;
+  maxPoints: number;
+}
+
+export interface CategoryScoreDetail {
+  id: string;
+  name: string;
+  score: number;
+  maxScore: number;
+  weight: number; // e.g. 0.20
+  status: 'good' | 'fair' | 'needs_attention';
+  checks: ScoreCheckItem[];
+  explanation: string;
+}
+
+export interface DeterministicScoringResult {
+  overallScore: number;
+  categories: {
+    technicalSeo: CategoryScoreDetail;
+    onPageSeo: CategoryScoreDetail;
+    localSeo: CategoryScoreDetail;
+    content: CategoryScoreDetail;
+    structuredData: CategoryScoreDetail;
+    performance: CategoryScoreDetail;
+  };
+  formulaExplanation: string;
+}
+
+export interface PublicGatedOpportunity {
+  id: string;
+  priority: number; // 1, 2, 3
+  title: string;
+  impact: string; // 'High Revenue Impact', 'Medium Impact', etc.
+  category: string;
+  difficulty: 'Quick Win' | 'Moderate' | 'Technical';
+  limitedEvidence: string;
+}
+
+export interface PublicGatedIssue {
+  id: string;
+  priority: number; // 1, 2, 3
+  severity: 'critical' | 'warning' | 'info';
+  category: string;
+  title: string;
+  description: string;
+  limitedEvidence: string;
+  affectedUrl?: string;
+  recommendation?: string;
+}
+
+export interface PublicGatedPassedCheck {
+  id: string;
+  title: string;
+  limitedEvidence: string;
+  category: string;
+}
+
+export interface PublicGatedReport {
+  totalOpportunitiesCount: number;
+  visibleOpportunitiesCount: number;
+  lockedOpportunitiesCount: number;
+  topIssues: PublicGatedIssue[]; // 2-3 highest priority problems
+  topPassedChecks: PublicGatedPassedCheck[]; // 2-3 passed checks
+  topOpportunities: PublicGatedOpportunity[]; // 2-3 highest priority opportunities
+  nextStepRecommendation: {
+    headline: string;
+    summary: string;
+    primaryFocus: string;
+  };
+  scanMetadata: {
+    scanDateTime: string;
+    pagesAnalyzedLabel: string;
+    dataSources: string[];
+  };
+  lockedFeaturesList: Array<{
+    feature: string;
+    description: string;
+  }>;
+}
+
+export interface PublicCheckupResult {
+  auditId: string;
+  url: string;
+  domain: string;
+  businessName: string;
+  businessLocation?: string;
+  visitorEmail?: string;
+  analyzedAt: string;
+  pagesCrawled: number;
+  overallScore: number;
+  // Deterministic 6-category scoring system (Section 9)
+  scoring: DeterministicScoringResult;
+  // Public Results Value-Gating (Sections 10, 11, 12, 13)
+  gatedReport: PublicGatedReport;
+  scores: {
+    seo: number;
+    performance: number;
+    localPresence: number;
+    technicalSeo?: number;
+    onPageSeo?: number;
+    localSeo?: number;
+    content?: number;
+    structuredData?: number;
+  };
+  crawlStats: {
+    latencyMs: number;
+    htmlSizeKb: number;
+    isSsl: boolean;
+    httpStatus: number;
+    totalImages: number;
+    missingAltImages: number;
+    internalLinksCount: number;
+  };
+  detectedBusinessData: {
+    name: string;
+    phone: string | null;
+    address: string | null;
+    schemaTypes: string[];
+    hasLocalBusinessSchema: boolean;
+    hasContactForm: boolean;
+    hasMapEmbed: boolean;
+    metaTitle: string;
+    metaDescription: string;
+    h1Heading: string | null;
+  };
+  // Sections 5, 6, 7, 8 deep authentic modules
+  businessDiscovery: BusinessDiscoveryData;
+  realSeoAnalysis: RealSeoAnalysisData;
+  localSeoAnalysis: LocalSeoAnalysisData;
+  performanceAnalysis: PerformanceAnalysisData;
+
+  discoveredIssues: Array<{
+    id: string;
+    severity: 'critical' | 'warning' | 'info';
+    category: 'SEO' | 'Local Presence' | 'Performance' | 'Security';
+    title: string;
+    description: string;
+    evidence: string;
+  }>;
+  gatedTeasers: Array<{
+    id: string;
+    question: string;
+    title: string;
+    teaserDescription: string;
+    featureHighlight: string;
+    unlockedInPlan: string;
+  }>;
+  status?: 'queued' | 'scanning' | 'analyzing' | 'completed' | 'partial' | 'failed' | 'expired';
+  cacheStatus?: 'live' | 'cached';
+  dataAge?: string;
+  crawlStartedAt?: string;
+  crawlCompletedAt?: string;
+  visitorId?: string;
+}
+
+export interface TechnicalSeoFactor {
+  id: string;
+  name: string;
+  score: number;
+  maxScore: number;
+  status: 'passed' | 'warning' | 'failed';
+  evidence: string;
+  recommendation?: string;
+}
+
+export interface TechnicalSeoBreakdown {
+  score: number;
+  basedOn: string[];
+  factors: TechnicalSeoFactor[];
+  crawledAt: string;
 }
 
 export interface SeoKeywordMatrixItem {
@@ -563,10 +1357,20 @@ export interface BacklinkProfile {
   links: BacklinkItem[];
 }
 
+export type ProviderStatus =
+  | 'success'
+  | 'not_configured'
+  | 'authentication_error'
+  | 'quota_exceeded'
+  | 'unavailable'
+  | 'connected_no_data';
+
 export interface SeoMatrixAuditData {
   tier: 'free' | 'pro';
   provider: 'serper' | 'serpapi' | 'scaleserp' | 'valueserp' | 'dataforseo' | 'google_search' | 'google_custom_search' | 'dom_heuristic' | 'dns_verification' | 'global_authority_index';
   providerName: string;
+  provider_status?: ProviderStatus;
+  providerStatusMessage?: string;
   isCached: boolean;
   cachedAt?: string;
   cacheTtlHours: number;

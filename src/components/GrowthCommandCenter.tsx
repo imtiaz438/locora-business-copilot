@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { FixItModal } from './FixItModal';
 import { MultiLocationSection } from './MultiLocationSection';
 import { PriorityAction } from '../types';
+import { DataProvenanceBadge } from './common/DataProvenanceBadge';
 import {
   Sparkles,
   TrendingUp,
@@ -33,13 +34,26 @@ import {
 export const GrowthCommandCenter: React.FC = () => {
   const {
     activeBusiness,
+    businessTruth,
     priorityActions,
     setActiveTab,
     setRightAiPanelOpen,
     user,
     consumeAiCredit,
     setIsGbpSyncModalOpen,
+    latestWebsiteAudit,
+    productionDashboard,
   } = useApp();
+
+  // Canonical business identity and facts from canonical truth service
+  const businessName = businessTruth?.name ?? activeBusiness?.name ?? null;
+  const businessCategory = businessTruth?.category ?? activeBusiness?.category ?? null;
+  const businessCity = businessTruth?.locations?.find((l) => l.isPrimary)?.city ?? businessTruth?.locations?.[0]?.city ?? activeBusiness?.city ?? null;
+  const businessState = businessTruth?.locations?.find((l) => l.isPrimary)?.state ?? businessTruth?.locations?.[0]?.state ?? activeBusiness?.state ?? null;
+  const businessWebsite = businessTruth?.website ?? activeBusiness?.website ?? null;
+  const businessPhone = businessTruth?.phone ?? activeBusiness?.phone ?? null;
+  const businessServices = businessTruth?.services ?? activeBusiness?.services ?? null;
+  const isGoogleConnected = businessTruth?.googleProfile ? businessTruth.googleProfile.connected : Boolean(activeBusiness?.gbpConnected);
 
   const [selectedFixItAction, setSelectedFixItAction] = useState<PriorityAction | null>(null);
   const [expandedReasonId, setExpandedReasonId] = useState<string | null>(null);
@@ -53,7 +67,7 @@ export const GrowthCommandCenter: React.FC = () => {
   // Suggested Quick Prompts
   const quickPrompts = [
     `Why is the high-intent service page our highest ROI action?`,
-    `How do we reach the Google Maps 3-pack for ${activeBusiness.city || 'our service area'}?`,
+    `How do we reach the Google Maps 3-pack for ${businessCity || 'our service area'}?`,
     `Draft a professional response for a client review`,
     `Compare our reviews with ${activeBusiness.competitors?.[0] || 'local competitors'}`,
   ];
@@ -73,13 +87,21 @@ export const GrowthCommandCenter: React.FC = () => {
         body: JSON.stringify({
           message: q,
           businessContext: {
-            name: activeBusiness.name,
-            category: activeBusiness.category,
-            city: activeBusiness.city,
-            state: activeBusiness.state,
-            phone: activeBusiness.phone,
-            healthScore: activeBusiness.healthScore,
-            unansweredReviews: activeBusiness.unansweredReviews,
+            businessId: businessTruth?.businessId || activeBusiness?.id || null,
+            name: businessName,
+            category: businessCategory,
+            city: businessCity,
+            state: businessState,
+            website: businessWebsite,
+            phone: businessPhone,
+            services: businessServices,
+            serviceAreas: businessTruth?.serviceAreas || null,
+            hours: businessTruth?.hours || null,
+            description: businessTruth?.description || null,
+            targetCustomers: businessTruth?.targetCustomers || null,
+            goals: businessTruth?.goals || null,
+            brandVoice: businessTruth?.brandVoice || null,
+            googleProfile: businessTruth?.googleProfile || null,
           },
         }),
       });
@@ -89,15 +111,15 @@ export const GrowthCommandCenter: React.FC = () => {
         setAiAnswer(data.reply || data.text);
       } else {
         setAiAnswer(
-          `### Locora AI Recommendation for ${activeBusiness.name}:\n\n` +
-          `1. **Focus on Priority Action #1**: Publishing the ${priorityActions[0]?.title || 'high-intent local service page'} directly targets qualified searchers in ${activeBusiness.city || 'your primary market'}.\n` +
-          `2. **Clear Review Backlog**: Responding to your ${activeBusiness.unansweredReviews || 0} unanswered customer reviews signals responsiveness to local ranking algorithms.\n` +
+          `### Locora AI Recommendation for ${businessName || 'Your Business'}:\n\n` +
+          `1. **Focus on Priority Action #1**: Publishing the ${priorityActions[0]?.title || 'high-intent local service page'} directly targets qualified searchers in ${businessCity || 'your primary market'}.\n` +
+          `2. **Clear Review Backlog**: Responding to your customer reviews signals responsiveness to local ranking algorithms.\n` +
           `3. **Continuous Schema Monitoring**: Keeping LocalBusiness structured data verified strengthens placement in Google Maps and AI Overviews.`
         );
       }
     } catch {
       setAiAnswer(
-        `### Strategic Growth Directive for ${activeBusiness.name}:\n\n` +
+        `### Strategic Growth Directive for ${businessName || 'Your Business'}:\n\n` +
         `Your quickest path to increase local call volume is completing the **Top 3 Things to Fix This Week** listed below. Click **Fix It** on each card to generate safe, non-destructive drafts that you can review and approve.`
       );
     } finally {
@@ -110,12 +132,34 @@ export const GrowthCommandCenter: React.FC = () => {
     setExpandedReasonId((prev) => (prev === id ? null : id));
   };
 
-  const breakdown = activeBusiness.healthBreakdown || {
-    visibility: 68,
-    reputation: 82,
-    conversion: 61,
-    operations: 85,
-  };
+  const hasObservedRank = typeof activeBusiness.rankingAvg === 'number' && activeBusiness.rankingAvg > 0;
+  const visibilityScore = hasObservedRank
+    ? Math.round(Math.max(15, 100 - (activeBusiness.rankingAvg! - 1) * 12))
+    : 0;
+
+  const reputationScore = activeBusiness.googleRating > 0
+    ? Math.round((activeBusiness.googleRating / 5) * 100)
+    : 0;
+
+  const websiteScore = latestWebsiteAudit?.scores?.seo
+    ? Math.round(((latestWebsiteAudit.scores.seo || 0) + (latestWebsiteAudit.scores.performance || 0)) / 2)
+    : activeBusiness.website ? 40 : 0;
+
+  const conversionScore = activeBusiness.gbpConnected && activeBusiness.website
+    ? 60
+    : activeBusiness.gbpConnected || activeBusiness.website ? 30 : 0;
+
+  const contentScore = (activeBusiness.services?.length || 0) > 0
+    ? Math.min(85, (activeBusiness.services?.length || 0) * 20)
+    : 0;
+
+  const compScore = (activeBusiness.competitors?.length || 0) > 0
+    ? Math.min(80, (activeBusiness.competitors?.length || 0) * 25)
+    : 0;
+
+  const overallScore = activeBusiness.healthScore > 0
+    ? activeBusiness.healthScore
+    : Math.round((visibilityScore + reputationScore + websiteScore + conversionScore + contentScore + compScore) / 6);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto font-sans text-slate-900 pb-16">
@@ -128,7 +172,7 @@ export const GrowthCommandCenter: React.FC = () => {
             </span>
             <span className="text-[11px] font-semibold text-slate-400 hidden sm:inline">•</span>
             <span className="text-xs font-semibold text-slate-600">
-              Active Business: <strong className="text-slate-900">{activeBusiness.name}</strong> ({activeBusiness.city}, {activeBusiness.state})
+              Active Business: <strong className="text-slate-900">{businessName || 'Business Workspace'}</strong> {businessCity ? `(${businessCity}${businessState ? `, ${businessState}` : ''})` : ''}
             </span>
           </div>
 
@@ -164,12 +208,12 @@ export const GrowthCommandCenter: React.FC = () => {
               Live Google Sync Operations
             </span>
             <span className="text-xs text-slate-300">
-              {activeBusiness.gbpConnected ? 'Google Business Linked' : 'Connect Your Google Business Profile'}
+              {isGoogleConnected ? 'Google Business Linked' : 'Connect Your Google Business Profile'}
             </span>
           </div>
           <h3 className="text-base sm:text-lg font-bold font-heading text-white">
-            {activeBusiness.gbpConnected
-              ? `${activeBusiness.name} is synchronized with Google Maps`
+            {isGoogleConnected
+              ? `${businessName || 'Your business'} is synchronized with Google Maps`
               : 'Sync directly from Google or setup your custom business profile'}
           </h3>
           <p className="text-xs text-slate-300 max-w-xl">
@@ -183,7 +227,7 @@ export const GrowthCommandCenter: React.FC = () => {
             className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
           >
             <Globe className="w-4 h-4" />
-            <span>{activeBusiness.gbpConnected ? 'Re-Sync from Google' : 'Sync Google Profile'}</span>
+            <span>{isGoogleConnected ? 'Re-Sync from Google' : 'Sync Google Profile'}</span>
           </button>
         </div>
       </div>
@@ -217,7 +261,7 @@ export const GrowthCommandCenter: React.FC = () => {
                 />
                 <path
                   className="text-[#059669]"
-                  strokeDasharray={`${activeBusiness.healthScore}, 100`}
+                  strokeDasharray={`${overallScore}, 100`}
                   strokeWidth="3.5"
                   strokeLinecap="round"
                   stroke="currentColor"
@@ -227,7 +271,7 @@ export const GrowthCommandCenter: React.FC = () => {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <span className="text-xl font-black font-heading leading-none">
-                  {activeBusiness.healthScore}
+                  {overallScore}
                 </span>
                 <span className="text-[9px] text-slate-400 font-bold uppercase">/ 100</span>
               </div>
@@ -238,11 +282,13 @@ export const GrowthCommandCenter: React.FC = () => {
                 Overall Growth Health
               </span>
               <p className="text-base font-bold font-heading text-white">
-                Score: {activeBusiness.healthScore} / 100
+                Score: {overallScore} / 100
               </p>
-              <div className="flex items-center gap-1 text-xs text-emerald-400 font-bold mt-1">
-                <TrendingUp className="w-3.5 h-3.5" />
-                <span>+6 this month</span>
+              <div className="flex items-center gap-1 text-xs text-slate-300 mt-1">
+                <DataProvenanceBadge
+                  type={overallScore > 0 ? 'CALCULATED' : 'UNAVAILABLE'}
+                  customText={overallScore > 0 ? '✓ Calculated from connected data' : '⚠ Connect profile to calculate score'}
+                />
               </div>
             </div>
           </div>
@@ -255,7 +301,7 @@ export const GrowthCommandCenter: React.FC = () => {
               Evidence-Based Scoring Breakdown (6 Pillars)
             </span>
             <span className="text-xs text-slate-500 font-medium">
-              Calculated from connected Google, Website, and Competitor data
+              Calculated strictly from connected Google, Website, and Competitor data
             </span>
           </div>
 
@@ -263,103 +309,172 @@ export const GrowthCommandCenter: React.FC = () => {
             {/* 1. Visibility */}
             <div
               onClick={() => setActiveTab('visibility')}
-              className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group"
+              className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group space-y-2"
             >
-              <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+              <div className="flex items-center justify-between text-xs text-slate-500">
                 <span className="font-bold text-slate-800 group-hover:text-[#059669]">Visibility</span>
-                <span className="font-bold text-slate-900 font-mono text-base">78</span>
+                <span className="font-bold text-slate-900 font-mono text-base">
+                  {visibilityScore > 0 ? visibilityScore : '—'}
+                </span>
               </div>
-              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mb-2">
-                <div className="bg-emerald-600 h-full rounded-full" style={{ width: '78%' }} />
+              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${visibilityScore}%` }} />
               </div>
               <p className="text-[11px] text-slate-600 font-medium line-clamp-1">
-                Evidence: Search 74 • Maps 81 • AI Search 63
+                {hasObservedRank
+                  ? `Observed Map rank #${activeBusiness.rankingAvg!.toFixed(1)}`
+                  : 'Tracking not configured'}
               </p>
+              <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between">
+                <span className="text-[10px] text-slate-400 font-medium">Source Status:</span>
+                <DataProvenanceBadge
+                  type={hasObservedRank ? 'CALCULATED' : 'UNAVAILABLE'}
+                  customText={hasObservedRank ? '✓ Calculated from rank tracker' : '⚠ No ranking data available'}
+                />
+              </div>
             </div>
 
             {/* 2. Reputation */}
             <div
               onClick={() => setActiveTab('reputation')}
-              className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group"
+              className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group space-y-2"
             >
-              <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+              <div className="flex items-center justify-between text-xs text-slate-500">
                 <span className="font-bold text-slate-800 group-hover:text-[#059669]">Reputation</span>
-                <span className="font-bold text-slate-900 font-mono text-base">91</span>
+                <span className="font-bold text-slate-900 font-mono text-base">
+                  {reputationScore > 0 ? reputationScore : '—'}
+                </span>
               </div>
-              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mb-2">
-                <div className="bg-emerald-600 h-full rounded-full" style={{ width: '91%' }} />
+              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${reputationScore}%` }} />
               </div>
               <p className="text-[11px] text-slate-600 font-medium line-clamp-1">
-                Evidence: 4.8 avg rating • 84% reply rate • 4 unanswered
+                {activeBusiness.reviewCount > 0
+                  ? `${activeBusiness.googleRating.toFixed(1)}★ • ${activeBusiness.reviewCount} reviews • ${activeBusiness.unansweredReviews} unread`
+                  : (activeBusiness.gbpConnected ? '0 reviews on connected listing' : 'Connect GBP to sync reviews')}
               </p>
+              <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between">
+                <span className="text-[10px] text-slate-400 font-medium">Source Status:</span>
+                <DataProvenanceBadge
+                  type={(activeBusiness.gbpConnected && activeBusiness.googleRating > 0) ? 'SYNCED' : 'UNAVAILABLE'}
+                  customText={(activeBusiness.gbpConnected && activeBusiness.googleRating > 0) ? '✓ Synced from Google' : '⚠ No Google reviews synced'}
+                />
+              </div>
             </div>
 
             {/* 3. Website */}
             <div
-              onClick={() => setActiveTab('content')}
-              className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group"
+              onClick={() => setActiveTab('seo')}
+              className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group space-y-2"
             >
-              <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-                <span className="font-bold text-slate-800 group-hover:text-[#059669]">Website</span>
-                <span className="font-bold text-slate-900 font-mono text-base">73</span>
+              <div className="flex items-center justify-between text-xs text-slate-500">
+                <span className="font-bold text-slate-800 group-hover:text-[#059669]">Website (Technical SEO)</span>
+                <span className="font-bold text-slate-900 font-mono text-base">
+                  {latestWebsiteAudit?.scores?.seo ? latestWebsiteAudit.scores.seo : '—'}
+                </span>
               </div>
-              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mb-2">
-                <div className="bg-emerald-600 h-full rounded-full" style={{ width: '73%' }} />
+              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div
+                  className="bg-emerald-600 h-full rounded-full transition-all"
+                  style={{ width: `${latestWebsiteAudit?.scores?.seo ? websiteScore : 0}%` }}
+                />
               </div>
               <p className="text-[11px] text-slate-600 font-medium line-clamp-1">
-                Evidence: Speed 94 • Missing dedicated emergency URL
+                {latestWebsiteAudit
+                  ? `Technical SEO: ${latestWebsiteAudit.scores?.seo || 0} • Speed ${latestWebsiteAudit.scores?.performance || 0}`
+                  : 'No SEO audit available yet • Click to run crawl'}
               </p>
+              <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between">
+                <span className="text-[10px] text-slate-400 font-medium">Source Status:</span>
+                <DataProvenanceBadge
+                  type={latestWebsiteAudit?.scores?.seo ? 'CALCULATED' : 'UNAVAILABLE'}
+                  customText={latestWebsiteAudit?.scores?.seo ? '✓ Calculated from latest crawl' : '⚠ No crawl data available'}
+                />
+              </div>
             </div>
 
             {/* 4. Conversion */}
             <div
               onClick={() => setActiveTab('customers')}
-              className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group"
+              className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group space-y-2"
             >
-              <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+              <div className="flex items-center justify-between text-xs text-slate-500">
                 <span className="font-bold text-slate-800 group-hover:text-[#059669]">Conversion</span>
-                <span className="font-bold text-slate-900 font-mono text-base">68</span>
+                <span className="font-bold text-slate-900 font-mono text-base">
+                  {conversionScore > 0 ? conversionScore : '—'}
+                </span>
               </div>
-              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mb-2">
-                <div className="bg-emerald-600 h-full rounded-full" style={{ width: '68%' }} />
+              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${conversionScore}%` }} />
               </div>
               <p className="text-[11px] text-slate-600 font-medium line-clamp-1">
-                Evidence: Online booking live • 3.4% click-to-call
+                {activeBusiness.gbpConnected && activeBusiness.website
+                  ? 'Maps & website contact active'
+                  : 'Requires website & Google sync'}
               </p>
+              <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between">
+                <span className="text-[10px] text-slate-400 font-medium">Source Status:</span>
+                <DataProvenanceBadge
+                  type={activeBusiness.gbpConnected || activeBusiness.website ? 'USER_PROVIDED' : 'UNAVAILABLE'}
+                  customText={activeBusiness.gbpConnected || activeBusiness.website ? '✓ User/Website Lead' : '⚠ No lead capture data'}
+                />
+              </div>
             </div>
 
             {/* 5. Content */}
             <div
               onClick={() => setActiveTab('content')}
-              className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group"
+              className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group space-y-2"
             >
-              <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+              <div className="flex items-center justify-between text-xs text-slate-500">
                 <span className="font-bold text-slate-800 group-hover:text-[#059669]">Content</span>
-                <span className="font-bold text-slate-900 font-mono text-base">82</span>
+                <span className="font-bold text-slate-900 font-mono text-base">
+                  {contentScore > 0 ? contentScore : '—'}
+                </span>
               </div>
-              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mb-2">
-                <div className="bg-emerald-600 h-full rounded-full" style={{ width: '82%' }} />
+              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${contentScore}%` }} />
               </div>
               <p className="text-[11px] text-slate-600 font-medium line-clamp-1">
-                Evidence: 12 guides live • GBP post overdue (14d)
+                {(activeBusiness.services?.length || 0) > 0
+                  ? `${activeBusiness.services.length} services configured`
+                  : 'No core services configured'}
               </p>
+              <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between">
+                <span className="text-[10px] text-slate-400 font-medium">Source Status:</span>
+                <DataProvenanceBadge
+                  type={(activeBusiness.services?.length || 0) > 0 ? 'USER_PROVIDED' : 'UNAVAILABLE'}
+                  customText={(activeBusiness.services?.length || 0) > 0 ? '✓ User provided services' : '⚠ No services configured'}
+                />
+              </div>
             </div>
 
             {/* 6. Competitiveness */}
             <div
               onClick={() => setActiveTab('competitors')}
-              className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group"
+              className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group space-y-2"
             >
-              <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+              <div className="flex items-center justify-between text-xs text-slate-500">
                 <span className="font-bold text-slate-800 group-hover:text-[#059669]">Competitiveness</span>
-                <span className="font-bold text-slate-900 font-mono text-base">75</span>
+                <span className="font-bold text-slate-900 font-mono text-base">
+                  {compScore > 0 ? compScore : '—'}
+                </span>
               </div>
-              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mb-2">
-                <div className="bg-emerald-600 h-full rounded-full" style={{ width: '75%' }} />
+              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${compScore}%` }} />
               </div>
               <p className="text-[11px] text-slate-600 font-medium line-clamp-1">
-                Evidence: Rating leads (+0.2) • Trailing review count
+                {(activeBusiness.competitors?.length || 0) > 0
+                  ? `${activeBusiness.competitors.length} competitors tracked`
+                  : '0 competitors tracked (click to add)'}
               </p>
+              <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between">
+                <span className="text-[10px] text-slate-400 font-medium">Source Status:</span>
+                <DataProvenanceBadge
+                  type={(activeBusiness.competitors?.length || 0) > 0 ? 'CALCULATED' : 'UNAVAILABLE'}
+                  customText={(activeBusiness.competitors?.length || 0) > 0 ? '✓ Calculated from competitor audit' : '⚠ No ranking data available'}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -388,68 +503,107 @@ export const GrowthCommandCenter: React.FC = () => {
           </button>
         </div>
 
-        {/* 3 Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {priorityActions.slice(0, 3).map((action, idx) => {
-            const isReasonExpanded = expandedReasonId === action.id;
-            const cardTag =
-              idx === 0
-                ? { label: 'High Impact', bg: 'bg-rose-50 text-rose-800 border-rose-200' }
-                : idx === 1
-                ? { label: 'Opportunity', bg: 'bg-amber-50 text-amber-800 border-amber-200' }
-                : { label: 'Healthy Area to Maintain', bg: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
+        {/* Priority Actions Grid or Verified Zero-Issue State */}
+        {priorityActions.length === 0 ? (
+          <div className="bg-white border border-slate-200/90 rounded-3xl p-8 text-center space-y-3 shadow-sm">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
+              <ShieldCheck className="w-6 h-6 text-[#059669]" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900 font-heading">
+              All Systems Healthy — Zero Open Issues Detected
+            </h3>
+            <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
+              Google Business Profile is synchronized, review response rate is healthy, and technical schema is verified. In accordance with operating standards, no opportunities are generated solely to fill the UI.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {priorityActions.slice(0, 3).map((action, idx) => {
+              const isReasonExpanded = expandedReasonId === action.id;
+              const cardTag =
+                action.severity === 'critical'
+                  ? { label: 'Critical Severity', bg: 'bg-red-50 text-red-800 border-red-200' }
+                  : action.severity === 'high' || idx === 0
+                  ? { label: 'High Priority', bg: 'bg-rose-50 text-rose-800 border-rose-200' }
+                  : action.severity === 'medium' || idx === 1
+                  ? { label: 'Opportunity', bg: 'bg-amber-50 text-amber-800 border-amber-200' }
+                  : { label: 'Optimization', bg: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
 
-            return (
-              <div
-                key={action.id}
-                className={`bg-white border rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col justify-between space-y-4 transition-all ${
-                  action.isFixed
-                    ? 'border-emerald-300 bg-emerald-50/20'
-                    : idx === 0
-                    ? 'border-slate-300 hover:border-emerald-500 ring-1 ring-emerald-500/10'
-                    : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <div className="space-y-3.5">
-                  {/* Card Header: Tag & Impact */}
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full border ${cardTag.bg}`}
-                    >
-                      {cardTag.label}
-                    </span>
-                    {action.isFixed ? (
-                      <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <Check className="w-3 h-3" /> Deployed
-                      </span>
-                    ) : (
-                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                        {action.expectedImpact}
-                      </span>
+              return (
+                <div
+                  key={action.id}
+                  className={`bg-white border rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col justify-between space-y-4 transition-all ${
+                    action.isFixed
+                      ? 'border-emerald-300 bg-emerald-50/20'
+                      : idx === 0
+                      ? 'border-slate-300 hover:border-emerald-500 ring-1 ring-emerald-500/10'
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="space-y-3.5">
+                    {/* Card Header: Tag, Provenance & Impact */}
+                    <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className={`text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-0.5 rounded-full border ${cardTag.bg}`}
+                        >
+                          {cardTag.label}
+                        </span>
+                        <DataProvenanceBadge
+                          type="AI_RECOMMENDATION"
+                          customText="✦ AI Recommendation"
+                          size="xs"
+                        />
+                      </div>
+                      {action.isFixed ? (
+                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Deployed
+                        </span>
+                      ) : (
+                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                          {action.expectedImpact}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Recommendation Title */}
+                    <h3 className="text-base font-bold font-heading text-slate-900 leading-snug">
+                      {action.recommendationTitle}
+                    </h3>
+
+                    {/* Metadata: Source & Confidence if present */}
+                    {(action.source || action.confidence) && (
+                      <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500">
+                        {action.source && (
+                          <span className="bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-slate-700 font-semibold uppercase">
+                            {action.source.replace(/_/g, ' ')}
+                          </span>
+                        )}
+                        {action.confidence && (
+                          <span className="text-emerald-700 font-bold">
+                            {Math.round(action.confidence <= 1 ? action.confidence * 100 : action.confidence)}% Confidence
+                          </span>
+                        )}
+                      </div>
                     )}
-                  </div>
 
-                  {/* Recommendation Title */}
-                  <h3 className="text-base font-bold font-heading text-slate-900 leading-snug">
-                    {action.recommendationTitle}
-                  </h3>
+                    {/* Problem & Why It Matters */}
+                    <div className="space-y-2 text-xs">
+                      <div>
+                        <span className="font-bold text-slate-900 block mb-0.5">The Problem:</span>
+                        <p className="text-slate-600 leading-relaxed">{action.problem}</p>
+                      </div>
 
-                  {/* Problem & Why It Matters */}
-                  <div className="space-y-2 text-xs">
-                    <div>
-                      <span className="font-bold text-slate-900 block mb-0.5">The Problem:</span>
-                      <p className="text-slate-600 leading-relaxed">{action.problem}</p>
+                      <div>
+                        <span className="font-bold text-slate-900 block mb-0.5">Why it matters:</span>
+                        <p className="text-slate-600 leading-relaxed">{action.whyItMatters}</p>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-950">
+                        <strong className="text-amber-900 block uppercase text-[10px] tracking-wider mb-0.5">Detected Evidence:</strong>
+                        <span className="font-mono">{action.evidence}</span>
+                      </div>
                     </div>
-
-                    <div>
-                      <span className="font-bold text-slate-900 block mb-0.5">Why it matters:</span>
-                      <p className="text-slate-600 leading-relaxed">{action.whyItMatters}</p>
-                    </div>
-
-                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-500">
-                      <strong className="text-slate-700">Evidence:</strong> {action.evidence}
-                    </div>
-                  </div>
 
                   {/* AI Explanation Accordion: "Why did Locora recommend this?" */}
                   <div className="pt-1">
@@ -517,7 +671,8 @@ export const GrowthCommandCenter: React.FC = () => {
             );
           })}
         </div>
-      </section>
+      )}
+    </section>
 
       {/* 4. ASK LOCORA AI BUSINESS MANAGER (INTELLIGENT COMMAND BAR) */}
       <section className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-5">
@@ -536,7 +691,7 @@ export const GrowthCommandCenter: React.FC = () => {
             </div>
           </div>
           <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 self-start sm:self-auto font-mono">
-            {activeBusiness.name} Brain Active
+            {businessName || 'Locora'} Brain Active
           </span>
         </div>
 
@@ -550,7 +705,7 @@ export const GrowthCommandCenter: React.FC = () => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleAskLocora();
               }}
-              placeholder={`Ask anything about growing ${activeBusiness.name}...`}
+              placeholder={`Ask anything about growing ${businessName || 'your business'}...`}
               className="w-full pl-4 pr-32 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#059669] transition-all font-sans"
             />
             <button
@@ -590,11 +745,18 @@ export const GrowthCommandCenter: React.FC = () => {
 
         {aiAnswer && !isAsking && (
           <div className="p-5 bg-emerald-50/50 border border-emerald-200 rounded-2xl space-y-3 font-sans text-xs text-slate-800 animate-fadeIn">
-            <div className="flex items-center justify-between border-b border-emerald-200/60 pb-2.5">
-              <span className="font-bold text-[#047857] flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#059669]" />
-                Locora Strategy: {lastAskedQuestion}
-              </span>
+            <div className="flex items-center justify-between border-b border-emerald-200/60 pb-2.5 flex-wrap gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-bold text-[#047857] flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-[#059669]" />
+                  Locora Strategy: {lastAskedQuestion}
+                </span>
+                <DataProvenanceBadge
+                  type="AI_RECOMMENDATION"
+                  customText="✦ AI Recommendation"
+                  size="xs"
+                />
+              </div>
               <button
                 onClick={() => setRightAiPanelOpen(true)}
                 className="text-[11px] font-bold text-[#059669] hover:underline flex items-center gap-1 cursor-pointer"
@@ -634,7 +796,9 @@ export const GrowthCommandCenter: React.FC = () => {
             <Star className="w-4 h-4" />
           </div>
           <h4 className="text-xs font-bold text-slate-900 font-heading">Reputation</h4>
-          <p className="text-[11px] text-slate-500 mt-0.5">{activeBusiness.unansweredReviews || 17} need replies</p>
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            {activeBusiness.unansweredReviews > 0 ? `${activeBusiness.unansweredReviews} need replies` : 'Review intelligence'}
+          </p>
         </button>
 
         <button

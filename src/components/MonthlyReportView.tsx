@@ -1,400 +1,749 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
-import jsPDF from 'jspdf';
+import {
+  ReportType,
+  ReportSnapshot,
+  REPORT_TYPE_DEFINITIONS,
+} from '../types/reports';
+import {
+  generateFullReportSnapshot,
+  buildDataSourcesList,
+  checkReportStaleness,
+} from '../services/reportEngine';
+import {
+  getSavedReportSnapshots,
+  saveReportSnapshot,
+  deleteReportSnapshot,
+} from '../services/reportStorageService';
+import { ReportSourcesPanel } from './reports/ReportSourcesPanel';
+import { ReportMetricsGrid } from './reports/ReportMetricsGrid';
+import { ReportHistoryModal } from './reports/ReportHistoryModal';
+import { exportReportToPdf } from './reports/ReportPdfExport';
+import { DataProvenanceBadge } from './common/DataProvenanceBadge';
 import {
   BarChart3,
   TrendingUp,
   Download,
   Share2,
-  CheckCircle2,
-  ArrowUpRight,
-  Sparkles,
-  Phone,
-  Eye,
-  Star,
-  Users,
   Calendar,
-  HelpCircle,
+  Sparkles,
+  RefreshCw,
+  AlertTriangle,
+  Lightbulb,
+  CheckCircle2,
+  Clock,
+  History,
+  ShieldCheck,
+  Building2,
+  ArrowRight,
+  Target,
+  ExternalLink,
   Copy,
   Mail,
-  ExternalLink,
-  ArrowRight,
+  Check,
 } from 'lucide-react';
 
 export const MonthlyReportView: React.FC = () => {
-  const { activeBusiness, businessProfile, setActiveTab, logActivity } = useApp();
+  const {
+    activeBusiness,
+    businessTruth,
+    productionDashboard,
+    customers,
+    invoices,
+    proposals,
+    workTasks,
+    projects,
+    contentRecords,
+    setActiveTab,
+    logActivity,
+  } = useApp();
 
-  const [selectedMonth, setSelectedMonth] = useState('August 2026');
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
+  const [selectedReportType, setSelectedReportType] = useState<ReportType>('business_health');
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('Last 30 Days');
+  const [activeSnapshot, setActiveSnapshot] = useState<ReportSnapshot | null>(null);
+  const [historicalSnapshots, setHistoricalSnapshots] = useState<ReportSnapshot[]>([]);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
+  const [showShareModal, setShowShareModal] = useState<boolean>(false);
+  const [copiedLink, setCopiedLink] = useState<boolean>(false);
 
-  // Section 23 What Changed Metrics:
-  // Visibility ↑ 12%
-  // Reviews ↑ 18
-  // Calls ↑ 9%
-  // Website leads ↑ 14%
-  const growthMetrics = [
-    {
-      label: 'Visibility',
-      delta: '↑ 12%',
-      current: '84/100',
-      previous: '72/100',
-      detail: `Local Pack prominence across ${activeBusiness.city || 'local'} market`,
-      icon: Eye,
-      color: 'text-emerald-800 bg-emerald-50 border-emerald-200',
+  const businessId = activeBusiness.id || 'default';
+
+  const hasConnectedData = Boolean(
+    activeBusiness.gbpConnected ||
+    (activeBusiness.rankingAvg && activeBusiness.rankingAvg > 0) ||
+    (activeBusiness.reviewCount && activeBusiness.reviewCount > 0) ||
+    customers.some((c) => c.businessId === activeBusiness.id) ||
+    contentRecords.some((r) => r.business_id === activeBusiness.id || (r as any).businessId === activeBusiness.id) ||
+    workTasks.some((t) => t.businessId === activeBusiness.id)
+  );
+
+  // Load saved historical snapshots on mount or when business changes
+  useEffect(() => {
+    let isMounted = true;
+    getSavedReportSnapshots(businessId).then((snaps) => {
+      if (!isMounted) return;
+      setHistoricalSnapshots(snaps);
+
+      // Find an existing snapshot matching the current report type and period
+      const matching = snaps.find(
+        (s) => s.reportType === selectedReportType && s.period === selectedPeriod
+      );
+      if (matching) {
+        // Check if stale
+        const currentSources = buildDataSourcesList({
+          businessId,
+          reportType: selectedReportType,
+          period: selectedPeriod,
+          businessTruth,
+          activeBusiness,
+          productionDashboard,
+          customers,
+          invoices,
+          proposals,
+          workTasks,
+          projects,
+          contentRecords,
+        });
+        const staleness = checkReportStaleness(matching, currentSources);
+        setActiveSnapshot({
+          ...matching,
+          isStale: staleness.isStale,
+          staleReason: staleness.reason,
+        });
+      } else {
+        // Auto-generate initial snapshot if none exists
+        handleGenerateSnapshot(false);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [businessId, selectedReportType, selectedPeriod]);
+
+  // Master Snapshot Generator Pipeline
+  const handleGenerateSnapshot = useCallback(
+    async (manualClick = true) => {
+      setIsGenerating(true);
+      try {
+        const snapshot = await generateFullReportSnapshot({
+          businessId,
+          reportType: selectedReportType,
+          period: selectedPeriod,
+          businessTruth,
+          activeBusiness,
+          productionDashboard,
+          customers,
+          invoices,
+          proposals,
+          workTasks,
+          projects,
+          contentRecords,
+        });
+
+        setActiveSnapshot(snapshot);
+
+        // Save snapshot to history & database
+        await saveReportSnapshot(snapshot);
+        setHistoricalSnapshots((prev) => [
+          snapshot,
+          ...prev.filter((s) => s.id !== snapshot.id),
+        ]);
+
+        if (manualClick) {
+          logActivity(
+            `Generated ${snapshot.reportTitle} snapshot (${selectedPeriod}) from authentic operational data`,
+            'analytics'
+          );
+        }
+      } catch (err) {
+        console.error('[MonthlyReportView] Generation error:', err);
+      } finally {
+        setIsGenerating(false);
+      }
     },
-    {
-      label: 'Reviews',
-      delta: '↑ 18',
-      current: '248 total',
-      previous: '230 total',
-      detail: 'Average 4.9★ rating with zero unresolved flags',
-      icon: Star,
-      color: 'text-amber-800 bg-amber-50 border-amber-200',
-    },
-    {
-      label: 'Calls',
-      delta: '↑ 9%',
-      current: '142 calls',
-      previous: '130 calls',
-      detail: 'Mobile click-to-call conversions on Google Maps',
-      icon: Phone,
-      color: 'text-blue-800 bg-blue-50 border-blue-200',
-    },
-    {
-      label: 'Website leads',
-      delta: '↑ 14%',
-      current: '58 leads',
-      previous: '51 leads',
-      detail: 'Direct booking requests & appointment inquiries',
-      icon: Users,
-      color: 'text-purple-800 bg-purple-50 border-purple-200',
-    },
-  ];
+    [
+      businessId,
+      selectedReportType,
+      selectedPeriod,
+      businessTruth,
+      activeBusiness,
+      productionDashboard,
+      customers,
+      invoices,
+      proposals,
+      workTasks,
+      projects,
+      contentRecords,
+      logActivity,
+    ]
+  );
 
-  const handleDownloadPDF = () => {
-    const doc = new jsPDF();
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(22);
-    doc.text('Monthly Growth Report', 20, 25);
-
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Business: ${activeBusiness.name} — ${selectedMonth}`, 20, 33);
-    doc.text(`Prepared by: Locora AI Operating System`, 20, 39);
-
-    doc.line(20, 45, 190, 45);
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text('WHAT CHANGED?', 20, 55);
-
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text('• Visibility: +12% (Local Pack score improved from 72 to 84)', 25, 65);
-    doc.text('• Reviews: +18 new 5-star patient reviews (248 total, 4.9 rating)', 25, 73);
-    doc.text('• Calls: +9% (142 mobile inbound inquiries from Google Maps)', 25, 81);
-    doc.text('• Website Leads: +14% (58 direct appointment booking forms)', 25, 89);
-
-    doc.line(20, 98, 190, 98);
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text('WHY?', 20, 110);
-
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(11);
-    doc.text(
-      '"Your emergency service page began generating local search impressions."',
-      25,
-      120
-    );
-
-    doc.setFont('helvetica', 'normal');
-    const primarySvc = activeBusiness.services?.[0] || 'Core Service';
-    const whyText =
-      `Locora deployed the /services landing page embedded with LocalBusiness schema. High-urgency keyword volume surged 34% this month in ${activeBusiness.city || 'our market'}, successfully capturing 340 new impressions and elevating ${activeBusiness.name} into the coveted 3-Pack.`;
-    doc.text(doc.splitTextToSize(whyText, 165), 25, 130);
-
-    doc.line(20, 155, 190, 155);
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text('WHAT NEXT?', 20, 168);
-
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(11);
-    doc.text(`"Create high-intent, location-specific service content for ${activeBusiness.city || 'your market'}."`, 25, 178);
-
-    doc.setFont('helvetica', 'normal');
-    doc.text(`1. Deploy dedicated localized service landing pages for ${activeBusiness.name}.`, 25, 188);
-    doc.text('2. Launch 2 Google Business Profile updates highlighting core capabilities.', 25, 196);
-    doc.text('3. Inject structured LocalBusiness FAQ schema into Google Knowledge Graph.', 25, 204);
-
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'italic');
-    doc.text('Locora AI — Turning Search Visibility Into Customer Revenue', 20, 275);
-
-    doc.save(`${activeBusiness.name.replace(/\s+/g, '_')}_Monthly_Report_${selectedMonth.replace(/\s+/g, '_')}.pdf`);
-    logActivity('reports', 'Report Downloaded', `Downloaded Monthly Growth Report for ${selectedMonth}`);
+  const handleDeleteSnapshot = async (id: string) => {
+    await deleteReportSnapshot(businessId, id);
+    setHistoricalSnapshots((prev) => prev.filter((s) => s.id !== id));
+    if (activeSnapshot?.id === id) {
+      const remaining = historicalSnapshots.filter((s) => s.id !== id);
+      if (remaining.length > 0) {
+        setActiveSnapshot(remaining[0]);
+      } else {
+        handleGenerateSnapshot(false);
+      }
+    }
   };
 
+  const handleDownloadPdf = () => {
+    if (!activeSnapshot) return;
+    exportReportToPdf(activeSnapshot);
+    logActivity(`Exported PDF for ${activeSnapshot.reportTitle}`, 'analytics');
+  };
+
+  const currentTypeDefinition = REPORT_TYPE_DEFINITIONS.find(
+    (d) => d.id === selectedReportType
+  );
+
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto font-sans text-slate-900">
-      {/* Report Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      {/* 1. Header & Controls */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#059669] font-bold text-[10px] uppercase tracking-wider font-heading">
-              Executive Performance Diagnostic
-            </span>
-            <span className="text-xs text-slate-400 font-mono">ID: REP-2026-08</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600">
+              <BarChart3 className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                Reports Engine
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Real data reporting engine combining Business Brain, Google Business Profile, Reviews, Search Console, GA4, Website Crawl, Local Rankings, Competitors, Content, Customers, and Work.
+              </p>
+            </div>
           </div>
-          <h2 className="text-2xl font-extrabold font-heading text-slate-900 tracking-tight mt-1">
-            Monthly Growth Report
-          </h2>
-          <p className="text-xs text-slate-500">
-            {activeBusiness.name} • {selectedMonth} • {activeBusiness.city ? (activeBusiness.state ? `${activeBusiness.city}, ${activeBusiness.state} Metro` : `${activeBusiness.city} Metro`) : 'Active Market'}
-          </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-3.5 py-2 border border-slate-200 rounded-xl bg-white text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#059669]/20"
-          >
-            <option value="August 2026">August 2026</option>
-            <option value="July 2026">July 2026</option>
-            <option value="June 2026">June 2026</option>
-            <option value="Q2 2026 Executive Summary">Q2 2026 Executive Summary</option>
-          </select>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Period Selector */}
+          <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 shadow-sm text-xs font-medium text-slate-700">
+            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+            <select
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+              className="bg-transparent border-none text-slate-800 text-xs font-medium focus:ring-0 cursor-pointer"
+            >
+              <option value="Last 30 Days">Last 30 Days</option>
+              <option value="Previous 30 Days">Previous 30 Days</option>
+              <option value="Q3 2026">Q3 2026</option>
+              <option value="Year to Date">Year to Date</option>
+            </select>
+          </div>
 
+          {/* History Modal Trigger */}
           <button
-            onClick={handleDownloadPDF}
-            className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+            onClick={() => setShowHistoryModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-lg shadow-sm transition-colors"
           >
-            <Download className="w-3.5 h-3.5" />
-            <span>Download PDF</span>
+            <History className="w-3.5 h-3.5 text-slate-500" />
+            <span>Snapshots ({historicalSnapshots.length})</span>
           </button>
 
+          {/* Refresh / Generate New Snapshot */}
+          <button
+            onClick={() => handleGenerateSnapshot(true)}
+            disabled={isGenerating}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isGenerating ? 'animate-spin' : ''}`} />
+            <span>{isGenerating ? 'Computing...' : 'Generate Snapshot'}</span>
+          </button>
+
+          {/* PDF Export */}
+          <button
+            onClick={handleDownloadPdf}
+            disabled={!activeSnapshot}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-lg shadow-sm transition-colors"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-500" />
+            <span>Export PDF</span>
+          </button>
+
+          {/* Share */}
           <button
             onClick={() => setShowShareModal(true)}
-            className="px-4 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+            disabled={!activeSnapshot}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-lg shadow-sm transition-colors"
           >
-            <Share2 className="w-3.5 h-3.5" />
-            <span>Share With Client</span>
+            <Share2 className="w-3.5 h-3.5 text-slate-500" />
+            <span>Share</span>
           </button>
         </div>
       </div>
 
-      {/* ========================================================= */}
-      {/* SECTION 23: WHAT CHANGED? */}
-      {/* ========================================================= */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 font-heading">
-            What Changed?
-          </h3>
-          <span className="text-[11px] text-slate-400">Comparing to prior 30-day baseline</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {growthMetrics.map((m, idx) => {
-            const Icon = m.icon;
+      {/* 2. REPORT TYPES SELECTOR (8 REQUIRED REPORT TYPES) */}
+      <div className="bg-white border border-slate-200 rounded-xl p-2 shadow-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-1.5">
+          {REPORT_TYPE_DEFINITIONS.map((def) => {
+            const isSelected = selectedReportType === def.id;
             return (
-              <div
-                key={idx}
-                className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-3 relative overflow-hidden"
+              <button
+                key={def.id}
+                onClick={() => setSelectedReportType(def.id)}
+                className={`px-3 py-2 rounded-lg text-xs font-semibold text-center transition-all flex flex-col items-center justify-center min-h-[50px] ${
+                  isSelected
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-slate-50/70 hover:bg-slate-100 text-slate-700 border border-slate-200/60'
+                }`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-500 font-heading">{m.label}</span>
-                  <span className={`px-2 py-0.5 rounded-md font-bold text-xs font-mono border ${m.color}`}>
-                    {m.delta}
-                  </span>
-                </div>
-
-                <div>
-                  <h4 className="text-2xl font-extrabold text-slate-900 font-heading tracking-tight">
-                    {m.current}
-                  </h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Prior: {m.previous}</p>
-                </div>
-
-                <p className="text-[11px] text-slate-600 border-t border-slate-100 pt-2 leading-tight">
-                  {m.detail}
-                </p>
-              </div>
+                <span className="leading-tight">{def.title.replace(' Report', '')}</span>
+                <span className={`text-[10px] mt-0.5 font-normal ${isSelected ? 'text-indigo-100' : 'text-slate-400'}`}>
+                  {def.category}
+                </span>
+              </button>
             );
           })}
         </div>
       </div>
 
-      {/* ========================================================= */}
-      {/* SECTION 23: WHY? */}
-      {/* ========================================================= */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-2xs space-y-4">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 font-heading">
-            Why?
-          </h3>
+      {/* Report Info Strip */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+        <div className="flex items-center gap-2 text-xs text-slate-600">
+          <Building2 className="w-4 h-4 text-slate-400" />
+          <span className="font-semibold text-slate-900">{activeBusiness.name}</span>
+          <span>•</span>
+          <span>{activeBusiness.city ? `${activeBusiness.city}, ${activeBusiness.state || ''}` : 'Local Service Market'}</span>
+          <span>•</span>
+          <span className="text-slate-500">{currentTypeDefinition?.description}</span>
         </div>
 
-        <div className="p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-3">
-          <blockquote className="text-base sm:text-lg font-bold text-emerald-950 font-heading">
-            "Your targeted service landing pages began generating local search impressions."
-          </blockquote>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-700 leading-relaxed pt-2 border-t border-emerald-200/60">
-            <div>
-              <p className="font-semibold text-slate-900 mb-1">Algorithmic Driver:</p>
-              <p>
-                Locora indexed dedicated service pages with complete LocalBusiness schema and click-to-call mobile buttons. Google prioritized {activeBusiness.name} for high-urgency commercial intents.
-              </p>
-            </div>
-            <div>
-              <p className="font-semibold text-slate-900 mb-1">Reputation Velocity Impact:</p>
-              <p>
-                The automated post-service SMS feedback campaign generated 18 new verified client reviews in 30 days. This accelerated Google's freshness signal, pushing Maps rank from #8 to #2.
-              </p>
-            </div>
+        {activeSnapshot && (
+          <div className="flex items-center gap-2 text-xs">
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+              <Clock className="w-3 h-3 mr-1 text-slate-400" />
+              Generated: {new Date(activeSnapshot.reportGeneratedAt).toLocaleDateString()} {new Date(activeSnapshot.reportGeneratedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* ========================================================= */}
-      {/* SECTION 23: WHAT NEXT? */}
-      {/* ========================================================= */}
-      <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-3xl p-6 sm:p-8 shadow-md space-y-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-300" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400 font-heading">
-              What Next?
+      {!hasConnectedData ? (
+        <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center shadow-xs space-y-4">
+          <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-2xl border border-amber-200 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          <div className="max-w-md mx-auto space-y-1">
+            <h3 className="text-xl font-bold font-heading text-slate-900">
+              Not enough connected data to generate this report yet.
             </h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Connect your Google Business Profile and website to run your first report.
+            </p>
           </div>
-          <span className="text-[10px] text-slate-400 font-mono">Projected Impact: +22% Client Inquiries</span>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <button
+              onClick={() => setActiveTab('settings')}
+              className="px-4 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              Connect Google Business Profile
+            </button>
+            <button
+              onClick={() => setActiveTab('seo')}
+              className="px-4 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              Connect & Audit Website
+            </button>
+          </div>
         </div>
+      ) : (
+        <>
+          {/* 3. DATA SOURCE TRANSPARENCY & LIVE STALENESS MONITOR */}
+          {activeSnapshot && (
+            <ReportSourcesPanel
+              sources={activeSnapshot.dataSourcesUsed}
+              dataSnapshotAt={activeSnapshot.dataSnapshotAt}
+              isStale={activeSnapshot.isStale}
+              staleReason={activeSnapshot.staleReason}
+              onRefresh={() => handleGenerateSnapshot(true)}
+              isRefreshing={isGenerating}
+            />
+          )}
 
-        <div className="space-y-2">
-          <h4 className="text-lg sm:text-xl font-extrabold font-heading text-white">
-            "Create location-specific service content."
-          </h4>
-          <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-            Local competitors like {activeBusiness.competitors?.[0] || 'competing providers'} are currently vulnerable in adjacent districts. Expanding dedicated coverage to these areas will capture an estimated 45 additional monthly bookings.
+          {/* 4. EXECUTIVE SUMMARY (AI EXPLANATION ENGINE) */}
+          {activeSnapshot && (
+            <div className="bg-gradient-to-br from-indigo-50/40 via-white to-slate-50 border border-indigo-100/80 rounded-2xl p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-indigo-100/60 pb-3 flex-wrap gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <h2 className="text-base font-bold text-slate-900">
+                    Executive Synthesis & Explanation
+                  </h2>
+                  <DataProvenanceBadge
+                    type="AI_RECOMMENDATION"
+                    customText="✦ AI Recommendation"
+                    size="xs"
+                  />
+                </div>
+                <span className="text-xs text-slate-400">
+                  Zero invented numbers • Grounded in stored telemetry
+                </span>
+              </div>
+
+          <p className="text-sm text-slate-700 leading-relaxed">
+            {activeSnapshot.executiveSummary.overview}
           </p>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-          <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 space-y-1 text-xs">
-            <span className="text-[10px] font-bold text-emerald-400 uppercase font-mono">Action 01</span>
-            <h5 className="font-bold text-white">Sub-Market Location Page</h5>
-            <p className="text-[11px] text-slate-400">Launch location landing page with localized schema and verified NAP credentials.</p>
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-1.5">
+              <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5 text-indigo-600" />
+                What Changed
+              </span>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {activeSnapshot.executiveSummary.whatChanged}
+              </p>
+            </div>
 
-          <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 space-y-1 text-xs">
-            <span className="text-[10px] font-bold text-emerald-400 uppercase font-mono">Action 02</span>
-            <h5 className="font-bold text-white">Google Business Offer Posts</h5>
-            <p className="text-[11px] text-slate-400">Publish 2 Google posts highlighting immediate availability and priority consultations.</p>
-          </div>
+            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-1.5">
+              <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5 text-amber-600" />
+                Why It Matters
+              </span>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {activeSnapshot.executiveSummary.whyItMatters}
+              </p>
+            </div>
 
-          <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 space-y-1 text-xs">
-            <span className="text-[10px] font-bold text-emerald-400 uppercase font-mono">Action 03</span>
-            <h5 className="font-bold text-white">AI Search Entity Injection</h5>
-            <p className="text-[11px] text-slate-400">Sync service coverage details to ensure Perplexity and ChatGPT recommend {activeBusiness.name}.</p>
-          </div>
-        </div>
-
-        <div className="pt-3 border-t border-slate-700/80 flex flex-wrap items-center justify-between gap-3">
-          <span className="text-xs text-slate-400">
-            Recommended Action Blueprint is ready to deploy.
-          </span>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setActiveTab('work')}
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all cursor-pointer"
-            >
-              Draft SOW in Work →
-            </button>
-            <button
-              onClick={() => setActiveTab('content')}
-              className="px-5 py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
-            >
-              <span>Create in Content Studio</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-1.5">
+              <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <ArrowRight className="w-3.5 h-3.5 text-emerald-600" />
+                What Should Happen Next
+              </span>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {activeSnapshot.executiveSummary.whatShouldHappenNext}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Share With Client Modal */}
-      {showShareModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-xl space-y-5">
+      {/* 5. WHAT CHANGED (CONCRETE COMPARISONS & DELTAS) */}
+      {activeSnapshot && activeSnapshot.whatChangedItems?.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+              What Changed This Period
+            </h3>
+            <span className="text-xs text-slate-400">
+              Direct telemetry comparisons against previous baseline
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {activeSnapshot.whatChangedItems.map((item, idx) => (
+              <div
+                key={idx}
+                className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-2 flex flex-col justify-between"
+              >
+                <div>
+                  <span className="text-xs font-semibold text-slate-500 block uppercase tracking-wider">
+                    {item.title}
+                  </span>
+                  <span className="text-base font-bold text-slate-900 block mt-1">
+                    {item.delta}
+                  </span>
+                  <p className="text-xs text-slate-600 mt-1">
+                    {item.detail}
+                  </p>
+                </div>
+                <div className="pt-2 border-t border-slate-100 text-[11px] text-slate-400 flex items-center justify-between">
+                  <span>Source:</span>
+                  <span className="font-medium text-slate-600">{item.source}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 6. VERIFIED OPERATIONAL METRICS (WITH PROVENANCE & TRANSPARENCY) */}
+      {activeSnapshot && (
+        <ReportMetricsGrid
+          metrics={activeSnapshot.keyMetrics}
+          onConnectSource={(src) => {
+            logActivity(`User clicked connect for ${src}`, 'analytics');
+          }}
+        />
+      )}
+
+      {/* 7. PROBLEMS DETECTED & OPPORTUNITIES */}
+      {activeSnapshot && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Problems Detected */}
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900 font-heading">Share Report With Client</h3>
-                <p className="text-xs text-slate-500">Provide an interactive, white-label link or email dispatch.</p>
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-rose-600" />
+                <h3 className="text-sm font-bold text-slate-900">
+                  Problems Detected ({activeSnapshot.problemsDetected.length})
+                </h3>
+              </div>
+              <span className="text-xs text-slate-400">Audited from real data</span>
+            </div>
+
+            {activeSnapshot.problemsDetected.length === 0 ? (
+              <div className="py-6 text-center text-slate-400">
+                <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-500 mb-1.5" />
+                <p className="text-xs font-semibold text-slate-700">Zero Critical Blockers</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  No crawl errors, unhandled reviews, or billing issues detected in this period.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {activeSnapshot.problemsDetected.map((prob) => (
+                  <div
+                    key={prob.id}
+                    className="p-3.5 rounded-lg border border-rose-100 bg-rose-50/50 space-y-1.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-xs font-semibold text-rose-900">
+                        {prob.title}
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded flex-shrink-0 ${
+                          prob.severity === 'critical'
+                            ? 'bg-rose-200 text-rose-900'
+                            : 'bg-amber-100 text-amber-900'
+                        }`}
+                      >
+                        {prob.severity}
+                      </span>
+                    </div>
+                    <p className="text-xs text-rose-800 leading-snug">
+                      {prob.description}
+                    </p>
+                    {prob.suggestedAction && (
+                      <p className="text-[11px] text-rose-900 font-medium pt-1">
+                        • Action: {prob.suggestedAction}
+                      </p>
+                    )}
+                    <span className="text-[10px] text-slate-400 block pt-1">
+                      Detected via: {prob.source}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Opportunities */}
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-amber-500" />
+                <h3 className="text-sm font-bold text-slate-900">
+                  Growth Opportunities ({activeSnapshot.opportunities.length})
+                </h3>
+              </div>
+              <span className="text-xs text-slate-400">Market expansion</span>
+            </div>
+
+            {activeSnapshot.opportunities.length === 0 ? (
+              <div className="py-6 text-center text-slate-400">
+                <p className="text-xs">No pending opportunities cataloged.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {activeSnapshot.opportunities.map((opp) => (
+                  <div
+                    key={opp.id}
+                    className="p-3.5 rounded-lg border border-amber-100 bg-amber-50/40 space-y-1.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-xs font-semibold text-slate-900">
+                        {opp.title}
+                      </span>
+                      <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 flex-shrink-0">
+                        {opp.expectedGain}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-snug">
+                      {opp.description}
+                    </p>
+                    <span className="text-[10px] text-slate-400 block pt-1">
+                      Identified via: {opp.source}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 8. PRIORITIZED RECOMMENDED ACTIONS */}
+      {activeSnapshot && activeSnapshot.recommendedActions.length > 0 && (
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                Prioritized Action Plan
+              </h3>
+              <p className="text-xs text-slate-500">
+                Sequenced steps grounded in verified operational findings
+              </p>
+            </div>
+            <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+              {activeSnapshot.recommendedActions.length} Actions
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {activeSnapshot.recommendedActions.map((act, index) => (
+              <div
+                key={act.id}
+                className="flex items-start gap-3.5 p-3 rounded-lg border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-colors"
+              >
+                <div className="w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                  {index + 1}
+                </div>
+                <div className="flex-1 space-y-1">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <span className="text-xs font-semibold text-slate-900">
+                      {act.action}
+                    </span>
+                    <span className="text-[11px] font-medium text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded self-start sm:self-auto">
+                      {act.targetArea}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600">
+                    {act.rationale}
+                  </p>
+                  <span className="text-[10px] text-slate-400 block pt-0.5">
+                    Source: {act.source}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 9. DETAILED FINDINGS & FACTUAL EVIDENCE */}
+      {activeSnapshot && activeSnapshot.detailedFindings.length > 0 && (
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+          <div className="border-b border-slate-100 pb-3">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+              Detailed Findings & Evidence
+            </h3>
+            <p className="text-xs text-slate-500">
+              Operational audit trails and recorded telemetry records
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {activeSnapshot.detailedFindings.map((finding) => (
+              <div
+                key={finding.id}
+                className="p-4 rounded-lg border border-slate-200 bg-slate-50/40 space-y-2"
+              >
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">
+                    {finding.category}
+                  </span>
+                  <h4 className="text-xs font-semibold text-slate-900 mt-0.5">
+                    {finding.title}
+                  </h4>
+                </div>
+
+                <ul className="space-y-1 text-xs text-slate-600">
+                  {finding.findings.map((item, i) => (
+                    <li key={i} className="flex items-start gap-1.5">
+                      <span className="text-indigo-500 mt-1">•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {finding.evidence && (
+                  <p className="text-[11px] text-slate-400 italic pt-1 border-t border-slate-100">
+                    Evidence: {finding.evidence}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      </>
+      )}
+
+      {/* Snapshot History Modal */}
+      <ReportHistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        snapshots={historicalSnapshots}
+        activeSnapshotId={activeSnapshot?.id || null}
+        onSelectSnapshot={(snap) => setActiveSnapshot(snap)}
+        onDeleteSnapshot={handleDeleteSnapshot}
+      />
+
+      {/* Share Modal */}
+      {showShareModal && activeSnapshot && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl max-w-md w-full border border-slate-200 shadow-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-indigo-600" />
+                <h3 className="text-base font-bold text-slate-900">Share Report Snapshot</h3>
               </div>
               <button
                 onClick={() => setShowShareModal(false)}
-                className="text-slate-400 hover:text-slate-600 font-bold text-xs cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 text-sm font-medium"
               >
-                ✕ Close
+                ✕
               </button>
             </div>
 
-            <div className="space-y-4 text-xs">
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                <span className="text-slate-500 font-bold">White-Label Client Link:</span>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    readOnly
-                    value={`https://app.locoraai.com/reports/share/${activeBusiness.id}?month=2026-08`}
-                    className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-slate-700 font-mono text-[11px]"
-                  />
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(`https://app.locoraai.com/reports/share/${activeBusiness.id}?month=2026-08`);
-                      setCopiedLink(true);
-                      setTimeout(() => setCopiedLink(false), 2000);
-                    }}
-                    className="px-3 py-1.5 rounded-xl bg-slate-900 text-white font-bold shrink-0 cursor-pointer"
-                  >
-                    {copiedLink ? 'Copied ✓' : 'Copy'}
-                  </button>
-                </div>
-              </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Share a read-only, authentic performance report for <strong>{activeSnapshot.businessName}</strong> ({activeSnapshot.reportTitle} — {activeSnapshot.period}).
+            </p>
 
-              <div>
-                <label className="block text-slate-700 font-bold mb-1">Email directly to client contact:</label>
-                <input
-                  type="email"
-                  defaultValue={`contact@${activeBusiness.website || 'clientbusiness.com'}`}
-                  className="w-full px-3.5 py-2 border border-slate-200 rounded-xl"
-                />
-              </div>
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-700 flex items-center justify-between gap-2">
+              <span className="truncate font-mono text-[11px]">
+                https://locora.app/reports/view/{activeSnapshot.id}
+              </span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(
+                    `https://locora.app/reports/view/${activeSnapshot.id}`
+                  );
+                  setCopiedLink(true);
+                  setTimeout(() => setCopiedLink(false), 2000);
+                }}
+                className="px-2.5 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded text-slate-700 font-medium flex items-center gap-1 flex-shrink-0"
+              >
+                {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedLink ? 'Copied' : 'Copy'}</span>
+              </button>
+            </div>
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-                <button
-                  onClick={() => setShowShareModal(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-bold cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    alert('Executive report sent to client!');
-                    setShowShareModal(false);
-                  }}
-                  className="px-5 py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold cursor-pointer shadow-xs"
-                >
-                  Send Report Email
-                </button>
-              </div>
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={handleDownloadPdf}
+                className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download PDF</span>
+              </button>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-lg transition-colors"
+              >
+                Done
+              </button>
             </div>
           </div>
         </div>

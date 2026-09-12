@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Invoice, InvoiceItem } from '../types';
 import { BrandedFooter } from './BrandedFooter';
 import { LocoraLogo } from './LocoraLogo';
+import { DeleteConfirmModal } from './common/DeleteConfirmModal';
 import jsPDF from 'jspdf';
 import {
   FileSpreadsheet,
@@ -15,6 +16,7 @@ import {
   Sparkles,
   DollarSign,
   Building,
+  Lock,
 } from 'lucide-react';
 
 export const InvoiceView: React.FC = () => {
@@ -22,6 +24,7 @@ export const InvoiceView: React.FC = () => {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(invoices[0] || null);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
 
   const totalCreatedCount = Math.max(user.invoicesCreatedCount || 0, invoices.length);
   const isFreePlanLimitReached = user.planTier === 'free' && totalCreatedCount >= 2;
@@ -229,7 +232,6 @@ export const InvoiceView: React.FC = () => {
         <button
           onClick={() => {
             if (isFreePlanLimitReached) {
-              alert('Free Explorer plan includes up to 2 invoices limit (used 2/2). Deleting past invoices does not reset this lifetime limit. Upgrade to Pro Growth ($29/mo) for Unlimited Invoices.');
               setCheckoutModalPlan('pro');
             } else {
               setShowCreateModal(true);
@@ -237,8 +239,12 @@ export const InvoiceView: React.FC = () => {
           }}
           className="px-4 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold shadow-2xs flex items-center gap-2 transition-all cursor-pointer font-sans"
         >
-          <Plus className="w-4 h-4" />
-          <span>Create New Invoice</span>
+          {isFreePlanLimitReached ? (
+            <Lock className="w-4 h-4 text-amber-300" />
+          ) : (
+            <Plus className="w-4 h-4" />
+          )}
+          <span>{isFreePlanLimitReached ? 'Unlock Unlimited Invoices (Pro)' : 'Create New Invoice'}</span>
         </button>
       </div>
 
@@ -311,11 +317,7 @@ export const InvoiceView: React.FC = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            deleteInvoice(inv.id);
-                            if (previewInvoice?.id === inv.id) {
-                              const remaining = invoices.filter((i) => i.id !== inv.id);
-                              setPreviewInvoice(remaining[0] || null);
-                            }
+                            setInvoiceToDelete(inv);
                           }}
                           title="Delete Invoice"
                           className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer opacity-80 group-hover:opacity-100"
@@ -367,12 +369,9 @@ export const InvoiceView: React.FC = () => {
                     <span>Download PDF</span>
                   </button>
                   <button
-                    onClick={() => {
-                      deleteInvoice(previewInvoice.id);
-                      const remaining = invoices.filter((i) => i.id !== previewInvoice.id);
-                      setPreviewInvoice(remaining[0] || null);
-                    }}
+                    onClick={() => setInvoiceToDelete(previewInvoice)}
                     className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                    title="Delete Invoice"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -613,6 +612,25 @@ export const InvoiceView: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Safe In-App Invoice Deletion Modal */}
+      <DeleteConfirmModal
+        isOpen={invoiceToDelete !== null}
+        title="Delete Invoice"
+        itemName={invoiceToDelete ? `${invoiceToDelete.invoiceNumber} (${invoiceToDelete.customerName})` : undefined}
+        message="Are you sure you want to delete this invoice? The billing record will be removed from your ledgers."
+        confirmLabel="Delete Invoice"
+        onConfirm={() => {
+          if (invoiceToDelete) {
+            deleteInvoice(invoiceToDelete.id);
+            if (previewInvoice?.id === invoiceToDelete.id) {
+              const remaining = invoices.filter((i) => i.id !== invoiceToDelete.id);
+              setPreviewInvoice(remaining[0] || null);
+            }
+            setInvoiceToDelete(null);
+          }
+        }}
+        onClose={() => setInvoiceToDelete(null)}
+      />
     </div>
   );
 };

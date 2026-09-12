@@ -54,12 +54,14 @@ import {
   Filter,
   Globe2,
 } from 'lucide-react';
+import { PlanProviderAccessSummary } from './PlanProviderAccessSummary';
+import { DataFreshnessPanel } from './DataFreshnessPanel';
 
 export const AdminView: React.FC = () => {
   const { user, customers: clients = [], invoices, updateInvoiceStatus, businessProfile, updateBusinessProfile, updateSettings } = useApp();
 
   const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'users' | 'payments' | 'logo' | 'ai_tokens' | 'sales' | 'subscribers' | 'invoices' | 'dispatch' | 'email_server'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'payments' | 'logo' | 'ai_tokens' | 'sales' | 'subscribers' | 'invoices' | 'dispatch' | 'email_server' | 'provider_access' | 'datasets'>('users');
   const [loading, setLoading] = useState<boolean>(false);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
   const [actionErrorMsg, setActionErrorMsg] = useState<string | null>(null);
@@ -1347,6 +1349,28 @@ export const AdminView: React.FC = () => {
         >
           <Server className="w-4 h-4 text-emerald-300" />
           <span>Brevo Mail Server</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('provider_access')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'provider_access' ? 'bg-[#059669] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4 text-emerald-300" />
+          <span>Plan & Provider Matrix</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('datasets')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'datasets' ? 'bg-[#059669] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
+          }`}
+        >
+          <Database className="w-4 h-4 text-emerald-300" />
+          <span>Datasets & Freshness</span>
         </button>
       </div>
 
@@ -3465,6 +3489,20 @@ export const AdminView: React.FC = () => {
               <div>BREVO_FROM_EMAIL=Locora AI &lt;support@locoraai.com&gt;</div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* TAB: PLAN & PROVIDER ACCESS MATRIX */}
+      {activeTab === 'provider_access' && (
+        <div className="space-y-6">
+          <PlanProviderAccessSummary />
+        </div>
+      )}
+
+      {/* TAB: EXTERNAL DATASETS & VERIFICATION FRESHNESS */}
+      {activeTab === 'datasets' && (
+        <div className="space-y-6">
+          <DataFreshnessPanel />
         </div>
       )}
 

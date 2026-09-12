@@ -33,14 +33,25 @@ export const RightAiPanel: React.FC = () => {
 
   const [messages, setMessages] = useState<
     Array<{ id: string; role: 'user' | 'assistant'; content: string; time: string; actionId?: string }>
-  >([
-    {
-      id: 'init_1',
-      role: 'assistant',
-      content: `Hello! I'm your Locora AI Business Manager for **${activeBusiness.name}**.\n\nI've analyzed your local presence in ${activeBusiness.city}, ${activeBusiness.state}. Right now your growth health score is **${activeBusiness.healthScore}/100**.\n\nI have **3 High-Impact Priority Actions** ready for you to review and fix. How can I help you grow today?`,
-      time: 'Just now',
-    },
-  ]);
+  >([]);
+
+  // Reset conversation and scope strictly to the active business when switched
+  useEffect(() => {
+    const greeting = activeBusiness.gbpConnected
+      ? `Hello! I'm your Locora AI Business Manager for **${activeBusiness.name}**.\n\n` +
+        `Your Google Business Profile is connected with ${activeBusiness.reviewCount || 0} reviews (${activeBusiness.googleRating || 0}★). How can I assist you with ${activeBusiness.name}'s growth today?`
+      : `Hello! I'm your Locora AI Business Manager for **${activeBusiness.name}**.\n\n` +
+        `This business workspace has zero demo data. Once you connect your Google Business Profile or run a website audit, I will continuously analyze real telemetry. How can I help you today?`;
+
+    setMessages([
+      {
+        id: `init_${activeBusiness.id}`,
+        role: 'assistant',
+        content: greeting,
+        time: 'Just now',
+      },
+    ]);
+  }, [activeBusiness.id, activeBusiness.name, activeBusiness.gbpConnected, activeBusiness.reviewCount, activeBusiness.googleRating]);
 
   const [inputPrompt, setInputPrompt] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -173,7 +184,7 @@ Let me know which one you'd like to inspect or generate!`;
         {
           id: `a_${Date.now()}`,
           role: 'assistant',
-          content: `Here is the AI Manager diagnostic for **${activeBusiness.name}**:\n\nOur priority recommendation is implementing the **Emergency Dental Care landing page** and clearing the **17 unanswered Google reviews**. This will raise your overall Growth Health score from **${activeBusiness.healthScore} to 88+** within 14 days.`,
+          content: `Here is the AI Manager diagnostic for **${activeBusiness.name}**:\n\nOur priority recommendation is implementing the **${priorityActions[0]?.title || 'high-intent service landing page'}** and addressing the **${activeBusiness.unansweredReviews || 0} unanswered customer reviews**. This will raise your overall Growth Health score from **${activeBusiness.healthScore || 75} to ${(activeBusiness.healthScore || 75) + 10}+** within 14 days.`,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);

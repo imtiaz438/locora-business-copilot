@@ -221,6 +221,23 @@ export async function performNormalizedSeoAudit(params: {
   if (!aiOverviewRes.isCached) weightedUnitsCost += SEO_LOOKUP_COSTS.AI_OVERVIEW_CHECK;
 
   const now = new Date().toISOString();
+  const creds = getSeoApiCredentials();
+  const hasKeys = Boolean((creds.dataforseoLogin && creds.dataforseoPassword) || creds.serpApiKey || creds.serperKey);
+
+  let provider_status: 'success' | 'not_configured' | 'authentication_error' | 'quota_exceeded' | 'unavailable' | 'connected_no_data' = 'not_configured';
+  let providerStatusMessage = 'API credentials for DataForSEO or SerpApi are not configured. Connect your keys in Settings to stream live metrics.';
+
+  if (hasKeys) {
+    const hasData = kwRes.data.length > 0 || domainRes.data.estimatedTraffic > 0 || backlinkRes.data.total > 0 || serpRes.data.results.length > 0;
+    if (hasData) {
+      provider_status = 'success';
+      providerStatusMessage = 'Live SEO intelligence retrieved and normalized from provider.';
+    } else {
+      provider_status = 'connected_no_data';
+      providerStatusMessage = 'Connected to SEO provider, but no indexed keywords or backlink records were found for this domain.';
+    }
+  }
+
   const audit: NormalizedSeoAudit = {
     domainOverview: domainRes.data,
     backlinks: backlinkRes.data,
@@ -230,6 +247,8 @@ export async function performNormalizedSeoAudit(params: {
     aiOverview: aiOverviewRes.data,
     fetchedAt: anyMiss ? now : domainRes.fetchedAt,
     provider: 'dataforseo',
+    provider_status,
+    providerStatusMessage,
     attribution: 'Powered by DataForSEO & SerpApi',
     isCached: !anyMiss,
     refreshCooldownUntil: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),

@@ -35,279 +35,6 @@ function ensureDataDir() {
 const businessesDatabase = new Map<string, LocoraBusinessRecord>();
 const leadsCacheDatabase = new Map<string, B2BLeadRecord>();
 
-// Initialize default seed business records for guest preview only (never containing dental or fake user data)
-function createDemoBusinessRecord(
-  id: string = 'biz_demo_workspace',
-  name: string = 'Demo Growth Agency',
-  website: string = 'demo.locora.ai',
-  category: string = 'Digital Marketing & SEO',
-  city: string = 'San Francisco',
-  tier: DataProviderTier = 'pro'
-): LocoraBusinessRecord {
-  const now = new Date().toISOString();
-  return {
-    id,
-    planTier: tier,
-    createdAt: now,
-    updatedAt: now,
-    identity: {
-      name,
-      tagline: 'Digital Marketing & Local Growth Solutions',
-      website,
-      phone: '(555) 019-2831',
-      address: '500 Market St, Suite 300',
-      city,
-      state: 'CA',
-      zip: '94105',
-      country: 'United States',
-      category,
-      industry: 'Marketing & Advertising',
-      targetLocations: [`${city}, CA`, 'Oakland, CA', 'San Jose, CA'],
-      services: ['Local SEO Optimization', 'Technical Website Audits', 'Reputation Management', 'Conversion Rate Optimization'],
-    },
-    websiteAudit: {
-      url: website,
-      isSsl: true,
-      httpStatus: 200,
-      latencyMs: 240,
-      performanceScore: 88,
-      seoScore: 84,
-      accessibilityScore: 92,
-      mobileFriendly: true,
-      wordCount: 1650,
-      hasSchema: true,
-      schemaTypes: ['LocalBusiness', 'Organization'],
-      metaTitle: `${name} | Local SEO & Growth Marketing in ${city}`,
-      metaDescription: `Full-service digital growth agency helping local businesses in ${city} dominate search results and scale customer inquiries.`,
-      h1Matches: [`Accelerate Your Local Search Presence with ${name}`],
-      h2Matches: ['Our Core Solutions', 'Client Case Studies', 'Get in Touch'],
-      issues: [
-        {
-          id: 'iss_schema_notice',
-          type: 'info',
-          category: 'schema',
-          title: 'Verified LocalBusiness Schema Detected',
-          description: 'JSON-LD structured data is present and validated for Google Maps and AI search engines.',
-          recommendation: 'Keep opening hours and service catalog synchronized in schema.',
-        },
-      ],
-      lastCrawledAt: now,
-      source: 'own_crawler',
-    },
-    gbpData: {
-      connected: true,
-      listingName: `${name} (Google Maps)`,
-      rating: 4.9,
-      reviewCount: 48,
-      unansweredReviews: 2,
-      category,
-      businessHours: ['Mon-Fri: 9:00 AM - 6:00 PM', 'Sat: 10:00 AM - 3:00 PM', 'Sun: Closed'],
-      photosCount: 24,
-      primaryPhone: '(555) 019-2831',
-      address: `500 Market St, ${city}, CA 94105`,
-      attributes: ['Wheelchair accessible', 'Online appointments', 'Verified business'],
-      lastSyncedAt: now,
-      source: 'google_places',
-    },
-    reviews: [
-      {
-        id: 'rev_demo_1',
-        author: 'Sarah Jenkins',
-        rating: 5,
-        text: 'Outstanding local marketing team. They completely revamped our local search presence and we saw a surge in customer calls within weeks.',
-        publishedAt: new Date(Date.now() - 2 * 86400000).toISOString(),
-        sentiment: 'positive',
-        keywordsMentioned: ['local search', 'growth', 'customer calls'],
-        isAnswered: true,
-        replyText: 'Thank you Sarah! We love supporting your business growth and helping you dominate local search.',
-        repliedAt: new Date(Date.now() - 1 * 86400000).toISOString(),
-        source: 'google_gbp',
-      },
-      {
-        id: 'rev_demo_2',
-        author: 'David Miller',
-        rating: 4,
-        text: 'Very knowledgeable and responsive team. Would appreciate more frequent weekly reporting updates.',
-        publishedAt: new Date(Date.now() - 6 * 86400000).toISOString(),
-        sentiment: 'neutral',
-        keywordsMentioned: ['responsive', 'reporting'],
-        isAnswered: false,
-        source: 'google_gbp',
-      },
-    ],
-    localPack: {
-      query: `${category} in ${city}`,
-      location: `${city}, CA`,
-      businessName: name,
-      rankPosition: 2,
-      inThreePack: true,
-      competitorsInPack: [
-        { name: 'Horizon Growth Partners', position: 1, rating: 4.9, reviewCount: 62, address: '200 California St' },
-        { name: name, position: 2, rating: 4.9, reviewCount: 48, address: '500 Market St' },
-        { name: 'Bay Area Digital Co', position: 3, rating: 4.7, reviewCount: 39, address: '750 Mission St' },
-      ],
-      lastTrackedAt: now,
-      source: 'low_cost_serp',
-    },
-    competitors: [
-      {
-        id: 'comp_1',
-        name: 'Horizon Growth Partners',
-        website: 'horizongrowth.example.com',
-        rating: 4.9,
-        reviewCount: 62,
-        estimatedTrafficMonthly: 3800,
-        rankingKeywordsCount: 310,
-        sharedKeywords: ['local seo agency', 'growth marketing consultant'],
-        reviewGap: 14,
-        strengths: ['High review volume (+6 last month)', 'Dedicated sub-service pages'],
-        weaknesses: ['Missing FAQ schema', 'Slower mobile speed'],
-        lastAnalyzedAt: now,
-        source: 'google_places',
-      },
-    ],
-    keywords: [
-      {
-        keyword: 'local seo agency',
-        searchVolume: 1200,
-        rank: 2,
-        previousRank: 4,
-        intent: 'commercial',
-        impressions: 4800,
-        clicks: 340,
-        ctr: 7.08,
-        difficultyScore: 42,
-        source: 'gsc',
-      },
-      {
-        keyword: 'growth marketing consultant',
-        searchVolume: 880,
-        rank: 4,
-        previousRank: 5,
-        intent: 'commercial',
-        impressions: 2900,
-        clicks: 160,
-        ctr: 5.51,
-        difficultyScore: 48,
-        source: 'gsc',
-      },
-    ],
-    traffic: {
-      sessions: 2450,
-      pageviews: 5890,
-      bounceRate: 41.2,
-      avgDurationSec: 145,
-      topChannels: [
-        { channel: 'Organic Search (Google)', percentage: 58 },
-        { channel: 'Google Maps / Local', percentage: 26 },
-        { channel: 'Direct / Referrals', percentage: 16 },
-      ],
-      gscClicks: 890,
-      gscImpressions: 19400,
-      avgPosition: 3.2,
-      lastSyncedAt: now,
-      source: 'ga4',
-    },
-    aiVisibility: {
-      score: 86,
-      chatGptMentioned: true,
-      perplexityRank: 2,
-      geminiCitation: true,
-      claudeRecommendation: true,
-      brandSentimentScore: 94,
-      samplePromptEvaluated: `Who is the top rated ${category.toLowerCase()} in ${city}?`,
-      monitoringFrequency: 'scheduled_weekly',
-      lastCheckedAt: now,
-    },
-    businessBrain: {
-      score: 85,
-      readinessScore: 90,
-      swot: {
-        strengths: [
-          'High 4.9★ rating across 48 verified customer reviews',
-          'Fast and secure website foundation with active Schema markup',
-          'Ranking #2 in local Google 3-Pack for core commercial keywords',
-        ],
-        weaknesses: [
-          '1 review awaiting official owner response',
-        ],
-        opportunities: [
-          'Close the 14-review gap with Horizon Growth Partners',
-          'Publish geo-targeted sub-service pages to capture surrounding territory search queries',
-        ],
-        threats: [
-          'Competitors actively publishing localized content to challenge 3-Pack placement',
-        ],
-      },
-      priorityActions: [
-        {
-          id: 'act_respond_demo_review',
-          urgency: 'high',
-          urgencyLabel: 'HIGH IMPACT',
-          title: 'Respond to 1 Pending Customer Review',
-          problem: 'David Miller left a 4-star review that has not yet received an owner reply.',
-          whyItMatters: 'Responding to all reviews within 24 hours improves customer retention and local SEO trust signals.',
-          evidence: '1 unanswered review on Google Business Profile.',
-          expectedImpact: 'Reaches 100% response rate and boosts local pack prominence.',
-          actionType: 'respond_reviews',
-          actionLabel: '[ Respond with AI ]',
-          recommendationTitle: 'Draft Owner Reply',
-          isFixed: false,
-        },
-        {
-          id: 'act_geo_page_demo',
-          urgency: 'opportunity',
-          urgencyLabel: 'OPPORTUNITY',
-          title: 'Publish Geo-Targeted Service Landing Page',
-          problem: 'Competitors are capturing neighborhood search traffic in surrounding regions.',
-          whyItMatters: 'Dedicated service pages targeting localized queries convert searchers at 3x the rate of a generic homepage.',
-          evidence: 'Search volume for target services is rising in adjacent areas.',
-          expectedImpact: '+20% increase in high-intent organic calls.',
-          actionType: 'create_page',
-          actionLabel: '[ Generate Page ]',
-          recommendationTitle: 'Create Service Page',
-          isFixed: false,
-        },
-      ],
-      targetKeywords: [`${category.toLowerCase()} ${city.toLowerCase()}`, `top ${category.toLowerCase()}`],
-      activeOffers: ['Complimentary Local Growth & SEO Diagnostic', 'New Client Strategy Session'],
-      voicePersona: 'Authoritative, strategic, and growth-focused',
-      executiveSummary: `${name} holds a healthy 85/100 Business Brain score with verified 4.9★ reputation and strong local 3-Pack presence.`,
-      lastSynthesizedAt: now,
-    },
-    history: [
-      {
-        date: new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0],
-        healthScore: 78,
-        seoScore: 76,
-        googleRating: 4.8,
-        reviewCount: 42,
-        unansweredReviews: 4,
-        estTraffic: 2450,
-        localPackRank: 2,
-        aiVisibilityScore: 86,
-      },
-    ],
-    leadCache: {
-      totalCount: 0,
-      leads: [],
-      exports: [],
-    },
-    oneTimeProducts: {
-      businessAudit: { available: true, price: 19, purchasedCount: 0 },
-      whiteLabelAudit: { available: true, price: 29, purchasedCount: 0 },
-      leadPacks: { pack250Purchased: 0, pack500Purchased: 0, pack1000Purchased: 0 },
-      aiActionTopUps: { actions50Purchased: 0, actions150Purchased: 0, actions500Purchased: 0, remainingBalance: 50 },
-    },
-    dataSources: {
-      crawler: { provider: 'own_crawler', last_sync: now, data_freshness: 'fresh', cost: 0, confidence: 96, status: 'active' },
-      places: { provider: 'google_places', last_sync: now, data_freshness: 'fresh', cost: 0, confidence: 94, status: 'active' },
-      serp: { provider: 'low_cost_serp', last_sync: now, data_freshness: 'cached', cost: 0, confidence: 92, status: 'active' },
-      analytics: { provider: 'ga4', last_sync: now, data_freshness: 'fresh', cost: 0, confidence: 95, status: 'active' },
-    },
-  };
-}
-
 // --------------------------------------------------------------------------
 // DISK PERSISTENCE: LOCORA DATABASE AS THE SINGLE SOURCE OF TRUTH
 // --------------------------------------------------------------------------
@@ -319,19 +46,15 @@ export function loadLocoraDatabaseFromDisk(): void {
       const raw = fs.readFileSync(LOCORA_DB_FILE, 'utf-8');
       const data: Record<string, LocoraBusinessRecord> = JSON.parse(raw);
       Object.keys(data).forEach((key) => {
-        businessesDatabase.set(key, data[key]);
+        // Exclude legacy demo records containing fake reviews/metrics
+        if (key !== 'biz_demo_workspace' && key !== 'austin-dental') {
+          businessesDatabase.set(key, data[key]);
+        }
       });
-      console.log(`[Locora Data Engine] Loaded ${businessesDatabase.size} business records from Locora Database.`);
+      console.log(`[Locora Data Engine] Loaded ${businessesDatabase.size} authentic business records from Locora Database.`);
     } catch (e: any) {
       console.error('[Locora Data Engine] Error reading database from disk:', e.message);
     }
-  }
-
-  // Seed default demo business for guest preview only if empty
-  if (businessesDatabase.size === 0) {
-    const seed1 = createDemoBusinessRecord();
-    businessesDatabase.set(seed1.id, seed1);
-    saveLocoraDatabaseToDisk();
   }
 
   // Load B2B Leads Cache
@@ -496,13 +219,29 @@ function normalizeCrawlHtml(
   const words = textContent.trim().split(/\s+/).filter(Boolean);
   const wordCount = words.length;
 
-  // Compute calculated scores
-  let seoScore = 70;
-  if (metaTitle.length >= 10 && metaTitle.length <= 60) seoScore += 8;
-  if (metaDescription.length >= 50 && metaDescription.length <= 160) seoScore += 8;
-  if (h1Matches.length === 1) seoScore += 6;
-  if (hasJsonLd) seoScore += 8;
-  seoScore = Math.min(98, Math.max(45, seoScore));
+  // Compute calculated scores strictly based on actual crawl factors (starting at 0, no fixed baseline)
+  let seoScore = 0;
+  if (isSsl) seoScore += 15;
+  if (metaTitle.length >= 20 && metaTitle.length <= 70) seoScore += 15;
+  else if (metaTitle.length > 0) seoScore += 10;
+
+  if (metaDescription.length >= 60 && metaDescription.length <= 165) seoScore += 15;
+  else if (metaDescription.length > 0) seoScore += 10;
+
+  if (h1Matches.length === 1) seoScore += 15;
+  else if (h1Matches.length > 1) seoScore += 8;
+
+  const hasCanonical = Boolean(html.match(/<link\b[^>]*rel=["']canonical["'][^>]*>/i));
+  if (hasCanonical) seoScore += 15;
+
+  const hasSitemapMention = /sitemap/i.test(html) || /sitemap\.xml/i.test(html);
+  if (hasSitemapMention) seoScore += 15;
+
+  const internalLinks = html.match(/<a\b[^>]*href=["']\/[^"']*["']/gi);
+  if (internalLinks && internalLinks.length > 0) seoScore += 10;
+  else seoScore += 5;
+
+  seoScore = Math.min(100, Math.max(10, seoScore));
 
   let performanceScore = 80;
   if (latencyMs < 300) performanceScore += 15;
@@ -987,15 +726,18 @@ export function createCleanBusinessRecordForUser(
 }
 
 export function getAllBusinessRecordsFromLocoraDb(): LocoraBusinessRecord[] {
-  return Array.from(businessesDatabase.values());
+  return Array.from(businessesDatabase.values()).filter(
+    (b) => b.id !== 'biz_demo_workspace' && b.id !== 'austin-dental'
+  );
 }
 
 export function getBusinessesForUser(userEmail?: string): LocoraBusinessRecord[] {
-  const all = Array.from(businessesDatabase.values());
+  const all = Array.from(businessesDatabase.values()).filter(
+    (b) => b.id !== 'biz_demo_workspace' && b.id !== 'austin-dental'
+  );
   const cleanEmail = (userEmail || '').toLowerCase().trim();
   if (!cleanEmail || cleanEmail === 'usr_guest') {
-    // Only for unauthenticated guest visitors testing public UI
-    return all.filter((b) => b.id === 'biz_demo_workspace');
+    return all.filter((b) => !b.userEmail || b.userEmail === 'usr_guest');
   }
 
   // For ANY authenticated user: return ONLY their own businesses

@@ -2,6 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { FixItModal } from './FixItModal';
 import { PriorityAction } from '../types';
+import { generateFullReportSnapshot } from '../services/reportEngine';
+import { saveReportSnapshot } from '../services/reportStorageService';
+import { exportReportToPdf } from './reports/ReportPdfExport';
 import {
   Bot,
   Sparkles,
@@ -30,6 +33,14 @@ import {
   Users,
   Calendar,
   Layers,
+  AlertCircle,
+  Phone,
+  UserCheck,
+  ListTodo,
+  Briefcase,
+  CalendarCheck,
+  BadgeAlert,
+  BarChart3,
 } from 'lucide-react';
 
 interface GooglePostDraft {
@@ -42,7 +53,17 @@ interface GooglePostDraft {
 
 interface ActionCardState {
   id: string;
-  type: 'google_post' | 'competitor_weakness' | 'unanswered_reviews' | 'seo_opportunity' | 'growth_plan' | 'generic';
+  type:
+    | 'google_post'
+    | 'competitor_weakness'
+    | 'unanswered_reviews'
+    | 'seo_opportunity'
+    | 'growth_plan'
+    | 'content_plan'
+    | 'leads_followup'
+    | 'monthly_report'
+    | 'weekly_work'
+    | 'generic';
   status: 'planning' | 'running_scan' | 'generated' | 'saved';
   prompt: string;
   scanStepIndex?: number;
@@ -51,14 +72,36 @@ interface ActionCardState {
 
 export const AiManagerView: React.FC = () => {
   const {
+    user,
     activeBusiness,
+    businessTruth,
     priorityActions,
+    customers,
+    contentRecords,
+    workTasks,
+    projects,
+    proposals,
+    invoices,
+    productionDashboard,
     setActiveTab,
     consumeAiCredit,
     addDocument,
     addLocalSeoItem,
     logActivity,
+    addWorkTask,
+    addContentRecord,
+    createAIAction,
+    setSelectedAIActionForApproval,
   } = useApp();
+
+  const businessName = businessTruth?.name ?? activeBusiness?.name ?? null;
+  const businessCategory = businessTruth?.category ?? activeBusiness?.category ?? null;
+  const businessCity = businessTruth?.locations?.find((l) => l.isPrimary)?.city ?? businessTruth?.locations?.[0]?.city ?? activeBusiness?.city ?? null;
+  const businessState = businessTruth?.locations?.find((l) => l.isPrimary)?.state ?? businessTruth?.locations?.[0]?.state ?? activeBusiness?.state ?? null;
+  const businessWebsite = businessTruth?.website ?? activeBusiness?.website ?? null;
+  const businessPhone = businessTruth?.phone ?? activeBusiness?.phone ?? null;
+  const businessServices = businessTruth?.services ?? activeBusiness?.services ?? null;
+  const businessAddress = businessTruth?.address ?? activeBusiness?.address ?? null;
 
   const [inputQuery, setInputQuery] = useState('');
   const [activeCards, setActiveCards] = useState<ActionCardState[]>([]);
@@ -66,43 +109,60 @@ export const AiManagerView: React.FC = () => {
   const [selectedFixItAction, setSelectedFixItAction] = useState<PriorityAction | null>(null);
   const [reviewSetupModalOpen, setReviewSetupModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [createdTaskIds, setCreatedTaskIds] = useState<Record<string, boolean>>({});
+  const [createdContentBatch, setCreatedContentBatch] = useState<Record<string, boolean>>({});
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const actionFeedEndRef = useRef<HTMLDivElement>(null);
 
   // Suggested Examples from User Specs
   const exampleQueries = [
-    'Why am I losing local traffic?',
+    "Create this month's content plan.",
+    'Show me leads that need follow-up.',
+    'Prepare my monthly report.',
+    'What should I work on this week?',
     'Find my biggest SEO opportunity.',
-    'Analyze my competitors.',
-    "Create this month's growth plan.",
     'Show me unanswered reviews.',
+    'Analyze my competitors.',
   ];
 
-  // LOCORA SUGGESTS items from User Specs
+  // LOCORA SUGGESTS items connected to real modules
   const locoraSuggestions = [
     {
-      id: 'sugg_reviews',
-      label: `Fix ${activeBusiness.unansweredReviews || 17} unanswered reviews`,
-      query: 'Show me unanswered reviews and draft HIPAA-compliant replies.',
-      type: 'reputation' as const,
-    },
-    {
-      id: 'sugg_emergency',
-      label: 'Improve emergency service visibility',
-      query: `Why are we losing local emergency dental traffic in ${activeBusiness.city} and how do we rank #1?`,
-      type: 'visibility' as const,
-    },
-    {
-      id: 'sugg_services',
-      label: 'Create 3 missing service pages',
-      query: 'Identify the 3 highest ROI service pages missing from our Austin website and generate content.',
+      id: 'sugg_content_plan',
+      label: "Create this month's content plan",
+      query: "Create this month's content plan.",
       type: 'content' as const,
     },
     {
-      id: 'sugg_pricing',
-      label: 'Review competitor pricing content',
-      query: `Analyze competitor pricing and transparency against ${activeBusiness.competitors?.[0] || 'local competitors'}.`,
-      type: 'competitors' as const,
+      id: 'sugg_leads',
+      label: 'Show leads needing follow-up',
+      query: 'Show me leads that need follow-up.',
+      type: 'leads' as const,
+    },
+    {
+      id: 'sugg_report',
+      label: 'Prepare my monthly report',
+      query: 'Prepare my monthly report.',
+      type: 'report' as const,
+    },
+    {
+      id: 'sugg_work',
+      label: 'What should I work on this week?',
+      query: 'What should I work on this week?',
+      type: 'work' as const,
+    },
+    {
+      id: 'sugg_reviews',
+      label: 'Address unanswered reviews',
+      query: 'Show me unanswered reviews.',
+      type: 'reputation' as const,
+    },
+    {
+      id: 'sugg_seo',
+      label: 'Find biggest SEO opportunity',
+      query: 'Find my biggest SEO opportunity.',
+      type: 'content' as const,
     },
   ];
 
@@ -110,7 +170,7 @@ export const AiManagerView: React.FC = () => {
     actionFeedEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeCards, isProcessing]);
 
-  // Execute Action Trigger
+  // Execute Action Trigger - Strictly Enforces Business Brain + Provider Data
   const handleExecute = (customPrompt?: string) => {
     const q = (customPrompt || inputQuery).trim();
     if (!q || isProcessing) return;
@@ -119,182 +179,71 @@ export const AiManagerView: React.FC = () => {
     setInputQuery('');
     setIsProcessing(true);
 
-    const lower = q.toLowerCase();
     const cardId = `card_${Date.now()}`;
+    const targetBusinessId = businessTruth?.businessId || activeBusiness?.id || 'biz_locora_canonical';
 
-    // 1. Google Business Post Generator workflow
-    if (lower.includes('google post') || lower.includes('teeth whitening') || lower.includes('offer')) {
-      const newCard: ActionCardState = {
-        id: cardId,
-        type: 'google_post',
-        status: 'planning',
-        prompt: q,
-      };
-      setActiveCards((prev) => [newCard, ...prev]);
-      setIsProcessing(false);
-      return;
-    }
+    const scopedCustomers = (customers || []).filter((c) => c.businessId === targetBusinessId);
+    const scopedContent = (contentRecords || []).filter(
+      (c) => c.business_id === targetBusinessId || (c as any).businessId === targetBusinessId
+    );
+    const scopedTasks = (workTasks || []).filter((t) => t.businessId === targetBusinessId);
+    const scopedProjects = (projects || []).filter((p) => p.businessId === targetBusinessId);
+    const scopedProposals = (proposals || []).filter((p) => p.businessId === targetBusinessId);
+    const scopedInvoices = (invoices || []).filter((i) => i.businessId === targetBusinessId);
 
-    // 2. Competitor Weakness & Scan Pipeline
-    if (lower.includes('competitor weakness') || lower.includes('analyze my competitor') || lower.includes('competitor scan')) {
-      const newCard: ActionCardState = {
-        id: cardId,
-        type: 'competitor_weakness',
-        status: 'running_scan',
-        prompt: q,
-        scanStepIndex: 0,
-      };
-      setActiveCards((prev) => [newCard, ...prev]);
-
-      // Run 6-stage pipeline:
-      // Competitor scan -> Review analysis -> Service comparison -> Website comparison -> Local visibility -> AI reasoning
-      const scanSteps = [0, 1, 2, 3, 4, 5];
-      scanSteps.forEach((step, idx) => {
-        setTimeout(() => {
-          setActiveCards((prev) =>
-            prev.map((c) =>
-              c.id === cardId
-                ? {
-                    ...c,
-                    scanStepIndex: step,
-                    status: step === 5 ? 'generated' : 'running_scan',
-                    data:
-                      step === 5
-                        ? {
-                            topOpportunity: 'Competitors receive 2.4× more reviews/month.',
-                            recommendedAction: 'Create automated review request workflow.',
-                            competitorMetrics: [
-                              { name: activeBusiness.name, reviewsPerMonth: 4.2, rating: activeBusiness.googleRating },
-                              { name: activeBusiness.competitors?.[0] || 'Apex Dental Specialists', reviewsPerMonth: 10.1, rating: 4.9 },
-                              { name: activeBusiness.competitors?.[1] || 'Austin Emergency Smiles', reviewsPerMonth: 9.8, rating: 4.7 },
-                            ],
-                          }
-                        : undefined,
-                  }
-                : c
-            )
-          );
-          if (step === 5) setIsProcessing(false);
-        }, (idx + 1) * 600);
-      });
-      return;
-    }
-
-    // 3. Unanswered reviews workflow
-    if (lower.includes('unanswered review') || lower.includes('17 reviews') || lower.includes('fix reviews')) {
-      const newCard: ActionCardState = {
-        id: cardId,
-        type: 'unanswered_reviews',
-        status: 'generated',
-        prompt: q,
-        data: {
-          count: activeBusiness.unansweredReviews || 17,
-          pendingReviews: [
-            {
-              author: 'Marcus Vance',
-              rating: 5,
-              date: '2 days ago',
-              text: 'Had an excruciating toothache on Sunday morning. Dr. Sarah got me in within 45 minutes and relieved the pain immediately. Incredible clinic!',
-              suggestedReply:
-                `Thank you so much for your kind words, Marcus! We understand how distressing sudden dental pain can be, and our team is proud to offer rapid emergency care in Austin. We are glad you are feeling better!`,
-            },
-            {
-              author: 'Elena Rodriguez',
-              rating: 4,
-              date: '4 days ago',
-              text: 'Very thorough cleaning and modern equipment. Front desk was polite, though wait time was about 15 minutes past appointment time.',
-              suggestedReply:
-                `Thank you for taking the time to share your feedback, Elena. We are glad you appreciated our modern diagnostic equipment and team! We always strive for punctual seating and will continue optimizing our morning schedule.`,
-            },
-            {
-              author: 'David Chen',
-              rating: 5,
-              date: '1 week ago',
-              text: `Best experience in ${activeBusiness.city || 'town'}. Polite team, transparent estimate, and no surprise billing.`,
-              suggestedReply:
-                `David, thank you for trusting us! Transparency and client satisfaction are our highest priorities at ${activeBusiness.name}. Looking forward to assisting you next time!`,
-            },
-          ],
-        },
-      };
-      setActiveCards((prev) => [newCard, ...prev]);
-      setIsProcessing(false);
-      return;
-    }
-
-    // 4. Local traffic loss / SEO problem & opportunity
-    if (lower.includes('seo problem') || lower.includes('local seo') || lower.includes('biggest') || lower.includes('traffic') || lower.includes('seo opportunity') || lower.includes('emergency service visibility') || lower.includes('missing service')) {
-      const emergencyAction = priorityActions.find((a) => a.id.includes('emergency')) || priorityActions[0];
-      const newCard: ActionCardState = {
-        id: cardId,
-        type: 'seo_opportunity',
-        status: 'generated',
-        prompt: q,
-        data: {
-          action: emergencyAction,
-          reason: `Google search volume for "emergency dentist Austin" has surged 34% this quarter. Competitors with dedicated landing pages capture 78% of mobile click-to-calls while your general homepage fails to trigger Local Pack 3-pack prominence.`,
-          solution: `Deploy a dedicated /emergency-dentist service page with MedicalBusiness schema and click-to-call mobile buttons.`,
-        },
-      };
-      setActiveCards((prev) => [newCard, ...prev]);
-      setIsProcessing(false);
-      return;
-    }
-
-    // 5. Growth Plan
-    if (lower.includes('growth plan') || lower.includes('growth roadmap') || lower.includes('month')) {
-      const newCard: ActionCardState = {
-        id: cardId,
-        type: 'growth_plan',
-        status: 'generated',
-        prompt: q,
-        data: {
-          title: `30-Day Growth Acceleration for ${activeBusiness.name}`,
-          score: activeBusiness.healthScore,
-          weeks: [
-            { week: 'Week 1', focus: 'Quick Wins & Reputation', tasks: ['Fix GBP services list', 'Clear 17 unanswered Google reviews', 'Update GBP business hours'] },
-            { week: 'Week 2', focus: 'High-Intent Landing Pages', tasks: ['Create Austin Emergency Dental page', 'Add LocalBusiness schema markup', 'Add patient FAQ accordion'] },
-            { week: 'Week 3', focus: 'Local Citations & Social', tasks: ['Publish 2 Google Business posts', 'Launch Teeth Whitening promo offer', 'Verify Apple Maps & Bing Local'] },
-            { week: 'Week 4', focus: 'Competitor Displacement', tasks: ['Conduct review volume audit vs Apex Dental', 'Launch automated SMS review requests', 'Review call conversion metrics'] },
-          ],
-        },
-      };
-      setActiveCards((prev) => [newCard, ...prev]);
-      setIsProcessing(false);
-      return;
-    }
-
-    // 6. Generic intelligent response via backend AI endpoint
-    fetch('/api/ai/chat', {
+    fetch('/api/ai-manager/query', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        message: q,
-        businessContext: {
-          name: activeBusiness.name,
-          category: activeBusiness.category,
-          city: activeBusiness.city,
-          state: activeBusiness.state,
-          healthScore: activeBusiness.healthScore,
-          unansweredReviews: activeBusiness.unansweredReviews,
-        },
+        businessId: targetBusinessId,
+        query: q,
+        userEmail: user?.email || 'demo@locora.ai',
+        customers: scopedCustomers,
+        contentRecords: scopedContent,
+        workTasks: scopedTasks,
+        projects: scopedProjects,
+        proposals: scopedProposals,
+        invoices: scopedInvoices,
       }),
     })
       .then((res) => res.json())
-      .then((data) => {
-        const text = data.reply || data.text || `Locora AI has analyzed your request for ${activeBusiness.name}. Based on local market diagnostics, we recommend addressing high-impact priority actions first.`;
+      .then((result) => {
+        // If data is unavailable or unverified, render strict honest response
+        if (!result.hasEnoughData) {
+          setActiveCards((prev) => [
+            {
+              id: cardId,
+              type: result.cardType || 'generic',
+              status: 'generated',
+              prompt: q,
+              data: {
+                text: result.answer || " I don't have enough verified data to answer this yet.",
+                sourcesUsed: result.sourcesUsed || ['Business Truth'],
+                hasEnoughData: false,
+                missingDataReason: result.missingDataReason,
+                ...(result.data || {}),
+              },
+            },
+            ...prev,
+          ]);
+          return;
+        }
+
+        // When verified data exists, render the appropriate card based on the backend verified response
+        const cardType = result.cardType || 'generic';
         setActiveCards((prev) => [
           {
             id: cardId,
-            type: 'generic',
-            status: 'generated',
+            type: cardType,
+            status: cardType === 'google_post' ? 'planning' : 'generated',
             prompt: q,
-            data: { text },
+            data: result.data || { text: result.answer },
           },
           ...prev,
         ]);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('[AI Manager Frontend Error]:', err);
         setActiveCards((prev) => [
           {
             id: cardId,
@@ -302,10 +251,9 @@ export const AiManagerView: React.FC = () => {
             status: 'generated',
             prompt: q,
             data: {
-              text: `### Strategic Diagnosis for ${activeBusiness.name}:\n\n` +
-                `1. **Visibility**: Target localized search phrases like "Emergency Dentist ${activeBusiness.city}".\n` +
-                `2. **Reputation**: Clear your ${activeBusiness.unansweredReviews || 17} unanswered Google reviews.\n` +
-                `3. **Conversion**: Add structured schema to capture Google AI Overview citations.`,
+              text: " I don't have enough verified data to answer this yet.",
+              hasEnoughData: false,
+              missingDataReason: 'Connection to verified Business Brain service failed',
             },
           },
           ...prev,
@@ -316,34 +264,244 @@ export const AiManagerView: React.FC = () => {
       });
   };
 
-  // Generate Google Post Trigger
+  // Helper: Create Content Drafts from Content Plan
+  const handleCreateDraftContent = async (cardId: string, items: any[]) => {
+    try {
+      const targetBizId = businessTruth?.businessId || activeBusiness?.id || 'biz_locora_canonical';
+      for (const item of items) {
+        await addContentRecord({
+          business_id: targetBizId,
+          title: item.title,
+          content_type: item.contentType,
+          platform: item.platform,
+          status: 'draft',
+          source: 'business_brain',
+          created_by: user.name || 'AI Growth Manager',
+          AI_generated: true,
+          target_service: item.targetService,
+          target_location: item.targetLocation,
+          body: `${item.hook}\n\nCall to Action: ${item.callToAction}\n\nStrategic Rationale: ${item.rationale}`,
+        });
+      }
+      setCreatedContentBatch((prev) => ({ ...prev, [cardId]: true }));
+      logActivity('content', 'Content Drafts Generated', `Generated ${items.length} content drafts from Business Brain Content Plan.`);
+    } catch (e) {
+      console.error('Failed to create content drafts:', e);
+    }
+  };
+
+  // Helper: Add Content Items as Work Tasks
+  const handleAddContentTasks = async (cardId: string, items: any[]) => {
+    try {
+      const targetBizId = businessTruth?.businessId || activeBusiness?.id || 'biz_locora_canonical';
+      for (const item of items) {
+        await addWorkTask({
+          businessId: targetBizId,
+          title: `Draft: ${item.title}`,
+          description: `Target: ${item.targetService} in ${item.targetLocation}\nPlatform: ${item.platform.toUpperCase()}\nRationale: ${item.rationale}`,
+          priority: 'medium',
+          status: 'todo',
+          dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+        });
+      }
+      setCreatedTaskIds((prev) => ({ ...prev, [`batch_${cardId}`]: true }));
+    } catch (e) {
+      console.error('Failed to add content work tasks:', e);
+    }
+  };
+
+  // Helper: Request Approval for Content Plan
+  const handleRequestPlanApproval = (card: ActionCardState) => {
+    const targetBizId = businessTruth?.businessId || activeBusiness?.id || 'biz_locora_canonical';
+    createAIAction({
+      type: 'CREATE_GROWTH_PLAN',
+      title: `Approve Monthly Content Plan for ${card.data.businessName || businessName}`,
+      business_id: targetBizId,
+      status: 'draft',
+      created_by: 'ai',
+      input: {
+        plannedItems: card.data.plannedItems,
+        targetCity: card.data.targetCity,
+      },
+      isSafeInternal: false,
+      explanation: {
+        diagnosis: `Deploy 4-week verified content plan for ${card.data.businessName || businessName} targeting ${card.data.verifiedServices?.join(', ')} in ${card.data.targetCity}.`,
+        whyItMatters: `Directly attacks verified SEO opportunity: ${card.data.topOpportunity}. Aligns with brand voice "${card.data.brandVoice}".`,
+        previewSummary: 'Drafts require explicit manual review and approval before scheduling.',
+        expectedImpact: 'Increases local organic impressions and captures high-intent service queries.',
+      },
+    });
+  };
+
+  // Helper: Create Lead Follow-up Task
+  const handleCreateLeadFollowupTask = async (lead: any) => {
+    try {
+      const targetBizId = businessTruth?.businessId || activeBusiness?.id || 'biz_locora_canonical';
+      await addWorkTask({
+        businessId: targetBizId,
+        title: `Follow up with ${lead.name} (${lead.service || 'Inquiry'})`,
+        description: `Reason: ${lead.reason}\nLead Value: $${(lead.value || 0).toLocaleString()}\nContact: ${lead.phone || lead.email || 'Check CRM'}\nDays since activity: ${lead.daysSinceContact}`,
+        priority: 'high',
+        status: 'todo',
+        dueDate: new Date().toISOString().split('T')[0],
+      });
+      setCreatedTaskIds((prev) => ({ ...prev, [lead.id]: true }));
+      logActivity('work', 'Lead Follow-up Created', `Created follow-up task for stale lead ${lead.name}.`);
+    } catch (e) {
+      console.error('Failed to create lead task:', e);
+    }
+  };
+
+  // Helper: Create All Lead Follow-up Tasks
+  const handleCreateAllLeadFollowupTasks = async (cardId: string, leads: any[]) => {
+    try {
+      const targetBizId = businessTruth?.businessId || activeBusiness?.id || 'biz_locora_canonical';
+      for (const lead of leads) {
+        await addWorkTask({
+          businessId: targetBizId,
+          title: `Follow up with ${lead.name} (${lead.service || 'Inquiry'})`,
+          description: `Reason: ${lead.reason}\nLead Value: $${(lead.value || 0).toLocaleString()}\nContact: ${lead.phone || lead.email || 'Check CRM'}\nDays since activity: ${lead.daysSinceContact}`,
+          priority: 'high',
+          status: 'todo',
+          dueDate: new Date().toISOString().split('T')[0],
+        });
+        setCreatedTaskIds((prev) => ({ ...prev, [lead.id]: true }));
+      }
+      setCreatedTaskIds((prev) => ({ ...prev, [`leads_batch_${cardId}`]: true }));
+    } catch (e) {
+      console.error('Failed to create batch lead tasks:', e);
+    }
+  };
+
+  // Helper: View Full Monthly Report (Generates Snapshot and Switches Tab)
+  const handleViewFullReport = async () => {
+    try {
+      if (activeBusiness) {
+        const snapshot = await generateFullReportSnapshot({
+          businessId: activeBusiness.id,
+          reportType: 'business_health',
+          period: 'current_month',
+          businessTruth,
+          activeBusiness,
+          productionDashboard: productionDashboard || null,
+          customers: customers || [],
+          invoices: invoices || [],
+          proposals: proposals || [],
+          workTasks: workTasks || [],
+          projects: projects || [],
+          contentRecords: contentRecords || [],
+        });
+        await saveReportSnapshot(snapshot);
+      }
+    } catch (e) {
+      console.warn('Auto-save snapshot warning:', e);
+    }
+    setActiveTab('monthly_report');
+  };
+
+  // Helper: Download Monthly Report PDF
+  const handleDownloadReportPdf = async () => {
+    setIsGeneratingPdf(true);
+    try {
+      if (activeBusiness) {
+        const snapshot = await generateFullReportSnapshot({
+          businessId: activeBusiness.id,
+          reportType: 'business_health',
+          period: 'current_month',
+          businessTruth,
+          activeBusiness,
+          productionDashboard: productionDashboard || null,
+          customers: customers || [],
+          invoices: invoices || [],
+          proposals: proposals || [],
+          workTasks: workTasks || [],
+          projects: projects || [],
+          contentRecords: contentRecords || [],
+        });
+        exportReportToPdf(snapshot);
+      }
+    } catch (e) {
+      console.error('Failed to generate PDF:', e);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  // Helper: Add Weekly Action to Work Hub
+  const handleAddWeeklyActionTask = async (action: any) => {
+    try {
+      const targetBizId = businessTruth?.businessId || activeBusiness?.id || 'biz_locora_canonical';
+      await addWorkTask({
+        businessId: targetBizId,
+        title: action.taskData?.title || action.title,
+        description: action.taskData?.description || action.whyItMatters,
+        priority: action.urgency === 'high' ? 'high' : 'medium',
+        status: 'todo',
+        dueDate: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0],
+      });
+      setCreatedTaskIds((prev) => ({ ...prev, [action.id]: true }));
+      logActivity('work', 'Weekly Priority Added', `Added weekly priority to Work Hub: ${action.title}`);
+    } catch (e) {
+      console.error('Failed to add weekly task:', e);
+    }
+  };
+
+  // Helper: Add All Weekly Actions to Work Hub
+  const handleAddAllWeeklyActions = async (cardId: string, actions: any[]) => {
+    try {
+      const targetBizId = businessTruth?.businessId || activeBusiness?.id || 'biz_locora_canonical';
+      for (const action of actions) {
+        await addWorkTask({
+          businessId: targetBizId,
+          title: action.taskData?.title || action.title,
+          description: action.taskData?.description || action.whyItMatters,
+          priority: action.urgency === 'high' ? 'high' : 'medium',
+          status: 'todo',
+          dueDate: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0],
+        });
+        setCreatedTaskIds((prev) => ({ ...prev, [action.id]: true }));
+      }
+      setCreatedTaskIds((prev) => ({ ...prev, [`weekly_batch_${cardId}`]: true }));
+    } catch (e) {
+      console.error('Failed to add all weekly tasks:', e);
+    }
+  };
+
+  // Generate Google Post Trigger using verified Business Truth
   const handleGenerateGooglePost = (cardId: string) => {
     setActiveCards((prev) =>
-      prev.map((c) =>
-        c.id === cardId
-          ? {
-              ...c,
-              status: 'generated',
-              data: {
-                postTitle: `✨ Premium ${activeBusiness.services?.[0] || 'Services'} in ${activeBusiness.city || 'Metro Area'} – Special Seasonal Offer!`,
-                offerCopy: `Looking for top-rated ${activeBusiness.services?.[0]?.toLowerCase() || 'quality services'}? For a limited time, ${activeBusiness.name} is offering our premier service package at a special promotional rate!\n\n✓ Same-day response and rapid turnaround\n✓ Certified specialists with transparent estimates\n✓ Conveniently located at ${activeBusiness.address || 'Central Office'}\n\nSlots are filling fast for this month. Claim your booking online or call ${activeBusiness.phone || '(512) 555-0199'} today!`,
-                ctaText: 'Book Appointment',
-                ctaUrl: `https://${activeBusiness.website || 'mybusiness.com'}/special-offer`,
-                imageBrief:
-                  `High-resolution, bright photo representing professional ${activeBusiness.category || 'service'} specialists with clean lighting and subtle branding accents.`,
-              } as GooglePostDraft,
-            }
-          : c
-      )
+      prev.map((c) => {
+        if (c.id !== cardId) return c;
+        if (c.data?.offerCopy) {
+          return { ...c, status: 'generated' };
+        }
+        const primaryService = businessServices?.[0] || businessTruth?.services?.[0] || businessCategory || 'Professional Services';
+        const primaryCity = businessCity || businessTruth?.locations?.[0]?.city || 'our service area';
+        const phoneLine = businessPhone ? `\n\nContact us directly at ${businessPhone} to book.` : '';
+        const addressLine = businessAddress ? `\n✓ Conveniently located at ${businessAddress}` : '';
+
+        return {
+          ...c,
+          status: 'generated',
+          data: {
+            postTitle: `Special Offer: ${primaryService} in ${primaryCity} – ${businessName}`,
+            offerCopy: `Looking for top-rated ${primaryService.toLowerCase()} in ${primaryCity}? ${businessName} provides verified, high-quality solutions tailored for you.\n\n✓ Experienced specialists\n✓ Direct communication and transparent estimates${addressLine}${phoneLine}`,
+            ctaText: 'Learn More',
+            ctaUrl: businessWebsite ? `https://${businessWebsite.replace(/^https?:\/\//, '')}` : 'https://maps.google.com',
+            imageBrief: `Professional photo representing ${primaryService.toLowerCase()} specialists with clean lighting and modern branding.`,
+          } as GooglePostDraft,
+        };
+      })
     );
   };
 
   const handleSaveGooglePost = (cardId: string, post: GooglePostDraft) => {
+    const primaryService = businessServices?.[0] || businessTruth?.services?.[0] || businessCategory || 'Professional Services';
     addDocument({
       title: post.postTitle,
       type: 'google_business_post',
       content: `${post.postTitle}\n\n${post.offerCopy}\n\nCTA: ${post.ctaText} -> ${post.ctaUrl}\nImage Brief: ${post.imageBrief}`,
-      prompt: 'Google post for teeth whitening offer',
+      prompt: `Google post for ${primaryService}`,
     });
     addLocalSeoItem({
       type: 'post',
@@ -364,7 +522,7 @@ export const AiManagerView: React.FC = () => {
   };
 
   const scanPipelineSteps = [
-    { label: 'Competitor scan', desc: 'Analyzing local dental rivals in Austin' },
+    { label: 'Competitor scan', desc: `Analyzing local market rivals in ${activeBusiness.city || 'your area'}` },
     { label: 'Review analysis', desc: 'Comparing review velocity & star ratings' },
     { label: 'Service comparison', desc: 'Checking procedures & emergency offerings' },
     { label: 'Website comparison', desc: 'Benchmarking load speed & mobile UX' },
@@ -518,13 +676,20 @@ export const AiManagerView: React.FC = () => {
               Ask Locora to generate Google Posts, run competitor scans, review unanswered patient feedback, or create local SEO service drafts.
             </p>
             <div className="pt-2">
-              <button
-                onClick={() => handleExecute('Create a Google post about our teeth whitening offer.')}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors cursor-pointer inline-flex items-center gap-2"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-[#059669]" />
-                <span>Try: "Create a Google post about our teeth whitening offer."</span>
-              </button>
+              {(() => {
+                const samplePrompt = activeBusiness.services?.[0]
+                  ? `Create a Google post highlighting our ${activeBusiness.services[0]} service.`
+                  : `Create an introductory Google update for ${activeBusiness.name || 'our business'}.`;
+                return (
+                  <button
+                    onClick={() => handleExecute(samplePrompt)}
+                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors cursor-pointer inline-flex items-center gap-2"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[#059669]" />
+                    <span>Try: "{samplePrompt}"</span>
+                  </button>
+                );
+              })()}
             </div>
           </div>
         )}
@@ -780,7 +945,7 @@ export const AiManagerView: React.FC = () => {
                           </h3>
 
                           <p className="text-xs text-slate-700">
-                            While {activeBusiness.name} averages 4 reviews/month with 142 total, Apex Dental Specialists and Austin Emergency Smiles average 10+ reviews/month. This accelerates their Google Maps 3-Pack rank velocity.
+                            While {activeBusiness.name} averages steady customer reviews with {activeBusiness.reviewCount || 0} total, top competitors {activeBusiness.competitors?.[0] || 'in your category'} average higher monthly acquisition rates. Accelerating review velocity will protect and elevate your local Google 3-Pack prominence.
                           </p>
                         </div>
 
@@ -826,7 +991,7 @@ export const AiManagerView: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
                         <h4 className="text-sm font-bold text-slate-900 font-heading">
-                          {card.data.count} Patient Reviews Awaiting Response
+                          {card.data.count} Customer Reviews Awaiting Response
                         </h4>
                       </div>
                       <button
@@ -839,40 +1004,54 @@ export const AiManagerView: React.FC = () => {
                     </div>
 
                     <div className="space-y-3">
-                      {card.data.pendingReviews.map((rev: any, rIdx: number) => (
-                        <div key={rIdx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-900">{rev.author}</span>
-                              <div className="flex text-amber-400">
-                                {[...Array(rev.rating)].map((_, s) => (
-                                  <Star key={s} className="w-3 h-3 fill-amber-400" />
-                                ))}
-                              </div>
-                            </div>
-                            <span className="text-[10px] text-slate-400">{rev.date}</span>
-                          </div>
-
-                          <p className="text-slate-600 italic">"{rev.text}"</p>
-
-                          <div className="pt-2 border-t border-slate-200/80 space-y-1">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold text-[#059669] uppercase tracking-wider font-heading">
-                                AI HIPAA-Compliant Reply:
-                              </span>
-                              <button
-                                onClick={() => handleCopyText(`rev_${rIdx}`, rev.suggestedReply)}
-                                className="text-[11px] font-bold text-[#059669] hover:underline flex items-center gap-1 cursor-pointer"
-                              >
-                                {copiedId === `rev_${rIdx}` ? 'Copied ✓' : 'Copy Reply'}
-                              </button>
-                            </div>
-                            <p className="text-slate-800 bg-white p-2.5 rounded-xl border border-slate-200">
-                              {rev.suggestedReply}
-                            </p>
-                          </div>
+                      {card.data.pendingReviews.length === 0 ? (
+                        <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-2">
+                          <CheckCircle2 className="w-6 h-6 text-emerald-600 mx-auto" />
+                          <p className="text-xs font-bold text-slate-800">
+                            No unanswered reviews found for {activeBusiness.name}.
+                          </p>
+                          <p className="text-[11px] text-slate-500">
+                            {activeBusiness.gbpConnected
+                              ? 'All reviews on your connected listing have responses.'
+                              : 'Connect your Google Business Profile in the Reputation Center to sync and answer reviews.'}
+                          </p>
                         </div>
-                      ))}
+                      ) : (
+                        card.data.pendingReviews.map((rev: any, rIdx: number) => (
+                          <div key={rIdx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-slate-900">{rev.author}</span>
+                                <div className="flex text-amber-400">
+                                  {[...Array(rev.rating)].map((_, s) => (
+                                    <Star key={s} className="w-3 h-3 fill-amber-400" />
+                                  ))}
+                                </div>
+                              </div>
+                              <span className="text-[10px] text-slate-400">{rev.date}</span>
+                            </div>
+
+                            <p className="text-slate-600 italic">"{rev.text}"</p>
+
+                            <div className="pt-2 border-t border-slate-200/80 space-y-1">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-bold text-[#059669] uppercase tracking-wider font-heading">
+                                  AI HIPAA-Compliant Reply:
+                                </span>
+                                <button
+                                  onClick={() => handleCopyText(`rev_${rIdx}`, rev.suggestedReply)}
+                                  className="text-[11px] font-bold text-[#059669] hover:underline flex items-center gap-1 cursor-pointer"
+                                >
+                                  {copiedId === `rev_${rIdx}` ? 'Copied ✓' : 'Copy Reply'}
+                                </button>
+                              </div>
+                              <p className="text-slate-800 bg-white p-2.5 rounded-xl border border-slate-200">
+                                {rev.suggestedReply}
+                              </p>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
                 )}
@@ -969,10 +1148,649 @@ export const AiManagerView: React.FC = () => {
                   </div>
                 )}
 
-                {/* CASE 6: GENERIC ADVICE */}
+                {/* CASE: BUSINESS BRAIN MONTHLY CONTENT PLAN */}
+                {card.type === 'content_plan' && (
+                  <div className="space-y-4">
+                    {/* Pipeline Grounding Bar */}
+                    <div className="p-3 rounded-xl bg-slate-900 text-slate-200 text-xs flex flex-wrap items-center gap-2 font-mono">
+                      <span className="text-emerald-400 font-bold">Query:</span>
+                      <span className="text-slate-300">"{card.prompt}"</span>
+                      <span className="text-slate-500">→</span>
+                      <span className="text-blue-400 font-semibold">Business Truth:</span>
+                      <span className="bg-slate-800 px-2 py-0.5 rounded text-amber-300">
+                        {card.data.businessName || businessName}
+                      </span>
+                      <span className="text-slate-500">→</span>
+                      <span className="text-purple-400 font-semibold">SEO Grounding:</span>
+                      <span className="text-emerald-300 truncate max-w-xs">{card.data.topOpportunity}</span>
+                    </div>
+
+                    {/* Grounding Summary Pill Header */}
+                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#059669] font-heading">
+                            Grounding Parameters
+                          </span>
+                          <span className="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-medium">
+                            {card.data.plannedItems?.length || 0} Planned Deliverables
+                          </span>
+                        </div>
+                        <div className="text-slate-600 text-[11px] flex flex-wrap gap-x-4 gap-y-1">
+                          <span>
+                            <strong>Target Market:</strong> {card.data.targetCity || 'Local Service Area'}
+                          </span>
+                          <span>
+                            <strong>Voice:</strong> {card.data.brandVoice || 'Professional'}
+                          </span>
+                          <span>
+                            <strong>Existing Assets:</strong> {card.data.existingContentCount || 0} in Content Studio
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Header Actions */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => setActiveTab('content')}
+                          className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          <Layers className="w-3.5 h-3.5 text-slate-500" />
+                          <span>Open Content Studio</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Planned Deliverables Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      {card.data.plannedItems?.map((item: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-emerald-300 transition-all space-y-2.5"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-bold bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded-md font-mono uppercase">
+                              {item.week} • {item.platform?.toUpperCase() || 'LOCAL POST'}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-medium truncate">
+                              {item.targetLocation}
+                            </span>
+                          </div>
+
+                          <div>
+                            <h5 className="font-bold text-slate-900 text-sm leading-snug">
+                              {item.title}
+                            </h5>
+                            <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
+                              Service Focus: {item.targetService}
+                            </p>
+                          </div>
+
+                          <p className="text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-[11px] italic">
+                            "{item.hook}"
+                          </p>
+
+                          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
+                            <span className="text-slate-500">
+                              <strong>CTA:</strong> {item.callToAction}
+                            </span>
+                          </div>
+
+                          <div className="text-[10px] text-slate-400 bg-slate-50/70 p-2 rounded-lg">
+                            <strong className="text-slate-600">Why this works:</strong> {item.rationale}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Operational Action Execution Bar */}
+                    <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-900 font-heading block">
+                          Execute Content Plan
+                        </span>
+                        <p className="text-emerald-950 font-medium text-[11px]">
+                          Push these {card.data.plannedItems?.length || 4} verified items directly into Content Studio or assign as Work Tasks.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        {/* 1. Create Drafts in Content Studio */}
+                        <button
+                          onClick={() => handleCreateDraftContent(card.id, card.data.plannedItems || [])}
+                          disabled={createdContentBatch[card.id]}
+                          className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                            createdContentBatch[card.id]
+                              ? 'bg-emerald-200 text-emerald-800 cursor-default'
+                              : 'bg-white border border-emerald-300 hover:bg-emerald-100 text-emerald-950 shadow-xs'
+                          }`}
+                        >
+                          {createdContentBatch[card.id] ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-emerald-700" />
+                              <span>Drafts Created in Studio ✓</span>
+                            </>
+                          ) : (
+                            <>
+                              <Edit3 className="w-3.5 h-3.5 text-emerald-700" />
+                              <span>Create Draft Content</span>
+                            </>
+                          )}
+                        </button>
+
+                        {/* 2. Add as Work Tasks */}
+                        <button
+                          onClick={() => handleAddContentTasks(card.id, card.data.plannedItems || [])}
+                          disabled={createdTaskIds[`batch_${card.id}`]}
+                          className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                            createdTaskIds[`batch_${card.id}`]
+                              ? 'bg-emerald-200 text-emerald-800 cursor-default'
+                              : 'bg-white border border-emerald-300 hover:bg-emerald-100 text-emerald-950 shadow-xs'
+                          }`}
+                        >
+                          {createdTaskIds[`batch_${card.id}`] ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-emerald-700" />
+                              <span>Added to Work Hub ✓</span>
+                            </>
+                          ) : (
+                            <>
+                              <ListTodo className="w-3.5 h-3.5 text-emerald-700" />
+                              <span>Add as Work Tasks</span>
+                            </>
+                          )}
+                        </button>
+
+                        {/* 3. Request Plan Approval */}
+                        <button
+                          onClick={() => handleRequestPlanApproval(card)}
+                          className="px-4 py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                          <span>Request Plan Approval</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* CASE: LEADS REQUIRING FOLLOW-UP (CRM INTEGRATION) */}
+                {card.type === 'leads_followup' && (
+                  <div className="space-y-4">
+                    {/* Pipeline Grounding Bar */}
+                    <div className="p-3 rounded-xl bg-slate-900 text-slate-200 text-xs flex flex-wrap items-center gap-2 font-mono">
+                      <span className="text-emerald-400 font-bold">Query:</span>
+                      <span className="text-slate-300">"{card.prompt}"</span>
+                      <span className="text-slate-500">→</span>
+                      <span className="text-blue-400 font-semibold">CRM Scan:</span>
+                      <span className="bg-slate-800 px-2 py-0.5 rounded text-amber-300">
+                        {card.data.totalLeadsChecked || 0} Records Evaluated
+                      </span>
+                      <span className="text-slate-500">→</span>
+                      <span className="text-purple-400 font-semibold">Priority Stale Leads:</span>
+                      <span className="text-emerald-300 font-bold">{card.data.staleLeads?.length || 0} Found</span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 font-heading">
+                          Leads Requiring Immediate Follow-Up
+                        </h4>
+                        <p className="text-[11px] text-slate-500">
+                          Identified from your CRM database using last contacted timestamps and stage velocity.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setActiveTab('crm')}
+                        className="text-xs font-bold text-[#059669] hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <Users className="w-3.5 h-3.5 text-[#059669]" />
+                        <span>Open CRM Pipeline</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    {(!card.data.staleLeads || card.data.staleLeads.length === 0) ? (
+                      <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-2">
+                        <CheckCircle2 className="w-7 h-7 text-emerald-600 mx-auto" />
+                        <p className="text-xs font-bold text-slate-800">
+                          No stale leads requiring immediate action!
+                        </p>
+                        <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
+                          All leads in your CRM have recent interaction records or are closed. New inquiries will appear here automatically.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {card.data.staleLeads.map((lead: any, lIdx: number) => (
+                          <div
+                            key={lead.id || lIdx}
+                            className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3 text-xs"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-slate-900 text-sm">{lead.name}</span>
+                                  {lead.company && (
+                                    <span className="text-[11px] text-slate-500">({lead.company})</span>
+                                  )}
+                                  <span className="text-[10px] bg-amber-50 text-amber-800 font-bold px-2 py-0.5 rounded-full border border-amber-200">
+                                    {lead.daysSinceContact} Days Inactive
+                                  </span>
+                                </div>
+                                <div className="text-[11px] text-slate-500 flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
+                                  {lead.email && <span>Email: {lead.email}</span>}
+                                  {lead.phone && <span>Phone: {lead.phone}</span>}
+                                  {lead.service && <span>Inquiry: {lead.service}</span>}
+                                </div>
+                              </div>
+
+                              <div className="text-right shrink-0">
+                                <span className="text-[10px] text-slate-400 block uppercase font-mono">
+                                  Estimated Value
+                                </span>
+                                <span className="font-bold text-emerald-700 text-sm">
+                                  ${(lead.value || 0).toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Diagnostic Reasoning */}
+                            <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-900">
+                              <strong>Diagnostic Reason:</strong> {lead.reason}
+                            </div>
+
+                            {/* Task Creation Trigger */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+                              <div className="text-[11px] text-slate-600">
+                                <strong>Suggested Action:</strong> {lead.suggestedTask}
+                              </div>
+
+                              <button
+                                onClick={() => handleCreateLeadFollowupTask(lead)}
+                                disabled={createdTaskIds[lead.id]}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 cursor-pointer ${
+                                  createdTaskIds[lead.id]
+                                    ? 'bg-emerald-100 text-emerald-800 cursor-default'
+                                    : 'bg-[#059669] hover:bg-[#047857] text-white shadow-xs'
+                                }`}
+                              >
+                                {createdTaskIds[lead.id] ? (
+                                  <>
+                                    <Check className="w-3.5 h-3.5 text-emerald-700" />
+                                    <span>Task Created ✓</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <ListTodo className="w-3.5 h-3.5 text-amber-200" />
+                                    <span>Create Follow-up Task</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Batch Action Bar */}
+                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                          <div>
+                            <span className="font-bold text-slate-900 block">Batch Task Assignment</span>
+                            <span className="text-[11px] text-slate-500">
+                              Generate follow-up tasks in Work Hub for all {card.data.staleLeads.length} stale leads at once.
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => handleCreateAllLeadFollowupTasks(card.id, card.data.staleLeads)}
+                            disabled={createdTaskIds[`leads_batch_${card.id}`]}
+                            className={`px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all cursor-pointer ${
+                              createdTaskIds[`leads_batch_${card.id}`]
+                                ? 'bg-emerald-100 text-emerald-800 cursor-default'
+                                : 'bg-slate-900 hover:bg-slate-800 text-white shadow-xs'
+                            }`}
+                          >
+                            {createdTaskIds[`leads_batch_${card.id}`] ? (
+                              <>
+                                <Check className="w-4 h-4 text-emerald-400" />
+                                <span>All Tasks Added to Work Hub ✓</span>
+                              </>
+                            ) : (
+                              <>
+                                <CheckSquare className="w-4 h-4 text-amber-300" />
+                                <span>Create All {card.data.staleLeads.length} Follow-up Tasks</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* CASE: MONTHLY REPORT INTEGRATION */}
+                {card.type === 'monthly_report' && (
+                  <div className="space-y-4">
+                    {/* Pipeline Grounding Bar */}
+                    <div className="p-3 rounded-xl bg-slate-900 text-slate-200 text-xs flex flex-wrap items-center gap-2 font-mono">
+                      <span className="text-emerald-400 font-bold">Query:</span>
+                      <span className="text-slate-300">"{card.prompt}"</span>
+                      <span className="text-slate-500">→</span>
+                      <span className="text-blue-400 font-semibold">Report Engine:</span>
+                      <span className="bg-slate-800 px-2 py-0.5 rounded text-amber-300">Real Data Pipeline</span>
+                      <span className="text-slate-500">→</span>
+                      <span className="text-purple-400 font-semibold">Sources Verified:</span>
+                      <span className="text-emerald-300 font-bold">{card.data.connectedSources?.length || 0} Connected</span>
+                    </div>
+
+                    {/* Executive Health Overview Card */}
+                    <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-heading">
+                            {card.data.reportPeriod || 'Current Month'} Report
+                          </span>
+                          <span className="text-xs text-slate-500 font-medium">
+                            {card.data.businessName || businessName}
+                          </span>
+                        </div>
+                        <h4 className="text-base font-bold text-slate-900 font-heading">
+                          Monthly Operational & Growth Health Snapshot
+                        </h4>
+                        <p className="text-xs text-slate-600">
+                          {card.data.reportNarrative}
+                        </p>
+                      </div>
+
+                      {/* Overall Health Score Badge */}
+                      <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200 shrink-0">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold font-mono text-emerald-700">
+                            {card.data.overallScore || 82}
+                            <span className="text-xs text-slate-400 font-normal">/100</span>
+                          </div>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 font-heading">
+                            Health Index
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Verified Data Sources Badges */}
+                    <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-heading block">
+                        Verified Connected Data Pipelines (Only Real Records Included)
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(card.data.connectedSources || []).map((source: string, sIdx: number) => (
+                          <span
+                            key={sIdx}
+                            className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-[11px] font-medium flex items-center gap-1.5 shadow-2xs"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span>{source}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Summary Metrics Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                      <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase block font-heading">
+                          Customer Reviews
+                        </span>
+                        <div className="text-lg font-bold text-slate-900 mt-1">
+                          {card.data.summaryMetrics?.reviewCount || 0}
+                        </div>
+                        <span className="text-[10px] text-amber-700 font-medium">
+                          {card.data.summaryMetrics?.unansweredReviewsCount || 0} awaiting reply
+                        </span>
+                      </div>
+
+                      <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase block font-heading">
+                          CRM Leads
+                        </span>
+                        <div className="text-lg font-bold text-slate-900 mt-1">
+                          {card.data.summaryMetrics?.leadsCount || 0}
+                        </div>
+                        <span className="text-[10px] text-emerald-700 font-medium">
+                          ${(card.data.summaryMetrics?.totalPipelineValue || 0).toLocaleString()} pipeline
+                        </span>
+                      </div>
+
+                      <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase block font-heading">
+                          Content Assets
+                        </span>
+                        <div className="text-lg font-bold text-slate-900 mt-1">
+                          {card.data.summaryMetrics?.contentCount || 0}
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-medium">
+                          Published & Drafts
+                        </span>
+                      </div>
+
+                      <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase block font-heading">
+                          Work Hub Tasks
+                        </span>
+                        <div className="text-lg font-bold text-slate-900 mt-1">
+                          {card.data.summaryMetrics?.tasksCompletedCount || 0}
+                        </div>
+                        <span className="text-[10px] text-blue-700 font-medium">
+                          {card.data.summaryMetrics?.tasksActiveCount || 0} in progress
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Top Strategic Finding */}
+                    {card.data.summaryMetrics?.topPriority && (
+                      <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 font-heading block">
+                          Top Strategic Recommendation for This Period
+                        </span>
+                        <p className="font-medium text-[11px] leading-relaxed">
+                          {card.data.summaryMetrics.topPriority}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Executive Report Actions */}
+                    <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-900 font-heading block">
+                          Access Complete Multi-Source Audit
+                        </span>
+                        <p className="text-emerald-950 font-medium text-[11px]">
+                          Dive into interactive breakdowns across SEO, Reputation, Content, and Financials.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={handleDownloadReportPdf}
+                          disabled={isGeneratingPdf}
+                          className="px-4 py-2 rounded-xl bg-white border border-emerald-300 hover:bg-emerald-100 text-emerald-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                        >
+                          {isGeneratingPdf ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-700" />
+                          ) : (
+                            <Download className="w-3.5 h-3.5 text-emerald-700" />
+                          )}
+                          <span>{isGeneratingPdf ? 'Generating PDF...' : 'Download PDF Report'}</span>
+                        </button>
+
+                        <button
+                          onClick={handleViewFullReport}
+                          className="px-4 py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          <BarChart3 className="w-3.5 h-3.5 text-amber-300" />
+                          <span>View Full Interactive Report</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* CASE: PRIORITIZED WEEKLY WORK PLAN (WORK HUB INTEGRATION) */}
+                {card.type === 'weekly_work' && (
+                  <div className="space-y-4">
+                    {/* Pipeline Grounding Bar */}
+                    <div className="p-3 rounded-xl bg-slate-900 text-slate-200 text-xs flex flex-wrap items-center gap-2 font-mono">
+                      <span className="text-emerald-400 font-bold">Query:</span>
+                      <span className="text-slate-300">"{card.prompt}"</span>
+                      <span className="text-slate-500">→</span>
+                      <span className="text-blue-400 font-semibold">Prioritization Engine:</span>
+                      <span className="bg-slate-800 px-2 py-0.5 rounded text-amber-300">
+                        {card.data.groundingSources?.join(' + ') || 'Business Brain + Hubs'}
+                      </span>
+                      <span className="text-slate-500">→</span>
+                      <span className="text-purple-400 font-semibold">Actions:</span>
+                      <span className="text-emerald-300 font-bold">{card.data.prioritizedActions?.length || 0} Ranked</span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 font-heading">
+                          Ranked Action Priorities for {card.data.businessName || businessName}
+                        </h4>
+                        <p className="text-[11px] text-slate-500">
+                          Prioritized based on customer impact, reputation risk, and high-velocity SEO opportunities.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => setActiveTab('work')}
+                        className="text-xs font-bold text-[#059669] hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <Briefcase className="w-3.5 h-3.5 text-[#059669]" />
+                        <span>Open Work Hub</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    {/* Action Items List */}
+                    <div className="space-y-2.5">
+                      {(card.data.prioritizedActions || []).map((action: any, aIdx: number) => (
+                        <div
+                          key={action.id || aIdx}
+                          className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2 text-xs hover:border-emerald-300 transition-all"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="w-5 h-5 rounded-full bg-slate-900 text-white font-bold text-[10px] flex items-center justify-center font-mono">
+                                {aIdx + 1}
+                              </span>
+                              <span className="font-bold text-slate-900 text-sm">{action.title}</span>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full font-mono uppercase ${
+                                  action.urgency === 'high'
+                                    ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                    : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                }`}
+                              >
+                                {action.urgency === 'high' ? 'High Impact' : 'Scheduled'}
+                              </span>
+                              <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
+                                {action.category}
+                              </span>
+                            </div>
+                          </div>
+
+                          <p className="text-slate-600 text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                            <strong>Why it matters:</strong> {action.whyItMatters}
+                          </p>
+
+                          <div className="flex items-center justify-end pt-1">
+                            <button
+                              onClick={() => handleAddWeeklyActionTask(action)}
+                              disabled={createdTaskIds[action.id]}
+                              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                                createdTaskIds[action.id]
+                                  ? 'bg-emerald-100 text-emerald-800 cursor-default'
+                                  : 'bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 shadow-2xs'
+                              }`}
+                            >
+                              {createdTaskIds[action.id] ? (
+                                <>
+                                  <Check className="w-3.5 h-3.5 text-emerald-700" />
+                                  <span>Added to Work Tasks ✓</span>
+                                </>
+                              ) : (
+                                <>
+                                  <ListTodo className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>Add to Work Tasks</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Batch Add All Actions */}
+                    <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                      <div>
+                        <span className="font-bold text-emerald-900 block font-heading">
+                          Add Entire Week's Priorities to Work Hub
+                        </span>
+                        <span className="text-[11px] text-emerald-950 font-medium">
+                          Populates your Work Tasks board with all {card.data.prioritizedActions?.length || 0} grounded priorities.
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => handleAddAllWeeklyActions(card.id, card.data.prioritizedActions || [])}
+                        disabled={createdTaskIds[`weekly_batch_${card.id}`]}
+                        className={`px-5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all cursor-pointer ${
+                          createdTaskIds[`weekly_batch_${card.id}`]
+                            ? 'bg-emerald-200 text-emerald-800 cursor-default'
+                            : 'bg-[#059669] hover:bg-[#047857] text-white shadow-xs'
+                        }`}
+                      >
+                        {createdTaskIds[`weekly_batch_${card.id}`] ? (
+                          <>
+                            <Check className="w-4 h-4 text-emerald-800" />
+                            <span>All Tasks Added to Work Hub ✓</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckSquare className="w-4 h-4 text-amber-300" />
+                            <span>Add All Priorities to Work Hub</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* CASE 6: GENERIC ADVICE / EVIDENCE-BOUND ANSWERS */}
                 {card.type === 'generic' && (
-                  <div className="prose prose-xs max-w-none text-slate-700 leading-relaxed whitespace-pre-line text-xs">
-                    {card.data.text}
+                  <div className="space-y-3">
+                    {card.data.hasEnoughData === false && (
+                      <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs">
+                        <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                        <div>
+                          <span className="font-bold block">Strict Verification Safeguard Active</span>
+                          <span className="text-[11px] text-amber-800">
+                            Locora AI Manager strictly prevents hallucinated metrics and unverified business facts.
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <div className="prose prose-xs max-w-none text-slate-700 leading-relaxed whitespace-pre-line text-xs">
+                      {card.data.text}
+                    </div>
+                    {card.data.sourcesUsed && card.data.sourcesUsed.length > 0 && (
+                      <div className="flex items-center gap-1.5 pt-2 border-t border-slate-100 text-[10px] text-slate-400 font-mono">
+                        <span className="font-bold uppercase tracking-wider text-slate-500">Verified Sources:</span>
+                        <span>{card.data.sourcesUsed.join(' • ')}</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -997,7 +1815,7 @@ export const AiManagerView: React.FC = () => {
                     Automated Review Request Workflow
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Configure SMS & email review triggers for {activeBusiness.name}
+                    Configure SMS & email review triggers for {businessName}
                   </p>
                 </div>
               </div>
@@ -1023,7 +1841,7 @@ export const AiManagerView: React.FC = () => {
               <div className="space-y-1.5">
                 <label className="font-bold text-slate-800">Trigger Cadence</label>
                 <select className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800">
-                  <option>Send SMS 2 hours after appointment completion</option>
+                  <option>Send SMS 2 hours after service completion</option>
                   <option>Send SMS next morning at 10:00 AM</option>
                   <option>Send email follow-up same day</option>
                 </select>
@@ -1032,7 +1850,7 @@ export const AiManagerView: React.FC = () => {
               <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-slate-800">
                 <span className="font-bold text-emerald-950 block mb-1">SMS Template:</span>
                 <p className="text-slate-700">
-                  "Hi [Patient Name], thank you for visiting {activeBusiness.name} today! Dr. Sarah and our team would appreciate 30 seconds of your feedback: https://g.page/r/{activeBusiness.id}/review"
+                  "Hi [Customer Name], thank you for choosing {businessName} today! Our team would appreciate 30 seconds of your honest feedback: https://g.page/r/{activeBusiness.id}/review"
                 </p>
               </div>
             </div>

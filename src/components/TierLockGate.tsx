@@ -51,10 +51,9 @@ export const TierLockGate: React.FC<TierLockGateProps> = ({
   benefits,
   children,
 }) => {
-  const { user, updateUser, logActivity, setActiveTab } = useApp();
+  const { user, updateUser, logActivity, setActiveTab, setCheckoutModalPlan } = useApp();
 
   const isUnlocked =
-    user.role === 'admin' ||
     user.planTier === 'agency' ||
     (requiredPlan === 'pro' && user.planTier === 'pro');
 
@@ -66,8 +65,8 @@ export const TierLockGate: React.FC<TierLockGateProps> = ({
   const displayBenefits = benefits || tierInfo.highlights;
 
   const handleQuickUpgrade = (tier: UserPlan) => {
-    updateUser({ planTier: tier });
-    logActivity('subscription', `Upgraded to ${tier.toUpperCase()} tier`, `Unlocked ${featureName}`);
+    setCheckoutModalPlan(tier);
+    logActivity('subscription', `Initiated ${tier.toUpperCase()} checkout`, `Clicked unlock for ${featureName}`);
   };
 
   return (
@@ -134,9 +133,8 @@ export const TierLockGate: React.FC<TierLockGateProps> = ({
 export const TierLockBadge: React.FC<{ minPlan: 'pro' | 'agency' }> = ({ minPlan }) => {
   const { user } = useApp();
   const isLocked =
-    user.role !== 'admin' &&
-    ((minPlan === 'pro' && user.planTier === 'free') ||
-      (minPlan === 'agency' && (user.planTier === 'free' || user.planTier === 'pro')));
+    (minPlan === 'pro' && user.planTier === 'free') ||
+    (minPlan === 'agency' && (user.planTier === 'free' || user.planTier === 'pro'));
 
   if (!isLocked) return null;
 

@@ -27,6 +27,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   const {
     setActiveTab,
     switchBusiness,
+    activeBusiness,
     customers,
     invoices,
     documents,
@@ -49,30 +50,23 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Section 27 Spec Actions:
-  // "Improve my teeth whitening rank" -> Content Studio → Service Page → Teeth Whitening
-  // "Fix unanswered reviews" -> Review Inbox → Unanswered
-  // "Who is beating me?" -> Competitors
-  // "Create proposal" -> Work → Proposals → New
-  // "Monthly report" -> Growth Report
-  // "Smith Plumbing" -> Smith Plumbing Business Brain
-  // "Add customer" -> Customers → New Customer form
+  // Fast Action Shortcuts
   const intentActions = useMemo(
     () => [
       {
-        triggers: ['teeth whitening', 'improve rank', 'whitening', 'rank teeth', 'improve my teeth whitening rank'],
-        title: 'Improve my teeth whitening rank',
-        destination: 'Content Studio → Service Page → Teeth Whitening',
+        triggers: ['service page', 'landing page', 'improve rank', 'content studio', 'new page', 'seo page'],
+        title: 'Create high-intent service page',
+        destination: 'Content Studio → Service Page Generator',
         icon: FileText,
         badge: 'Content Studio',
         color: 'text-emerald-800 bg-emerald-50 border-emerald-200',
         execute: () => {
           setActiveTab('content');
-          logActivity('ai_search', 'Action Executed', 'Opened Content Studio for Teeth Whitening Service Page');
+          logActivity('ai_search', 'Action Executed', 'Opened Content Studio for Service Page Generator');
         },
       },
       {
-        triggers: ['reviews', 'unanswered', 'fix reviews', 'review inbox', 'fix unanswered reviews', '17 unanswered'],
+        triggers: ['reviews', 'unanswered', 'fix reviews', 'review inbox', 'fix unanswered reviews', 'reply reviews'],
         title: 'Fix unanswered reviews',
         destination: 'Review Inbox → Unanswered',
         icon: Star,
@@ -120,16 +114,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
         },
       },
       {
-        triggers: ['smith plumbing', 'smith', 'plumbing'],
-        title: 'Smith Plumbing',
-        destination: 'Smith Plumbing Business Brain',
+        triggers: ['business brain', 'brain', 'client profile', 'active business', 'workspace info'],
+        title: `${activeBusiness.name} Business Brain`,
+        destination: `${activeBusiness.name} Knowledge Base`,
         icon: Building2,
-        badge: 'Client Brain',
+        badge: 'Business Brain',
         color: 'text-orange-700 bg-orange-50 border-orange-200',
         execute: () => {
-          switchBusiness('smith-plumbing');
           setActiveTab('business_brain');
-          logActivity('ai_search', 'Action Executed', 'Switched workspace to Smith Plumbing Business Brain');
+          logActivity('ai_search', 'Action Executed', `Opened ${activeBusiness.name} Business Brain`);
         },
       },
       {
@@ -181,7 +174,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ask Locora anything... (e.g. 'Improve my teeth whitening rank', 'Who is beating me?')"
+              placeholder="Ask Locora anything... (e.g. 'Review ranking opportunities', 'Who is outranking me?')"
               className="w-full bg-transparent border-0 text-sm font-semibold text-slate-900 focus:outline-none placeholder-slate-400 font-sans"
               autoFocus
             />

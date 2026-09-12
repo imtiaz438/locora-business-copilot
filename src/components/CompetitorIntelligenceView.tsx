@@ -1,155 +1,55 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import {
-  Crosshair,
-  TrendingUp,
-  Award,
-  ArrowRight,
+  Target,
   Sparkles,
-  CheckCircle2,
+  Zap,
+  ArrowRight,
+  Plus,
+  Trash2,
+  Building2,
   AlertCircle,
   ExternalLink,
   ShieldCheck,
-  Zap,
-  Target,
-  FileText,
-  MessageSquare,
-  Users,
-  ChevronRight,
-  Info,
 } from 'lucide-react';
 
-interface CompetitorProfile {
-  id: string;
-  name: string;
-  score: number;
-  rating: number;
-  reviews: number;
-  servicePages: number;
-  whyWinning: string[];
-  opportunities: {
-    gap: string;
-    actionLabel: string;
-    impact: string;
-    tabTarget: string;
-  }[];
-}
-
 export const CompetitorIntelligenceView: React.FC = () => {
-  const { activeBusiness, setActiveTab, logActivity } = useApp();
+  const { activeBusiness, updateBusinessProfile, setActiveTab, logActivity } = useApp();
 
-  const [selectedCompetitor, setSelectedCompetitor] = useState<string>('comp_a');
-  const [opportunityModalCompetitor, setOpportunityModalCompetitor] = useState<CompetitorProfile | null>(null);
+  const [newCompetitorName, setNewCompetitorName] = useState('');
+  const [selectedCompetitorIndex, setSelectedCompetitorIndex] = useState<number>(0);
+  const [isAdding, setIsAdding] = useState(false);
 
-  const rawCompNames = activeBusiness.competitors && activeBusiness.competitors.length > 0
-    ? activeBusiness.competitors
-    : ['Apex Group', 'Capitol Premier', 'Downtown Center'];
-
+  const competitorsList = activeBusiness.competitors || [];
   const primaryService = activeBusiness.services?.[0] || 'Core Services';
-  const bizCity = activeBusiness.city || 'Metro Area';
+  const hasCompetitors = competitorsList.length > 0;
 
-  const competitors: CompetitorProfile[] = useMemo(() => {
-    return [
-      {
-        id: 'comp_a',
-        name: rawCompNames[0] || 'Competitor A (Premier Group)',
-        score: 84,
-        rating: 4.6,
-        reviews: 411,
-        servicePages: 12,
-        whyWinning: [
-          '+84 reviews advantage',
-          '12 targeted service pages',
-          'Stronger localized landing page content',
-          'Faster response velocity',
-        ],
-        opportunities: [
-          {
-            gap: `Lacks same-day booking or transparent pricing for ${primaryService.toLowerCase()}.`,
-            actionLabel: `Create ${primaryService} Page with Transparent Pricing`,
-            impact: '+12% High-intent client conversion',
-            tabTarget: 'content',
-          },
-          {
-            gap: 'Has not published a Google Business update post in 4 weeks.',
-            actionLabel: 'Publish Fresh Google Post on Immediate Availability',
-            impact: '+8% Maps 3-Pack freshness signal',
-            tabTarget: 'content',
-          },
-          {
-            gap: 'Review velocity gap: Receives ~12 reviews/mo vs your average.',
-            actionLabel: 'Trigger 1-Click Review Request Campaign to surpass them',
-            impact: 'Closes local review count gap',
-            tabTarget: 'reputation',
-          },
-        ],
-      },
-      {
-        id: 'comp_b',
-        name: rawCompNames[1] || 'Competitor B (Express Solutions)',
-        score: 81,
-        rating: 4.5,
-        reviews: 355,
-        servicePages: 9,
-        whyWinning: [
-          `Aggressive ${primaryService.toLowerCase()} keyword density`,
-          `4 geo-suburb landing pages around ${bizCity}`,
-          `Maps 3-Pack position for top service queries`,
-        ],
-        opportunities: [
-          {
-            gap: `Lower client rating (4.5 vs your ${activeBusiness.googleRating || 4.8}); recurring complaints on responsiveness.`,
-            actionLabel: `Highlight "${activeBusiness.googleRating || 4.8}★ Verified Service" in Meta Titles`,
-            impact: '+18% click-through from high-intent searchers',
-            tabTarget: 'content',
-          },
-          {
-            gap: `Missing dedicated pages for secondary service tiers.`,
-            actionLabel: `Create Comprehensive ${activeBusiness.services?.[1] || 'Specialty'} Landing Page`,
-            impact: 'Captures suburban high-LTV inquiries',
-            tabTarget: 'content',
-          },
-        ],
-      },
-      {
-        id: 'comp_c',
-        name: rawCompNames[2] || 'Competitor C (Regional Center)',
-        score: 72,
-        rating: 4.3,
-        reviews: 218,
-        servicePages: 6,
-        whyWinning: [
-          `Prime central ${bizCity} physical location`,
-          'Strong corporate partnership backlinks',
-        ],
-        opportunities: [
-          {
-            gap: 'Outdated mobile website with 3.8s load time and no click-to-call scheduling.',
-            actionLabel: 'Launch Instant Online Consultation CTA in Google Business Profile',
-            impact: 'Wins mobile searchers abandoning slow competitors',
-            tabTarget: 'visibility',
-          },
-        ],
-      },
-    ];
-  }, [activeBusiness, rawCompNames, primaryService, bizCity]);
+  const handleAddCompetitor = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = newCompetitorName.trim();
+    if (!trimmed) return;
+    if (competitorsList.includes(trimmed)) {
+      setNewCompetitorName('');
+      return;
+    }
+    const updated = [...competitorsList, trimmed];
+    updateBusinessProfile({ competitors: updated });
+    logActivity('growth', 'Competitor Added', `Added ${trimmed} to competitor tracking.`);
+    setNewCompetitorName('');
+    setIsAdding(false);
+  };
 
-  const activeComp = competitors.find((c) => c.id === selectedCompetitor) || competitors[0];
+  const handleRemoveCompetitor = (indexToRemove: number) => {
+    const targetName = competitorsList[indexToRemove];
+    const updated = competitorsList.filter((_, idx) => idx !== indexToRemove);
+    updateBusinessProfile({ competitors: updated });
+    logActivity('growth', 'Competitor Removed', `Removed ${targetName} from tracking.`);
+    if (selectedCompetitorIndex >= updated.length) {
+      setSelectedCompetitorIndex(Math.max(0, updated.length - 1));
+    }
+  };
 
-  const yourAdvantages = [
-    {
-      title: 'Better rating',
-      desc: `${activeBusiness.googleRating || 4.8} ★ vs competitor average of 4.5 ★ across ${activeBusiness.reviewCount || 248} verified client reviews.`,
-    },
-    {
-      title: 'Better homepage conversion',
-      desc: 'Clean mobile-first UX with instant online scheduling and direct click-to-call buttons.',
-    },
-    {
-      title: 'More recent content',
-      desc: 'Regular service FAQ updates and active Google Business profile announcements.',
-    },
-  ];
+  const activeCompetitorName = competitorsList[selectedCompetitorIndex] || competitorsList[0] || '';
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto font-sans text-slate-900 space-y-8 pb-20">
@@ -159,7 +59,7 @@ export const CompetitorIntelligenceView: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-heading">
-                Operational Counter-Strategy
+                Market Intelligence
               </span>
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
             </div>
@@ -167,322 +67,235 @@ export const CompetitorIntelligenceView: React.FC = () => {
               Competitor Intelligence
             </h1>
             <p className="text-xs text-slate-500 mt-1">
-              The purpose is action, not competitor spying. Discover why rivals win and execute concrete counter-plays.
+              Track local competitors in your market to identify search gaps, review differentials, and strategic counter-plays.
             </p>
           </div>
 
-          <div className="px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs flex items-center gap-2">
-            <Target className="w-4 h-4 text-[#059669]" />
-            <span className="font-bold text-slate-700">Goal:</span>
-            <span className="text-emerald-800 font-bold">Overtake Competitor A (+6 pts)</span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsAdding(!isAdding)}
+              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Competitor</span>
+            </button>
           </div>
         </div>
 
-        {/* 2. LEADERBOARD SCOREBOARD */}
+        {/* ADD COMPETITOR FORM */}
+        {isAdding && (
+          <form onSubmit={handleAddCompetitor} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-center gap-3">
+            <div className="relative flex-1 w-full">
+              <input
+                type="text"
+                value={newCompetitorName}
+                onChange={(e) => setNewCompetitorName(e.target.value)}
+                placeholder="Enter competitor business name (e.g. Acme Plumbing, Metro Dental)..."
+                className="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-emerald-500"
+                autoFocus
+              />
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                type="submit"
+                disabled={!newCompetitorName.trim()}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs transition-colors cursor-pointer"
+              >
+                Track Competitor
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsAdding(false)}
+                className="px-3 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-semibold cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* 2. SCOREBOARD */}
         <div className="space-y-2 pt-2">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-heading">
-            Local Market Visibility Scoreboard
+            Local Market Visibility Comparison
           </span>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* Your Business */}
-            <div className="p-5 rounded-2xl bg-emerald-50/80 border-2 border-emerald-500 space-y-2 shadow-sm relative">
+            <div className="p-5 rounded-2xl bg-emerald-50/80 border-2 border-emerald-500 space-y-2 shadow-xs relative">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-emerald-950 font-heading">
-                  Your Business
+                <span className="text-xs font-bold text-emerald-950 font-heading truncate">
+                  {activeBusiness.name}
                 </span>
-                <span className="text-[10px] font-extrabold bg-[#059669] text-white px-2 py-0.5 rounded-full uppercase">
+                <span className="text-[10px] font-extrabold bg-emerald-600 text-white px-2 py-0.5 rounded-full uppercase">
                   You
                 </span>
               </div>
               <div className="flex items-baseline justify-between">
-                <span className="text-3xl font-black font-heading text-emerald-950">
-                  78
+                <span className="text-2xl font-black font-heading text-emerald-950">
+                  {activeBusiness.healthScore > 0 ? activeBusiness.healthScore : '—'}
                 </span>
-                <span className="text-xs font-mono font-bold text-[#059669]">
-                  4.8 ★ (327 rev)
-                </span>
-              </div>
-              <div className="w-full bg-emerald-200 h-2 rounded-full overflow-hidden">
-                <div className="bg-[#059669] h-full rounded-full" style={{ width: '78%' }} />
-              </div>
-            </div>
-
-            {/* Competitor A */}
-            <div
-              onClick={() => setSelectedCompetitor('comp_a')}
-              className={`p-5 rounded-2xl border transition-all cursor-pointer space-y-2 ${
-                selectedCompetitor === 'comp_a'
-                  ? 'bg-amber-50/70 border-amber-400 shadow-sm'
-                  : 'bg-slate-50/80 border-slate-200 hover:bg-white'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-900 font-heading truncate">
-                  Competitor A
-                </span>
-                <span className="text-[10px] font-bold text-amber-700 font-mono">#1 in Market</span>
-              </div>
-              <div className="flex items-baseline justify-between">
-                <span className="text-3xl font-black font-heading text-slate-900">
-                  84
-                </span>
-                <span className="text-xs font-mono text-slate-500">
-                  4.6 ★ (411 rev)
+                <span className="text-xs font-mono font-bold text-emerald-700">
+                  {activeBusiness.googleRating > 0 ? `${activeBusiness.googleRating.toFixed(1)} ★` : 'No rating'} ({activeBusiness.reviewCount || 0} rev)
                 </span>
               </div>
-              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                <div className="bg-amber-500 h-full rounded-full" style={{ width: '84%' }} />
+              <div className="w-full bg-emerald-200 h-1.5 rounded-full overflow-hidden">
+                <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${Math.min(100, activeBusiness.healthScore || 50)}%` }} />
               </div>
             </div>
 
-            {/* Competitor B */}
-            <div
-              onClick={() => setSelectedCompetitor('comp_b')}
-              className={`p-5 rounded-2xl border transition-all cursor-pointer space-y-2 ${
-                selectedCompetitor === 'comp_b'
-                  ? 'bg-amber-50/70 border-amber-400 shadow-sm'
-                  : 'bg-slate-50/80 border-slate-200 hover:bg-white'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-900 font-heading truncate">
-                  Competitor B
-                </span>
-                <span className="text-[10px] font-bold text-slate-500 font-mono">#2 in Market</span>
-              </div>
-              <div className="flex items-baseline justify-between">
-                <span className="text-3xl font-black font-heading text-slate-900">
-                  81
-                </span>
-                <span className="text-xs font-mono text-slate-500">
-                  4.5 ★ (355 rev)
-                </span>
-              </div>
-              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                <div className="bg-slate-600 h-full rounded-full" style={{ width: '81%' }} />
-              </div>
-            </div>
-
-            {/* Competitor C */}
-            <div
-              onClick={() => setSelectedCompetitor('comp_c')}
-              className={`p-5 rounded-2xl border transition-all cursor-pointer space-y-2 ${
-                selectedCompetitor === 'comp_c'
-                  ? 'bg-amber-50/70 border-amber-400 shadow-sm'
-                  : 'bg-slate-50/80 border-slate-200 hover:bg-white'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-900 font-heading truncate">
-                  Competitor C
-                </span>
-                <span className="text-[10px] font-bold text-slate-500 font-mono">#4 in Market</span>
-              </div>
-              <div className="flex items-baseline justify-between">
-                <span className="text-3xl font-black font-heading text-slate-900">
-                  72
-                </span>
-                <span className="text-xs font-mono text-slate-500">
-                  4.3 ★ (218 rev)
-                </span>
-              </div>
-              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                <div className="bg-slate-400 h-full rounded-full" style={{ width: '72%' }} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. WHY THEY ARE WINNING & OPPORTUNITIES */}
-      <section className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-700 font-heading">
-              Detailed Competitive Analysis
-            </span>
-            <h2 className="text-xl sm:text-2xl font-extrabold font-heading text-slate-900 tracking-tight mt-0.5">
-              WHY THEY ARE WINNING
-            </h2>
-            <p className="text-xs text-slate-500">
-              Examining: <strong className="text-slate-800">{activeComp.name}</strong> (Score: {activeComp.score})
-            </p>
-          </div>
-
-          <button
-            onClick={() => setOpportunityModalCompetitor(activeComp)}
-            className="px-5 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer font-sans self-start sm:self-auto"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>Find Opportunities</span>
-          </button>
-        </div>
-
-        {/* Bullet List Matching Section 15 */}
-        <div className="p-6 rounded-2xl bg-amber-50/50 border border-amber-200/90 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold font-heading text-amber-950 uppercase tracking-wide">
-              {activeComp.name}
-            </h3>
-            <span className="text-xs font-mono text-amber-900 bg-amber-100/80 px-2.5 py-0.5 rounded-full">
-              Score: {activeComp.score}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            {activeComp.whyWinning.map((item, idx) => (
+            {/* Dynamic user-configured competitors */}
+            {competitorsList.map((compName, idx) => (
               <div
                 key={idx}
-                className="flex items-center gap-3 p-3.5 rounded-xl bg-white border border-amber-200/80 text-slate-800 font-bold shadow-2xs"
+                onClick={() => setSelectedCompetitorIndex(idx)}
+                className={`p-5 rounded-2xl border transition-all cursor-pointer space-y-2 relative group ${
+                  selectedCompetitorIndex === idx
+                    ? 'bg-amber-50/70 border-amber-400 shadow-xs'
+                    : 'bg-slate-50/80 border-slate-200 hover:bg-white'
+                }`}
               >
-                <CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0" />
-                <span>✓ {item}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 font-heading truncate pr-4">
+                    {compName}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveCompetitor(idx);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded text-slate-400 hover:text-red-600 transition-opacity"
+                    title="Remove competitor"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-xs font-semibold text-slate-600">
+                    Tracked Rival
+                  </span>
+                  <span className="text-xs font-mono text-slate-500">
+                    Active
+                  </span>
+                </div>
+                <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-amber-500 h-full rounded-full" style={{ width: '65%' }} />
+                </div>
               </div>
             ))}
-          </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-amber-200/60">
-            <span className="text-xs text-amber-900 font-medium">
-              Locora has detected <strong>{activeComp.opportunities.length} actionable vulnerabilities</strong> in their digital footprint.
-            </span>
-
-            <button
-              onClick={() => setOpportunityModalCompetitor(activeComp)}
-              className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <span>Find Opportunities</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            {competitorsList.length === 0 && (
+              <div
+                onClick={() => setIsAdding(true)}
+                className="p-5 rounded-2xl border-2 border-dashed border-slate-200 hover:border-emerald-300 bg-slate-50/50 flex flex-col items-center justify-center text-center cursor-pointer transition-colors"
+              >
+                <Plus className="w-5 h-5 text-slate-400 mb-1" />
+                <span className="text-xs font-bold text-slate-600">Track a Competitor</span>
+                <span className="text-[10px] text-slate-400">Compare market gaps</span>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* 4. YOUR ADVANTAGES (Section 15) */}
-      <section className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-        <div className="border-b border-slate-100 pb-3">
-          <span className="text-xs font-bold uppercase tracking-wider text-[#059669] font-heading">
-            Strategic Moats
+      {/* 3. COMPETITOR ANALYSIS & COUNTER-STRATEGIES */}
+      {hasCompetitors ? (
+        <section className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-700 font-heading">
+                Market Counter-Strategy
+              </span>
+              <h2 className="text-xl sm:text-2xl font-extrabold font-heading text-slate-900 tracking-tight mt-0.5">
+                Counter-Plays for {activeCompetitorName}
+              </h2>
+              <p className="text-xs text-slate-500">
+                Actionable plays to outrank and outperform {activeCompetitorName} in {activeBusiness.city || 'your local market'}.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-amber-600" />
+                <h3 className="font-bold text-slate-900 text-sm">Targeted Service Pages</h3>
+              </div>
+              <p className="text-slate-600 leading-relaxed">
+                Publish a dedicated landing page for <strong>{primaryService}</strong> featuring local neighborhood schema, clear pricing disclosures, and direct contact options.
+              </p>
+              <button
+                onClick={() => setActiveTab('content')}
+                className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 hover:border-emerald-500 text-slate-800 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>Draft Service Page</span>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-emerald-600" />
+                <h3 className="font-bold text-slate-900 text-sm">Review Velocity Campaign</h3>
+              </div>
+              <p className="text-slate-600 leading-relaxed">
+                Generate review invitations for recent clients to build steady monthly review growth and strengthen 3-Pack position over local rivals.
+              </p>
+              <button
+                onClick={() => setActiveTab('reputation')}
+                className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 hover:border-emerald-500 text-slate-800 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>Launch Review Campaign</span>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="bg-white border border-slate-200/90 rounded-3xl p-8 sm:p-12 text-center shadow-sm space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center mx-auto">
+            <Building2 className="w-6 h-6" />
+          </div>
+          <div className="space-y-1 max-w-md mx-auto">
+            <h3 className="text-base font-bold font-heading text-slate-900">
+              No Competitors Tracked Yet
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Add your primary local competitors in {activeBusiness.city || 'your area'} to monitor strategic gaps and draft targeted counter-measures.
+            </p>
+          </div>
+          <button
+            onClick={() => setIsAdding(true)}
+            className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Add First Competitor</span>
+          </button>
+        </section>
+      )}
+
+      {/* 4. STRATEGIC EXECUTION PRINCIPLE */}
+      <section className="p-5 rounded-2xl bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1 text-xs">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 font-heading block">
+            Execution Principle
           </span>
-          <h2 className="text-xl sm:text-2xl font-extrabold font-heading text-slate-900 tracking-tight mt-0.5">
-            YOUR ADVANTAGES
-          </h2>
-          <p className="text-xs text-slate-500">
-            Areas where {activeBusiness.name} outperforms competitors. Emphasize these in all patient-facing marketing.
+          <p className="font-bold text-sm text-slate-100">
+            The purpose is action, not competitor spying.
+          </p>
+          <p className="text-slate-300">
+            Convert competitive gaps directly into localized content drafts, Google Business updates, and verified review campaigns.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-          {yourAdvantages.map((adv, idx) => (
-            <div
-              key={idx}
-              className="p-5 rounded-2xl bg-emerald-50/60 border border-emerald-200/90 space-y-2 shadow-2xs"
-            >
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0" />
-                <h3 className="font-extrabold font-heading text-emerald-950 text-sm">
-                  ✓ {adv.title}
-                </h3>
-              </div>
-              <p className="text-slate-600 leading-relaxed pl-6">
-                {adv.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Action Callout */}
-        <div className="p-5 rounded-2xl bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1 text-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 font-heading block">
-              Execution Principle
-            </span>
-            <p className="font-bold text-sm text-slate-100">
-              The purpose is action, not competitor spying.
-            </p>
-            <p className="text-slate-300">
-              Convert these insights directly into content drafts, service pages, and review invitations.
-            </p>
-          </div>
-
-          <button
-            onClick={() => setActiveTab('content')}
-            className="px-5 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-md transition-colors cursor-pointer shrink-0"
-          >
-            Go to Content Studio →
-          </button>
-        </div>
+        <button
+          onClick={() => setActiveTab('content')}
+          className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-colors cursor-pointer shrink-0"
+        >
+          Open Content Studio →
+        </button>
       </section>
-
-      {/* OPPORTUNITY MODAL: FIND THEIR OPPORTUNITIES */}
-      {opportunityModalCompetitor && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
-          <div className="bg-white rounded-3xl w-full max-w-2xl p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-5 animate-scaleUp">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#059669] font-heading">
-                  Actionable Counter-Plays
-                </span>
-                <h3 className="text-lg sm:text-xl font-bold font-heading text-slate-900 mt-0.5">
-                  Opportunities to Overtake {opportunityModalCompetitor.name}
-                </h3>
-              </div>
-              <button
-                onClick={() => setOpportunityModalCompetitor(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Based on empirical analysis of their service pages, review velocity, and content gaps, here are the highest-impact actions you can execute today:
-            </p>
-
-            <div className="space-y-3">
-              {opportunityModalCompetitor.opportunities.map((opp, idx) => (
-                <div
-                  key={idx}
-                  className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-slate-900">Vulnerability #{idx + 1}:</span>
-                    <span className="text-[10px] font-extrabold text-[#059669] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-mono">
-                      {opp.impact}
-                    </span>
-                  </div>
-                  <p className="text-slate-600 italic">
-                    "{opp.gap}"
-                  </p>
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-slate-500 font-medium text-[11px]">Recommended Play:</span>
-                    <button
-                      onClick={() => {
-                        logActivity('growth', 'Competitor Opportunity Executed', opp.actionLabel);
-                        setOpportunityModalCompetitor(null);
-                        setActiveTab(opp.tabTarget);
-                      }}
-                      className="px-4 py-1.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-2xs flex items-center gap-1.5 transition-colors cursor-pointer"
-                    >
-                      <Zap className="w-3 h-3 text-amber-300" />
-                      <span>{opp.actionLabel}</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-center justify-end pt-3 border-t border-slate-100">
-              <button
-                onClick={() => setOpportunityModalCompetitor(null)}
-                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

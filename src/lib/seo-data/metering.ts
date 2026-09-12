@@ -3,7 +3,7 @@ import { SEO_LOOKUP_COSTS } from './types.ts';
 export const SEO_PLAN_LIMITS: Record<string, { seoLookupsPerMonth: number; aiVisibilityRunsPerMonth: number }> = {
   free: {
     seoLookupsPerMonth: 0, // Free mode is strictly limited to Technical SEO & Lighthouse. 0 live API lookups to prevent credit burn.
-    aiVisibilityRunsPerMonth: 0,
+    aiVisibilityRunsPerMonth: 1, // 1 complimentary audit to test live multi-model visibility
   },
   pro: {
     seoLookupsPerMonth: 100, // 100 weighted units
@@ -78,8 +78,8 @@ export function checkSeoLookupEntitlement(
   user: SeoLookupUserRecord,
   cost: number = 1
 ): { allowed: boolean; remaining: number; limit: number; used: number; reason?: string } {
-  // Admins bypass lookup constraints
-  if (user.role === 'admin' || user.role === 'owner') {
+  // Admins bypass lookup constraints unless testing free tier
+  if ((user.role === 'admin' || user.role === 'owner') && user.planTier !== 'free') {
     return {
       allowed: true,
       remaining: 99999,
@@ -129,7 +129,7 @@ export function checkSeoLookupEntitlement(
 export function checkAiVisibilityEntitlement(
   user: SeoLookupUserRecord
 ): { allowed: boolean; remaining: number; limit: number; used: number; reason?: string } {
-  if (user.role === 'admin' || user.role === 'owner') {
+  if ((user.role === 'admin' || user.role === 'owner') && user.planTier !== 'free') {
     return {
       allowed: true,
       remaining: 999,
@@ -141,17 +141,7 @@ export function checkAiVisibilityEntitlement(
   evaluateRollingReset(user);
 
   const tier = (user.planTier || 'free').toLowerCase();
-  if (tier === 'free') {
-    return {
-      allowed: false,
-      remaining: 0,
-      limit: 0,
-      used: user.aiVisibilityRunsUsed || 0,
-      reason: 'Multi-Model AI Visibility benchmarking across ChatGPT, Claude, Gemini & Perplexity requires a Pro or Agency Elite subscription.',
-    };
-  }
-
-  const limit = user.aiVisibilityRunsPerMonth || SEO_PLAN_LIMITS[tier]?.aiVisibilityRunsPerMonth || 4;
+  const limit = user.aiVisibilityRunsPerMonth ?? SEO_PLAN_LIMITS[tier]?.aiVisibilityRunsPerMonth ?? (tier === 'free' ? 1 : 4);
   const used = user.aiVisibilityRunsUsed || 0;
   const remaining = Math.max(0, limit - used);
 
@@ -161,7 +151,9 @@ export function checkAiVisibilityEntitlement(
       remaining,
       limit,
       used,
-      reason: `Monthly AI Visibility benchmark limit reached (${used}/${limit} runs used). Upgrade plan for more scheduled audits.`,
+      reason: tier === 'free'
+        ? 'Complimentary AI Visibility check already used. Upgrade to Pro or Agency Elite for scheduled multi-model audits.'
+        : `Monthly AI Visibility benchmark limit reached (${used}/${limit} runs used). Upgrade plan for more scheduled audits.`,
     };
   }
 

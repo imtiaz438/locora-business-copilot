@@ -29,6 +29,7 @@ export const TopBusinessSelector: React.FC = () => {
     businesses,
     activeBusinessId,
     activeBusiness,
+    businessTruth,
     switchBusiness,
     updateActiveBusiness,
     addBusiness,
@@ -38,7 +39,15 @@ export const TopBusinessSelector: React.FC = () => {
     user,
     logActivity,
     setIsGbpSyncModalOpen,
+    setOnboardingModalOpen,
   } = useApp();
+
+  const displayName = businessTruth?.name ?? activeBusiness?.name ?? 'Business Workspace';
+  const displayCategory = businessTruth?.category ?? activeBusiness?.category ?? null;
+  const primaryLoc = businessTruth?.locations?.find((l) => l.isPrimary) || businessTruth?.locations?.[0];
+  const displayCity = primaryLoc?.city ?? activeBusiness?.city ?? null;
+  const displayState = primaryLoc?.state ?? activeBusiness?.state ?? null;
+  const displayLocationName = primaryLoc?.name ?? activeBusiness?.locationName ?? 'Main Location';
 
   const [isOpen, setIsOpen] = useState(false);
   const [showAddBusinessModal, setShowAddBusinessModal] = useState(false);
@@ -231,10 +240,10 @@ export const TopBusinessSelector: React.FC = () => {
           </span>
           <div className="flex flex-col min-w-0 pr-1">
             <span className="text-xs font-bold text-slate-900 truncate max-w-[140px] sm:max-w-[180px] font-heading leading-tight group-hover:text-[#059669] transition-colors">
-              {activeBusiness.name}
+              {displayName}
             </span>
             <span className="text-[10px] text-slate-500 font-medium truncate leading-none">
-              {activeBusiness.locationName || 'Main Location'}
+              {displayLocationName}
             </span>
           </div>
           <ChevronDown
@@ -265,11 +274,17 @@ export const TopBusinessSelector: React.FC = () => {
               <div className="flex items-center justify-between pt-1.5 gap-2">
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-slate-900 font-heading truncate">
-                    {activeBusiness.name}
+                    {displayName}
                   </p>
                   <p className="text-xs text-slate-500 truncate">
-                    {activeBusiness.category} • {activeBusiness.city}, {activeBusiness.state}
+                    {displayCategory || 'Local Business'} {displayCity ? `• ${displayCity}${displayState ? `, ${displayState}` : ''}` : ''}
                   </p>
+                  {businessTruth && (
+                    <div className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100/70 text-emerald-800 text-[10px] font-medium">
+                      <Sparkles className="w-2.5 h-2.5 text-emerald-600" />
+                      <span>Brain Verified</span>
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => {
@@ -424,14 +439,26 @@ export const TopBusinessSelector: React.FC = () => {
               <div className="pt-2 px-0.5 space-y-1.5">
                 <button
                   type="button"
+                  id="top-selector-onboard-business-btn"
+                  onClick={() => {
+                    setOnboardingModalOpen(true);
+                    setIsOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all shadow-sm cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>+ Run Business Onboarding Flow</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => {
                     setShowAddBusinessModal(true);
                     setIsOpen(false);
                   }}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#059669] font-bold text-xs transition-colors cursor-pointer border border-emerald-200 shadow-2xs"
+                  className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs transition-colors cursor-pointer border border-slate-200"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>+ Add Business Workspace</span>
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Manual Business Entry</span>
                 </button>
                 {!isAgency && (
                   <button

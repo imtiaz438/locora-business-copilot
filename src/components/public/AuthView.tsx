@@ -40,6 +40,22 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
   const [selectedPlan, setSelectedPlan] = useState<UserPlan>('free');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [pendingAudit, setPendingAudit] = useState<{ domain?: string; businessName?: string } | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('locora_pending_public_audit');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          setPendingAudit(parsed);
+          if (parsed.businessName) {
+            setCompany((curr) => curr || parsed.businessName);
+          }
+        }
+      } catch {}
+    }
+  }, []);
 
   // Book Demo CTA State
   const [showBookDemo, setShowBookDemo] = useState(false);
@@ -784,6 +800,21 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
 
                 {/* Form Fields */}
                 <form onSubmit={handleSubmit} className="space-y-4 font-sans">
+                  {isSignUp && pendingAudit && (
+                    <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-950 flex items-start gap-2.5">
+                      <Sparkles className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <span className="font-bold block text-emerald-900 font-heading">
+                          🎯 Quick Checkup Preserved!
+                        </span>
+                        <span className="text-slate-600 block leading-relaxed font-sans">
+                          Creating your account will claim your scan for{' '}
+                          <strong className="text-slate-900">{pendingAudit.businessName || pendingAudit.domain}</strong> and initialize your verified Business Brain.
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   {isSignUp && (
                     <>
                       <div>

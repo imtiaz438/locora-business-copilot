@@ -54,7 +54,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
     { id: 'ai_manager', label: 'AI Manager', icon: Bot, badge: 'Copilot' },
     { id: 'growth', label: 'Growth', icon: TrendingUp },
     { id: 'visibility', label: 'Local Visibility', icon: MapPin },
-    { id: 'reputation', label: 'Reputation', icon: Star, badge: `${activeBusiness?.unansweredReviews || 12} Reviews` },
+    { id: 'seo', label: 'SEO Audit', icon: Globe },
+    {
+      id: 'reputation',
+      label: 'Reputation',
+      icon: Star,
+      badge: (activeBusiness?.unansweredReviews && activeBusiness.unansweredReviews > 0)
+        ? `${activeBusiness.unansweredReviews} Pending`
+        : undefined,
+    },
     { id: 'content', label: 'Content', icon: FileText },
     { id: 'customers', label: 'Customers', icon: Users },
     { id: 'work', label: 'Work', icon: Briefcase },
@@ -74,6 +82,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
     if (id === 'ai_manager' && activeTab === 'chat') return true;
     if (id === 'growth' && (activeTab === 'marketing' || activeTab === 'marketing_planner')) return true;
     if (id === 'visibility' && (activeTab === 'local_seo' || activeTab === 'seo_schema' || activeTab === 'competitors')) return true;
+    if (id === 'seo' && (activeTab === 'seo' || activeTab === 'audit' || activeTab === 'website_review' || activeTab === 'seo_audit')) return true;
     if (id === 'content' && (activeTab === 'content' || activeTab === 'documents' || activeTab === 'content_drafts')) return true;
     if (id === 'customers' && (activeTab === 'crm' || activeTab === 'lead_prospector' || activeTab === 'lead_vault')) return true;
     if (id === 'work' && (activeTab === 'invoices' || activeTab === 'proposals' || activeTab === 'projects')) return true;

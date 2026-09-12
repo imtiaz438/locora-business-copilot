@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { TierLockGate } from './TierLockGate';
 import {
@@ -35,67 +35,58 @@ interface AgencyClientItem {
 }
 
 export const AgencyClientsView: React.FC = () => {
-  const { switchBusiness, setActiveTab, activeBusiness, logActivity } = useApp();
+  const { switchBusiness, setActiveTab, activeBusiness, logActivity, businesses, user } = useApp();
 
-  // Section 24 Spec:
-  // 12 Clients
-  // 🔴 3 Need Attention
-  // 🟡 5 Improving
-  // 🟢 4 Healthy
-  // Example:
-  // Austin Dental       78  🟢
-  // Smith Plumbing      61  🔴
-  // ABC Legal            72  🟡
-  // Green Dental         84  🟢
-  const initialClients: AgencyClientItem[] = [
+  // Demo Fallback for Guest Preview Only
+  const DEMO_AGENCY_CLIENTS: AgencyClientItem[] = [
     {
-      id: 'austin-dental',
-      name: 'Austin Dental Care',
-      category: 'Healthcare & Dentistry',
-      city: 'Austin, TX',
-      score: 78,
+      id: 'demo-agency',
+      name: 'Demo Growth Agency',
+      category: 'Digital Marketing & SEO',
+      city: 'San Francisco, CA',
+      score: 85,
       status: 'healthy',
-      recommendedAction: 'Deploy South Congress emergency dentist landing page',
-      reviewsCount: 248,
+      recommendedAction: 'Deploy localized sub-service landing pages',
+      reviewsCount: 48,
       rating: 4.9,
-      unansweredReviews: 17,
+      unansweredReviews: 2,
     },
     {
-      id: 'smith-plumbing',
-      name: 'Smith Plumbing',
-      category: 'Home Services',
-      city: 'Austin, TX',
-      score: 61,
+      id: 'apex-solutions',
+      name: 'Apex Local Solutions',
+      category: 'Professional Services',
+      city: 'Oakland, CA',
+      score: 64,
       status: 'need_attention',
-      issue: 'Review rating dropped (4.8★ → 4.2★ after 2 negative ratings)',
+      issue: 'Review rating dropped (4.8★ → 4.3★ after 2 negative ratings)',
       recommendedAction: 'Draft empathetic replies & launch review recovery SMS',
       reviewsCount: 89,
-      rating: 4.2,
+      rating: 4.3,
       unansweredReviews: 5,
     },
     {
       id: 'abc-legal',
-      name: 'ABC Legal',
+      name: 'Pacific Coast Legal',
       category: 'Legal Services',
-      city: 'Austin, TX',
+      city: 'San Jose, CA',
       score: 72,
       status: 'improving',
-      issue: 'Visibility declined (-8% local rank for "austin personal injury")',
+      issue: 'Visibility declined (-8% local rank for competitive queries)',
       recommendedAction: 'Inject LegalService Schema & build local citations',
       reviewsCount: 114,
       rating: 4.7,
       unansweredReviews: 2,
     },
     {
-      id: 'green-dental',
-      name: 'Green Dental',
-      category: 'Healthcare & Dentistry',
-      city: 'Round Rock, TX',
+      id: 'beacon-consulting',
+      name: 'Beacon Tech Consulting',
+      category: 'Technology & IT Services',
+      city: 'Palo Alto, CA',
       score: 84,
       status: 'healthy',
-      issue: 'Competitor gaining reviews (+14 reviews by Apex Dental this week)',
-      recommendedAction: 'Accelerate post-appointment review invite frequency',
-      reviewsCount: 312,
+      issue: 'Competitor gaining reviews (+8 reviews this week)',
+      recommendedAction: 'Accelerate post-project review invite frequency',
+      reviewsCount: 198,
       rating: 4.9,
       unansweredReviews: 0,
     },
@@ -207,11 +198,39 @@ export const AgencyClientsView: React.FC = () => {
   const [agencyAiRunning, setAgencyAiRunning] = useState(false);
   const [agencyAiActionsGenerated, setAgencyAiActionsGenerated] = useState(false);
 
-  const attentionCount = initialClients.filter((c) => c.status === 'need_attention').length; // 3
-  const improvingCount = initialClients.filter((c) => c.status === 'improving').length; // 5
-  const healthyCount = initialClients.filter((c) => c.status === 'healthy').length; // 4
+  // Synchronize client list strictly from user's authentic database businesses
+  const clientsList: AgencyClientItem[] = useMemo(() => {
+    if (!user.isAuthenticated) {
+      return DEMO_AGENCY_CLIENTS;
+    }
+    return businesses.map((b) => {
+      const score = b.healthScore || 70;
+      const status: 'healthy' | 'improving' | 'need_attention' =
+        score >= 75 ? 'healthy' : score >= 65 ? 'improving' : 'need_attention';
+      return {
+        id: b.id,
+        name: b.name,
+        category: b.category || 'Local Business',
+        city: b.city ? `${b.city}${b.state ? `, ${b.state}` : ''}` : 'Local Market',
+        score,
+        status,
+        recommendedAction:
+          b.highImpactCount > 0
+            ? 'Execute urgent Technical SEO Audit & Local schema fixes'
+            : 'Monitor live Google keyword rankings and review velocity',
+        reviewsCount: b.reviewCount || 0,
+        rating: b.googleRating || 0,
+        unansweredReviews: b.unansweredReviews || 0,
+      };
+    });
+  }, [user.isAuthenticated, businesses]);
 
-  const filteredClients = initialClients.filter((c) => {
+  const attentionCount = clientsList.filter((c) => c.status === 'need_attention').length;
+  const improvingCount = clientsList.filter((c) => c.status === 'improving').length;
+  const healthyCount = clientsList.filter((c) => c.status === 'healthy').length;
+  const topAttentionClients = clientsList.filter((c) => c.status === 'need_attention' || c.status === 'improving').slice(0, 3);
+
+  const filteredClients = clientsList.filter((c) => {
     if (filterStatus !== 'all' && c.status !== filterStatus) return false;
     if (searchTerm && !c.name.toLowerCase().includes(searchTerm.toLowerCase()) && !c.city.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
@@ -230,7 +249,8 @@ export const AgencyClientsView: React.FC = () => {
     setTimeout(() => {
       setAgencyAiRunning(false);
       setAgencyAiActionsGenerated(true);
-      logActivity('agency', 'Agency AI Action Generated', `Generated multi-client recovery plans for Smith Plumbing, ABC Legal, and Green Dental`);
+      const firstClients = clientsList.slice(0, 3).map((c) => c.name).join(', ') || 'Managed Clients';
+      logActivity('agency', 'Agency AI Action Generated', `Generated multi-client recovery plans for ${firstClients}`);
     }, 1200);
   };
 
@@ -248,7 +268,9 @@ export const AgencyClientsView: React.FC = () => {
             <span className="px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 font-bold text-[10px] uppercase font-heading">
               Agency Mode
             </span>
-            <span className="text-xs text-slate-500 font-mono">12 Client Accounts Managed</span>
+            <span className="text-xs text-slate-500 font-mono">
+              {clientsList.length} Client {clientsList.length === 1 ? 'Account' : 'Accounts'} Managed
+            </span>
           </div>
           <h2 className="text-2xl font-extrabold font-heading text-slate-900 tracking-tight mt-1 flex items-center gap-2.5">
             <Building2 className="w-6 h-6 text-[#059669]" />
@@ -337,38 +359,32 @@ export const AgencyClientsView: React.FC = () => {
               </div>
             </div>
 
-            {/* The 3 Attention Items from Spec:
-                🔴 Smith Plumbing (Review rating dropped)
-                🔴 ABC Legal (Visibility declined)
-                🟡 Green Dental (Competitor gaining reviews)
-            */}
+            {/* Dynamic Attention Items from Active Database */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-rose-500/40 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-rose-300">🔴 Smith Plumbing</span>
-                  <span className="text-[10px] font-mono text-slate-400">61/100</span>
+              {topAttentionClients.length === 0 ? (
+                <div className="col-span-3 p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-center text-xs text-slate-400">
+                  All active business profiles are currently in healthy standing. No critical bottlenecks pending.
                 </div>
-                <p className="text-[11px] text-slate-300 font-medium">Review rating dropped</p>
-                <p className="text-[10px] text-slate-400">Dropped from 4.8★ to 4.2★ after 2 negative ratings.</p>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-rose-500/40 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-rose-300">🔴 ABC Legal</span>
-                  <span className="text-[10px] font-mono text-slate-400">72/100</span>
-                </div>
-                <p className="text-[11px] text-slate-300 font-medium">Visibility declined</p>
-                <p className="text-[10px] text-slate-400">Lost 3-Pack rank #2 for "austin personal injury".</p>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-slate-900/80 border border-amber-500/40 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-amber-300">🟡 Green Dental</span>
-                  <span className="text-[10px] font-mono text-slate-400">84/100</span>
-                </div>
-                <p className="text-[11px] text-slate-300 font-medium">Competitor gaining reviews</p>
-                <p className="text-[10px] text-slate-400">Apex Dental added 14 reviews this week.</p>
-              </div>
+              ) : (
+                topAttentionClients.map((c) => (
+                  <div
+                    key={c.id}
+                    onClick={() => handleEnterClientBusinessBrain(c)}
+                    className={`p-3.5 rounded-xl bg-slate-900/80 border space-y-1 cursor-pointer hover:border-white/30 transition ${
+                      c.status === 'need_attention' ? 'border-rose-500/40' : 'border-amber-500/40'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={`font-bold ${c.status === 'need_attention' ? 'text-rose-300' : 'text-amber-300'}`}>
+                        {c.status === 'need_attention' ? '🔴' : '🟡'} {c.name}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400">{c.score}/100</span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 font-medium">{c.category}</p>
+                    <p className="text-[10px] text-slate-400 line-clamp-2">{c.recommendedAction}</p>
+                  </div>
+                ))
+              )}
             </div>
 
             {/* Section 25 Big CTA: [ Generate All Recommended Actions ] */}
@@ -403,24 +419,18 @@ export const AgencyClientsView: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span>3 Multi-Client Action Bundles Generated Successfully</span>
+                  <span>{Math.min(3, clientsList.length)} Multi-Client Action Bundles Generated Successfully</span>
                 </span>
                 <span className="text-[10px] text-emerald-400 font-mono">Ready to Deploy</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px] text-slate-300">
-                <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-700">
-                  <strong className="text-white block mb-1">Smith Plumbing:</strong>
-                  Drafted 2 HIPAA/neutral review replies and generated a 50-patient SMS reputation catch-up run.
-                </div>
-                <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-700">
-                  <strong className="text-white block mb-1">ABC Legal:</strong>
-                  Generated revised LegalService schema and 2 new injury case-result FAQ blocks to regain 3-Pack rank.
-                </div>
-                <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-700">
-                  <strong className="text-white block mb-1">Green Dental:</strong>
-                  Created 3 Google Business offer posts highlighting free teeth whitening with initial cleaning.
-                </div>
+                {clientsList.slice(0, 3).map((c) => (
+                  <div key={c.id} className="p-3 rounded-xl bg-slate-900/60 border border-slate-700">
+                    <strong className="text-white block mb-1">{c.name}:</strong>
+                    Synthesized localized keyword targets, verified GBP status, and queued automated Schema & review workflows.
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -428,7 +438,7 @@ export const AgencyClientsView: React.FC = () => {
       </div>
 
       {/* ========================================================= */}
-      {/* SECTION 24: 12 CLIENTS LIST */}
+      {/* SECTION 24: CLIENTS LIST */}
       {/* ========================================================= */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
@@ -439,7 +449,7 @@ export const AgencyClientsView: React.FC = () => {
                 filterStatus === 'all' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
               }`}
             >
-              All Clients ({initialClients.length})
+              All Clients ({clientsList.length})
             </button>
             <span className="text-slate-300">|</span>
             <span className="text-xs text-slate-500">

@@ -21,8 +21,13 @@ export const ShareableReportCardModal: React.FC<Props> = ({ isOpen, onClose }) =
     .filter((i) => i.status === 'paid')
     .reduce((sum, i) => sum + (Number(i.total) || 0), 0);
 
-  const healthScore = Math.min(100, 60 + Math.min(25, customers.length * 5) + Math.min(15, invoices.filter((i) => i.status === 'paid').length * 3));
-  const growthScore = Math.min(100, 50 + Math.min(30, projects.length * 8) + Math.min(20, customers.length * 4));
+  const healthScore = (customers.length === 0 && invoices.length === 0)
+    ? 0
+    : Math.min(100, Math.min(50, customers.length * 10) + Math.min(50, invoices.filter((i) => i.status === 'paid').length * 10));
+
+  const growthScore = (projects.length === 0 && customers.length === 0)
+    ? 0
+    : Math.min(100, Math.min(60, projects.length * 15) + Math.min(40, customers.length * 10));
 
   const reportUrl = `${window.location.origin}/report/${encodeURIComponent(businessProfile.name || 'workspace')}`;
 
@@ -95,8 +100,12 @@ export const ShareableReportCardModal: React.FC<Props> = ({ isOpen, onClose }) =
                 <ShieldCheck className="w-4 h-4 text-[#059669]" />
                 <span>Health Score</span>
               </div>
-              <p className="text-3xl font-black text-slate-900 font-heading">{healthScore}<span className="text-xs text-slate-400">/100</span></p>
-              <p className="text-[10px] text-[#059669] font-bold">Excellent Standing</p>
+              <p className="text-3xl font-black text-slate-900 font-heading">
+                {healthScore > 0 ? healthScore : '—'}{healthScore > 0 && <span className="text-xs text-slate-400">/100</span>}
+              </p>
+              <p className={`text-[10px] font-bold ${healthScore >= 70 ? 'text-[#059669]' : 'text-slate-400'}`}>
+                {healthScore >= 70 ? 'Strong Standing' : healthScore > 0 ? 'Developing' : 'No Activity Recorded'}
+              </p>
             </div>
 
             <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-1 text-center shadow-2xs">
@@ -104,8 +113,12 @@ export const ShareableReportCardModal: React.FC<Props> = ({ isOpen, onClose }) =
                 <TrendingUp className="w-4 h-4 text-indigo-600" />
                 <span>Growth Velocity</span>
               </div>
-              <p className="text-3xl font-black text-slate-900 font-heading">{growthScore}<span className="text-xs text-slate-400">/100</span></p>
-              <p className="text-[10px] text-indigo-600 font-bold">High Expansion</p>
+              <p className="text-3xl font-black text-slate-900 font-heading">
+                {growthScore > 0 ? growthScore : '—'}{growthScore > 0 && <span className="text-xs text-slate-400">/100</span>}
+              </p>
+              <p className={`text-[10px] font-bold ${growthScore >= 60 ? 'text-indigo-600' : 'text-slate-400'}`}>
+                {growthScore >= 60 ? 'High Expansion' : growthScore > 0 ? 'Initial Growth' : 'Awaiting Projects'}
+              </p>
             </div>
 
             <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-1 text-center shadow-2xs">
@@ -113,8 +126,13 @@ export const ShareableReportCardModal: React.FC<Props> = ({ isOpen, onClose }) =
                 <Globe className="w-4 h-4 text-cyan-600" />
                 <span>SEO Audit Score</span>
               </div>
-              <p className="text-3xl font-black text-slate-900 font-heading">{latestWebsiteAudit?.overallScore || 92}<span className="text-xs text-slate-400">/100</span></p>
-              <p className="text-[10px] text-cyan-600 font-bold">Verified Audit</p>
+              <p className="text-3xl font-black text-slate-900 font-heading">
+                {latestWebsiteAudit?.overallScore ? latestWebsiteAudit.overallScore : '—'}
+                {latestWebsiteAudit?.overallScore ? <span className="text-xs text-slate-400">/100</span> : null}
+              </p>
+              <p className={`text-[10px] font-bold ${latestWebsiteAudit?.overallScore ? 'text-cyan-600' : 'text-slate-400'}`}>
+                {latestWebsiteAudit?.overallScore ? 'Verified Audit' : 'Audit Pending'}
+              </p>
             </div>
           </div>
 

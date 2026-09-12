@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext.tsx';
+import { ProviderStatusDisplay } from './ProviderStatusDisplay.tsx';
+import { DatasetFreshnessBadge } from './DatasetFreshnessBadge.tsx';
+import { ProviderAccessGate } from './ProviderAccessGate.tsx';
 import {
   Search,
   TrendingUp,
@@ -37,6 +40,7 @@ import type {
   AiVisibilityProfile,
   BrandTrustProfile,
 } from '../types.ts';
+import { AiVisibilityObservationsPanel } from './AiVisibilityObservationsPanel.tsx';
 
 interface SeoKeywordsAndTrafficPanelProps {
   seoMatrix?: SeoMatrixAuditData;
@@ -55,7 +59,7 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
   onUpgradeClick,
   defaultTab = 'keywords',
 }) => {
-  const { settings } = useApp();
+  const { settings, setActiveTab: setAppActiveTab } = useApp();
   const [currentMatrix, setCurrentMatrix] = useState<SeoMatrixAuditData | undefined>(initialSeoMatrix);
   const [activeTab, setActiveTab] = useState<'keywords' | 'traffic' | 'backlinks' | 'ai_trust' | 'competitors'>(
     defaultTab === 'traffic' ? 'traffic' : defaultTab
@@ -237,6 +241,18 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
             <p className="text-xs text-slate-500 max-w-2xl">
               Organic keyword rankings, visitor traffic, backlink profile, and authority metrics for <strong className="text-slate-700 font-medium">{domain}</strong>.
             </p>
+            <div className="pt-1">
+              <DatasetFreshnessBadge
+                id="keywords_traffic"
+                name="Search Index"
+                source={matrix?.providerName || 'DataForSEO & Global SERP Index'}
+                last_synced_at={matrix?.cachedAt || (matrix ? new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() : null)}
+                status={matrix ? 'connected' : 'not_connected'}
+                error={matrix?.warning || null}
+                onRefresh={() => handleQuerySubmit(undefined, domain, true)}
+                isRefreshing={isSearching}
+              />
+            </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -351,13 +367,6 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
         >
           <Bot className="w-3.5 h-3.5" />
           <span>AI Visibility & Brand Trust</span>
-          <span
-            className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-              activeTab === 'ai_trust' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800'
-            }`}
-          >
-            {traffic.aiVisibility?.score || 76}/100
-          </span>
         </button>
 
         <button
@@ -408,6 +417,17 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
 
         {searchError && <p className="mt-2 text-xs text-rose-600 font-semibold">{searchError}</p>}
       </div>
+
+      {/* Provider Status Notification / Connection Banner */}
+      {matrix?.provider_status && matrix.provider_status !== 'success' && (
+        <ProviderStatusDisplay
+          status={matrix.provider_status}
+          providerName="Search Intelligence Engine (DataForSEO / SerpApi / Google Index)"
+          customMessage={matrix.providerStatusMessage}
+          onConfigureClick={() => setAppActiveTab('settings')}
+          onRetryClick={() => handleQuerySubmit(undefined, customQuery, true)}
+        />
+      )}
 
       {/* ========================================================================= */}
       {/* TAB 1: KEYWORD RANKINGS & ACCURATE KEYWORD MATRIX                        */}
@@ -654,38 +674,28 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
                 Direct buyer intent questions pulled from global search index footprints.
               </p>
               <div className="space-y-2.5 pt-1">
-                {(matrix?.peopleAlsoAsk && matrix.peopleAlsoAsk.length > 0
-                  ? matrix.peopleAlsoAsk
-                  : [
-                      {
-                        question: `What is the pricing model for ${domain}?`,
-                        snippet: 'Transparent tiered plans with instant self-service activation.',
-                      },
-                      {
-                        question: `How does ${domain} compare to competitors?`,
-                        snippet: 'Delivers superior speed, higher audit accuracy, and turnkey deliverables.',
-                      },
-                      {
-                        question: `Is ${domain} suitable for enterprise marketing?`,
-                        snippet: 'Scales effortlessly with team access, custom branding, and white-labeling.',
-                      },
-                    ]
-                ).map((paa, idx) => (
-                  <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-                    <div className="text-xs font-bold text-slate-900 flex items-center justify-between">
-                      <span>{paa.question}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleQuerySubmit(undefined, paa.question)}
-                        className="text-[10px] font-bold text-[#059669] hover:underline flex items-center gap-0.5 ml-2 shrink-0 cursor-pointer"
-                      >
-                        <span>Audit</span>
-                        <ChevronRight className="w-3 h-3" />
-                      </button>
+                {matrix?.peopleAlsoAsk && matrix.peopleAlsoAsk.length > 0 ? (
+                  matrix.peopleAlsoAsk.map((paa, idx) => (
+                    <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+                      <div className="text-xs font-bold text-slate-900 flex items-center justify-between">
+                        <span>{paa.question}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleQuerySubmit(undefined, paa.question)}
+                          className="text-[10px] font-bold text-[#059669] hover:underline flex items-center gap-0.5 ml-2 shrink-0 cursor-pointer"
+                        >
+                          <span>Audit</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </button>
+                      </div>
+                      {paa.snippet && <p className="text-[11px] text-slate-600 leading-relaxed">{paa.snippet}</p>}
                     </div>
-                    {paa.snippet && <p className="text-[11px] text-slate-600 leading-relaxed">{paa.snippet}</p>}
+                  ))
+                ) : (
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-500">
+                    No People Also Ask questions returned from search engine for this domain.
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -698,28 +708,26 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
               <p className="text-xs text-slate-500">
                 Semantically related search queries ranking alongside your target domain.
               </p>
-              <div className="flex flex-wrap gap-2 pt-1">
-                {(matrix?.relatedSearches && matrix.relatedSearches.length > 0
-                  ? matrix.relatedSearches
-                  : [
-                      `${domain} pricing`,
-                      `${domain} reviews`,
-                      `best ${domain} alternatives`,
-                      `${domain} software features`,
-                      `${domain} case study`,
-                      `${domain} login`,
-                    ]
-                ).map((rel, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleQuerySubmit(undefined, rel)}
-                    className="px-3 py-1.5 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-xl text-xs font-medium text-slate-700 hover:text-emerald-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    <span>{rel}</span>
-                    <ArrowUpRight className="w-3 h-3 text-slate-400" />
-                  </button>
-                ))}
+              <div className="pt-1">
+                {matrix?.relatedSearches && matrix.relatedSearches.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {matrix.relatedSearches.map((rel, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleQuerySubmit(undefined, rel)}
+                        className="px-3 py-1.5 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-xl text-xs font-medium text-slate-700 hover:text-emerald-800 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                      >
+                        <span>{rel}</span>
+                        <ArrowUpRight className="w-3 h-3 text-slate-400" />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-500">
+                    No related keyword clusters returned for this domain query.
+                  </div>
+                )}
               </div>
 
               {matrix?.serpFeatures && matrix.serpFeatures.length > 0 && (
@@ -844,55 +852,61 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
             </div>
 
             {/* Stacked Bar */}
-            <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
-              <div
-                style={{ width: `${traffic.channels?.organic || 66}%` }}
-                className="bg-emerald-500 h-full transition-all"
-                title={`Organic Search: ${traffic.channels?.organic || 66}%`}
-              />
-              <div
-                style={{ width: `${traffic.channels?.direct || 18}%` }}
-                className="bg-blue-500 h-full transition-all"
-                title={`Direct: ${traffic.channels?.direct || 18}%`}
-              />
-              <div
-                style={{ width: `${traffic.channels?.referral || 8}%` }}
-                className="bg-amber-500 h-full transition-all"
-                title={`Referral: ${traffic.channels?.referral || 8}%`}
-              />
-              <div
-                style={{ width: `${traffic.channels?.social || 5}%` }}
-                className="bg-purple-500 h-full transition-all"
-                title={`Social: ${traffic.channels?.social || 5}%`}
-              />
-              <div
-                style={{ width: `${traffic.channels?.paid || 3}%` }}
-                className="bg-rose-500 h-full transition-all"
-                title={`Paid Ads: ${traffic.channels?.paid || 3}%`}
-              />
-            </div>
+            {traffic.monthlyVisits > 0 ? (
+              <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
+                <div
+                  style={{ width: `${traffic.channels?.organic || 0}%` }}
+                  className="bg-emerald-500 h-full transition-all"
+                  title={`Organic Search: ${traffic.channels?.organic || 0}%`}
+                />
+                <div
+                  style={{ width: `${traffic.channels?.direct || 0}%` }}
+                  className="bg-blue-500 h-full transition-all"
+                  title={`Direct: ${traffic.channels?.direct || 0}%`}
+                />
+                <div
+                  style={{ width: `${traffic.channels?.referral || 0}%` }}
+                  className="bg-amber-500 h-full transition-all"
+                  title={`Referral: ${traffic.channels?.referral || 0}%`}
+                />
+                <div
+                  style={{ width: `${traffic.channels?.social || 0}%` }}
+                  className="bg-purple-500 h-full transition-all"
+                  title={`Social: ${traffic.channels?.social || 0}%`}
+                />
+                <div
+                  style={{ width: `${traffic.channels?.paid || 0}%` }}
+                  className="bg-rose-500 h-full transition-all"
+                  title={`Paid Ads: ${traffic.channels?.paid || 0}%`}
+                />
+              </div>
+            ) : (
+              <div className="w-full py-2.5 px-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-500">
+                <span>No live traffic streams detected. Connect Google Analytics 4 (GA4) or Google Search Console to track verified channels.</span>
+              </div>
+            )}
 
             {/* Legend */}
             <div className="flex flex-wrap items-center justify-between gap-3 text-xs pt-1">
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-                <span className="text-slate-700 font-bold">Organic Search ({traffic.channels?.organic || 66}%)</span>
+                <span className="text-slate-700 font-bold">Organic Search ({traffic.monthlyVisits > 0 ? (traffic.channels?.organic || 0) : 0}%)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-blue-500"></span>
-                <span className="text-slate-700 font-bold">Direct ({traffic.channels?.direct || 18}%)</span>
+                <span className="text-slate-700 font-bold">Direct ({traffic.monthlyVisits > 0 ? (traffic.channels?.direct || 0) : 0}%)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-amber-500"></span>
-                <span className="text-slate-700 font-bold">Referral ({traffic.channels?.referral || 8}%)</span>
+                <span className="text-slate-700 font-bold">Referral ({traffic.monthlyVisits > 0 ? (traffic.channels?.referral || 0) : 0}%)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-purple-500"></span>
-                <span className="text-slate-700 font-bold">Social ({traffic.channels?.social || 5}%)</span>
+                <span className="text-slate-700 font-bold">Social ({traffic.monthlyVisits > 0 ? (traffic.channels?.social || 0) : 0}%)</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-rose-500"></span>
-                <span className="text-slate-700 font-bold">Paid Search ({traffic.channels?.paid || 3}%)</span>
+                <span className="text-slate-700 font-bold">Paid Search ({traffic.monthlyVisits > 0 ? (traffic.channels?.paid || 0) : 0}%)</span>
               </div>
             </div>
           </div>
@@ -1057,6 +1071,11 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
       {/* TAB 3: INBOUND BACKLINKS PROFILE & LINK DETAILS                          */}
       {/* ========================================================================= */}
       {activeTab === 'backlinks' && (
+        <ProviderAccessGate
+          featureId="dataforseo"
+          title="DataForSEO Live Backlink Intelligence"
+          description="Inbound backlink index inspection, referring root domain discovery, and dofollow authority distribution are powered exclusively by DataForSEO Labs for Agency Elite workspaces."
+        >
         <div className="space-y-6">
           {/* Backlink KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
@@ -1285,6 +1304,7 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
             </div>
           </div>
         </div>
+        </ProviderAccessGate>
       )}
 
       {/* ========================================================================= */}
@@ -1292,81 +1312,16 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
       {/* ========================================================================= */}
       {activeTab === 'ai_trust' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* AI Answer Engine Visibility Card */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center">
-                    <Bot className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold font-heading text-slate-900">
-                      AI Answer Engine Visibility
-                    </h4>
-                    <p className="text-xs text-slate-500">ChatGPT, Gemini, Perplexity, & Copilot readiness</p>
-                  </div>
-                </div>
+          {/* Grounded Empirical AI Visibility Panel */}
+          <AiVisibilityObservationsPanel
+            userEmail={userEmail}
+            businessProfile={{
+              name: domain || 'Your Business',
+            }}
+          />
 
-                <span className="px-3 py-1 bg-purple-100 text-purple-900 font-extrabold text-sm rounded-xl border border-purple-200 font-mono">
-                  {traffic.aiVisibility?.score || 76} / 100
-                </span>
-              </div>
-
-              <div className="space-y-3 pt-2">
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-700">AI Citation Readiness Score</span>
-                    <strong className="text-purple-700 font-mono">{traffic.aiVisibility?.aiReadinessScore || 82}%</strong>
-                  </div>
-                  <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-purple-600 rounded-full"
-                      style={{ width: `${traffic.aiVisibility?.aiReadinessScore || 82}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                    <span className="text-slate-500 block text-[11px]">Brand Sentiment</span>
-                    <strong className="text-emerald-700 font-bold text-sm">
-                      {traffic.aiVisibility?.sentiment || 'Positive'}
-                    </strong>
-                  </div>
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                    <span className="text-slate-500 block text-[11px]">AI Citations Count</span>
-                    <strong className="text-slate-900 font-mono text-sm">
-                      {traffic.aiVisibility?.citationsCount || 142} mentions
-                    </strong>
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t border-slate-100">
-                  <span className="text-[11px] font-bold text-slate-500 block mb-2">
-                    Top AI Knowledge Base Citation Sources:
-                  </span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(traffic.aiVisibility?.topMentionSources || [
-                      'techcrunch.com',
-                      'producthunt.com',
-                      'github.com',
-                      'medium.com',
-                    ]).map((source, idx) => (
-                      <span
-                        key={idx}
-                        className="px-2 py-0.5 rounded bg-purple-50 text-purple-800 text-[11px] font-mono border border-purple-200 font-semibold"
-                      >
-                        ✓ {source}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Brand Trust & Domain Authority Card */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
+          {/* Brand Trust & Domain Authority Card */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-[#059669] flex items-center justify-center">
@@ -1381,7 +1336,7 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
                 </div>
 
                 <span className="px-3 py-1 bg-emerald-100 text-emerald-900 font-extrabold text-sm rounded-xl border border-emerald-200 font-mono">
-                  {traffic.brandTrust?.domainAuthority || 42} DA
+                  {traffic.brandTrust?.domainAuthority ? `${traffic.brandTrust.domainAuthority} DA` : '— DA'}
                 </span>
               </div>
 
@@ -1389,12 +1344,14 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-bold text-slate-700">Algorithmic Trust Score</span>
-                    <strong className="text-emerald-700 font-mono">{traffic.brandTrust?.trustScore || 78} / 100</strong>
+                    <strong className="text-emerald-700 font-mono">
+                      {traffic.brandTrust?.trustScore ? `${traffic.brandTrust.trustScore} / 100` : '— / 100'}
+                    </strong>
                   </div>
                   <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#059669] rounded-full"
-                      style={{ width: `${traffic.brandTrust?.trustScore || 78}%` }}
+                      className="h-full bg-[#059669] rounded-full transition-all"
+                      style={{ width: `${traffic.brandTrust?.trustScore || 0}%` }}
                     />
                   </div>
                 </div>
@@ -1403,19 +1360,19 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
                   <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-center">
                     <span className="text-slate-500 block text-[10px]">Spam Score</span>
                     <strong className="text-emerald-700 font-bold text-sm">
-                      {traffic.brandTrust?.spamScore || 1}% (Clean)
+                      {traffic.brandTrust?.spamScore !== undefined ? `${traffic.brandTrust.spamScore}%` : '—'}
                     </strong>
                   </div>
                   <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-center">
                     <span className="text-slate-500 block text-[10px]">Indexed Pages</span>
                     <strong className="text-slate-900 font-mono text-sm">
-                      {traffic.brandTrust?.indexedPages || 140}
+                      {traffic.brandTrust?.indexedPages !== undefined ? traffic.brandTrust.indexedPages : '—'}
                     </strong>
                   </div>
                   <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-center">
                     <span className="text-slate-500 block text-[10px]">Brand Search</span>
                     <strong className="text-blue-700 font-bold text-sm">
-                      {traffic.brandTrust?.brandSearchShare || 32}%
+                      {traffic.brandTrust?.brandSearchShare !== undefined ? `${traffic.brandTrust.brandSearchShare}%` : '—'}
                     </strong>
                   </div>
                 </div>
@@ -1423,14 +1380,15 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
                 <div className="p-3 bg-emerald-50/60 border border-emerald-200 rounded-xl text-xs text-emerald-950 flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                   <p className="leading-relaxed">
-                    Zero spam signals or algorithmic penalties detected. Backlink profile demonstrates established domain longevity.
+                    {traffic.brandTrust?.trustScore
+                      ? 'Backlink profile and search index demonstrate verified domain credibility.'
+                      : 'Brand authority indicators update automatically once website crawl and backlink indexing are performed.'}
                   </p>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* ========================================================================= */}
       {/* TAB 5: COMPETITOR BENCHMARK & KEYWORD GAPS                                */}
@@ -1464,74 +1422,65 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {(traffic.topCompetitors || [
-                    {
-                      domain: `${domain.split('.')[0]}-hub.com`,
-                      commonKeywords: Math.round(traffic.organicKeywordsCount * 0.45),
-                      organicTraffic: Math.round(traffic.monthlyVisits * 1.15),
-                      domainAuthority: Math.min(95, traffic.domainRank + 4),
-                      trafficShare: 32,
-                    },
-                    {
-                      domain: `get${domain.split('.')[0]}.io`,
-                      commonKeywords: Math.round(traffic.organicKeywordsCount * 0.35),
-                      organicTraffic: Math.round(traffic.monthlyVisits * 0.85),
-                      domainAuthority: Math.max(20, traffic.domainRank - 3),
-                      trafficShare: 24,
-                    },
-                    {
-                      domain: `${domain.split('.')[0]}pro.net`,
-                      commonKeywords: Math.round(traffic.organicKeywordsCount * 0.25),
-                      organicTraffic: Math.round(traffic.monthlyVisits * 0.65),
-                      domainAuthority: Math.max(18, traffic.domainRank - 6),
-                      trafficShare: 18,
-                    },
-                  ]).map((comp, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3 px-4 font-bold text-slate-900">
-                        <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-800 font-bold flex items-center justify-center text-[10px]">
-                            {idx + 1}
-                          </span>
-                          <span className="font-mono">{comp.domain}</span>
+                  {(!traffic.topCompetitors || traffic.topCompetitors.length === 0) ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-slate-500">
+                        <div className="space-y-1.5 max-w-sm mx-auto">
+                          <p className="font-bold text-slate-800">No Organic Search Competitors Tracked</p>
+                          <p className="text-xs text-slate-500">
+                            Search competitors are discovered automatically when ranking keywords are detected or via the Competitors tab.
+                          </p>
                         </div>
                       </td>
-
-                      <td className="py-3 px-3 text-center font-mono font-bold text-slate-800">
-                        {comp.commonKeywords} common queries
-                      </td>
-
-                      <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
-                        {comp.organicTraffic.toLocaleString()}
-                      </td>
-
-                      <td className="py-3 px-3 text-center">
-                        <span
-                          className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold border ${
-                            comp.domainAuthority >= 50
-                              ? 'bg-blue-50 text-blue-800 border-blue-200'
-                              : 'bg-slate-100 text-slate-700 border-slate-200'
-                          }`}
-                        >
-                          DA {comp.domainAuthority}
-                        </span>
-                      </td>
-
-                      <td className="py-3 px-3 text-center font-mono text-slate-600">
-                        {comp.trafficShare}%
-                      </td>
-
-                      <td className="py-3 px-4 text-center">
-                        <button
-                          type="button"
-                          onClick={() => handleQuerySubmit(undefined, comp.domain)}
-                          className="px-2.5 py-1 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 font-bold rounded-lg border border-slate-200 hover:border-emerald-300 transition-colors cursor-pointer text-[11px]"
-                        >
-                          Analyze Domain
-                        </button>
-                      </td>
                     </tr>
-                  ))}
+                  ) : (
+                    traffic.topCompetitors.map((comp, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3 px-4 font-bold text-slate-900">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-800 font-bold flex items-center justify-center text-[10px]">
+                              {idx + 1}
+                            </span>
+                            <span className="font-mono">{comp.domain}</span>
+                          </div>
+                        </td>
+
+                        <td className="py-3 px-3 text-center font-mono font-bold text-slate-800">
+                          {comp.commonKeywords} common queries
+                        </td>
+
+                        <td className="py-3 px-3 text-right font-mono font-bold text-slate-900">
+                          {comp.organicTraffic.toLocaleString()}
+                        </td>
+
+                        <td className="py-3 px-3 text-center">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold border ${
+                              comp.domainAuthority >= 50
+                                ? 'bg-blue-50 text-blue-800 border-blue-200'
+                                : 'bg-slate-100 text-slate-700 border-slate-200'
+                            }`}
+                          >
+                            DA {comp.domainAuthority}
+                          </span>
+                        </td>
+
+                        <td className="py-3 px-3 text-center font-mono text-slate-600">
+                          {comp.trafficShare}%
+                        </td>
+
+                        <td className="py-3 px-4 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleQuerySubmit(undefined, comp.domain)}
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 font-bold rounded-lg border border-slate-200 hover:border-emerald-300 transition-colors cursor-pointer text-[11px]"
+                          >
+                            Analyze Domain
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

@@ -56,6 +56,14 @@ export interface AiOverviewPresenceData {
   }>;
 }
 
+export type ProviderStatus =
+  | 'success'
+  | 'not_configured'
+  | 'authentication_error'
+  | 'quota_exceeded'
+  | 'unavailable'
+  | 'connected_no_data';
+
 export interface NormalizedSeoAudit {
   domainOverview: DomainOverviewData;
   backlinks: BacklinkSummaryData;
@@ -65,6 +73,8 @@ export interface NormalizedSeoAudit {
   aiOverview: AiOverviewPresenceData;
   fetchedAt: string;
   provider: string;
+  provider_status?: ProviderStatus;
+  providerStatusMessage?: string;
   attribution: string; // "Powered by DataForSEO" & "Powered by SerpApi"
   isCached: boolean;
   refreshCooldownUntil?: string;
@@ -96,14 +106,26 @@ export const SEO_LOOKUP_COSTS = {
   FULL_AUDIT_BASE: 6, // Combined fresh audit = 6 units (1+1+1+1+2)
 } as const;
 
-export interface AiVisibilityCheckItem {
+export interface AiVisibilityObservation {
   id: string;
+  businessId?: string;
   userId: string;
   userEmail?: string;
   businessName?: string;
+  query: string;
+  date: string;
+  location: string;
   provider: 'openai' | 'anthropic' | 'gemini' | 'perplexity' | 'groq' | string;
-  prompt: string;
-  mentioned: boolean;
+  business_mentioned: boolean;
+  position: number | null;
+  competitors_mentioned: string[];
+  citation_sources: string[];
+  raw_observation: string;
+  // Compatibility fields
+  prompt?: string;
+  mentioned?: boolean;
   responseSnippet?: string;
-  checkedAt: string;
+  checkedAt?: string;
 }
+
+export type AiVisibilityCheckItem = AiVisibilityObservation;

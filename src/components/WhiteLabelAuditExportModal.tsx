@@ -66,7 +66,7 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
 
   // Target URL
   const [inputUrl, setInputUrl] = useState<string>(
-    auditUrl || latestWebsiteAudit?.url || businessProfile.website || 'brightsmiledental.com'
+    auditUrl || latestWebsiteAudit?.url || businessProfile.website || 'example.com'
   );
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
@@ -84,16 +84,16 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
   const [agencyName, setAgencyName] = useState(
     businessProfile.name && businessProfile.name !== 'My Business Workspace'
       ? businessProfile.name
-      : 'Apex Digital Media Group'
+      : 'Locora Growth Partners'
   );
   const [agencyWebsite, setAgencyWebsite] = useState(
-    businessProfile.website || 'https://apexdigitalmedia.com'
+    businessProfile.website || 'https://locora.ai'
   );
   const [agencyContactEmail, setAgencyContactEmail] = useState(
-    businessProfile.email || user.email || 'partner@apexdigitalmedia.com'
+    businessProfile.email || user.email || 'growth@locora.ai'
   );
   const [agencyPhone, setAgencyPhone] = useState(
-    businessProfile.phone || '+1 (555) 782-9901'
+    businessProfile.phone || '+1 (555) 019-2831'
   );
 
   // Custom Agency Logo (Upload or URL)
@@ -105,7 +105,11 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
   const [agencyBrandColor, setAgencyBrandColor] = useState<string>('#4f46e5');
 
   // Client Details & Proposal Customization
-  const [clientBusinessName, setClientBusinessName] = useState('Bright Smile Dental');
+  const [clientBusinessName, setClientBusinessName] = useState(
+    businessProfile.name && businessProfile.name !== 'My Business Workspace'
+      ? `${businessProfile.name} Client`
+      : 'Target Client Business'
+  );
   const [customExecutiveNote, setCustomExecutiveNote] = useState(
     'This comprehensive 40-point technical, SEO, and performance evaluation was executed on live production assets. Immediate remediation of critical issues will protect search rankings, improve mobile conversions, and eliminate estimated monthly revenue leakage.'
   );
@@ -124,10 +128,10 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
       if (derived && derived.length < 40) {
         setClientBusinessName(derived);
       }
-    } else if (inputUrl) {
+    } else if (inputUrl && inputUrl !== 'example.com') {
       const clean = inputUrl.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').replace(/^www\./i, '');
       const nameGuess = clean.split('.')[0];
-      if (nameGuess && clientBusinessName === 'Bright Smile Dental') {
+      if (nameGuess && (clientBusinessName === 'Target Client Business' || clientBusinessName === 'Bright Smile Dental')) {
         const formatted = nameGuess.charAt(0).toUpperCase() + nameGuess.slice(1);
         setClientBusinessName(formatted);
       }
@@ -731,7 +735,7 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
                       value={clientBusinessName}
                       onChange={(e) => setClientBusinessName(e.target.value)}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:border-indigo-500"
-                      placeholder="Bright Smile Dental"
+                      placeholder="e.g. Acme Local Care"
                     />
                   </div>
 

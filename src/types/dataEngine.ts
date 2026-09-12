@@ -457,6 +457,11 @@ export interface GrowthOpportunityTableRecord {
   problem: string;
   expectedImpact: string;
   isFixed: boolean;
+  source: string;
+  evidence: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  confidence: number;
+  createdAt: string | Date;
 }
 
 export interface CrawlRunTableRecord {
