@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { WebsiteAuditResult, PublicCheckupResult } from '../../types';
 import { LocoraLogo } from '../LocoraLogo';
@@ -69,36 +69,35 @@ export const HomeView: React.FC = () => {
   const [crawlProgressStage, setCrawlProgressStage] = useState(0);
   const [auditError, setAuditError] = useState<string | null>(null);
 
-  // Stored public checkup result
-  const [publicAudit, setPublicAudit] = useState<PublicCheckupResult | null>(() => {
+  // Live public checkup result - strictly in-memory per session visit
+  const [publicAudit, setPublicAudit] = useState<PublicCheckupResult | null>(null);
+  const [checkupDone, setCheckupDone] = useState<boolean>(false);
+  const [targetBusinessName, setTargetBusinessName] = useState<string>('My Business');
+
+  const handleResetCheckup = () => {
+    setPublicAudit(null);
+    setCheckupDone(false);
+    setHeroInputUrl('');
+    setHeroLocation('');
+    setHeroBusinessName('');
+    setHeroEmail('');
+    setAuditError(null);
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('locora_pending_public_audit');
-        if (saved) return JSON.parse(saved);
+        localStorage.removeItem('locora_pending_public_audit');
       } catch {}
     }
-    return null;
-  });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-  const [checkupDone, setCheckupDone] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return Boolean(localStorage.getItem('locora_pending_public_audit'));
-    }
-    return false;
-  });
-
-  const [targetBusinessName, setTargetBusinessName] = useState<string>(() => {
+  // Ensure returning to or refreshing the homepage always presents the clean default home view
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('locora_pending_public_audit');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          return parsed.businessName || 'My Business';
-        }
+        localStorage.removeItem('locora_pending_public_audit');
       } catch {}
     }
-    return 'My Business';
-  });
+  }, []);
 
   // Checkup Sub-Tab State (Sections 5, 6, 7, 8, 9, 10, 11, 12, 13)
   const [auditTab, setAuditTab] = useState<'quick_checkup' | 'overview' | 'discovery' | 'seo' | 'local' | 'performance'>('quick_checkup');
@@ -158,12 +157,7 @@ export const HomeView: React.FC = () => {
       setCheckupDone(true);
       setTargetBusinessName(data.businessName || 'My Business');
 
-      // Preserve audit in localStorage for seamless registration/login hydration
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('locora_pending_public_audit', JSON.stringify(data));
-      }
-
-      // Update AppContext so workspace is immediately hydrated
+      // Update AppContext so workspace is immediately hydrated if already logged in
       updateBusinessProfile({
         name: data.businessName,
         website: data.domain,
@@ -496,6 +490,15 @@ export const HomeView: React.FC = () => {
 
                 <div className="flex items-center gap-2.5 shrink-0">
                   <button
+                    type="button"
+                    onClick={handleResetCheckup}
+                    className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+                    title="Clear current report and check another website"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Check Another</span>
+                  </button>
+                  <button
                     onClick={() => handleClaimAndUnlock()}
                     className="px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer font-sans"
                   >
@@ -672,11 +675,7 @@ export const HomeView: React.FC = () => {
                   <QuickCheckupReport
                     audit={publicAudit}
                     onClaimAndUnlock={handleClaimAndUnlock}
-                    onCheckAnother={() => {
-                      setPublicAudit(null);
-                      setCheckupDone(false);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
+                    onCheckAnother={handleResetCheckup}
                     onForceRefresh={() => handleHeroSubmit(undefined, true)}
                     isRefreshing={isAnalyzing}
                   />
@@ -1354,11 +1353,7 @@ export const HomeView: React.FC = () => {
                           <ArrowRight className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => {
-                            setPublicAudit(null);
-                            setCheckupDone(false);
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }}
+                          onClick={handleResetCheckup}
                           className="px-4 py-3 bg-white/10 hover:bg-white/15 text-white font-medium text-xs rounded-xl transition-all cursor-pointer font-sans"
                         >
                           Check Another Website

@@ -1,6 +1,6 @@
 {
   "name": "Locora AI — Business Copilot",
-  "description": "Your AI business manager for local growth. Tell Locora what you want to improve, and it finds the opportunities, explains what matters, and does it for you.",
+  "description": "Tell Locora what to improve — it finds the opportunities, explains what matters, and does the work. AI business copilot for local service businesses and agencies.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

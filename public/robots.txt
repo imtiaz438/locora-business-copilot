@@ -2,7 +2,41 @@ User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /admin
-Disallow: /auth/callback
+Disallow: /auth/
+Disallow: /login
+Disallow: /signup
+Disallow: /ai-manager
+Disallow: /growth
+Disallow: /growth-hub
+Disallow: /visibility
+Disallow: /local-visibility
+Disallow: /seo
+Disallow: /local-seo
+Disallow: /reputation
+Disallow: /customers
+Disallow: /content
+Disallow: /content-studio
+Disallow: /reports
+Disallow: /work
+Disallow: /clients
+Disallow: /dashboard
+Disallow: /crm
+Disallow: /invoices
+Disallow: /proposals
+Disallow: /documents
+Disallow: /settings
+Disallow: /business-brain
+Disallow: /brain
+Disallow: /lead-prospector
+Disallow: /leads
+Disallow: /lead-vault
+Disallow: /masterclass-kit
+Disallow: /projects
+Disallow: /chat
+Disallow: /pipeline
+Disallow: /data-engine
+Disallow: /data_engine
+Disallow: /architecture
 
 # AI & Answer Engine Optimization (AEO / GEO) Directives
 User-agent: GPTBot
@@ -40,5 +74,3 @@ Allow: /
 # LLMS-FULL-TXT: https://locoraai.com/llms-full.txt
 
 Sitemap: https://locoraai.com/sitemap.xml
-Sitemap: https://www.locoraai.com/sitemap.xml
-

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { INDUSTRY_METADATA, applyPageMetadata } from '../../utils/seoMetadata';
 import {
   Zap,
   ArrowRight,
@@ -449,10 +450,19 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
   }, [industrySlug]);
 
   useEffect(() => {
-    document.title = `${currentIndustry.name} Local SEO & AI Operating System | Locora AI`;
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) {
-      metaDesc.setAttribute('content', currentIndustry.heroSubheadline);
+    const meta = INDUSTRY_METADATA[currentIndustry.slug];
+    if (meta) {
+      applyPageMetadata('industry_pseo', {
+        title: meta.title,
+        description: meta.description,
+        canonicalPath: meta.canonicalPath,
+      });
+    } else {
+      applyPageMetadata('industry_pseo', {
+        title: `${currentIndustry.name} Local SEO & AI Operating System | Locora AI`,
+        description: currentIndustry.heroSubheadline,
+        canonicalPath: `/for/${currentIndustry.slug}`,
+      });
     }
   }, [currentIndustry]);
 

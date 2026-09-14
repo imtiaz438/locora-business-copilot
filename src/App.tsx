@@ -52,6 +52,7 @@ import { PrivacyPolicyView } from './components/public/PrivacyPolicyView';
 import { TermsOfServiceView } from './components/public/TermsOfServiceView';
 import { SecurityOverviewView } from './components/public/SecurityOverviewView';
 import { RefundPolicyView } from './components/public/RefundPolicyView';
+import { applyPageMetadata } from './utils/seoMetadata';
 
 const PATH_TO_TAB: Record<string, string> = {
   '': 'home',
@@ -59,6 +60,9 @@ const PATH_TO_TAB: Record<string, string> = {
   'products': 'products',
   'product': 'products',
   'features': 'features',
+  'agencies': 'agency_landing',
+  'for/agencies': 'agency_landing',
+  'for-agencies': 'agency_landing',
   'use-cases': 'use_cases_hub',
   'use-cases/': 'use_cases_hub',
   'resources': 'resources_hub',
@@ -308,6 +312,11 @@ const MainContent: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [setActiveTab, subscribePlan, updateUser, user.email, user.isAuthenticated, user.name]);
 
+  // Synchronize document.title, meta descriptions, and robots index/noindex directives
+  useEffect(() => {
+    applyPageMetadata(activeTab);
+  }, [activeTab]);
+
   const renderViewContent = () => {
     // Dynamic Layer 1: Product Pages
     if (activeTab.startsWith('feature_')) {
@@ -320,7 +329,8 @@ const MainContent: React.FC = () => {
       return <UseCaseDetailPage slug={activeTab.replace(/^usecase_/, '').replace(/^use_case_/, '')} />;
     }
 
-    // Dynamic Layer 3: Industry Pages
+    // Dynamic Layer 3: Industry & Agency Pages
+    if (activeTab === 'agency_landing') return <IndustryPseoView industrySlug="agencies" />;
     if (activeTab === 'industry_pseo') return <IndustryPseoView />;
 
     // Dynamic Layer 4: Educational Content & SOPs

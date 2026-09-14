@@ -13,6 +13,7 @@ import { promisify } from 'util';
 import net from 'net';
 
 const resolveMxAsync = promisify(dns.resolveMx);
+import { resolveRouteMetadata, injectMetadataIntoHtml } from './src/utils/seoMetadata.ts';
 import { getOrCreateUser } from './src/db/users.ts';
 import * as dbService from './src/db/service.ts';
 import * as onboardingService from './server/onboardingService.ts';
@@ -95,6 +96,25 @@ app.use((req, res, next) => {
   // Subdomain & Hostname Routing for locoraai.com and app.locoraai.com
   const host = ((req.headers['x-forwarded-host'] as string) || req.headers.host || '').toLowerCase();
   const isAppHost = host.startsWith('app.locoraai.com') || host.startsWith('app.');
+  const isWwwHost = host.startsWith('www.locoraai.com');
+
+  // 301 permanently redirect www.locoraai.com to canonical bare domain (locoraai.com)
+  if (isWwwHost) {
+    return res.redirect(301, `https://locoraai.com${req.originalUrl}`);
+  }
+
+  // 301 permanently redirect underscore URLs to clean marketing URLs
+  if (req.path === '/resources_hub') {
+    return res.redirect(301, `https://locoraai.com/resources`);
+  }
+  if (req.path === '/use_cases_hub') {
+    return res.redirect(301, `https://locoraai.com/use-cases`);
+  }
+
+  // Enforce search engine exclusion header across all app subdomain responses
+  if (isAppHost) {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  }
 
   // If visitor is accessing marketing-only content on the app subdomain, 301 redirect to main website
   if (
@@ -103,6 +123,8 @@ app.use((req, res, next) => {
     !req.path.startsWith('/assets/') &&
     !req.path.includes('.') &&
     (req.path === '/home' ||
+      req.path === '/pricing' ||
+      req.path === '/agencies' ||
       req.path.startsWith('/features') ||
       req.path.startsWith('/use-cases') ||
       req.path.startsWith('/resources') ||
@@ -14174,36 +14196,79 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
 app.get('/robots.txt', (req, res) => {
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=86400');
-  const baseUrl = getRequestBaseUrl(req);
+  const host = ((req.headers['x-forwarded-host'] as string) || req.headers.host || '').toLowerCase();
+  const isAppHost = host.startsWith('app.locoraai.com') || host.startsWith('app.');
+
+  if (isAppHost) {
+    return res.send(`User-agent: *
+Disallow: /
+`);
+  }
+
   res.send(`User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /admin
 Disallow: /auth/callback
 
-Sitemap: ${baseUrl}/sitemap.xml
+# AI & Answer Engine Optimization (AEO / GEO) Directives
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+# LLM Documentation Standards
+# LLMS-TXT: https://locoraai.com/llms.txt
+# LLMS-FULL-TXT: https://locoraai.com/llms-full.txt
+
+Sitemap: https://locoraai.com/sitemap.xml
 `);
 });
 
 app.get('/sitemap.xml', (req, res) => {
   try {
-    const baseUrl = getRequestBaseUrl(req);
+    const baseUrl = 'https://locoraai.com';
     const today = new Date().toISOString().split('T')[0];
 
     const pages = [
       { path: '/', priority: '1.0', changefreq: 'daily' },
+      { path: '/products', priority: '0.95', changefreq: 'weekly' },
+      { path: '/pricing', priority: '0.9', changefreq: 'weekly' },
       { path: '/features', priority: '0.9', changefreq: 'weekly' },
       { path: '/use-cases', priority: '0.9', changefreq: 'weekly' },
       { path: '/resources', priority: '0.9', changefreq: 'weekly' },
-      { path: '/pricing', priority: '0.9', changefreq: 'weekly' },
+      { path: '/for/agencies', priority: '0.9', changefreq: 'weekly' },
       { path: '/about', priority: '0.7', changefreq: 'monthly' },
       { path: '/contact', priority: '0.7', changefreq: 'monthly' },
       { path: '/security', priority: '0.6', changefreq: 'monthly' },
       { path: '/privacy', priority: '0.5', changefreq: 'monthly' },
       { path: '/terms', priority: '0.5', changefreq: 'monthly' },
       { path: '/refund', priority: '0.5', changefreq: 'monthly' },
-      { path: '/login', priority: '0.6', changefreq: 'monthly' },
-      { path: '/signup', priority: '0.6', changefreq: 'monthly' },
 
       // Layer 1: Product Feature Pages
       { path: '/features/ai-business-audit', priority: '0.85', changefreq: 'weekly' },
@@ -14225,14 +14290,16 @@ app.get('/sitemap.xml', (req, res) => {
       { path: '/use-cases/business-growth', priority: '0.85', changefreq: 'weekly' },
 
       // Layer 3: Programmatic Industry Landing Pages
-      { path: '/for/dentists', priority: '0.85', changefreq: 'weekly' },
-      { path: '/for/hvac-contractors', priority: '0.85', changefreq: 'weekly' },
-      { path: '/for/real-estate', priority: '0.85', changefreq: 'weekly' },
-      { path: '/for/law-firms', priority: '0.85', changefreq: 'weekly' },
-      { path: '/for/plumbers', priority: '0.85', changefreq: 'weekly' },
-      { path: '/for/med-spas', priority: '0.85', changefreq: 'weekly' },
-      { path: '/for/restaurants', priority: '0.85', changefreq: 'weekly' },
-      { path: '/for/auto-repair', priority: '0.85', changefreq: 'weekly' },
+      { path: '/for/restaurants', priority: '0.88', changefreq: 'weekly' },
+      { path: '/for/hvac-contractors', priority: '0.88', changefreq: 'weekly' },
+      { path: '/for/real-estate', priority: '0.88', changefreq: 'weekly' },
+      { path: '/for/law-firms', priority: '0.88', changefreq: 'weekly' },
+      { path: '/for/plumbers', priority: '0.88', changefreq: 'weekly' },
+      { path: '/for/med-spas', priority: '0.88', changefreq: 'weekly' },
+      { path: '/for/auto-repair', priority: '0.88', changefreq: 'weekly' },
+      { path: '/for/contractors', priority: '0.88', changefreq: 'weekly' },
+      { path: '/for/agencies', priority: '0.9', changefreq: 'weekly' },
+      { path: '/for/dentists', priority: '0.88', changefreq: 'weekly' },
 
       // Layer 4: Educational Content & SOPs
       { path: '/resources/how-to-improve-local-seo', priority: '0.85', changefreq: 'weekly' },
@@ -14279,11 +14346,22 @@ app.get('/llms-full.txt', (_req, res) => {
   res.sendFile(filePath);
 });
 
-app.get('/robots.txt', (_req, res) => {
-  const filePath = path.join(process.cwd(), 'public', 'robots.txt');
+app.get('/robots.txt', (req, res) => {
+  const host = ((req.headers['x-forwarded-host'] as string) || req.headers.host || '').toLowerCase();
+  const isAppHost = host.startsWith('app.locoraai.com') || host.startsWith('app.');
+
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=86400');
-  res.sendFile(filePath);
+
+  if (isAppHost) {
+    return res.send('User-agent: *\nDisallow: /\n');
+  }
+
+  const filePath = path.join(process.cwd(), 'public', 'robots.txt');
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+  return res.send('User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin\nDisallow: /dashboard\n');
 });
 
 // API 404 Catch-All Handler: Prevents unmatched API requests from falling through to the Vite SPA HTML fallback
@@ -14294,6 +14372,66 @@ app.all('/api/*', (req, res) => {
     message: `API route ${req.method} ${req.originalUrl} not found`,
   });
 });
+
+// HTML Request Handler with Server-Side Metadata & Canonical Tag Injection
+async function handleHtmlRequest(req: express.Request, res: express.Response, viteInstance?: any) {
+  const host = ((req.headers['x-forwarded-host'] as string) || req.headers.host || '').toLowerCase();
+  const isAppHost = host.startsWith('app.locoraai.com') || host.startsWith('app.');
+
+  // Clean redirects for legacy or underscore URLs:
+  if (req.path === '/resources_hub') {
+    return res.redirect(301, '/resources');
+  }
+  if (req.path === '/use_cases_hub') {
+    return res.redirect(301, '/use-cases');
+  }
+
+  // Resolve metadata for this exact route and host
+  const metadata = resolveRouteMetadata(req.path, host);
+
+  // Set X-Robots-Tag header
+  if (metadata.noIndex || metadata.isDashboard || isAppHost) {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  } else {
+    res.setHeader('X-Robots-Tag', 'index, follow');
+  }
+
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+
+  try {
+    let html: string;
+    if (viteInstance) {
+      // In development: read index.html and transform through Vite plugins
+      const templatePath = path.resolve(process.cwd(), 'index.html');
+      const template = fs.readFileSync(templatePath, 'utf-8');
+      const transformed = await viteInstance.transformIndexHtml(req.originalUrl, template);
+      html = injectMetadataIntoHtml(transformed, metadata);
+    } else {
+      // In production:
+      // First check if pre-rendered static HTML file exists for this route in dist/
+      const distPath = path.join(process.cwd(), 'dist');
+      const cleanPath = req.path.replace(/^\/+|\/+$/g, '').trim();
+      const directHtmlPath = path.join(distPath, `${cleanPath}.html`);
+      const nestedIndexPath = path.join(distPath, cleanPath, 'index.html');
+
+      if (cleanPath && !metadata.isDashboard && fs.existsSync(directHtmlPath)) {
+        html = fs.readFileSync(directHtmlPath, 'utf-8');
+      } else if (cleanPath && !metadata.isDashboard && fs.existsSync(nestedIndexPath)) {
+        html = fs.readFileSync(nestedIndexPath, 'utf-8');
+      } else {
+        const baseTemplate = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
+        html = injectMetadataIntoHtml(baseTemplate, metadata);
+      }
+    }
+    return res.send(html);
+  } catch (err) {
+    console.error('[HtmlHandler] Error rendering page:', err);
+    if (!res.headersSent) {
+      return res.status(500).send('Internal Server Error');
+    }
+  }
+}
 
 // Start Server with Vite / Static middleware
 async function startServer() {
@@ -14306,14 +14444,27 @@ async function startServer() {
           ignored: ['**/data/**', '**/*.json'],
         },
       },
-      appType: 'spa',
+      appType: 'custom',
     });
     app.use(vite.middlewares);
+
+    app.get('*', async (req, res, next) => {
+      // Skip API routes, which were handled before this
+      if (req.path.startsWith('/api/')) {
+        return next();
+      }
+      // If it looks like a static asset with a file extension (not html), pass to next
+      if (req.path.includes('.') && !req.path.endsWith('.html')) {
+        return next();
+      }
+      await handleHtmlRequest(req, res, vite);
+    });
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(
       express.static(distPath, {
         maxAge: '1d',
+        index: false, // Prevents serving un-injected dist/index.html on root
         setHeaders: (res, filePath) => {
           // Hashed assets in assets folder get immutable long-term caching
           if (filePath.includes('/assets/')) {
@@ -14324,9 +14475,15 @@ async function startServer() {
         },
       })
     );
-    app.get('*', (req, res) => {
-      res.setHeader('Cache-Control', 'no-cache');
-      res.sendFile(path.join(distPath, 'index.html'));
+
+    app.get('*', async (req, res, next) => {
+      if (req.path.startsWith('/api/')) {
+        return next();
+      }
+      if (req.path.includes('.') && !req.path.endsWith('.html')) {
+        return next();
+      }
+      await handleHtmlRequest(req, res);
     });
   }
 
