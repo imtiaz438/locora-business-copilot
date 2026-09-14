@@ -27,9 +27,9 @@ export const MARKETING_METADATA: Record<string, PageMetadata> = {
     noIndex: false,
   },
   products: {
-    title: 'Locora AI Products — CRM, Proposals, Invoicing & Local SEO',
+    title: 'Locora AI Products — All-in-One Business Software & Local SEO Platform',
     description:
-      'Everything your business needs in one AI workspace: client CRM, AI proposals, invoicing, website audits, and Google Business Profile growth tools.',
+      'All-in-one AI business platform combining client CRM, digital proposal generator, instant invoicing, and local SEO tools for service businesses and agencies.',
     canonicalPath: '/products',
     noIndex: false,
   },
@@ -153,72 +153,72 @@ export const MARKETING_METADATA: Record<string, PageMetadata> = {
  */
 export const INDUSTRY_METADATA: Record<string, PageMetadata> = {
   restaurants: {
-    title: 'AI Business Tools for Restaurants — Locora AI',
+    title: 'Restaurant Marketing AI & Reputation Management — Locora AI',
     description:
-      'Fill your dining room, dominate Google Maps food searches, automate diner review responses, and streamline reservations-adjacent CRM and event quotes.',
+      'Fill your dining room, grow local Google Maps search visibility, automate diner review responses, and streamline catering proposals with Locora AI.',
     canonicalPath: '/for/restaurants',
     noIndex: false,
   },
   'hvac-contractors': {
-    title: 'AI CRM & Local SEO for HVAC Contractors — Locora AI',
+    title: 'HVAC Business Software & AI CRM for Contractors — Locora AI',
     description:
-      'Capture emergency repair calls, rank across your service radius, send mobile job estimates on-site, and manage maintenance contract renewals with Locora AI.',
+      'Capture emergency repair calls, expand visibility across your service radius, send mobile job estimates on-site, and manage maintenance contract renewals with Locora AI.',
     canonicalPath: '/for/hvac-contractors',
     noIndex: false,
   },
   'real-estate': {
-    title: 'AI Business Manager for Real Estate Agents — Locora AI',
+    title: 'AI Tools for Real Estate Agents & Teams — Locora AI',
     description:
-      'Establish hyper-local neighborhood authority, automate listing proposals, streamline buyer and seller follow-up, and win more listings with Locora AI.',
+      'Establish hyper-local neighborhood authority, streamline buyer and seller follow-up, create listing proposals, and nurture real estate leads with Locora AI.',
     canonicalPath: '/for/real-estate',
     noIndex: false,
   },
   'law-firms': {
-    title: 'AI Client Management for Law Firms — Locora AI',
+    title: 'Law Firm Client Management & Intake CRM — Locora AI',
     description:
       'Attract qualified legal inquiries, streamline client intake proposals and retainer agreements, and safeguard your firm\'s 5-star reputation with Locora AI.',
     canonicalPath: '/for/law-firms',
     noIndex: false,
   },
   plumbers: {
-    title: 'AI Tools for Plumbers — Win More Local Jobs — Locora AI',
+    title: 'AI Tools & Business Software for Plumbers — Locora AI',
     description:
-      'Rank #1 for emergency drain cleaning, pipe repairs, and water heater installs. Send instant digital quotes and win more local jobs with Locora AI.',
+      'Get found for emergency drain cleaning, pipe repairs, and water heater installs. Send instant digital quotes, manage customer follow-ups, and win more local jobs with Locora AI.',
     canonicalPath: '/for/plumbers',
     noIndex: false,
   },
   'med-spas': {
-    title: 'AI Marketing & CRM for Med Spas — Locora AI',
+    title: 'Med Spa Marketing Software & AI CRM — Locora AI',
     description:
-      'Attract high-ticket aesthetic clients, automate consultation treatment plans, manage recurring memberships, and build a 5-star reputation with Locora AI.',
+      'Attract aesthetic clients, streamline consultation treatment plans, manage recurring memberships, and build a 5-star reputation with Locora AI.',
     canonicalPath: '/for/med-spas',
     noIndex: false,
   },
   'auto-repair': {
-    title: 'AI Business Tools for Auto Repair Shops — Locora AI',
+    title: 'Auto Repair Shop Software & AI CRM — Locora AI',
     description:
-      'Fill your service bays, rank for high-margin repair terms, deliver transparent itemized digital estimates, and automate maintenance reminders with Locora AI.',
+      'Fill your service bays, get found for high-margin repair terms, deliver transparent itemized digital estimates, and automate maintenance reminders with Locora AI.',
     canonicalPath: '/for/auto-repair',
     noIndex: false,
   },
   contractors: {
-    title: 'AI CRM & Proposals for Contractors — Locora AI',
+    title: 'Contractor CRM & AI Proposal Generator — Locora AI',
     description:
-      'Win high-margin construction and remodeling bids with on-site 3-tier proposals, service radius Google Maps SEO, and automated client CRM.',
+      'Win construction and remodeling bids with on-site 3-tier proposals, expand service radius Google Maps SEO, and automate client CRM with Locora AI.',
     canonicalPath: '/for/contractors',
     noIndex: false,
   },
   agencies: {
-    title: 'Locora AI for Agencies — Manage & Grow Every Client',
+    title: 'White Label Local SEO Platform & Agency CRM — Locora AI',
     description:
       'Run your local SEO agency on one platform: client CRM, white-label reports, proposal generation, and AI-driven growth plans for every client you manage.',
     canonicalPath: '/for/agencies',
     noIndex: false,
   },
   dentists: {
-    title: 'AI Local SEO & Practice CRM for Dentists — Locora AI',
+    title: 'Dental Practice Marketing Software & Patient CRM — Locora AI',
     description:
-      'Dominate Google Maps local search, automate patient review responses, manage treatment plan estimates, and scale private pay leads for your dental clinic.',
+      'Grow dental practice visibility on Google Maps, automate patient review responses, manage treatment plan estimates, and attract qualified new patients with Locora AI.',
     canonicalPath: '/for/dentists',
     noIndex: false,
   },
@@ -487,6 +487,10 @@ export function injectMetadataIntoHtml(rawHtml: string, metadata: ResolvedMetada
   // 3. Handle Canonical Link Tag
   // If canonicalUrl is provided, ensure it points to the exact URL.
   // If canonicalUrl is null (e.g. dashboard / private routes), REMOVE ANY CANONICAL TAG!
+  // 3. Remove deprecated or noisy keywords tag completely
+  html = html.replace(/<meta\s+name="keywords"\s+content=".*?"\s*\/?>\n?/gi, '');
+
+  // 4. Handle Canonical URL
   if (metadata.canonicalUrl) {
     if (/<link\s+rel="canonical"/i.test(html)) {
       html = html.replace(
@@ -501,7 +505,7 @@ export function injectMetadataIntoHtml(rawHtml: string, metadata: ResolvedMetada
     html = html.replace(/<link\s+rel="canonical"\s+href=".*?"\s*\/?>\n?/gi, '');
   }
 
-  // 4. Handle Robots Tag
+  // 5. Handle Robots Tag
   if (metadata.noIndex) {
     if (/<meta\s+name="robots"/i.test(html)) {
       html = html.replace(
@@ -511,6 +515,8 @@ export function injectMetadataIntoHtml(rawHtml: string, metadata: ResolvedMetada
     } else {
       html = html.replace('<head>', '<head>\n    <meta name="robots" content="noindex, nofollow" />');
     }
+    // Strip public schemas on dashboard shell to prevent mixed indexing signals
+    html = html.replace(/<script\s+type="application\/ld\+json">[\s\S]*?"@type":\s*"(FAQPage|HowTo|SoftwareApplication)"[\s\S]*?<\/script>\n?/gi, '');
   } else {
     if (/<meta\s+name="robots"/i.test(html)) {
       html = html.replace(
@@ -522,7 +528,7 @@ export function injectMetadataIntoHtml(rawHtml: string, metadata: ResolvedMetada
     }
   }
 
-  // 5. OpenGraph & Twitter Tags
+  // 6. OpenGraph & Twitter Tags
   if (metadata.canonicalUrl) {
     if (/<meta\s+property="og:url"/i.test(html)) {
       html = html.replace(
@@ -530,6 +536,9 @@ export function injectMetadataIntoHtml(rawHtml: string, metadata: ResolvedMetada
         `<meta property="og:url" content="${metadata.canonicalUrl}" />`
       );
     }
+  } else {
+    // Strip og:url on private dashboard routes
+    html = html.replace(/<meta\s+property="og:url"\s+content=".*?"\s*\/?>\n?/gi, '');
   }
 
   if (/<meta\s+property="og:title"/i.test(html)) {
@@ -589,8 +598,10 @@ export function applyPageMetadata(
   // 1. Update Title
   document.title = resolved.title;
 
-  // 2. Update Meta Description
+  // 2. Update Meta Description and purge keywords
   ensureMetaTag('description', resolved.description);
+  const existingKeywords = document.querySelector('meta[name="keywords"]');
+  if (existingKeywords) existingKeywords.remove();
 
   // 3. Handle Robots Meta
   if (resolved.noIndex) {
@@ -602,8 +613,9 @@ export function applyPageMetadata(
     }
   }
 
-  // 4. Handle Canonical Link
+  // 4. Handle Canonical Link and og:url
   const existingCanonical = document.querySelector('link[rel="canonical"]');
+  const existingOgUrl = document.querySelector('meta[property="og:url"]');
   if (resolved.canonicalUrl) {
     ensureCanonicalLink(resolved.canonicalUrl);
     ensurePropertyTag('og:url', resolved.canonicalUrl);
@@ -611,6 +623,9 @@ export function applyPageMetadata(
     // Crucial: remove canonical link element completely on dashboard / private pages
     if (existingCanonical) {
       existingCanonical.remove();
+    }
+    if (existingOgUrl) {
+      existingOgUrl.remove();
     }
   }
 

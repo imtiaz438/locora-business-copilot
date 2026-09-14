@@ -94,9 +94,17 @@ app.use((req, res, next) => {
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
   // Subdomain & Hostname Routing for locoraai.com and app.locoraai.com
-  const host = ((req.headers['x-forwarded-host'] as string) || req.headers.host || '').toLowerCase();
-  const isAppHost = host.startsWith('app.locoraai.com') || host.startsWith('app.');
-  const isWwwHost = host.startsWith('www.locoraai.com');
+  const fHost = ((req.headers['x-forwarded-host'] as string) || '').toLowerCase();
+  const hHost = ((req.headers.host as string) || '').toLowerCase();
+  const rHost = ((req.hostname as string) || '').toLowerCase();
+  const allHosts = `${fHost} ${hHost} ${rHost}`;
+  const isAppHost =
+    allHosts.includes('app.locoraai.com') ||
+    fHost.startsWith('app.') ||
+    hHost.startsWith('app.') ||
+    rHost.startsWith('app.') ||
+    (Array.isArray(req.subdomains) && req.subdomains.includes('app'));
+  const isWwwHost = allHosts.includes('www.locoraai.com');
 
   // 301 permanently redirect www.locoraai.com to canonical bare domain (locoraai.com)
   if (isWwwHost) {
@@ -14347,8 +14355,16 @@ app.get('/llms-full.txt', (_req, res) => {
 });
 
 app.get('/robots.txt', (req, res) => {
-  const host = ((req.headers['x-forwarded-host'] as string) || req.headers.host || '').toLowerCase();
-  const isAppHost = host.startsWith('app.locoraai.com') || host.startsWith('app.');
+  const fHost = ((req.headers['x-forwarded-host'] as string) || '').toLowerCase();
+  const hHost = ((req.headers.host as string) || '').toLowerCase();
+  const rHost = ((req.hostname as string) || '').toLowerCase();
+  const allHosts = `${fHost} ${hHost} ${rHost}`;
+  const isAppHost =
+    allHosts.includes('app.locoraai.com') ||
+    fHost.startsWith('app.') ||
+    hHost.startsWith('app.') ||
+    rHost.startsWith('app.') ||
+    (Array.isArray(req.subdomains) && req.subdomains.includes('app'));
 
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Cache-Control', 'public, max-age=86400');
@@ -14375,8 +14391,17 @@ app.all('/api/*', (req, res) => {
 
 // HTML Request Handler with Server-Side Metadata & Canonical Tag Injection
 async function handleHtmlRequest(req: express.Request, res: express.Response, viteInstance?: any) {
-  const host = ((req.headers['x-forwarded-host'] as string) || req.headers.host || '').toLowerCase();
-  const isAppHost = host.startsWith('app.locoraai.com') || host.startsWith('app.');
+  const fHost = ((req.headers['x-forwarded-host'] as string) || '').toLowerCase();
+  const hHost = ((req.headers.host as string) || '').toLowerCase();
+  const rHost = ((req.hostname as string) || '').toLowerCase();
+  const allHosts = `${fHost} ${hHost} ${rHost}`;
+  const isAppHost =
+    allHosts.includes('app.locoraai.com') ||
+    fHost.startsWith('app.') ||
+    hHost.startsWith('app.') ||
+    rHost.startsWith('app.') ||
+    (Array.isArray(req.subdomains) && req.subdomains.includes('app'));
+  const effectiveHost = isAppHost ? 'app.locoraai.com' : (fHost || hHost || rHost);
 
   // Clean redirects for legacy or underscore URLs:
   if (req.path === '/resources_hub') {
@@ -14387,7 +14412,7 @@ async function handleHtmlRequest(req: express.Request, res: express.Response, vi
   }
 
   // Resolve metadata for this exact route and host
-  const metadata = resolveRouteMetadata(req.path, host);
+  const metadata = resolveRouteMetadata(req.path, effectiveHost);
 
   // Set X-Robots-Tag header
   if (metadata.noIndex || metadata.isDashboard || isAppHost) {
@@ -14415,9 +14440,9 @@ async function handleHtmlRequest(req: express.Request, res: express.Response, vi
       const directHtmlPath = path.join(distPath, `${cleanPath}.html`);
       const nestedIndexPath = path.join(distPath, cleanPath, 'index.html');
 
-      if (cleanPath && !metadata.isDashboard && fs.existsSync(directHtmlPath)) {
+      if (cleanPath && !metadata.isDashboard && !isAppHost && fs.existsSync(directHtmlPath)) {
         html = fs.readFileSync(directHtmlPath, 'utf-8');
-      } else if (cleanPath && !metadata.isDashboard && fs.existsSync(nestedIndexPath)) {
+      } else if (cleanPath && !metadata.isDashboard && !isAppHost && fs.existsSync(nestedIndexPath)) {
         html = fs.readFileSync(nestedIndexPath, 'utf-8');
       } else {
         const baseTemplate = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');

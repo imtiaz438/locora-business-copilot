@@ -5,6 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     <title>Locora AI — Your AI Business Manager for Local Growth</title>
     <meta name="description" content="Tell Locora what to improve — it finds the opportunities, explains what matters, and does the work. AI business copilot for local service businesses and agencies." />
+    <meta name="robots" content="index, follow" />
+    <script>
+      (function() {
+        try {
+          var h = (window.location.hostname || '').toLowerCase();
+          var p = (window.location.pathname || '').toLowerCase();
+          var isApp = h === 'app.locoraai.com' || h.indexOf('app.') === 0 || h.indexOf('app-') !== -1;
+          var isDashboard = isApp || /^\/(dashboard|visibility|growth|ai-manager|seo|reputation|customers|content|reports|work|crm|invoices|proposals|settings|business-brain|lead-prospector|projects|clients|website-audit)/.test(p);
+          if (isDashboard) {
+            var r = document.querySelector('meta[name="robots"]');
+            if (r) {
+              r.setAttribute('content', 'noindex, nofollow');
+            } else {
+              r = document.createElement('meta');
+              r.name = 'robots';
+              r.content = 'noindex, nofollow';
+              document.head.appendChild(r);
+            }
+            var c = document.querySelector('link[rel="canonical"]');
+            if (c) c.remove();
+            var kw = document.querySelector('meta[name="keywords"]');
+            if (kw) kw.remove();
+          }
+        } catch(e) {}
+      })();
+    </script>
     <link rel="canonical" href="https://locoraai.com/" />
     <link rel="alternate" href="https://locoraai.com/" hreflang="x-default" />
     <link rel="alternate" href="https://locoraai.com/" hreflang="en" />
