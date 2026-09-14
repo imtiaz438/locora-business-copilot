@@ -1435,7 +1435,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
             href="/resources"
             onClick={(e) => {
               e.preventDefault();
-              setActiveTab('resources_hub');
+              setActiveTab('resources');
               window.history.pushState({}, '', '/resources');
             }}
             className="hover:text-emerald-700 hover:underline font-medium"
@@ -1447,7 +1447,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
             href="/use-cases"
             onClick={(e) => {
               e.preventDefault();
-              setActiveTab('use_cases_hub');
+              setActiveTab('use-cases');
               window.history.pushState({}, '', '/use-cases');
             }}
             className="hover:text-emerald-700 hover:underline font-medium"

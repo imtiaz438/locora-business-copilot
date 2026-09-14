@@ -137,7 +137,13 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
               Home
             </button>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <button onClick={() => setActiveTab('resources_hub')} className="hover:text-slate-900 cursor-pointer font-medium">
+            <button
+              onClick={() => {
+                window.history.pushState({}, '', '/resources');
+                setActiveTab('resources');
+              }}
+              className="hover:text-slate-900 cursor-pointer font-medium"
+            >
               Resources & Masterclasses
             </button>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />

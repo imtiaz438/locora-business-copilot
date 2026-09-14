@@ -269,7 +269,7 @@ export const PublicNavbar: React.FC = () => {
             {openDropdown === 'resources' && (
               <div className="absolute left-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-2.5 space-y-1 animate-in fade-in-50 zoom-in-95">
                 <button
-                  onClick={() => navigateTo('resources_hub', '/resources')}
+                  onClick={() => navigateTo('resources', '/resources')}
                   className="w-full text-left p-2.5 rounded-xl hover:bg-emerald-50 transition-colors flex items-start gap-3 cursor-pointer group"
                 >
                   <div className="p-2 bg-emerald-100 rounded-lg text-[#059669] group-hover:bg-[#059669] group-hover:text-white transition-colors">
@@ -282,7 +282,7 @@ export const PublicNavbar: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => navigateTo('use_cases_hub', '/use-cases')}
+                  onClick={() => navigateTo('use-cases', '/use-cases')}
                   className="w-full text-left p-2.5 rounded-xl hover:bg-emerald-50 transition-colors flex items-start gap-3 cursor-pointer group"
                 >
                   <div className="p-2 bg-emerald-100 rounded-lg text-[#059669] group-hover:bg-[#059669] group-hover:text-white transition-colors">

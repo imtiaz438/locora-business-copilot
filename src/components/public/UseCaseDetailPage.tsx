@@ -113,7 +113,13 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
               Home
             </button>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <button onClick={() => setActiveTab('use_cases_hub')} className="hover:text-slate-900 cursor-pointer font-medium">
+            <button
+              onClick={() => {
+                window.history.pushState({}, '', '/use-cases');
+                setActiveTab('use-cases');
+              }}
+              className="hover:text-slate-900 cursor-pointer font-medium"
+            >
               Use Cases
             </button>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />

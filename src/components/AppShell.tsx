@@ -86,9 +86,12 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     activeTab === 'product' ||
     activeTab === 'features' ||
     activeTab.startsWith('feature_') ||
+    activeTab === 'use-cases' ||
+    activeTab === 'use_cases' ||
     activeTab === 'use_cases_hub' ||
     activeTab.startsWith('usecase_') ||
     activeTab.startsWith('use_case_') ||
+    activeTab === 'resources' ||
     activeTab === 'resources_hub' ||
     activeTab.startsWith('resource_') ||
     activeTab === 'industry_pseo' ||

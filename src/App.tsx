@@ -63,11 +63,14 @@ const PATH_TO_TAB: Record<string, string> = {
   'agencies': 'agency_landing',
   'for/agencies': 'agency_landing',
   'for-agencies': 'agency_landing',
-  'use-cases': 'use_cases_hub',
-  'use-cases/': 'use_cases_hub',
-  'resources': 'resources_hub',
-  'resources/': 'resources_hub',
-  'blog': 'resources_hub',
+  'use-cases': 'use-cases',
+  'use-cases/': 'use-cases',
+  'use_cases': 'use-cases',
+  'use_cases_hub': 'use-cases',
+  'resources': 'resources',
+  'resources/': 'resources',
+  'resources_hub': 'resources',
+  'blog': 'resources',
   'pricing': 'pricing_public',
   'about': 'about',
   'contact': 'contact',
@@ -324,7 +327,7 @@ const MainContent: React.FC = () => {
     }
 
     // Dynamic Layer 2: Use Cases
-    if (activeTab === 'use_cases_hub') return <UseCasesHubView />;
+    if (activeTab === 'use-cases' || activeTab === 'use_cases' || activeTab === 'use_cases_hub') return <UseCasesHubView />;
     if (activeTab.startsWith('usecase_') || activeTab.startsWith('use_case_')) {
       return <UseCaseDetailPage slug={activeTab.replace(/^usecase_/, '').replace(/^use_case_/, '')} />;
     }
@@ -334,7 +337,7 @@ const MainContent: React.FC = () => {
     if (activeTab === 'industry_pseo') return <IndustryPseoView />;
 
     // Dynamic Layer 4: Educational Content & SOPs
-    if (activeTab === 'resources_hub') return <ResourcesHubView />;
+    if (activeTab === 'resources' || activeTab === 'resources_hub') return <ResourcesHubView />;
     if (activeTab.startsWith('resource_')) {
       return <ResourceDetailPage slug={activeTab.replace(/^resource_/, '')} />;
     }
