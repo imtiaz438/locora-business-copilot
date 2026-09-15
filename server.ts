@@ -5027,26 +5027,184 @@ app.get('/api/places/search-live', async (req, res) => {
   try {
     const query = (req.query.query as string || '').trim();
     if (!query) {
-      return res.json({ results: [], provider_status: 'connected_no_data' });
+      return res.json({ results: [], provider_status: 'connected_no_data', providerStatusMessage: 'Please enter a business name or city to search.' });
     }
 
     const apiKey = (process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_PLACES_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY || storedAppSettings?.providerKeys?.googleMaps || storedAppSettings?.providerKeys?.googlePlaces || '').trim();
 
+    // Helper to extract name and location from user query
+    const queryParts = query.split(',').map((p) => p.trim()).filter(Boolean);
+    const parsedName = queryParts[0] || query;
+    const parsedCity = queryParts[1] || '';
+    const parsedState = queryParts[2] ? queryParts[2].split(' ')[0] : '';
+
+    const suggestedListing = {
+      placeId: `direct_${Date.now()}`,
+      name: parsedName,
+      address: parsedCity ? `${parsedName}, ${parsedCity}` : parsedName,
+      city: parsedCity || '',
+      state: parsedState || '',
+      zip: '',
+      country: 'United States',
+      formattedAddress: queryParts.length > 1 ? query : `${parsedName}${parsedCity ? `, ${parsedCity}` : ''}`,
+      rating: 5.0,
+      reviewCount: 0,
+      primaryType: 'Local Business',
+      source: 'custom_listing',
+      isSuggestedListing: true,
+    };
+
+    // Helper to find existing matching businesses in workspace database
+    const findWorkspaceMatches = async () => {
+      try {
+        const lowerQ = query.toLowerCase();
+        const dbBizList = await dbService.getBusinesses().catch(() => []);
+        const locoraDbBiz = typeof getAllBusinessRecordsFromLocoraDb === 'function' ? getAllBusinessRecordsFromLocoraDb() : [];
+        const seenIds = new Set();
+        const combined: any[] = [];
+
+        for (const b of [...(dbBizList || []), ...(locoraDbBiz || [])]) {
+          if (b && b.id && !seenIds.has(b.id)) {
+            seenIds.add(b.id);
+            combined.push(b);
+          }
+        }
+
+        const matched = combined.filter((b: any) => {
+          const bName = (b.identity?.name || b.name || '').toLowerCase();
+          const bCity = (b.identity?.city || b.city || '').toLowerCase();
+          return bName.includes(lowerQ) || lowerQ.includes(bName) || (bCity && lowerQ.includes(bCity));
+        }).slice(0, 5).map((b: any) => ({
+          placeId: `ws_${b.id}`,
+          name: b.identity?.name || b.name || 'Workspace Business',
+          address: b.identity?.address || b.address || '',
+          city: b.identity?.city || b.city || '',
+          state: b.identity?.state || b.state || '',
+          zip: b.identity?.zip || b.zip || '',
+          country: b.identity?.country || b.country || 'United States',
+          formattedAddress: b.identity?.address ? `${b.identity.address}, ${b.identity.city || ''} ${b.identity.state || ''}`.trim() : `${b.identity?.name || b.name}, ${b.identity?.city || ''}`,
+          rating: b.gbpData?.rating || b.googleRating || 5.0,
+          reviewCount: b.gbpData?.reviewCount || b.reviewCount || 0,
+          types: [b.identity?.category || b.category || 'business'],
+          primaryType: b.identity?.category || b.category || 'Local Business',
+          phone: b.identity?.phone || b.phone || '',
+          website: b.identity?.website || b.website || '',
+          source: 'workspace_database',
+        }));
+        return matched;
+      } catch {
+        return [];
+      }
+    };
+
     if (!apiKey) {
+      const workspaceResults = await findWorkspaceMatches();
       return res.json({
         provider_status: 'not_configured',
-        providerStatusMessage: 'Google Maps API key is not configured. Add credentials in Settings to search live businesses.',
-        results: [],
+        providerStatusMessage: 'Google Maps API key is not configured in Settings. You can link your listing directly below or add credentials in Settings.',
+        results: workspaceResults,
+        suggestedListing,
+        searchedQuery: query,
       });
     }
 
+    let isRefererRestricted = false;
+    let providerStatus = 'connected_no_data';
+    let providerStatusMessage = `No verified Google Business Profile found matching "${query}".`;
+
+    // 1. Attempt Modern Google Places API (New): places.googleapis.com/v1/places:searchText
+    try {
+      const placesNewHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.googleMapsUri,places.types,places.addressComponents',
+        'X-Goog-Maps-Solution-ID': 'gmp_mcp_codeassist_v1_aistudio',
+      };
+      if (req.headers.referer) placesNewHeaders['Referer'] = req.headers.referer as string;
+      if (req.headers.origin) placesNewHeaders['Origin'] = req.headers.origin as string;
+
+      const pNewRes = await fetch('https://places.googleapis.com/v1/places:searchText', {
+        method: 'POST',
+        headers: placesNewHeaders,
+        body: JSON.stringify({
+          textQuery: query,
+          pageSize: 8,
+        }),
+      });
+
+      if (pNewRes.ok) {
+        const pNewData = await pNewRes.json();
+        if (Array.isArray(pNewData.places) && pNewData.places.length > 0) {
+          const results = pNewData.places.map((p: any) => {
+            let city = '';
+            let state = '';
+            let zip = '';
+            let country = 'United States';
+            if (Array.isArray(p.addressComponents)) {
+              for (const c of p.addressComponents) {
+                const types = c.types || [];
+                if (types.includes('locality') || types.includes('postal_town')) city = c.longText || c.shortText || '';
+                if (!city && types.includes('sublocality_level_1')) city = c.longText || c.shortText || '';
+                if (types.includes('administrative_area_level_1')) state = c.shortText || c.longText || '';
+                if (types.includes('country')) country = c.longText || c.shortText || 'United States';
+                if (types.includes('postal_code')) zip = c.longText || c.shortText || '';
+              }
+            }
+            if (!city && p.formattedAddress) {
+              const parts = p.formattedAddress.split(',').map((s: string) => s.trim());
+              if (parts.length >= 2) {
+                city = parts[parts.length - 2] || '';
+              }
+            }
+
+            return {
+              placeId: p.id,
+              name: p.displayName?.text || p.displayName || query,
+              address: p.formattedAddress || '',
+              city,
+              state,
+              zip,
+              country,
+              formattedAddress: p.formattedAddress || `${query}, ${country}`,
+              rating: typeof p.rating === 'number' ? p.rating : 0,
+              reviewCount: typeof p.userRatingCount === 'number' ? p.userRatingCount : 0,
+              types: p.types || [],
+              primaryType: (p.types && p.types[0]) ? p.types[0].replace(/_/g, ' ') : 'Local Business',
+              phone: p.nationalPhoneNumber || p.internationalPhoneNumber || '',
+              website: p.websiteUri || '',
+              source: 'google_places_live',
+            };
+          });
+
+          return res.json({
+            provider_status: 'success',
+            providerStatusMessage: `Found ${results.length} verified Google listings.`,
+            results,
+            suggestedListing,
+            searchedQuery: query,
+            source: 'google_places_live',
+          });
+        }
+      } else {
+        const errJson: any = await pNewRes.json().catch(() => ({}));
+        const errMsg = (errJson?.error?.message || '').toLowerCase();
+        if (pNewRes.status === 403 || errMsg.includes('referer') || errMsg.includes('blocked') || errMsg.includes('permission_denied')) {
+          isRefererRestricted = true;
+        }
+      }
+    } catch (e: any) {
+      console.warn('[Places New API Search Error]', e.message);
+    }
+
+    // 2. Fallback to Legacy Google Places TextSearch: maps.googleapis.com/maps/api/place/textsearch/json
     try {
       const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${apiKey}`;
       const gRes = await fetch(textSearchUrl);
       if (gRes.ok) {
         const gData = await gRes.json();
-        if (gData.status === 'OK' && gData.results && gData.results.length > 0) {
-          const results = gData.results.slice(0, 6).map((item: any) => {
+
+        if (gData.status === 'OK' && Array.isArray(gData.results) && gData.results.length > 0) {
+          const results = gData.results.slice(0, 8).map((item: any) => {
             const addrParts = (item.formatted_address || '').split(',').map((s: string) => s.trim());
             const stateZip = addrParts[addrParts.length - 2] || '';
             const stateParts = stateZip.split(' ').filter(Boolean);
@@ -5066,44 +5224,55 @@ app.get('/api/places/search-live', async (req, res) => {
               source: 'google_places_live',
             };
           });
-          return res.json({ provider_status: 'success', results, source: 'google_places_live' });
-        }
-        if (gData.status === 'ZERO_RESULTS' || !gData.results || gData.results.length === 0) {
-          return res.json({
-            provider_status: 'connected_no_data',
-            providerStatusMessage: 'No businesses found matching query.',
-            results: [],
-          });
-        }
-        if (gData.status === 'REQUEST_DENIED') {
-          return res.status(401).json({
-            provider_status: 'authentication_error',
-            providerStatusMessage: gData.error_message || 'Google Maps API request denied.',
-            results: [],
-          });
-        }
-        if (gData.status === 'OVER_QUERY_LIMIT') {
-          return res.status(429).json({
-            provider_status: 'quota_exceeded',
-            providerStatusMessage: 'Google Maps API quota exceeded.',
-            results: [],
-          });
-        }
-      }
 
-      return res.status(gRes.status).json({
-        provider_status: gRes.status === 401 || gRes.status === 403 ? 'authentication_error' : gRes.status === 429 ? 'quota_exceeded' : 'unavailable',
-        providerStatusMessage: `Google Places API returned HTTP ${gRes.status}`,
-        results: [],
-      });
+          return res.json({
+            provider_status: 'success',
+            providerStatusMessage: `Found ${results.length} verified Google listings.`,
+            results,
+            suggestedListing,
+            searchedQuery: query,
+            source: 'google_places_live',
+          });
+        }
+
+        // Properly inspect error status BEFORE checking length
+        if (gData.status === 'REQUEST_DENIED') {
+          const errMsg = (gData.error_message || '').toLowerCase();
+          if (errMsg.includes('referer') || isRefererRestricted) {
+            providerStatus = 'key_restricted';
+            providerStatusMessage = 'Your Google Maps API key has HTTP referer restrictions in Google Cloud Console that block server-side Places search. To enable live Google Places lookups, change Application restrictions to "None" or "IP addresses" in Google Cloud Console. You can still sync your business profile directly below.';
+          } else {
+            providerStatus = 'authentication_error';
+            providerStatusMessage = gData.error_message || 'Google Maps API request was denied. Please verify your API key in Settings.';
+          }
+        } else if (gData.status === 'OVER_QUERY_LIMIT') {
+          providerStatus = 'quota_exceeded';
+          providerStatusMessage = 'Google Maps API quota exceeded. You can link your listing directly below.';
+        } else if (gData.status === 'ZERO_RESULTS') {
+          providerStatus = 'connected_no_data';
+          providerStatusMessage = `No verified Google Business Profile found matching "${query}".`;
+        }
+      } else if (gRes.status === 403 || isRefererRestricted) {
+        providerStatus = 'key_restricted';
+        providerStatusMessage = 'Google Maps API key has HTTP referer restrictions in Google Cloud Console. You can sync your listing directly using the 1-click option below.';
+      }
     } catch (gErr: any) {
-      return res.status(503).json({
-        provider_status: 'unavailable',
-        providerStatusMessage: gErr.message || 'Network error querying Google Places API.',
-        results: [],
-      });
+      console.warn('[Places Legacy API Search Error]', gErr.message);
+      providerStatus = 'unavailable';
+      providerStatusMessage = gErr.message || 'Unable to reach Google Places API.';
     }
+
+    // 3. If live search did not return listings, provide workspace database matches + suggested listing
+    const workspaceResults = await findWorkspaceMatches();
+    return res.json({
+      provider_status: providerStatus,
+      providerStatusMessage,
+      results: workspaceResults,
+      suggestedListing,
+      searchedQuery: query,
+    });
   } catch (err: any) {
+    console.error('[search-live error]', err);
     res.status(500).json({ error: err.message || 'Places search failed' });
   }
 });

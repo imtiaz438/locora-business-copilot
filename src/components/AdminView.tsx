@@ -2694,6 +2694,9 @@ export const AdminView: React.FC = () => {
                     <p className="text-[10px] text-slate-500">
                       Streams real-time live local businesses, addresses, verified phone numbers, websites, and review counts.
                     </p>
+                    <p className="text-[10px] text-slate-600 bg-slate-100/80 px-2 py-1 rounded">
+                      <span className="font-semibold text-slate-700">Tip:</span> In Google Cloud Console, set Application restrictions to &ldquo;None&rdquo; or &ldquo;IP addresses&rdquo; so server-side Places calls are not blocked by HTTP referer rules.
+                    </p>
                   </div>
 
                   {/* Google PageSpeed Insights API */}
