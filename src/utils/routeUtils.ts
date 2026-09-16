@@ -1,0 +1,335 @@
+/**
+ * Unified Route and Path Resolver for Locora AI
+ *
+ * Guarantees that all public marketing sub-pages, dynamic resource guides,
+ * feature pages, use cases, industry pSEO pages, legal pages, and workspace
+ * tabs maintain exact, bidirectional sync between the browser address bar,
+ * reload/refresh cycles, and application state.
+ */
+
+export interface ResolvedRoute {
+  targetTab: string;
+  canonicalPath: string;
+  isCanonical: boolean;
+}
+
+// Canonical Tab -> URL Path Map
+export const TAB_TO_PATH: Record<string, string> = {
+  home: '/',
+  products: '/products',
+  product: '/products',
+  features: '/features',
+  pricing_public: '/pricing',
+  pricing: '/pricing-plans',
+  subscription: '/subscription',
+  about: '/about',
+  contact: '/contact',
+  login: '/login',
+  signup: '/signup',
+  privacy: '/privacy',
+  terms: '/terms',
+  refund: '/refund',
+  security: '/security',
+  resources: '/resources',
+  resources_hub: '/resources',
+  'use-cases': '/use-cases',
+  use_cases: '/use-cases',
+  use_cases_hub: '/use-cases',
+  agency_landing: '/for/agencies',
+  dashboard: '/dashboard',
+  ai_manager: '/ai-manager',
+  chat: '/ai-manager',
+  growth: '/growth',
+  marketing: '/growth',
+  marketing_planner: '/growth',
+  visibility: '/visibility',
+  local_visibility: '/visibility',
+  local_seo: '/visibility',
+  seo: '/visibility',
+  reputation: '/reputation',
+  competitors: '/competitors',
+  content: '/content',
+  documents: '/content',
+  customers: '/customers',
+  crm: '/customers',
+  clients: '/clients',
+  work: '/work',
+  proposals: '/work',
+  invoices: '/work',
+  reports: '/reports',
+  website_review: '/reports',
+  projects: '/projects',
+  lead_prospector: '/lead-prospector',
+  masterclass_kit: '/agency-vault',
+  settings: '/settings',
+  admin: '/admin',
+};
+
+// Static Path -> Tab Map
+export const PATH_TO_TAB: Record<string, string> = {
+  '': 'home',
+  'home': 'home',
+  'products': 'products',
+  'product': 'products',
+  'features': 'features',
+  'features/': 'features',
+  'use-cases': 'use-cases',
+  'use-cases/': 'use-cases',
+  'use_cases': 'use-cases',
+  'use_cases_hub': 'use-cases',
+  'resources': 'resources',
+  'resources/': 'resources',
+  'resources_hub': 'resources',
+  'blog': 'resources',
+  'blog/': 'resources',
+  'pricing': 'pricing_public',
+  'pricing/': 'pricing_public',
+  'pricing-public': 'pricing_public',
+  'pricing-plans': 'pricing',
+  'subscription': 'subscription',
+  'about': 'about',
+  'about/': 'about',
+  'about-us': 'about',
+  'contact': 'contact',
+  'contact/': 'contact',
+  'contact-us': 'contact',
+  'support': 'contact',
+  'login': 'login',
+  'signin': 'login',
+  'signup': 'signup',
+  'register': 'signup',
+  'privacy': 'privacy',
+  'privacy/': 'privacy',
+  'privacy-policy': 'privacy',
+  'terms': 'terms',
+  'terms/': 'terms',
+  'terms-of-service': 'terms',
+  'terms-conditions': 'terms',
+  'terms-and-conditions': 'terms',
+  'term-condition': 'terms',
+  'terms-condition': 'terms',
+  'refund': 'refund',
+  'refund/': 'refund',
+  'refunds': 'refund',
+  'refund-policy': 'refund',
+  'cancellation-policy': 'refund',
+  'security': 'security',
+  'security/': 'security',
+  'security-overview': 'security',
+  'agencies': 'agency_landing',
+  'for-agencies': 'agency_landing',
+  'for/agencies': 'agency_landing',
+  'dashboard': 'dashboard',
+  'app': 'dashboard',
+  'home-dashboard': 'dashboard',
+  'growth-hub': 'dashboard',
+  'ai-manager': 'ai_manager',
+  'ai_manager': 'ai_manager',
+  'chat': 'ai_manager',
+  'growth': 'growth',
+  'marketing': 'growth',
+  'marketing-planner': 'growth',
+  'marketing_planner': 'growth',
+  'visibility': 'visibility',
+  'local-visibility': 'visibility',
+  'local_visibility': 'visibility',
+  'local-seo': 'visibility',
+  'local_seo': 'visibility',
+  'seo': 'visibility',
+  'reputation': 'reputation',
+  'competitors': 'competitors',
+  'content': 'content',
+  'content-studio': 'content',
+  'documents': 'content',
+  'customers': 'customers',
+  'crm': 'customers',
+  'clients': 'clients',
+  'work': 'work',
+  'proposals': 'work',
+  'invoices': 'work',
+  'reports': 'reports',
+  'monthly-report': 'reports',
+  'monthly_report': 'reports',
+  'website-audit': 'reports',
+  'website-review': 'reports',
+  'website_review': 'reports',
+  'projects': 'projects',
+  'lead-prospector': 'lead_prospector',
+  'lead_prospector': 'lead_prospector',
+  'lead-vault': 'lead_prospector',
+  'lead_vault': 'lead_prospector',
+  'b2b-vault': 'lead_prospector',
+  'b2b_vault': 'lead_prospector',
+  'b2b': 'lead_prospector',
+  'leads': 'lead_prospector',
+  'prospector': 'lead_prospector',
+  'masterclass': 'masterclass_kit',
+  'masterclass-kit': 'masterclass_kit',
+  'masterclass_kit': 'masterclass_kit',
+  'agency-vault': 'masterclass_kit',
+  'agency_vault': 'masterclass_kit',
+  'growth-vault': 'masterclass_kit',
+  'growth_vault': 'masterclass_kit',
+  'vault': 'masterclass_kit',
+  'settings': 'settings',
+  'admin': 'admin',
+};
+
+/**
+ * Resolves the canonical URL path for a given tab.
+ */
+export function resolvePathFromTab(tab: string, currentPathname: string = ''): string {
+  if (!tab) return '/';
+
+  // 1. Dynamic Resource Guides (/resources/:slug)
+  if (tab.startsWith('resource_')) {
+    const slug = tab.replace(/^resource_/, '').trim();
+    return `/resources/${slug}`;
+  }
+
+  // 2. Dynamic Feature Pages (/features/:slug)
+  if (tab.startsWith('feature_')) {
+    const slug = tab.replace(/^feature_/, '').trim();
+    return `/features/${slug}`;
+  }
+
+  // 3. Dynamic Use Case Pages (/use-cases/:slug)
+  if (tab.startsWith('usecase_') || tab.startsWith('use_case_')) {
+    const slug = tab.replace(/^usecase_/, '').replace(/^use_case_/, '').trim();
+    return `/use-cases/${slug}`;
+  }
+
+  // 4. Industry pSEO Pages (/for/:slug)
+  if (tab === 'industry_pseo') {
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/for/')) {
+      return window.location.pathname;
+    }
+    if (currentPathname.startsWith('/for/')) {
+      return currentPathname;
+    }
+    return '/for/restaurants';
+  }
+
+  // 5. Agency Landing Page
+  if (tab === 'agency_landing') {
+    return '/for/agencies';
+  }
+
+  // 6. Static Tab Map
+  if (TAB_TO_PATH[tab]) {
+    return TAB_TO_PATH[tab];
+  }
+
+  return `/${tab}`;
+}
+
+/**
+ * Parses any incoming URL path (including legacy variations like /resource_:slug, /feature_:slug)
+ * and resolves the exact active tab and canonical clean URL.
+ */
+export function resolveRouteFromPath(rawPath: string, isApp: boolean = false): ResolvedRoute {
+  // Strip query string, hash, and leading/trailing slashes
+  const pathWithoutQuery = rawPath.split('?')[0].split('#')[0];
+  const cleanPath = pathWithoutQuery.replace(/^\/+|\/+$/g, '').trim();
+
+  // App Subdomain Override
+  if (isApp) {
+    if (cleanPath === '' || cleanPath === 'home' || cleanPath === 'app' || cleanPath === 'dashboard') {
+      return { targetTab: 'dashboard', canonicalPath: '/dashboard', isCanonical: cleanPath === 'dashboard' };
+    }
+    if (cleanPath === 'pricing' || cleanPath === 'pricing-plans') {
+      return { targetTab: 'subscription', canonicalPath: '/pricing-plans', isCanonical: true };
+    }
+  }
+
+  // Root Homepage
+  if (cleanPath === '' || cleanPath === 'home') {
+    return { targetTab: 'home', canonicalPath: '/', isCanonical: cleanPath === '' };
+  }
+
+  // 1. Dynamic Resources / Guides:
+  // Handles: /resources/:slug, /resource/:slug, /resource_:slug, /resource-:slug, /blog/:slug
+  const resourcePrefixes = ['resources/', 'resource/', 'resource_', 'resource-', 'blog/'];
+  for (const prefix of resourcePrefixes) {
+    if (cleanPath.startsWith(prefix)) {
+      const slug = cleanPath.slice(prefix.length).trim();
+      if (slug) {
+        return {
+          targetTab: `resource_${slug}`,
+          canonicalPath: `/resources/${slug}`,
+          isCanonical: cleanPath === `resources/${slug}`,
+        };
+      }
+    }
+  }
+
+  // 2. Dynamic Features:
+  // Handles: /features/:slug, /feature/:slug, /feature_:slug, /feature-:slug
+  const featurePrefixes = ['features/', 'feature/', 'feature_', 'feature-'];
+  for (const prefix of featurePrefixes) {
+    if (cleanPath.startsWith(prefix)) {
+      const slug = cleanPath.slice(prefix.length).trim();
+      if (slug) {
+        return {
+          targetTab: `feature_${slug}`,
+          canonicalPath: `/features/${slug}`,
+          isCanonical: cleanPath === `features/${slug}`,
+        };
+      }
+    }
+  }
+
+  // 3. Dynamic Use Cases:
+  // Handles: /use-cases/:slug, /use-case/:slug, /usecase/:slug, /usecase_:slug, /use_case_:slug, /usecase-:slug
+  const useCasePrefixes = ['use-cases/', 'use-case/', 'usecase/', 'usecase_', 'use_case_', 'usecase-'];
+  for (const prefix of useCasePrefixes) {
+    if (cleanPath.startsWith(prefix)) {
+      const slug = cleanPath.slice(prefix.length).trim();
+      if (slug) {
+        return {
+          targetTab: `usecase_${slug}`,
+          canonicalPath: `/use-cases/${slug}`,
+          isCanonical: cleanPath === `use-cases/${slug}`,
+        };
+      }
+    }
+  }
+
+  // 4. Industry pSEO Pages:
+  // Handles: /for/:slug, /industries/:slug, /industry/:slug
+  const industryPrefixes = ['for/', 'industries/', 'industry/'];
+  for (const prefix of industryPrefixes) {
+    if (cleanPath.startsWith(prefix)) {
+      const slug = cleanPath.slice(prefix.length).trim();
+      if (slug === 'agencies') {
+        return { targetTab: 'agency_landing', canonicalPath: '/for/agencies', isCanonical: cleanPath === 'for/agencies' };
+      }
+      if (slug) {
+        return {
+          targetTab: 'industry_pseo',
+          canonicalPath: `/for/${slug}`,
+          isCanonical: cleanPath === `for/${slug}`,
+        };
+      }
+    }
+  }
+
+  // 5. Agency Landing Aliases
+  if (cleanPath === 'agencies' || cleanPath === 'for-agencies') {
+    return { targetTab: 'agency_landing', canonicalPath: '/for/agencies', isCanonical: false };
+  }
+
+  // 6. Static Path Map
+  if (PATH_TO_TAB[cleanPath]) {
+    const tab = PATH_TO_TAB[cleanPath];
+    const canonical = TAB_TO_PATH[tab] || `/${cleanPath}`;
+    return {
+      targetTab: tab,
+      canonicalPath: canonical,
+      isCanonical: `/${cleanPath}` === canonical,
+    };
+  }
+
+  // Default fallback to home (or workspace if authenticated)
+  return { targetTab: 'home', canonicalPath: '/', isCanonical: true };
+}
