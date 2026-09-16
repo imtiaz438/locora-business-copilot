@@ -847,9 +847,14 @@ export const CRMView: React.FC = () => {
 
       {/* Add / Edit Contact Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div 
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowAddModal(false);
+          }}
+        >
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto my-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 sticky top-0 bg-white z-10">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 font-heading">
                   {editingCustomer ? 'Edit Contact' : 'Add New Contact'}
@@ -859,10 +864,13 @@ export const CRMView: React.FC = () => {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setShowAddModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors text-xs font-bold cursor-pointer flex items-center gap-1"
+                aria-label="Close modal"
               >
-                ✕ Close
+                <span>✕</span>
+                <span className="hidden sm:inline">Close</span>
               </button>
             </div>
 

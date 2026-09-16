@@ -1024,11 +1024,16 @@ export const LeadProspectorView: React.FC = () => {
 
       {/* Lead Pack Purchase Modal */}
       {showPurchaseModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 relative">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowPurchaseModal(false);
+          }}
+        >
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto my-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 sticky top-0 bg-white z-10">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
                   <FileSpreadsheet className="w-5 h-5" />
                 </div>
                 <div>
@@ -1041,8 +1046,10 @@ export const LeadProspectorView: React.FC = () => {
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setShowPurchaseModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-lg font-bold p-1"
+                className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-xl text-xs font-bold cursor-pointer transition-colors"
+                aria-label="Close modal"
               >
                 ✕
               </button>

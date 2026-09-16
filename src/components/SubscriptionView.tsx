@@ -699,10 +699,23 @@ export const SubscriptionView: React.FC = () => {
 
       {/* Cancellation Modal */}
       {showCancelModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs font-sans animate-fadeIn">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs font-sans animate-fadeIn overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowCancelModal(false);
+          }}
+        >
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto my-auto relative">
+            <button
+              type="button"
+              onClick={() => setShowCancelModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors font-bold text-xs cursor-pointer"
+              aria-label="Close modal"
+            >
+              ✕
+            </button>
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-              <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0">
                 <Mail className="w-5 h-5" />
               </div>
               <div>

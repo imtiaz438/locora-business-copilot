@@ -367,10 +367,15 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
-      <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-8 animate-in fade-in zoom-in duration-200">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto max-h-[90vh] flex flex-col animate-in fade-in zoom-in duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/70">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/70 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#059669]/10 border border-[#059669]/20 flex items-center justify-center text-[#059669] shrink-0">
               <RefreshCw className={`w-5 h-5 ${isSyncing ? 'animate-spin' : ''}`} />
@@ -391,15 +396,17 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
           </div>
 
           <button
+            type="button"
             onClick={onClose}
             className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 transition-colors cursor-pointer"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Toggle */}
-        <div className="flex border-b border-slate-200 px-6 bg-slate-100/60 pt-2 gap-2">
+        <div className="flex border-b border-slate-200 px-6 bg-slate-100/60 pt-2 gap-2 shrink-0">
           <button
             type="button"
             onClick={() => setActiveTab('search')}
@@ -428,7 +435,7 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
         </div>
 
         {/* Body */}
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto flex-1">
           {syncSuccess ? (
             <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
               <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center animate-bounce shadow-sm">

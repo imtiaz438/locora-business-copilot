@@ -579,11 +579,18 @@ export const ContentStudioView: React.FC = () => {
 
       {/* ================= GENERATION MODAL ================= */}
       {isGeneratorOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 relative my-8">
+        <div 
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsGeneratorOpen(false);
+          }}
+        >
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-100 relative my-auto max-h-[90vh] overflow-y-auto">
             <button
+              type="button"
               onClick={() => setIsGeneratorOpen(false)}
-              className="absolute right-5 top-5 text-slate-400 hover:text-slate-700"
+              className="absolute right-5 top-5 p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              aria-label="Close modal"
             >
               <X className="w-5 h-5" />
             </button>
@@ -796,8 +803,16 @@ export const ContentStudioView: React.FC = () => {
 
       {/* ================= FULL RECORD EDITOR MODAL ================= */}
       {activeEditingRecord && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl border border-slate-100 relative my-8 max-h-[90vh] flex flex-col">
+        <div 
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setActiveEditingRecord(null);
+              setPublishError(null);
+            }
+          }}
+        >
+          <div className="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl border border-slate-100 relative my-auto max-h-[90vh] flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-200">
               <div className="flex items-center gap-2">

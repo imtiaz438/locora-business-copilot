@@ -696,9 +696,17 @@ export const LocalVisibilityView: React.FC = () => {
 
       {/* 4. CONFIGURATION MODAL */}
       {isConfigModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div 
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsConfigModalOpen(false);
+              setConfigSuccessMsg(null);
+            }
+          }}
+        >
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6 max-h-[90vh] overflow-y-auto my-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 sticky top-0 bg-white z-10">
               <div className="flex items-center gap-2">
                 <Sliders className="w-5 h-5 text-[#059669]" />
                 <h3 className="text-lg font-black font-heading text-slate-900">
@@ -706,11 +714,13 @@ export const LocalVisibilityView: React.FC = () => {
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => {
                   setIsConfigModalOpen(false);
                   setConfigSuccessMsg(null);
                 }}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
               </button>

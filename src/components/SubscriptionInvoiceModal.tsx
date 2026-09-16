@@ -48,10 +48,15 @@ export const SubscriptionInvoiceModal: React.FC<SubscriptionInvoiceModalProps> =
   });
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto font-sans animate-fadeIn print:p-0 print:bg-white print:static">
+    <div 
+      className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto font-sans animate-fadeIn print:p-0 print:bg-white print:static"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div 
         ref={printRef}
-        className="bg-white border border-slate-200 rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden my-auto flex flex-col print:border-none print:shadow-none print:max-w-none print:w-full"
+        className="bg-white border border-slate-200 rounded-3xl max-w-2xl w-full shadow-2xl overflow-y-auto max-h-[90vh] my-auto flex flex-col print:border-none print:shadow-none print:max-w-none print:w-full print:max-h-none"
       >
         {/* Top Header Bar */}
         <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between print:bg-transparent print:text-slate-900 print:border-b print:border-slate-200">

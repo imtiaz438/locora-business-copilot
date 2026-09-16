@@ -1006,9 +1006,14 @@ export const ReputationView: React.FC = () => {
 
       {/* MODAL 1: ADD USER-ENTERED CUSTOMER REVIEW */}
       {addReviewModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
-          <div className="bg-white rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-4 animate-scaleUp">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div 
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto font-sans"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setAddReviewModalOpen(false);
+          }}
+        >
+          <div className="bg-white rounded-3xl w-full max-w-lg p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto my-auto animate-scaleUp">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 sticky top-0 bg-white z-10">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#059669] font-heading">
                   Direct Feedback Entry
@@ -1018,8 +1023,10 @@ export const ReputationView: React.FC = () => {
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setAddReviewModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors font-bold text-xs cursor-pointer flex items-center gap-1"
+                aria-label="Close modal"
               >
                 ✕
               </button>
@@ -1131,9 +1138,14 @@ export const ReputationView: React.FC = () => {
 
       {/* MODAL 2: CONNECT SUPPORTED REVIEW PROVIDER */}
       {connectProviderModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-4 animate-scaleUp">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div 
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto font-sans"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setConnectProviderModalOpen(false);
+          }}
+        >
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto my-auto animate-scaleUp">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 sticky top-0 bg-white z-10">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 font-heading">
                   Provider Integration
@@ -1143,8 +1155,10 @@ export const ReputationView: React.FC = () => {
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setConnectProviderModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors font-bold text-xs cursor-pointer flex items-center gap-1"
+                aria-label="Close modal"
               >
                 ✕
               </button>
@@ -1229,9 +1243,14 @@ export const ReputationView: React.FC = () => {
 
       {/* MODAL 3: RESPONSE DRAFT & APPROVAL MODAL */}
       {responseModalReview && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
-          <div className="bg-white rounded-3xl w-full max-w-xl p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-4 animate-scaleUp">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div 
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto font-sans"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setResponseModalReview(null);
+          }}
+        >
+          <div className="bg-white rounded-3xl w-full max-w-xl p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto my-auto animate-scaleUp">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 sticky top-0 bg-white z-10">
               <div>
                 <div className="flex items-center gap-2">
                   <span
@@ -1251,8 +1270,10 @@ export const ReputationView: React.FC = () => {
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setResponseModalReview(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors font-bold text-xs cursor-pointer flex items-center gap-1"
+                aria-label="Close modal"
               >
                 ✕
               </button>
@@ -1313,9 +1334,14 @@ export const ReputationView: React.FC = () => {
 
       {/* MODAL 4: REVIEW INVITE CAMPAIGN MODAL */}
       {reviewInviteModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
-          <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl border border-slate-200 space-y-4 animate-scaleUp">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div 
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto font-sans"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setReviewInviteModalOpen(false);
+          }}
+        >
+          <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto my-auto animate-scaleUp">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 sticky top-0 bg-white z-10">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#059669] font-heading">
                   Growth Automation
@@ -1325,8 +1351,10 @@ export const ReputationView: React.FC = () => {
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setReviewInviteModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors font-bold text-xs cursor-pointer flex items-center gap-1"
+                aria-label="Close modal"
               >
                 ✕
               </button>

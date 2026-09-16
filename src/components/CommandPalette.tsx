@@ -161,8 +161,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn font-sans">
-      <div className="bg-white border border-slate-200 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scaleUp">
+    <div 
+      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn font-sans overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-white border border-slate-200 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scaleUp mb-8">
         {/* Search Header strictly reflecting Section 27 Spec: [ ⌘ K  Ask Locora anything... ] */}
         <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center gap-3 bg-slate-50/70">
           <div className="w-8 h-8 rounded-xl bg-emerald-100 text-[#059669] flex items-center justify-center shrink-0">

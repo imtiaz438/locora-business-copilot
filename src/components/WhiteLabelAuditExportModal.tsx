@@ -352,6 +352,9 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
     <div
       id="whitelabel_audit_modal_overlay"
       className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-xs overflow-y-auto font-sans"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         id="whitelabel_audit_modal_container"

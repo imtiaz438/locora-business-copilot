@@ -104,10 +104,13 @@ export const FuelPackModal: React.FC<Props> = ({ isOpen, onClose, initialReason 
     <div
       id="fuel_pack_modal_overlay"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-xs overflow-y-auto animate-fadeIn font-sans"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         id="fuel_pack_modal_container"
-        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-auto"
+        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-y-auto max-h-[90vh] my-auto"
       >
         {/* Header Banner */}
         <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white p-6 sm:p-7 relative overflow-hidden">

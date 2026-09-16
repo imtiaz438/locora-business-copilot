@@ -1804,11 +1804,16 @@ export const AiManagerView: React.FC = () => {
 
       {/* REVIEW WORKFLOW SETUP MODAL */}
       {reviewSetupModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
-          <div className="bg-white rounded-3xl w-full max-w-xl p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-scaleUp">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div 
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto font-sans"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setReviewSetupModalOpen(false);
+          }}
+        >
+          <div className="bg-white rounded-3xl w-full max-w-xl p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 max-h-[90vh] overflow-y-auto my-auto animate-scaleUp">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 sticky top-0 bg-white z-10">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-[#059669] flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-[#059669] flex items-center justify-center font-bold shrink-0">
                   <Star className="w-5 h-5 fill-[#059669]" />
                 </div>
                 <div>
@@ -1821,8 +1826,10 @@ export const AiManagerView: React.FC = () => {
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setReviewSetupModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors font-bold text-xs cursor-pointer"
+                aria-label="Close modal"
               >
                 ✕
               </button>

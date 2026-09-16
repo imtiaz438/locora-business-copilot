@@ -1046,8 +1046,21 @@ export const AdminView: React.FC = () => {
     <div className="space-y-6 font-sans max-w-7xl mx-auto">
       {/* User Deletion Confirmation Modal */}
       {userToDelete && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in fade-in zoom-in duration-200">
+        <div 
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setUserToDelete(null);
+          }}
+        >
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto my-auto relative">
+            <button
+              type="button"
+              onClick={() => setUserToDelete(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors font-bold text-xs cursor-pointer"
+              aria-label="Close modal"
+            >
+              ✕
+            </button>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 border border-rose-200">
                 <AlertCircle className="w-5 h-5" />
@@ -1086,8 +1099,21 @@ export const AdminView: React.FC = () => {
 
       {/* Transaction Deletion Confirmation Modal */}
       {transactionToDelete && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in fade-in zoom-in duration-200">
+        <div 
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setTransactionToDelete(null);
+          }}
+        >
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto my-auto relative">
+            <button
+              type="button"
+              onClick={() => setTransactionToDelete(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors font-bold text-xs cursor-pointer"
+              aria-label="Close modal"
+            >
+              ✕
+            </button>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 border border-rose-200">
                 <Trash2 className="w-5 h-5" />

@@ -138,13 +138,16 @@ export const CheckoutModal: React.FC = () => {
     <div
       id="checkout_modal_overlay"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 backdrop-blur-xs overflow-y-auto animate-fadeIn font-sans"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) setCheckoutModalPlan(null);
+      }}
     >
       <div
         id="checkout_modal_container"
-        className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-auto"
+        className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-y-auto max-h-[90vh] my-auto"
       >
         {/* Header */}
-        <div className="bg-slate-900 text-white px-6 py-5 flex items-center justify-between border-b border-slate-800">
+        <div className="bg-slate-900 text-white px-6 py-5 flex items-center justify-between border-b border-slate-800 sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
               <Zap className="w-5 h-5" />

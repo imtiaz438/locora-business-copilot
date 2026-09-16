@@ -467,12 +467,28 @@ export const InvoiceView: React.FC = () => {
 
       {/* MODAL: CREATE INVOICE */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 w-full max-w-2xl space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold font-heading text-slate-900 flex items-center gap-2">
-              <FileSpreadsheet className="w-5 h-5 text-[#059669]" />
-              <span>Create New Invoice</span>
-            </h3>
+        <div 
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowCreateModal(false);
+          }}
+        >
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 w-full max-w-2xl space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto my-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 sticky top-0 bg-white z-10">
+              <h3 className="text-lg font-bold font-heading text-slate-900 flex items-center gap-2">
+                <FileSpreadsheet className="w-5 h-5 text-[#059669]" />
+                <span>Create New Invoice</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors text-xs font-bold cursor-pointer flex items-center gap-1"
+                aria-label="Close modal"
+              >
+                <span>✕</span>
+                <span className="hidden sm:inline">Close</span>
+              </button>
+            </div>
 
             <form onSubmit={handleCreateInvoice} className="space-y-4 text-xs font-sans">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

@@ -329,7 +329,12 @@ export const CustomerDetailDrawer: React.FC<CustomerDetailDrawerProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-black/40 backdrop-blur-xs flex justify-end animate-fadeIn">
+    <div 
+      className="fixed inset-0 z-50 overflow-hidden bg-black/40 backdrop-blur-xs flex justify-end animate-fadeIn"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <div className="w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out border-l border-slate-200">
         {/* Drawer Header */}
         <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-start justify-between">
@@ -697,11 +702,23 @@ export const CustomerDetailDrawer: React.FC<CustomerDetailDrawerProps> = ({
 
       {/* Log Activity Modal */}
       {showLogActivityModal && (
-        <div className="fixed inset-0 z-60 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-5 max-w-md w-full shadow-xl space-y-4 text-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div 
+          className="fixed inset-0 z-60 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowLogActivityModal(false);
+          }}
+        >
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 text-xs max-h-[90vh] overflow-y-auto my-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 sticky top-0 bg-white z-10">
               <h3 className="font-bold text-slate-900 text-sm">Log Customer Activity</h3>
-              <button onClick={() => setShowLogActivityModal(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+              <button 
+                type="button" 
+                onClick={() => setShowLogActivityModal(false)} 
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
             </div>
 
             <form onSubmit={handleLogActivitySubmit} className="space-y-3">
@@ -764,11 +781,23 @@ export const CustomerDetailDrawer: React.FC<CustomerDetailDrawerProps> = ({
 
       {/* Add Task Modal */}
       {showAddTaskModal && (
-        <div className="fixed inset-0 z-60 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-5 max-w-md w-full shadow-xl space-y-4 text-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div 
+          className="fixed inset-0 z-60 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowAddTaskModal(false);
+          }}
+        >
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 text-xs max-h-[90vh] overflow-y-auto my-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 sticky top-0 bg-white z-10">
               <h3 className="font-bold text-slate-900 text-sm">Add Customer Task</h3>
-              <button onClick={() => setShowAddTaskModal(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+              <button 
+                type="button" 
+                onClick={() => setShowAddTaskModal(false)} 
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
             </div>
 
             <form onSubmit={handleCreateTask} className="space-y-3">

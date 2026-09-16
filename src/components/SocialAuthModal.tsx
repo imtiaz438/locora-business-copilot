@@ -143,13 +143,20 @@ export const SocialAuthModal: React.FC<SocialAuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fadeIn font-sans">
-      <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fadeIn font-sans overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className={`p-6 ${isGoogle ? 'bg-gradient-to-r from-blue-50/70 to-emerald-50/70' : 'bg-gradient-to-r from-blue-50/80 to-indigo-50/80'} border-b border-slate-100 relative`}>
+        <div className={`p-6 ${isGoogle ? 'bg-gradient-to-r from-blue-50/70 to-emerald-50/70' : 'bg-gradient-to-r from-blue-50/80 to-indigo-50/80'} border-b border-slate-100 relative shrink-0`}>
           <button
+            type="button"
             onClick={onClose}
             className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white text-slate-400 hover:text-slate-700 transition-colors shadow-2xs cursor-pointer"
+            aria-label="Close modal"
           >
             <X className="w-4 h-4" />
           </button>

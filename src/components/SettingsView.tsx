@@ -203,8 +203,22 @@ const AccountSecuritySection: React.FC = () => {
 
       {/* Account Deletion Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl border border-slate-200">
+        <div 
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowDeleteModal(false);
+          }}
+        >
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto my-auto relative">
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors font-bold text-xs cursor-pointer"
+              aria-label="Close modal"
+            >
+              ✕
+            </button>
+
             <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6" />
             </div>
@@ -1315,20 +1329,35 @@ export const SettingsView: React.FC = () => {
 
       {/* MODAL: CANCEL AUTO-RENEW CONFIRMATION */}
       {showCancelAutoRenewModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl animate-fade-in">
-            <div className="flex items-center gap-3 text-amber-600">
-              <div className="p-2.5 bg-amber-100 rounded-xl">
-                <AlertTriangle className="w-6 h-6 text-amber-700" />
+        <div 
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowCancelAutoRenewModal(false);
+          }}
+        >
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto my-auto relative">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-3 text-amber-600">
+                <div className="p-2.5 bg-amber-100 rounded-xl">
+                  <AlertTriangle className="w-6 h-6 text-amber-700" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-slate-900 font-heading text-base">
+                    Cancel Subscription Auto-Renewal?
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Effective from your next renewal date
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-extrabold text-slate-900 font-heading text-base">
-                  Cancel Subscription Auto-Renewal?
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Effective from your next renewal date
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowCancelAutoRenewModal(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors font-bold text-xs cursor-pointer"
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
             </div>
 
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 text-xs text-slate-700">
