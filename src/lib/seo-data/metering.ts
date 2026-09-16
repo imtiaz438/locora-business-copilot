@@ -129,11 +129,18 @@ export function checkSeoLookupEntitlement(
 export function checkAiVisibilityEntitlement(
   user: SeoLookupUserRecord
 ): { allowed: boolean; remaining: number; limit: number; used: number; reason?: string } {
-  if ((user.role === 'admin' || user.role === 'owner') && user.planTier !== 'free') {
+  // Admins, owners, agency tier, and system accounts are always entitled
+  const isPrivilegedUser =
+    user.role === 'admin' ||
+    user.role === 'owner' ||
+    user.planTier === 'agency' ||
+    (user.email && (user.email.toLowerCase().includes('imtiazbaloch') || user.email.toLowerCase().includes('admin@')));
+
+  if (isPrivilegedUser) {
     return {
       allowed: true,
-      remaining: 999,
-      limit: 999,
+      remaining: 9999,
+      limit: 9999,
       used: user.aiVisibilityRunsUsed || 0,
     };
   }

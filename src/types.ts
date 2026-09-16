@@ -73,6 +73,7 @@ export interface BusinessProfile {
   name: string;
   tagline: string;
   industry: string;
+  category?: string;
   description: string;
   targetAudience: string;
   toneOfVoice: string;
@@ -89,6 +90,7 @@ export interface BusinessProfile {
   taxId: string;
   logoUrl?: string;
   logoConfig?: CustomLogoConfig;
+  gbpConnected?: boolean;
   // Core Business Brain Fields
   services?: string[];
   targetLocations?: string[];
@@ -198,6 +200,20 @@ export interface BusinessTruthGoogleProfile {
   status: string | null;
 }
 
+export interface BusinessTruthBrain {
+  score: number | null;
+  readinessScore: number | null;
+  summary: string | null;
+  swot: {
+    strengths?: string[];
+    weaknesses?: string[];
+    opportunities?: string[];
+    threats?: string[];
+  } | null;
+  priorities: any[] | null;
+  lastSynthesizedAt: string | null;
+}
+
 export interface BusinessTruth {
   businessId: string;
   name: string | null;
@@ -215,6 +231,7 @@ export interface BusinessTruth {
   goals: string[] | null;
   brandVoice: string | null;
   googleProfile: BusinessTruthGoogleProfile | null;
+  brain?: BusinessTruthBrain | null;
   dataSources: string[];
   lastUpdated: string | null;
 }
@@ -243,6 +260,8 @@ export interface ClientBusiness {
   country?: string;
   zip: string;
   phone: string;
+  email?: string;
+  description?: string;
   website: string;
   healthScore: number;
   healthDelta: number; // e.g. +6 points this month
@@ -1688,5 +1707,3 @@ export interface GrowthStoreItem {
   features: string[];
   badge?: string;
 }
-
-

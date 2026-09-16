@@ -54,6 +54,7 @@ interface GooglePostDraft {
 interface ActionCardState {
   id: string;
   type:
+    | 'business_brain_overview'
     | 'google_post'
     | 'competitor_weakness'
     | 'unanswered_reviews'

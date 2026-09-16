@@ -34,7 +34,14 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
   const currentSlug =
     slug ||
     (typeof window !== 'undefined'
-      ? window.location.pathname.replace(/^\/use-cases\//, '').trim()
+      ? window.location.pathname
+          .replace(/^\/use-cases\//, '')
+          .replace(/^\/use-case\//, '')
+          .replace(/^\/usecase\//, '')
+          .replace(/^\/usecase_/, '')
+          .replace(/^\/use_case_/, '')
+          .replace(/^\/usecase-/, '')
+          .trim()
       : 'local-seo');
 
   const useCase: SeoUseCaseItem =

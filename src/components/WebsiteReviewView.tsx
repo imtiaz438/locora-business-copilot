@@ -38,6 +38,9 @@ import {
   Zap,
   Bot,
   Lock,
+  Building2,
+  MapPin,
+  Phone,
 } from 'lucide-react';
 
 interface AuditDiagnosis {
@@ -51,17 +54,36 @@ interface AuditDiagnosis {
 }
 
 export const WebsiteReviewView: React.FC = () => {
-  const { businessProfile, latestWebsiteAudit, setLatestWebsiteAudit, settings, user, updateUser, logActivity, setCheckoutModalPlan, setActiveTab } = useApp();
+  const {
+    businessProfile,
+    activeBusiness,
+    latestWebsiteAudit,
+    setLatestWebsiteAudit,
+    settings,
+    user,
+    updateUser,
+    logActivity,
+    setCheckoutModalPlan,
+    setActiveTab,
+    refreshProductionDashboard,
+  } = useApp();
 
   const isPaidUser = user.planTier === 'pro' || user.planTier === 'agency' || user.planTier === 'elite';
 
   const [mode, setMode] = useState<'single' | 'competitor'>('single');
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'keywords' | 'traffic' | 'recommendations' | 'real_seo'>('overview');
   const [competitorSubView, setCompetitorSubView] = useState<'matrix' | 'target' | 'competitor'>('matrix');
-  const [url, setUrl] = useState(businessProfile.website || 'locora.ai');
+  const [url, setUrl] = useState(activeBusiness?.website || businessProfile.website || 'smilesolutions.com.au');
+
+  React.useEffect(() => {
+    const currentBizWeb = activeBusiness?.website || businessProfile?.website;
+    if (currentBizWeb) {
+      setUrl(currentBizWeb);
+    }
+  }, [activeBusiness?.id, activeBusiness?.website]);
 
   // Normalized current domain
-  const currentDomain = (url || businessProfile.website || 'locora.ai')
+  const currentDomain = (url || activeBusiness?.website || businessProfile.website || 'smilesolutions.com.au')
     .replace(/^https?:\/\//i, '')
     .replace(/\/.*$/, '')
     .toLowerCase()
@@ -70,6 +92,7 @@ export const WebsiteReviewView: React.FC = () => {
   // The 1 allowed free domain for this user
   const effectiveFreeDomain = user.freeAuditedDomain ||
     (typeof window !== 'undefined' ? localStorage.getItem('locora_free_audited_domain') : null) ||
+    (activeBusiness?.website ? activeBusiness.website.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').toLowerCase().trim() : null) ||
     (businessProfile?.website ? businessProfile.website.replace(/^https?:\/\//i, '').replace(/\/.*$/, '').toLowerCase().trim() : null);
 
   const isAllowedFreeDomain = !effectiveFreeDomain ||
@@ -107,7 +130,8 @@ export const WebsiteReviewView: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             url: targetUrl,
-            businessProfile,
+            businessId: activeBusiness?.id || businessProfile?.id,
+            businessProfile: activeBusiness || businessProfile,
             provider: settings.activeProvider,
             modelVersion: activeModel,
             providerKey: settings.providerKeys[settings.activeProvider],
@@ -149,6 +173,9 @@ export const WebsiteReviewView: React.FC = () => {
 
         setLatestWebsiteAudit(data);
         logActivity('audit', 'Ran Website Audit', `Audited ${targetUrl}`);
+        if (activeBusiness?.id) {
+          refreshProductionDashboard(activeBusiness.id).catch(console.error);
+        }
       } else {
         const cleanTarget = targetUrl.trim();
         const cleanComp = competitorUrl.trim();
@@ -363,10 +390,10 @@ export const WebsiteReviewView: React.FC = () => {
                 <span>Live Crawl Results</span>
               </div>
               <h3 className="text-2xl sm:text-3xl font-black font-heading text-slate-900 tracking-tight">
-                Technical SEO: {technicalSeoScore}
+                {activeBusiness?.name || businessProfile?.name} • Technical SEO: {technicalSeoScore}/100
               </h3>
               <p className="text-xs text-slate-500 font-medium">
-                Calculated strictly from {siteUrl} crawl results • No fixed or fabricated scores
+                Live audit results for {activeBusiness?.name || businessProfile?.name} ({siteUrl}) • Real HTTP signals & DOM crawl
               </p>
             </div>
 
@@ -787,6 +814,78 @@ export const WebsiteReviewView: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Target Business Context & Clear Title Card */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700/80 rounded-2xl p-5 text-white shadow-md">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 px-2.5 py-0.5 rounded-full font-heading">
+                Connected Business Audit Target
+              </span>
+              <span className="text-xs text-slate-400 font-medium">
+                {activeBusiness?.category || (businessProfile as any)?.category || businessProfile?.industry || 'Local Business'}
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black font-heading text-white tracking-tight flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-emerald-400 shrink-0" />
+              <span>{activeBusiness?.name || businessProfile?.name || 'Selected Business'}</span>
+            </h1>
+            <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-300">
+              {(activeBusiness?.website || businessProfile?.website) && (
+                <a
+                  href={(activeBusiness?.website || businessProfile?.website || '').startsWith('http') ? (activeBusiness?.website || businessProfile?.website) : `https://${activeBusiness?.website || businessProfile?.website}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-emerald-300 hover:text-emerald-200 underline font-mono text-[11px]"
+                >
+                  <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{activeBusiness?.website || businessProfile?.website}</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+              {(activeBusiness?.phone || businessProfile?.phone) && (
+                <span className="inline-flex items-center gap-1.5 text-slate-300 font-mono text-[11px]">
+                  <Phone className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{activeBusiness?.phone || businessProfile?.phone}</span>
+                </span>
+              )}
+              {(activeBusiness?.address || activeBusiness?.city) && (
+                <span className="inline-flex items-center gap-1.5 text-slate-300 text-[11px]">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                  <span>
+                    {activeBusiness?.address ? `${activeBusiness.address}, ` : ''}
+                    {activeBusiness?.city || ''}
+                    {activeBusiness?.state ? `, ${activeBusiness.state}` : ''}
+                  </span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-700/60">
+            <button
+              type="button"
+              onClick={(e) => {
+                const targetBizWeb = activeBusiness?.website || businessProfile?.website;
+                if (targetBizWeb) {
+                  setUrl(targetBizWeb);
+                  handleAnalyze(e, targetBizWeb);
+                }
+              }}
+              disabled={loading || !(activeBusiness?.website || businessProfile?.website)}
+              className="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span>
+                {loading
+                  ? 'Crawling Live Issues...'
+                  : `Re-scan Issues for ${activeBusiness?.name || 'Selected Business'}`}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* URL Input Form */}
       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs">

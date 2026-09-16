@@ -32,7 +32,13 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
   const rawSlug =
     slug ||
     (typeof window !== 'undefined'
-      ? window.location.pathname.replace(/^\/resources\//, '').replace(/^\/blog\//, '').trim()
+      ? window.location.pathname
+          .replace(/^\/resources\//, '')
+          .replace(/^\/resource\//, '')
+          .replace(/^\/resource_/, '')
+          .replace(/^\/resource-/, '')
+          .replace(/^\/blog\//, '')
+          .trim()
       : 'how-to-improve-local-seo');
 
   const currentSlug =

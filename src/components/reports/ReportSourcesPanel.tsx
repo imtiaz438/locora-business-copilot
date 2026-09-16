@@ -9,6 +9,7 @@ interface ReportSourcesPanelProps {
   staleReason?: string;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  onConnectSource?: (sourceId: string) => void;
 }
 
 export const ReportSourcesPanel: React.FC<ReportSourcesPanelProps> = ({
@@ -18,6 +19,7 @@ export const ReportSourcesPanel: React.FC<ReportSourcesPanelProps> = ({
   staleReason,
   onRefresh,
   isRefreshing,
+  onConnectSource,
 }) => {
   const connectedSources = sources.filter((s) => s.isConnected);
   const disconnectedSources = sources.filter((s) => !s.isConnected);
@@ -100,10 +102,23 @@ export const ReportSourcesPanel: React.FC<ReportSourcesPanelProps> = ({
                   Synced
                 </span>
               ) : (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200 flex-shrink-0">
-                  <Link2 className="w-2.5 h-2.5 mr-1" />
-                  Not Connected
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200 flex-shrink-0">
+                    <Link2 className="w-2.5 h-2.5 mr-1" />
+                    Not Connected
+                  </span>
+                  {onConnectSource && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onConnectSource(source.id);
+                      }}
+                      className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-colors cursor-pointer"
+                    >
+                      {source.id === 'google_gbp' ? 'Connect GBP' : source.id === 'website_crawl' ? 'Audit Website' : 'Connect'}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
 

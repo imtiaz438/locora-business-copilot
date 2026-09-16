@@ -54,7 +54,10 @@ export const TierLockGate: React.FC<TierLockGateProps> = ({
   const { user, updateUser, logActivity, setActiveTab, setCheckoutModalPlan } = useApp();
 
   const isUnlocked =
+    user.role === 'admin' ||
+    user.role === 'owner' ||
     user.planTier === 'agency' ||
+    user.planTier === 'elite' ||
     (requiredPlan === 'pro' && user.planTier === 'pro');
 
   if (isUnlocked) {

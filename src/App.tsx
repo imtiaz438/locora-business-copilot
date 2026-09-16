@@ -53,6 +53,7 @@ import { TermsOfServiceView } from './components/public/TermsOfServiceView';
 import { SecurityOverviewView } from './components/public/SecurityOverviewView';
 import { RefundPolicyView } from './components/public/RefundPolicyView';
 import { applyPageMetadata } from './utils/seoMetadata';
+import { resolveRouteFromPath } from './utils/routeUtils';
 
 const PATH_TO_TAB: Record<string, string> = {
   '': 'home',
@@ -156,59 +157,40 @@ const MainContent: React.FC = () => {
   useEffect(() => {
     const syncRouteFromLocation = () => {
       const rawPath = window.location.pathname;
-      const path = rawPath.replace(/^\//, '').trim();
-
       const isApp = isAppSubdomain();
 
       if (isApp) {
-        if (path === '' || path === 'app' || path === 'dashboard' || path === 'home') {
-          setActiveTab('dashboard');
-          return;
-        }
-        if (path === 'pricing' || path === 'pricing-plans') {
-          setActiveTab('subscription');
-          return;
-        }
         // Redirect marketing routes on app subdomain to main website
         if (
-          rawPath.startsWith('/features/') ||
-          rawPath.startsWith('/use-cases/') ||
-          rawPath.startsWith('/resources/') ||
-          rawPath.startsWith('/blog/') ||
-          rawPath.startsWith('/for/')
+          rawPath.startsWith('/features') ||
+          rawPath.startsWith('/feature') ||
+          rawPath.startsWith('/use-cases') ||
+          rawPath.startsWith('/usecase') ||
+          rawPath.startsWith('/resources') ||
+          rawPath.startsWith('/resource') ||
+          rawPath.startsWith('/blog') ||
+          rawPath.startsWith('/for/') ||
+          rawPath === '/agencies' ||
+          rawPath === '/for-agencies'
         ) {
           navigateToMain(rawPath);
           return;
         }
       }
 
-      if (path === '' || path === 'home') {
-        setActiveTab('home');
-        return;
+      const resolved = resolveRouteFromPath(rawPath, isApp);
+      let targetTab = resolved.targetTab;
+
+      if ((targetTab === 'login' || targetTab === 'signup') && user.isAuthenticated) {
+        targetTab = 'dashboard';
       }
 
-      if (rawPath.startsWith('/features/')) {
-        const slug = rawPath.replace(/^\/features\//, '').trim();
-        setActiveTab(`feature_${slug}`);
-      } else if (rawPath.startsWith('/use-cases/')) {
-        const slug = rawPath.replace(/^\/use-cases\//, '').trim();
-        setActiveTab(`usecase_${slug}`);
-      } else if (rawPath.startsWith('/resources/')) {
-        const slug = rawPath.replace(/^\/resources\//, '').trim();
-        setActiveTab(`resource_${slug}`);
-      } else if (rawPath.startsWith('/blog/')) {
-        const slug = rawPath.replace(/^\/blog\//, '').trim();
-        setActiveTab(`resource_${slug}`);
-      } else if (rawPath.startsWith('/for/')) {
-        setActiveTab('industry_pseo');
-      } else if (PATH_TO_TAB[path]) {
-        const targetTab = PATH_TO_TAB[path];
-        if ((targetTab === 'login' || targetTab === 'signup') && user.isAuthenticated) {
-          setActiveTab('dashboard');
-        } else {
-          setActiveTab(targetTab);
-        }
+      // If browser was pointed to an uncanonical alias (like /resource_google-business-profile-guide), clean it up silently
+      if (!resolved.isCanonical && rawPath !== resolved.canonicalPath) {
+        window.history.replaceState({}, '', resolved.canonicalPath);
       }
+
+      setActiveTab(targetTab);
     };
 
     syncRouteFromLocation();

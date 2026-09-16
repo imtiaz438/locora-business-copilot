@@ -75,7 +75,12 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
   const currentSlug =
     slug ||
     (typeof window !== 'undefined'
-      ? window.location.pathname.replace(/^\/features\//, '').trim()
+      ? window.location.pathname
+          .replace(/^\/features\//, '')
+          .replace(/^\/feature\//, '')
+          .replace(/^\/feature_/, '')
+          .replace(/^\/feature-/, '')
+          .trim()
       : 'ai-business-audit');
 
   const feature: SeoFeatureItem =

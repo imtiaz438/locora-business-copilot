@@ -118,6 +118,14 @@ export const TopBusinessSelector: React.FC = () => {
     if (loc.zip) setEditBizZip(loc.zip);
   };
 
+  const handleNewLocationSelectFromAutocomplete = (loc: LocationData) => {
+    if (loc.address) setNewBizAddress(loc.address);
+    if (loc.city) setNewBizCity(loc.city);
+    if (loc.state) setNewBizState(loc.state);
+    if (loc.country) setNewBizCountry(loc.country);
+    if (loc.zip) setNewBizZip(loc.zip);
+  };
+
   // Form states for adding location
   const [newLocName, setNewLocName] = useState('');
   const [newLocAddress, setNewLocAddress] = useState('');
@@ -741,15 +749,14 @@ export const TopBusinessSelector: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Street Address (Optional)
-                  </label>
-                  <input
-                    type="text"
+                  <GoogleAddressAutocomplete
+                    label="Street Address (Optional)"
+                    placeholder="Search street address or enter manually..."
+                    initialValue={newBizAddress}
                     value={newBizAddress}
-                    onChange={(e) => setNewBizAddress(e.target.value)}
-                    placeholder="e.g. 100 Main St, Suite 200"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:outline-none transition-colors"
+                    onChange={(val) => setNewBizAddress(val)}
+                    onSelectLocation={handleNewLocationSelectFromAutocomplete}
+                    helperText="Select from autocomplete to auto-populate City, State, and Zip"
                   />
                 </div>
 
@@ -1048,6 +1055,8 @@ export const TopBusinessSelector: React.FC = () => {
                     label="Business Street Address (Google Places Autocomplete)"
                     placeholder="Search and select street address..."
                     initialValue={editBizAddress}
+                    value={editBizAddress}
+                    onChange={(val) => setEditBizAddress(val)}
                     onSelectLocation={handleEditLocationSelectFromAutocomplete}
                     helperText="Select from Google Places to auto-populate City, State, and Zip"
                   />

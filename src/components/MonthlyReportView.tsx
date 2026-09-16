@@ -41,6 +41,7 @@ import {
   Copy,
   Mail,
   Check,
+  Link2,
 } from 'lucide-react';
 
 export const MonthlyReportView: React.FC = () => {
@@ -54,8 +55,10 @@ export const MonthlyReportView: React.FC = () => {
     workTasks,
     projects,
     contentRecords,
+    latestWebsiteAudit,
     setActiveTab,
     logActivity,
+    setIsGbpSyncModalOpen,
   } = useApp();
 
   const [selectedReportType, setSelectedReportType] = useState<ReportType>('business_health');
@@ -69,16 +72,119 @@ export const MonthlyReportView: React.FC = () => {
 
   const businessId = activeBusiness.id || 'default';
 
-  const hasConnectedData = Boolean(
+  const effectiveWebsite = (
+    activeBusiness.website ||
+    latestWebsiteAudit?.url ||
+    (latestWebsiteAudit as any)?.domain ||
+    productionDashboard?.business?.website ||
+    (typeof window !== 'undefined' ? localStorage.getItem('locora_free_audited_domain') : '') ||
+    ''
+  ).trim();
+
+  const hasWebsite = Boolean(
+    effectiveWebsite.length > 0 ||
+    Boolean(latestWebsiteAudit) ||
+    productionDashboard?.collectedData?.websiteProject !== null ||
+    productionDashboard?.collectedData?.latestCrawlRun !== null ||
+    (productionDashboard?.collectedData?.websiteIssues?.length || 0) > 0
+  );
+
+  const isGbpConnected = Boolean(
     activeBusiness.gbpConnected ||
-    (activeBusiness.rankingAvg && activeBusiness.rankingAvg > 0) ||
+    (activeBusiness as any).googleConnected ||
     (activeBusiness.reviewCount && activeBusiness.reviewCount > 0) ||
+    productionDashboard?.collectedData?.googleProfile?.isVerified
+  );
+
+  const hasConnectedData = Boolean(
+    hasWebsite ||
+    isGbpConnected ||
+    Boolean(activeBusiness.name) ||
+    Boolean(businessTruth) ||
+    Boolean(productionDashboard?.businessBrain) ||
+    (activeBusiness.rankingAvg && activeBusiness.rankingAvg > 0) ||
     customers.some((c) => c.businessId === activeBusiness.id) ||
     contentRecords.some((r) => r.business_id === activeBusiness.id || (r as any).businessId === activeBusiness.id) ||
     workTasks.some((t) => t.businessId === activeBusiness.id)
   );
 
-  // Load saved historical snapshots on mount or when business changes
+  // Direct source connector dispatcher
+  const handleConnectSource = useCallback((sourceId: string) => {
+    if (sourceId === 'google_gbp' || sourceId.toLowerCase().includes('google') || sourceId.toLowerCase().includes('gbp')) {
+      setIsGbpSyncModalOpen(true);
+      logActivity('Initiated Google Business Profile connection from Reports', 'analytics');
+    } else if (sourceId === 'website_crawl' || sourceId.toLowerCase().includes('website') || sourceId.toLowerCase().includes('crawl')) {
+      setActiveTab('website_review');
+      logActivity('Navigated to Website Review from Reports', 'analytics');
+    } else if (sourceId === 'search_console' || sourceId === 'ga4') {
+      setActiveTab('settings');
+      logActivity(`Navigated to Settings to configure ${sourceId} from Reports`, 'analytics');
+    } else {
+      setActiveTab('settings');
+    }
+  }, [setIsGbpSyncModalOpen, setActiveTab, logActivity]);
+
+  // Master Snapshot Generator Pipeline
+  const handleGenerateSnapshot = useCallback(
+    async (manualClick = true) => {
+      setIsGenerating(true);
+      try {
+        const snapshot = await generateFullReportSnapshot({
+          businessId,
+          reportType: selectedReportType,
+          period: selectedPeriod,
+          businessTruth,
+          activeBusiness,
+          productionDashboard,
+          customers,
+          invoices,
+          proposals,
+          workTasks,
+          projects,
+          contentRecords,
+          latestWebsiteAudit,
+        });
+
+        setActiveSnapshot(snapshot);
+
+        // Save snapshot to history & database
+        await saveReportSnapshot(snapshot);
+        setHistoricalSnapshots((prev) => [
+          snapshot,
+          ...prev.filter((s) => s.id !== snapshot.id),
+        ]);
+
+        if (manualClick) {
+          logActivity(
+            `Generated ${snapshot.reportTitle} snapshot (${selectedPeriod}) from authentic operational data`,
+            'analytics'
+          );
+        }
+      } catch (err) {
+        console.error('[MonthlyReportView] Generation error:', err);
+      } finally {
+        setIsGenerating(false);
+      }
+    },
+    [
+      businessId,
+      selectedReportType,
+      selectedPeriod,
+      businessTruth,
+      activeBusiness,
+      productionDashboard,
+      customers,
+      invoices,
+      proposals,
+      workTasks,
+      projects,
+      contentRecords,
+      latestWebsiteAudit,
+      logActivity,
+    ]
+  );
+
+  // Load saved historical snapshots on mount or when business/reportType/period changes
   useEffect(() => {
     let isMounted = true;
     getSavedReportSnapshots(businessId).then((snaps) => {
@@ -120,65 +226,7 @@ export const MonthlyReportView: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [businessId, selectedReportType, selectedPeriod]);
-
-  // Master Snapshot Generator Pipeline
-  const handleGenerateSnapshot = useCallback(
-    async (manualClick = true) => {
-      setIsGenerating(true);
-      try {
-        const snapshot = await generateFullReportSnapshot({
-          businessId,
-          reportType: selectedReportType,
-          period: selectedPeriod,
-          businessTruth,
-          activeBusiness,
-          productionDashboard,
-          customers,
-          invoices,
-          proposals,
-          workTasks,
-          projects,
-          contentRecords,
-        });
-
-        setActiveSnapshot(snapshot);
-
-        // Save snapshot to history & database
-        await saveReportSnapshot(snapshot);
-        setHistoricalSnapshots((prev) => [
-          snapshot,
-          ...prev.filter((s) => s.id !== snapshot.id),
-        ]);
-
-        if (manualClick) {
-          logActivity(
-            `Generated ${snapshot.reportTitle} snapshot (${selectedPeriod}) from authentic operational data`,
-            'analytics'
-          );
-        }
-      } catch (err) {
-        console.error('[MonthlyReportView] Generation error:', err);
-      } finally {
-        setIsGenerating(false);
-      }
-    },
-    [
-      businessId,
-      selectedReportType,
-      selectedPeriod,
-      businessTruth,
-      activeBusiness,
-      productionDashboard,
-      customers,
-      invoices,
-      proposals,
-      workTasks,
-      projects,
-      contentRecords,
-      logActivity,
-    ]
-  );
+  }, [businessId, selectedReportType, selectedPeriod, handleGenerateSnapshot]);
 
   const handleDeleteSnapshot = async (id: string) => {
     await deleteReportSnapshot(businessId, id);
@@ -336,26 +384,107 @@ export const MonthlyReportView: React.FC = () => {
               Not enough connected data to generate this report yet.
             </h3>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Connect your Google Business Profile and website to run your first report.
+              Connect your Google Business Profile, website URL, or record customer business information to generate your executive report.
             </p>
           </div>
-          <div className="flex items-center justify-center gap-3 pt-2">
+          <div className="flex items-center justify-center gap-3 pt-2 flex-wrap">
             <button
-              onClick={() => setActiveTab('settings')}
+              onClick={() => setIsGbpSyncModalOpen(true)}
               className="px-4 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
             >
+              <Link2 className="w-3.5 h-3.5" />
               Connect Google Business Profile
             </button>
             <button
-              onClick={() => setActiveTab('seo')}
+              onClick={() => setActiveTab('website_review')}
               className="px-4 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
             >
+              <Link2 className="w-3.5 h-3.5" />
               Connect & Audit Website
             </button>
           </div>
         </div>
+      ) : isGenerating && !activeSnapshot ? (
+        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-sm space-y-4">
+          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-200 flex items-center justify-center mx-auto">
+            <RefreshCw className="w-6 h-6 animate-spin" />
+          </div>
+          <div className="max-w-md mx-auto space-y-1">
+            <h3 className="text-lg font-bold text-slate-900">
+              Generating {currentTypeDefinition?.title || 'Report'} Snapshot...
+            </h3>
+            <p className="text-xs text-slate-500">
+              Synthesizing real metrics from {activeBusiness.name} and connected operational channels.
+            </p>
+          </div>
+        </div>
       ) : (
         <>
+          {/* Telemetry Status Banners */}
+          {hasWebsite && !isGbpConnected && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs">
+              <div className="flex items-start gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="font-bold text-blue-950">
+                    Website Connected & Reporting: {activeBusiness.website}
+                  </p>
+                  <p className="text-blue-800 text-[11px] mt-0.5">
+                    Technical SEO, page health, and crawl telemetry are active. Google Business Profile is currently unlinked — connect GBP to also stream live Google Reviews and Local 3-Pack Map rankings.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsGbpSyncModalOpen(true)}
+                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-1.5 flex-shrink-0 cursor-pointer self-start sm:self-center"
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                <span>Connect Google Business Profile</span>
+              </button>
+            </div>
+          )}
+
+          {isGbpConnected && !hasWebsite && (
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs">
+              <div className="flex items-start gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="font-bold text-emerald-950">
+                    Google Business Profile Connected & Reporting
+                  </p>
+                  <p className="text-emerald-800 text-[11px] mt-0.5">
+                    Live Google Reviews ({activeBusiness.reviewCount || 0} reviews) and Map 3-Pack telemetry are active. Connect your website to also unlock technical crawl health and speed scoring.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveTab('website_review')}
+                className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-1.5 flex-shrink-0 cursor-pointer self-start sm:self-center"
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                <span>Connect Website</span>
+              </button>
+            </div>
+          )}
+
+          {isGbpConnected && hasWebsite && (
+            <div className="bg-gradient-to-r from-emerald-50/60 via-slate-50 to-indigo-50/60 border border-emerald-200/60 rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span className="font-medium text-slate-800">
+                  <strong className="text-emerald-800 font-semibold">Dual Telemetry Active:</strong> Both Website ({activeBusiness.website}) and Google Business Profile are actively synchronized in this report.
+                </span>
+              </div>
+              <span className="text-[11px] font-medium text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full flex-shrink-0">
+                100% Operational Telemetry
+              </span>
+            </div>
+          )}
+
           {/* 3. DATA SOURCE TRANSPARENCY & LIVE STALENESS MONITOR */}
           {activeSnapshot && (
             <ReportSourcesPanel
@@ -365,6 +494,7 @@ export const MonthlyReportView: React.FC = () => {
               staleReason={activeSnapshot.staleReason}
               onRefresh={() => handleGenerateSnapshot(true)}
               isRefreshing={isGenerating}
+              onConnectSource={handleConnectSource}
             />
           )}
 
@@ -471,9 +601,7 @@ export const MonthlyReportView: React.FC = () => {
       {activeSnapshot && (
         <ReportMetricsGrid
           metrics={activeSnapshot.keyMetrics}
-          onConnectSource={(src) => {
-            logActivity(`User clicked connect for ${src}`, 'analytics');
-          }}
+          onConnectSource={handleConnectSource}
         />
       )}
 

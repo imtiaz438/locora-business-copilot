@@ -6,6 +6,8 @@ import { TeamManagementSection } from './TeamManagementSection';
 import { IntegrationsSettingsTab } from './IntegrationsSettingsTab';
 import { LocoraLogo } from './LocoraLogo';
 import { SubscriptionInvoiceModal } from './SubscriptionInvoiceModal';
+import { GoogleAddressAutocomplete, LocationData } from './GoogleAddressAutocomplete';
+import { CountryAutocomplete } from './CountryAutocomplete';
 import {
   Settings,
   Cpu,
@@ -452,6 +454,17 @@ export const SettingsView: React.FC = () => {
     setTimeout(() => setSavedSuccess(false), 2500);
   };
 
+  const handleLocationSelect = (loc: LocationData) => {
+    setProfileForm((prev) => ({
+      ...prev,
+      address: loc.address || prev.address,
+      city: loc.city || prev.city,
+      state: loc.state || prev.state,
+      country: loc.country || prev.country,
+      zip: loc.zip || prev.zip,
+    }));
+  };
+
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     updateBusinessProfile(profileForm);
@@ -464,7 +477,10 @@ export const SettingsView: React.FC = () => {
         city: profileForm.city,
         state: profileForm.state,
         zip: profileForm.zip,
+        country: profileForm.country,
         phone: profileForm.phone,
+        email: profileForm.email,
+        description: profileForm.description,
       });
     }
     setSavedSuccess(true);
@@ -903,14 +919,60 @@ export const SettingsView: React.FC = () => {
               />
             </div>
 
-            <div className="sm:col-span-2">
-              <label className="block text-slate-600 mb-1 font-medium">Address</label>
-              <input
-                type="text"
-                value={profileForm.address}
-                onChange={(e) => setProfileForm({ ...profileForm, address: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
+            <div className="sm:col-span-2 space-y-3">
+              <GoogleAddressAutocomplete
+                label="Street Address (Google Places & Geocoding Autocomplete)"
+                placeholder="Start typing street address (e.g. 220 Collins Street, Melbourne)..."
+                initialValue={profileForm.address || ''}
+                value={profileForm.address || ''}
+                onChange={(val) => setProfileForm({ ...profileForm, address: val })}
+                onSelectLocation={handleLocationSelect}
+                helperText="Select a location to automatically populate City, State / Province, Postal Code, and Country."
               />
+
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block text-slate-600 mb-1 font-medium">City</label>
+                  <input
+                    type="text"
+                    value={profileForm.city || ''}
+                    onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })}
+                    placeholder="e.g. Melbourne"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-600 mb-1 font-medium">State / Province</label>
+                  <input
+                    type="text"
+                    value={profileForm.state || ''}
+                    onChange={(e) => setProfileForm({ ...profileForm, state: e.target.value })}
+                    placeholder="e.g. Victoria"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-600 mb-1 font-medium">Postal / Zip Code</label>
+                  <input
+                    type="text"
+                    value={profileForm.zip || ''}
+                    onChange={(e) => setProfileForm({ ...profileForm, zip: e.target.value })}
+                    placeholder="e.g. 3000"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
+                  />
+                </div>
+
+                <div className="sm:col-span-4">
+                  <label className="block text-slate-600 mb-1 font-medium">Country</label>
+                  <CountryAutocomplete
+                    value={profileForm.country || 'Australia'}
+                    onChange={(c) => setProfileForm({ ...profileForm, country: c })}
+                    placeholder="Select country..."
+                  />
+                </div>
+              </div>
             </div>
 
             <div>

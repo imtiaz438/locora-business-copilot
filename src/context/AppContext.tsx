@@ -33,6 +33,7 @@ import {
 import { getBusinessTruth, invalidateBusinessTruth } from '../services/businessTruthService';
 import { INITIAL_BUSINESSES, INITIAL_PRIORITY_ACTIONS } from '../data/initialBusinesses';
 import { isAppSubdomain } from '../utils/domain';
+import { resolveRouteFromPath, resolvePathFromTab, PATH_TO_TAB, TAB_TO_PATH } from '../utils/routeUtils';
 import { dashboardService } from '../services/dashboardService';
 import type { NormalizedDashboardData } from '../types/production';
 
@@ -130,6 +131,7 @@ interface AppContextType {
   addBusiness: (data: Partial<ClientBusiness>) => void;
   addLocation: (businessId: string, location: { name: string; address: string; city?: string; state?: string; country?: string; zip?: string; phone?: string }) => void;
   priorityActions: PriorityAction[];
+  setPriorityActions: React.Dispatch<React.SetStateAction<PriorityAction[]>>;
   fixItAction: (actionId: string, draftData?: Partial<FixItDraft>) => void;
   publishDraft: (actionId: string) => void;
   rightAiPanelOpen: boolean;
@@ -288,117 +290,6 @@ const DEFAULT_NOTIFICATIONS: LocoraNotification[] = [
 
 const DEFAULT_AI_ACTIONS: AIAction[] = [];
 
-const TAB_TO_PATH: Record<string, string> = {
-  home: '/',
-  features: '/features',
-  pricing_public: '/pricing',
-  about: '/about',
-  contact: '/contact',
-  login: '/login',
-  signup: '/signup',
-  privacy: '/privacy',
-  terms: '/terms',
-  security: '/security',
-  dashboard: '/dashboard',
-  ai_manager: '/ai-manager',
-  chat: '/ai-manager',
-  growth: '/growth',
-  visibility: '/visibility',
-  reputation: '/reputation',
-  competitors: '/competitors',
-  content: '/content',
-  customers: '/customers',
-  work: '/work',
-  reports: '/reports',
-  clients: '/clients',
-  crm: '/customers',
-  projects: '/projects',
-  lead_prospector: '/lead-prospector',
-  invoices: '/work',
-  proposals: '/work',
-  documents: '/content',
-  website_review: '/reports',
-  local_seo: '/visibility',
-  marketing: '/growth',
-  marketing_planner: '/growth',
-  masterclass_kit: '/agency-vault',
-  pricing: '/pricing-plans',
-  subscription: '/subscription',
-  settings: '/settings',
-  admin: '/admin',
-};
-
-const PATH_TO_TAB: Record<string, string> = {
-  '': 'home',
-  'home': 'home',
-  'features': 'features',
-  'pricing': 'pricing_public',
-  'about': 'about',
-  'contact': 'contact',
-  'login': 'login',
-  'signup': 'signup',
-  'privacy': 'privacy',
-  'privacy-policy': 'privacy',
-  'terms': 'terms',
-  'terms-of-service': 'terms',
-  'terms-conditions': 'terms',
-  'terms-and-conditions': 'terms',
-  'term-condition': 'terms',
-  'terms-condition': 'terms',
-  'security': 'security',
-  'dashboard': 'dashboard',
-  'home-dashboard': 'dashboard',
-  'ai-manager': 'ai_manager',
-  'ai_manager': 'ai_manager',
-  'chat': 'ai_manager',
-  'growth': 'growth',
-  'visibility': 'visibility',
-  'reputation': 'reputation',
-  'competitors': 'competitors',
-  'content': 'content',
-  'customers': 'customers',
-  'work': 'work',
-  'reports': 'reports',
-  'clients': 'clients',
-  'crm': 'customers',
-  'projects': 'projects',
-  'lead-prospector': 'lead_prospector',
-  'lead_prospector': 'lead_prospector',
-  'lead-vault': 'lead_prospector',
-  'lead_vault': 'lead_prospector',
-  'b2b-vault': 'lead_prospector',
-  'b2b_vault': 'lead_prospector',
-  'b2b': 'lead_prospector',
-  'leads': 'lead_prospector',
-  'prospector': 'lead_prospector',
-  'invoices': 'work',
-  'proposals': 'work',
-  'documents': 'content',
-  'website-audit': 'reports',
-  'website_review': 'reports',
-  'local-seo': 'visibility',
-  'local_seo': 'visibility',
-  'marketing-planner': 'growth',
-  'marketing_planner': 'growth',
-  'marketing': 'growth',
-  'masterclass': 'masterclass_kit',
-  'masterclass-kit': 'masterclass_kit',
-  'masterclass_kit': 'masterclass_kit',
-  'agency-vault': 'masterclass_kit',
-  'agency_vault': 'masterclass_kit',
-  'growth-vault': 'masterclass_kit',
-  'growth_vault': 'masterclass_kit',
-  'agency-growth-vault': 'masterclass_kit',
-  'agency_growth_vault': 'masterclass_kit',
-  'growth-kit': 'masterclass_kit',
-  'growth_kit': 'masterclass_kit',
-  'vault': 'masterclass_kit',
-  'pricing-plans': 'pricing',
-  'subscription': 'subscription',
-  'settings': 'settings',
-  'admin': 'admin',
-};
-
 export const UNCONFIGURED_BUSINESS: ClientBusiness = {
   id: 'workspace_pending',
   name: 'My Business',
@@ -436,43 +327,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeTab, setActiveTabState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const isApp = isAppSubdomain();
-      const path = window.location.pathname.replace(/^\//, '').trim();
-
-      // On app subdomain (app.locoraai.com), default root '/' or '/home' or '/app' directly to dashboard
-      if (isApp) {
-        if (path === '' || path === 'home' || path === 'app' || path === 'dashboard') {
-          return 'dashboard';
-        }
-        if (path === 'pricing' || path === 'pricing-plans') {
-          return 'subscription';
-        }
+      const resolved = resolveRouteFromPath(window.location.pathname, isApp);
+      // Clean up legacy URL in address bar if needed without page refresh
+      if (!resolved.isCanonical && window.location.pathname !== resolved.canonicalPath) {
+        window.history.replaceState({}, '', resolved.canonicalPath);
       }
-
-      if (path === '' || path === 'home') return 'home';
-      if (path && PATH_TO_TAB[path]) return PATH_TO_TAB[path];
-      if (path === 'admin') return 'admin';
-      if (path === 'features') return 'features';
-      if (path === 'pricing') return 'pricing_public';
-      if (path === 'about') return 'about';
-      if (path === 'contact') return 'contact';
-      if (path === 'login') return 'login';
-      if (path === 'signup') return 'signup';
-      if (path === 'dashboard') return 'dashboard';
-      if (path === 'lead-prospector' || path === 'lead_prospector' || path === 'lead-vault' || path === 'lead_vault' || path === 'b2b-vault' || path === 'b2b_vault' || path === 'leads' || path === 'prospector') return 'lead_prospector';
-      if (path === 'agency-vault' || path === 'agency_vault' || path === 'masterclass' || path === 'masterclass-kit' || path === 'masterclass_kit' || path === 'growth-vault' || path === 'growth_vault' || path === 'vault') return 'masterclass_kit';
-      if (window.location.pathname.startsWith('/features/')) {
-        return `feature_${window.location.pathname.replace(/^\/features\//, '').trim()}`;
-      }
-      if (window.location.pathname.startsWith('/use-cases/')) {
-        return `usecase_${window.location.pathname.replace(/^\/use-cases\//, '').trim()}`;
-      }
-      if (window.location.pathname.startsWith('/resources/')) {
-        return `resource_${window.location.pathname.replace(/^\/resources\//, '').trim()}`;
-      }
-      if (window.location.pathname.startsWith('/blog/')) {
-        return `resource_${window.location.pathname.replace(/^\/blog\//, '').trim()}`;
-      }
-      if (window.location.pathname.startsWith('/for/')) return 'industry_pseo';
+      return resolved.targetTab;
     }
     return 'home';
   });
@@ -486,14 +346,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         targetTab = 'dashboard';
       }
 
-      let newPath = TAB_TO_PATH[targetTab] || `/${targetTab}`;
-      if (targetTab === 'industry_pseo') {
-        if (window.location.pathname.startsWith('/for/')) {
-          newPath = window.location.pathname;
-        } else {
-          newPath = '/for/restaurants';
-        }
-      }
+      const newPath = resolvePathFromTab(targetTab, window.location.pathname);
 
       if (window.location.pathname !== newPath) {
         window.history.pushState({}, '', newPath);
@@ -557,12 +410,100 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setUser({
             ...data.user,
             role: isSuperAdminEmail ? 'admin' : (data.user.role || 'customer'),
+            planTier: isSuperAdminEmail ? 'agency' : (data.user.planTier || 'free'),
+            monthlyAiCredits: isSuperAdminEmail ? 9999 : (data.user.monthlyAiCredits || 250),
             isAuthenticated: true,
           });
         }
       })
       .catch(() => {
         // Unauthenticated visitor: keep default user without destroying application state
+      });
+
+    // Hydrate businesses directly from production database
+    fetch('/api/production/businesses', { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((list) => {
+        if (Array.isArray(list) && list.length > 0) {
+          setBusinesses((prev) => {
+            const mapped: ClientBusiness[] = list.map((b: any) => {
+              const existing = prev.find((p) => p.id === b.id);
+              return {
+                id: b.id,
+                name: b.name || 'Local Business',
+                category: b.category || b.industry || 'Local Services',
+                tagline: b.tagline || existing?.tagline || '',
+                locationName: 'Primary Location',
+                address: b.address || existing?.address || '',
+                city: b.city || existing?.city || '',
+                state: b.state || existing?.state || '',
+                country: b.country || existing?.country || 'United States',
+                zip: b.zip || existing?.zip || '',
+                phone: b.phone || existing?.phone || '',
+                website: b.website || existing?.website || '',
+                email: b.email || existing?.email || '',
+                description: b.description || existing?.description || '',
+                healthScore: typeof b.healthScore === 'number' && b.healthScore > 0 ? b.healthScore : (existing?.healthScore || 75),
+                healthDelta: 0,
+                highImpactCount: 0,
+                opportunityCount: 0,
+                healthyAreaCount: 0,
+                isMainLocation: true,
+                locations: existing?.locations || [],
+                services: Array.isArray(b.services) ? b.services : (existing?.services || []),
+                competitors: existing?.competitors || [],
+                googleRating: existing?.googleRating || 0,
+                reviewCount: existing?.reviewCount || 0,
+                unansweredReviews: 0,
+                gbpCompleteness: b.gbpConnected ? 100 : (existing?.gbpCompleteness || 0),
+                gbpConnected: b.gbpConnected || existing?.gbpConnected || false,
+                reviews: existing?.reviews || [],
+              };
+            });
+
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('locora_businesses_list', JSON.stringify(mapped));
+              localStorage.setItem('locora_onboarding_completed', 'true');
+              localStorage.removeItem('locora_pending_public_audit');
+            }
+
+            // Sync business profile state
+            if (mapped.length > 0) {
+              setBusinessProfile((prev) => ({
+                ...prev,
+                id: `bp_${mapped[0].id}`,
+                name: mapped[0].name || prev.name,
+                category: mapped[0].category || prev.category,
+                phone: mapped[0].phone || prev.phone,
+                website: mapped[0].website || prev.website,
+                address: mapped[0].address || prev.address,
+                city: mapped[0].city || prev.city,
+                state: mapped[0].state || prev.state,
+                country: mapped[0].country || prev.country,
+                zip: mapped[0].zip || prev.zip,
+                tagline: mapped[0].tagline || prev.tagline,
+                gbpConnected: mapped[0].gbpConnected,
+              }));
+            }
+
+            return mapped;
+          });
+
+          setActiveBusinessId((currentId) => {
+            const hasCurrent = list.some((b: any) => b.id === currentId);
+            if (hasCurrent && currentId && currentId !== 'workspace_pending') {
+              return currentId;
+            }
+            const fallbackId = list[0].id;
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('locora_active_business_id', fallbackId);
+            }
+            return fallbackId;
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn('[AppContext] Could not fetch workspace businesses:', err);
       });
   }, []);
 
@@ -795,85 +736,154 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })
       .catch(() => {});
 
-    // Initialize clean user business profile & fresh workspace if non-demo account
+    // Hydrate existing user business records or initialize clean workspace if brand new
     if (!isDemo) {
-      let pendingAuditData: any = null;
-      if (typeof window !== 'undefined') {
-        try {
-          const raw = localStorage.getItem('locora_pending_public_audit');
-          if (raw) pendingAuditData = JSON.parse(raw);
-        } catch {}
-      }
+      const alreadyCompletedOnboarding =
+        typeof window !== 'undefined' &&
+        (localStorage.getItem('locora_onboarding_completed') === 'true' ||
+          localStorage.getItem('locora_onboarding_done') === 'true');
 
-      setBusinessProfile((prev) => ({
-        ...prev,
-        id: `bp_${newUser.id}`,
-        name: pendingAuditData?.businessName || companyName || prev.name,
-        email: userEmail,
-        website: pendingAuditData?.domain || pendingAuditData?.url || prev.website,
-        phone: pendingAuditData?.detectedBusinessData?.phone || prev.phone,
-        address: pendingAuditData?.detectedBusinessData?.address || prev.address,
-        tagline: pendingAuditData?.detectedBusinessData?.metaDescription || prev.tagline,
-        updatedAt: new Date().toISOString(),
-      }));
+      // Hydrate user's authentic businesses from PostgreSQL & Locora DB
+      fetch(`/api/production/businesses?email=${encodeURIComponent(userEmail)}`, { credentials: 'include' })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((list) => {
+          if (Array.isArray(list) && list.length > 0) {
+            // User already has permanent businesses in database!
+            const mapped: ClientBusiness[] = list.map((b: any) => ({
+              id: b.id,
+              name: b.name || 'Local Business',
+              category: b.category || b.industry || 'Local Services',
+              tagline: b.tagline || b.description || '',
+              locationName: 'Primary Location',
+              address: b.address || '',
+              city: b.city || '',
+              state: b.state || '',
+              country: b.country || 'United States',
+              zip: b.zip || '',
+              phone: b.phone || '',
+              website: b.website || '',
+              email: b.email || userEmail,
+              description: b.description || '',
+              healthScore: typeof b.healthScore === 'number' && b.healthScore > 0 ? b.healthScore : 78,
+              healthDelta: 0,
+              highImpactCount: 0,
+              opportunityCount: 0,
+              healthyAreaCount: 0,
+              isMainLocation: true,
+              locations: [],
+              services: Array.isArray(b.services) ? b.services : [],
+              competitors: [],
+              googleRating: b.googleRating || 0,
+              reviewCount: b.reviewCount || 0,
+              unansweredReviews: 0,
+              gbpCompleteness: b.gbpConnected ? 100 : 0,
+              gbpConnected: !!b.gbpConnected,
+              reviews: [],
+            }));
 
-      if (pendingAuditData?.auditId) {
-        fetch('/api/public/claim-audit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            auditId: pendingAuditData.auditId,
-            userEmail,
-          }),
-        }).catch(() => {});
-      }
+            setBusinesses(mapped);
+            const activeId = mapped[0].id;
+            setActiveBusinessId(activeId);
 
-      // Initialize business record from claimed audit without demo mock data
-      const newBizId = `biz_${newUser.id}`;
-      const newBiz: ClientBusiness = {
-        id: newBizId,
-        name: pendingAuditData?.businessName || companyName || 'My Business',
-        category: pendingAuditData?.detectedBusinessData?.schemaTypes?.[0] || 'Local Business',
-        tagline: pendingAuditData?.detectedBusinessData?.metaDescription || '',
-        locationName: 'Main Location',
-        address: pendingAuditData?.detectedBusinessData?.address || '',
-        city: '',
-        state: '',
-        country: 'United States',
-        zip: '',
-        phone: pendingAuditData?.detectedBusinessData?.phone || '',
-        website: pendingAuditData?.domain || pendingAuditData?.url || '',
-        healthScore: pendingAuditData?.overallScore || 70,
-        healthDelta: 0,
-        highImpactCount: 2,
-        opportunityCount: 3,
-        healthyAreaCount: 5,
-        isMainLocation: true,
-        services: [],
-        competitors: [],
-        googleRating: 0,
-        reviewCount: 0,
-        unansweredReviews: 0,
-        gbpCompleteness: 0,
-      };
-      setBusinesses([newBiz]);
-      setActiveBusinessId(newBizId);
+            // Update business profile
+            setBusinessProfile((prev) => ({
+              ...prev,
+              id: `bp_${activeId}`,
+              name: mapped[0].name || prev.name,
+              category: mapped[0].category || prev.category,
+              industry: mapped[0].category || prev.industry,
+              phone: mapped[0].phone || prev.phone,
+              website: mapped[0].website || prev.website,
+              address: mapped[0].address || prev.address,
+              city: mapped[0].city || prev.city,
+              state: mapped[0].state || prev.state,
+              country: mapped[0].country || prev.country,
+              zip: mapped[0].zip || prev.zip,
+              email: userEmail,
+              tagline: mapped[0].tagline || prev.tagline,
+              updatedAt: new Date().toISOString(),
+            }));
 
-      if (pendingAuditData) {
-        setTimeout(() => {
-          setOnboardingModalOpen(true);
-        }, 400);
-      }
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('locora_businesses_list', JSON.stringify(mapped));
+              localStorage.setItem('locora_active_business_id', activeId);
+              localStorage.setItem('locora_onboarding_completed', 'true');
+              localStorage.removeItem('locora_pending_public_audit');
+            }
+          } else {
+            // First-time user with no business in DB yet
+            let pendingAuditData: any = null;
+            if (typeof window !== 'undefined') {
+              try {
+                const raw = localStorage.getItem('locora_pending_public_audit');
+                if (raw) pendingAuditData = JSON.parse(raw);
+              } catch {}
+            }
 
-      setCustomers([]);
-      setProjects([]);
-      setNotes([]);
-      setInvoices([]);
-      setProposals([]);
-      setDocuments([]);
-      setConversations([]);
-      setActivityLogs([]);
-      setLocalSeoItems([]);
+            setBusinessProfile((prev) => ({
+              ...prev,
+              id: `bp_${newUser.id}`,
+              name: pendingAuditData?.businessName || companyName || prev.name,
+              email: userEmail,
+              website: pendingAuditData?.domain || pendingAuditData?.url || prev.website,
+              phone: pendingAuditData?.detectedBusinessData?.phone || prev.phone,
+              address: pendingAuditData?.detectedBusinessData?.address || prev.address,
+              tagline: pendingAuditData?.detectedBusinessData?.metaDescription || prev.tagline,
+              updatedAt: new Date().toISOString(),
+            }));
+
+            if (pendingAuditData?.auditId) {
+              fetch('/api/public/claim-audit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  auditId: pendingAuditData.auditId,
+                  userEmail,
+                }),
+              }).catch(() => {});
+            }
+
+            const newBizId = `biz_${newUser.id}`;
+            const newBiz: ClientBusiness = {
+              id: newBizId,
+              name: pendingAuditData?.businessName || companyName || 'My Business',
+              category: pendingAuditData?.detectedBusinessData?.schemaTypes?.[0] || 'Local Business',
+              tagline: pendingAuditData?.detectedBusinessData?.metaDescription || '',
+              locationName: 'Main Location',
+              address: pendingAuditData?.detectedBusinessData?.address || '',
+              city: '',
+              state: '',
+              country: 'United States',
+              zip: '',
+              phone: pendingAuditData?.detectedBusinessData?.phone || '',
+              website: pendingAuditData?.domain || pendingAuditData?.url || '',
+              healthScore: pendingAuditData?.overallScore || 70,
+              healthDelta: 0,
+              highImpactCount: 2,
+              opportunityCount: 3,
+              healthyAreaCount: 5,
+              isMainLocation: true,
+              services: [],
+              competitors: [],
+              googleRating: 0,
+              reviewCount: 0,
+              unansweredReviews: 0,
+              gbpCompleteness: 0,
+            };
+
+            setBusinesses([newBiz]);
+            setActiveBusinessId(newBizId);
+
+            if (!alreadyCompletedOnboarding && (pendingAuditData || newUser.planTier === 'free')) {
+              setTimeout(() => {
+                setOnboardingModalOpen(true);
+              }, 400);
+            }
+          }
+        })
+        .catch((err) => {
+          console.warn('[AppContext] Error fetching businesses during login:', err);
+        });
     }
 
     setAuthModalOpen(false);
@@ -1217,38 +1227,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const activeBusiness = businesses.find((b) => b.id === activeBusinessId) || businesses[0] || UNCONFIGURED_BUSINESS;
 
   const switchBusiness = useCallback((id: string) => {
-    const target = businesses.find((b) => b.id === id);
-    if (!target) return;
     setActiveBusinessId(id);
     if (typeof window !== 'undefined') {
       localStorage.setItem('locora_active_business_id', id);
     }
-    setBusinessProfile((prev) => ({
-      ...prev,
-      id: `bp_${target.id}`,
-      name: target.name,
-      tagline: target.tagline,
-      industry: target.category,
-      address: target.address,
-      city: target.city,
-      state: target.state,
-      country: target.country || prev.country || 'United States',
-      zip: target.zip,
-      phone: target.phone,
-      website: target.website,
-      services: target.services,
-      primaryCompetitors: target.competitors,
-      googleBusiness: {
-        ...prev.googleBusiness,
-        connected: Boolean(target.gbpConnected),
-        listingName: target.gbpConnected ? `${target.name} (Google Maps)` : '',
-        rating: target.googleRating || 0,
-        reviewCount: target.reviewCount || 0,
-        unansweredReviews: target.unansweredReviews || 0,
-        category: target.category,
-      },
-    }));
-  }, [businesses]);
+    const target = businesses.find((b) => b.id === id);
+    if (target) {
+      setBusinessProfile((prev) => ({
+        ...prev,
+        id: `bp_${target.id}`,
+        name: target.name,
+        tagline: target.tagline,
+        industry: target.category,
+        address: target.address,
+        city: target.city,
+        state: target.state,
+        country: target.country || prev.country || 'Australia',
+        zip: target.zip,
+        phone: target.phone,
+        website: target.website,
+        services: target.services,
+        primaryCompetitors: target.competitors,
+        googleBusiness: {
+          ...prev.googleBusiness,
+          connected: Boolean(target.gbpConnected),
+          listingName: target.gbpConnected ? `${target.name} (Google Maps)` : '',
+          rating: target.googleRating || 0,
+          reviewCount: target.reviewCount || 0,
+          unansweredReviews: target.unansweredReviews || 0,
+          category: target.category,
+        },
+      }));
+    }
+    refreshBusinessTruth(id);
+    refreshProductionDashboard(id);
+  }, [businesses, refreshBusinessTruth, refreshProductionDashboard]);
 
   const syncGoogleBusinessProfile = useCallback((data: Partial<ClientBusiness>) => {
     setBusinesses((prev) => {
@@ -1313,7 +1326,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [activeBusinessId, activeBusiness]);
 
   const addBusiness = useCallback((data: Partial<ClientBusiness>) => {
-    const newId = `biz_${Date.now()}`;
+    const newId = data.id || `biz_${Date.now()}`;
     const newBiz: ClientBusiness = {
       id: newId,
       name: data.name || 'New Client Business',
@@ -1356,7 +1369,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       reviews: data.reviews || [],
     };
     setBusinesses((prev) => {
-      const next = [...prev, newBiz];
+      const filtered = prev.filter((b) => b.id !== newId);
+      const next = [newBiz, ...filtered];
       if (typeof window !== 'undefined') {
         localStorage.setItem('locora_businesses_list', JSON.stringify(next));
       }
@@ -1415,18 +1429,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return next;
     });
 
-    setBusinessProfile((prev) => ({
-      ...prev,
-      name: data.name || prev.name,
-      industry: data.category || prev.industry,
-      website: data.website || prev.website,
-      phone: data.phone || prev.phone,
-      address: data.address || prev.address,
-      city: data.city || prev.city,
-      state: data.state || prev.state,
-      country: data.country || prev.country,
-    }));
-  }, [activeBusinessId]);
+    setBusinessProfile((prev) => {
+      const updated = {
+        ...prev,
+        name: data.name || prev.name,
+        industry: data.category || prev.industry,
+        website: data.website || prev.website,
+        phone: data.phone || prev.phone,
+        address: data.address || prev.address,
+        city: data.city || prev.city,
+        state: data.state || prev.state,
+        country: data.country || prev.country,
+        zip: data.zip !== undefined ? data.zip : prev.zip,
+      };
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('locora_business_profile', JSON.stringify(updated));
+        } catch {}
+      }
+      return updated;
+    });
+
+    if (data.name) {
+      setUser((prev) => ({
+        ...prev,
+        companyName: data.name || prev.companyName,
+      }));
+    }
+
+    if (activeBusinessId) {
+      fetch(`/api/production/business/${encodeURIComponent(activeBusinessId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }).catch(() => {});
+    }
+
+    fetch(`/api/workspace/business-profile?email=${encodeURIComponent(user.email || '')}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...data,
+        userEmail: user.email,
+        name: data.name,
+        industry: data.category,
+      }),
+    }).catch(() => {});
+  }, [activeBusinessId, user.email]);
 
   const fixItAction = useCallback((actionId: string) => {
     setPriorityActions((prev) => {
@@ -2534,6 +2583,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addBusiness,
         addLocation,
         priorityActions,
+        setPriorityActions,
         fixItAction,
         publishDraft,
         rightAiPanelOpen,

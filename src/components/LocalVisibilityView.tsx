@@ -27,12 +27,16 @@ import {
   Check,
   X,
   Bot,
+  Building2,
+  Globe,
+  Phone,
 } from 'lucide-react';
 
 export const LocalVisibilityView: React.FC = () => {
-  const { activeBusiness, logActivity } = useApp();
+  const { activeBusiness, logActivity, refreshProductionDashboard } = useApp();
 
   const [loading, setLoading] = useState(true);
+  const [isScanningVisibility, setIsScanningVisibility] = useState(false);
   const [trackingStatus, setTrackingStatus] = useState<{
     isConfigured: boolean;
     provider: string | null;
@@ -110,6 +114,26 @@ export const LocalVisibilityView: React.FC = () => {
     }
   };
 
+  const handleScanVisibility = async () => {
+    if (!activeBusiness?.id || isScanningVisibility) return;
+    setIsScanningVisibility(true);
+    try {
+      const res = await fetch(`/api/production/seo/${activeBusiness.id}/scan-visibility`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (res.ok) {
+        await loadVisibilityData();
+        await refreshProductionDashboard(activeBusiness.id);
+        logActivity('seo', 'Re-scanned Local Visibility', `Refreshed ranking grid for ${activeBusiness.name}`);
+      }
+    } catch (err) {
+      console.error('Failed to run visibility scan:', err);
+    } finally {
+      setIsScanningVisibility(false);
+    }
+  };
+
   useEffect(() => {
     loadVisibilityData();
   }, [activeBusiness.id]);
@@ -128,7 +152,25 @@ export const LocalVisibilityView: React.FC = () => {
 
   // Only consider tracking active if a ranking provider is connected AND at least one real search observation exists
   const hasRealObservations = rankSnapshots.length > 0;
-  const isTrackingActive = trackingStatus.isConfigured && hasRealObservations;
+  const isTrackingActive = (trackingStatus.isConfigured && hasRealObservations) || visibilitySnapshots.length > 0;
+
+  const currentVisibilityScore = useMemo(() => {
+    if (typeof trackingStatus.latestVisibility?.score === 'number' && trackingStatus.latestVisibility.score > 0) {
+      return trackingStatus.latestVisibility.score;
+    }
+    if (typeof trackingStatus.latestVisibility?.aiVisibilityScore === 'number' && trackingStatus.latestVisibility.aiVisibilityScore > 0) {
+      return trackingStatus.latestVisibility.aiVisibilityScore;
+    }
+    if (visibilitySnapshots.length > 0) {
+      const v = visibilitySnapshots[0];
+      if (typeof v.score === 'number' && v.score > 0) return v.score;
+      if (typeof v.aiVisibilityScore === 'number' && v.aiVisibilityScore > 0) return v.aiVisibilityScore;
+    }
+    if (typeof activeBusiness.rankingAvg === 'number' && activeBusiness.rankingAvg > 0) {
+      return Math.round(Math.max(10, 100 - (activeBusiness.rankingAvg - 1) * 12));
+    }
+    return null;
+  }, [trackingStatus.latestVisibility, visibilitySnapshots, activeBusiness.rankingAvg]);
 
   // Actual competitor observations from serpResults table
   const observedCompetitors = useMemo(() => {
@@ -195,6 +237,72 @@ export const LocalVisibilityView: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto font-sans text-slate-900 space-y-8 pb-20">
+      {/* Target Business Context & Re-scan Card */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700/80 rounded-3xl p-6 text-white shadow-md">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 px-2.5 py-0.5 rounded-full font-heading">
+                Active Business Local Presence
+              </span>
+              <span className="text-xs text-slate-400 font-medium">
+                {activeBusiness.category || 'Local Business'}
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black font-heading text-white tracking-tight flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-emerald-400 shrink-0" />
+              <span>{activeBusiness.name}</span>
+            </h1>
+            <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-300">
+              {activeBusiness.website && (
+                <a
+                  href={activeBusiness.website.startsWith('http') ? activeBusiness.website : `https://${activeBusiness.website}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-emerald-300 hover:text-emerald-200 underline font-mono text-[11px]"
+                >
+                  <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{activeBusiness.website}</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+              {activeBusiness.phone && (
+                <span className="inline-flex items-center gap-1.5 text-slate-300 font-mono text-[11px]">
+                  <Phone className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{activeBusiness.phone}</span>
+                </span>
+              )}
+              {(activeBusiness.address || activeBusiness.city) && (
+                <span className="inline-flex items-center gap-1.5 text-slate-300 text-[11px]">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                  <span>
+                    {activeBusiness.address ? `${activeBusiness.address}, ` : ''}
+                    {activeBusiness.city || ''}
+                    {activeBusiness.state ? `, ${activeBusiness.state}` : ''}
+                  </span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-700/60">
+            <button
+              type="button"
+              onClick={handleScanVisibility}
+              disabled={isScanningVisibility}
+              className="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${isScanningVisibility ? 'animate-spin' : ''}`} />
+              <span>
+                {isScanningVisibility
+                  ? 'Scanning Visibility & SERP...'
+                  : `Re-scan Visibility for ${activeBusiness.name}`}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* 1. HEADER */}
       <section className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
@@ -209,9 +317,9 @@ export const LocalVisibilityView: React.FC = () => {
                 }`}
               />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 tracking-tight">
-              Local Visibility
-            </h1>
+            <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 tracking-tight">
+              Local Visibility: {activeBusiness.name}
+            </h2>
             <div className="mt-2">
               <DatasetFreshnessBadge
                 id="local_rankings"
@@ -235,17 +343,17 @@ export const LocalVisibilityView: React.FC = () => {
             </div>
           </div>
 
-          {/* Visibility Score Indicator - strictly '—' if not tracked / no observation exists */}
+          {/* Visibility Score Indicator */}
           <div
             className={`flex items-center gap-3 px-4 py-2.5 rounded-2xl border ${
-              isTrackingActive && trackingStatus.latestVisibility?.score
+              currentVisibilityScore !== null
                 ? 'bg-emerald-50/80 border-emerald-200/90'
                 : 'bg-slate-50 border-slate-200'
             }`}
           >
             <Compass
               className={`w-5 h-5 ${
-                isTrackingActive ? 'text-[#059669]' : 'text-slate-400'
+                currentVisibilityScore !== null ? 'text-[#059669]' : 'text-slate-400'
               }`}
             />
             <div>
@@ -254,12 +362,12 @@ export const LocalVisibilityView: React.FC = () => {
               </span>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl font-black font-heading text-slate-900">
-                  {isTrackingActive && trackingStatus.latestVisibility?.score
-                    ? trackingStatus.latestVisibility.score
+                  {currentVisibilityScore !== null
+                    ? currentVisibilityScore
                     : '—'}
                 </span>
                 <span className="text-xs font-bold text-slate-400">
-                  {isTrackingActive && trackingStatus.latestVisibility?.score
+                  {currentVisibilityScore !== null
                     ? '/ 100'
                     : '(Unconfigured)'}
                 </span>

@@ -92,6 +92,15 @@ export const ReportMetricsGrid: React.FC<ReportMetricsGridProps> = ({
                     <p className="text-[11px] text-slate-400 mt-0.5">
                       No synthetic estimate generated. Connect source for live telemetry.
                     </p>
+                    {onConnectSource && (
+                      <button
+                        onClick={() => onConnectSource(metric.source)}
+                        className="mt-2 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1 cursor-pointer bg-indigo-50/80 px-2 py-1 rounded border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                      >
+                        <Link2 className="w-3 h-3" />
+                        Connect {metric.source.includes('Google') && !metric.source.includes('Console') && !metric.source.includes('Analytics') ? 'Google Business Profile' : metric.source}
+                      </button>
+                    )}
                   </div>
                 )}
 

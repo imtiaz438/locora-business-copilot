@@ -148,8 +148,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
             const isActive = isNavActive(item.id);
 
             const isLocked =
-              (item.requiredPlan === 'pro' && user.planTier === 'free') ||
-              (item.requiredPlan === 'agency' && (user.planTier === 'free' || user.planTier === 'pro'));
+              !(user.role === 'admin' || user.role === 'owner') &&
+              ((item.requiredPlan === 'pro' && user.planTier === 'free') ||
+              (item.requiredPlan === 'agency' && (user.planTier === 'free' || user.planTier === 'pro')));
 
             return (
               <button

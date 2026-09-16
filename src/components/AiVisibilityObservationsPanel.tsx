@@ -118,10 +118,17 @@ export const AiVisibilityObservationsPanel: React.FC<AiVisibilityObservationsPan
         data = await res.json();
       } else {
         const text = await res.text();
+        const isForbidden = res.status === 403 || text.includes('403 Forbidden');
+        const isTimeout = res.status === 504 || res.status === 408;
+        if (isForbidden) {
+          setProviderStatus('quota_exceeded');
+          setProviderStatusMessage('AI Visibility runs exhausted. Upgrade to Pro or Agency for unlimited scheduled AI benchmarks.');
+          throw new Error('AI Visibility limit reached. Upgrade to Pro or Agency for continuous AI benchmark queries.');
+        }
         throw new Error(
-          res.status === 504 || res.status === 408
+          isTimeout
             ? 'The live AI audit query timed out while querying models. Please try again in a few moments.'
-            : `AI Service temporary response (${res.status}): ${text.slice(0, 120)}`
+            : `AI Service temporary notice (${res.status}): Please retry or verify provider quota.`
         );
       }
 

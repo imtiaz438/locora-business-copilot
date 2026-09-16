@@ -390,9 +390,10 @@ export function resolveRouteMetadata(rawPath: string, host: string = ''): Resolv
     };
   }
 
-  // 8. Dynamic feature pages (/features/:slug)
-  if (cleanPath.startsWith('features/')) {
-    const featureSlug = cleanPath.replace(/^features\//, '').trim();
+  // 8. Dynamic feature pages (/features/:slug, /feature_:slug, etc.)
+  const featurePrefix = ['features/', 'feature/', 'feature_', 'feature-'].find((p) => cleanPath.startsWith(p));
+  if (featurePrefix) {
+    const featureSlug = cleanPath.slice(featurePrefix.length).trim();
     const formattedName = featureSlug
       .split('-')
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
@@ -406,9 +407,10 @@ export function resolveRouteMetadata(rawPath: string, host: string = ''): Resolv
     };
   }
 
-  // 9. Dynamic use case pages (/use-cases/:slug)
-  if (cleanPath.startsWith('use-cases/')) {
-    const slug = cleanPath.replace(/^use-cases\//, '').trim();
+  // 9. Dynamic use case pages (/use-cases/:slug, /usecase_:slug, etc.)
+  const useCasePrefix = ['use-cases/', 'use-case/', 'usecase/', 'usecase_', 'use_case_', 'usecase-'].find((p) => cleanPath.startsWith(p));
+  if (useCasePrefix) {
+    const slug = cleanPath.slice(useCasePrefix.length).trim();
     const formattedName = slug
       .split('-')
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
@@ -422,9 +424,10 @@ export function resolveRouteMetadata(rawPath: string, host: string = ''): Resolv
     };
   }
 
-  // 10. Dynamic resources / guides (/resources/:slug)
-  if (cleanPath.startsWith('resources/')) {
-    const slug = cleanPath.replace(/^resources\//, '').trim();
+  // 10. Dynamic resources / guides (/resources/:slug, /resource_:slug, etc.)
+  const resourcePrefix = ['resources/', 'resource/', 'resource_', 'resource-', 'blog/'].find((p) => cleanPath.startsWith(p));
+  if (resourcePrefix) {
+    const slug = cleanPath.slice(resourcePrefix.length).trim();
     const formattedName = slug
       .split('-')
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))

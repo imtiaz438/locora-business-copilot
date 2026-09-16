@@ -13,10 +13,13 @@ export interface LocationData {
 interface GoogleAddressAutocompleteProps {
   onSelectLocation: (loc: LocationData) => void;
   initialValue?: string;
+  value?: string;
+  onChange?: (val: string) => void;
   placeholder?: string;
   id?: string;
   label?: string;
   helperText?: string;
+  className?: string;
 }
 
 // Built-in verified seed addresses & cities for instant responsive autocomplete
@@ -52,14 +55,6 @@ const VERIFIED_LOCATIONS = [
     country: 'United States',
     zip: '90401',
     formatted: '100 Wilshire Blvd, Santa Monica, CA 90401, USA',
-  },
-  {
-    address: '233 S Wacker Dr',
-    city: 'Chicago',
-    state: 'IL',
-    country: 'United States',
-    zip: '60606',
-    formatted: '233 S Wacker Dr, Chicago, IL 60606, USA',
   },
   {
     address: '1000 Louisiana St, Suite 5000',
@@ -102,6 +97,14 @@ const VERIFIED_LOCATIONS = [
     formatted: '1 Canada Square, London E14 5AA, United Kingdom',
   },
   {
+    address: '220 Collins Street',
+    city: 'Melbourne',
+    state: 'Victoria',
+    country: 'Australia',
+    zip: '3000',
+    formatted: '220 Collins Street, Melbourne, Victoria 3000, Australia',
+  },
+  {
     address: '100 Barangaroo Avenue',
     city: 'Sydney',
     state: 'NSW',
@@ -114,12 +117,15 @@ const VERIFIED_LOCATIONS = [
 export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps> = ({
   onSelectLocation,
   initialValue = '',
-  placeholder = 'Start typing address, city, or state (e.g. 500 Market St, San Francisco, CA)...',
+  value,
+  onChange,
+  placeholder = 'Start typing address, city, or state (e.g. 220 Collins Street, Melbourne)...',
   id = 'google_address_autocomplete',
   label = 'Search Address or Location',
-  helperText = 'Google Places autocomplete enabled for street addresses, cities, and states',
+  helperText = 'Real-time address autocomplete enabled for street addresses, cities, states, and postal codes',
+  className,
 }) => {
-  const [query, setQuery] = useState(initialValue);
+  const [query, setQuery] = useState(value !== undefined ? value : initialValue);
   const [predictions, setPredictions] = useState<
     Array<{
       description: string;
@@ -135,8 +141,16 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    setQuery(initialValue);
-  }, [initialValue]);
+    if (value !== undefined) {
+      setQuery(value);
+    }
+  }, [value]);
+
+  useEffect(() => {
+    if (initialValue && value === undefined) {
+      setQuery(initialValue);
+    }
+  }, [initialValue, value]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -150,6 +164,8 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
 
   const handleQueryChange = (val: string) => {
     setQuery(val);
+    onChange?.(val);
+
     if (!val || val.trim().length < 2) {
       setPredictions([]);
       setIsOpen(false);
@@ -162,7 +178,6 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
     searchTimeoutRef.current = setTimeout(async () => {
       setIsLoading(true);
       try {
-        // First try server-side Google Places API proxy
         const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(val)}`);
         if (res.ok) {
           const data = await res.json();
@@ -198,7 +213,7 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
         },
       }));
 
-      // If user typed a custom city/address not in mock list, generate a parsed suggestion
+      // If user typed a custom city/address not in seed list, generate a parsed suggestion
       if (localMatches.length === 0 && val.trim().length > 3) {
         const parts = val.split(',').map((p) => p.trim());
         const generatedLoc: LocationData = {
@@ -230,7 +245,8 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
     locationData?: LocationData;
   }) => {
     if (item.locationData) {
-      setQuery(item.description);
+      setQuery(item.locationData.address || item.description);
+      onChange?.(item.locationData.address || item.description);
       onSelectLocation(item.locationData);
       setIsOpen(false);
       return;
@@ -239,11 +255,12 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
     if (item.placeId) {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/places/details?place_id=${encodeURIComponent(item.placeId)}`);
+        const res = await fetch(`/api/places/details?place_id=${encodeURIComponent(item.placeId)}&query=${encodeURIComponent(item.description)}`);
         if (res.ok) {
           const detail = await res.json();
           if (detail.locationData) {
-            setQuery(detail.locationData.formattedAddress || item.description);
+            setQuery(detail.locationData.address || detail.locationData.formattedAddress || item.description);
+            onChange?.(detail.locationData.address || detail.locationData.formattedAddress || item.description);
             onSelectLocation(detail.locationData);
             setIsOpen(false);
             setIsLoading(false);
@@ -266,13 +283,46 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
       zip: '',
       formattedAddress: item.description,
     };
-    setQuery(item.description);
+    setQuery(item.mainText || parts[0] || item.description);
+    onChange?.(item.mainText || parts[0] || item.description);
     onSelectLocation(fallbackData);
     setIsOpen(false);
   };
 
+  const handleBlur = () => {
+    // If input has text and looks like an address with commas or numbers, trigger parse
+    if (query && query.includes(',')) {
+      const parts = query.split(',').map((p) => p.trim());
+      if (parts.length >= 2) {
+        const stateZip = parts[2] || '';
+        const tokens = stateZip.split(' ').filter(Boolean);
+        onSelectLocation({
+          address: parts[0] || '',
+          city: parts[1] || '',
+          state: tokens[0] || '',
+          zip: tokens[1] || '',
+          country: parts[3] || 'United States',
+          formattedAddress: query,
+        });
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (predictions.length > 0) {
+        handleSelectPrediction(predictions[0]);
+      } else {
+        handleBlur();
+        setIsOpen(false);
+      }
+    }
+  };
+
   const handleClear = () => {
     setQuery('');
+    onChange?.('');
     setPredictions([]);
   };
 
@@ -298,12 +348,14 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
           type="text"
           value={query}
           onChange={(e) => handleQueryChange(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
           onFocus={() => {
             if (query.trim().length >= 2) setIsOpen(true);
           }}
           placeholder={placeholder}
           autoComplete="off"
-          className="w-full pl-9 pr-14 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:ring-1 focus:ring-[#059669] focus:outline-none transition-all"
+          className={className || "w-full pl-9 pr-14 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:ring-1 focus:ring-[#059669] focus:outline-none transition-all"}
         />
 
         <div className="absolute right-2.5 flex items-center gap-1">
@@ -332,19 +384,22 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
           {isLoading && predictions.length === 0 ? (
             <div className="p-4 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
               <Loader2 className="w-3.5 h-3.5 animate-spin text-[#059669]" />
-              <span>Searching Google Places...</span>
+              <span>Searching places & addresses...</span>
             </div>
           ) : predictions.length > 0 ? (
             <>
               <div className="px-3 py-1.5 bg-slate-50/80 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                <span>Google Places Suggestions</span>
+                <span>Address & Location Suggestions</span>
                 <span className="text-emerald-700 font-normal">Cities, States & Streets</span>
               </div>
               {predictions.map((p, idx) => (
                 <button
                   key={idx}
                   type="button"
-                  onClick={() => handleSelectPrediction(p)}
+                  onMouseDown={(e) => {
+                    e.preventDefault(); // prevent blur before click
+                    handleSelectPrediction(p);
+                  }}
                   className="w-full text-left px-3.5 py-2.5 hover:bg-emerald-50/80 transition-colors flex items-start gap-2.5 cursor-pointer group"
                 >
                   <MapPin className="w-4 h-4 text-slate-400 group-hover:text-[#059669] shrink-0 mt-0.5 transition-colors" />
@@ -367,10 +422,10 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
             </div>
           )}
 
-          {/* Google Places Required Attribution */}
+          {/* Attribution */}
           <div className="px-3 py-1 bg-slate-50 text-[10px] text-slate-400 flex items-center justify-between font-mono">
-            <span>Powered by Google Maps</span>
-            <span className="text-slate-300">Places API</span>
+            <span>Verified Places & Geocoding</span>
+            <span className="text-slate-400">Live Global Search</span>
           </div>
         </div>
       )}

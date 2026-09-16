@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import { db, schema } from '../src/db/index.ts';
 import { eq, desc } from 'drizzle-orm';
 import { syncDetectedGrowthOpportunities } from './growthDetectorService.ts';
+import { saveBusinessRecordToLocoraDb } from './locoraDataEngine.ts';
 import type { DiscoveredBusinessInfo, OnboardingMissingInfoForm } from '../src/types.ts';
 
 // Helper to get GoogleGenAI client
@@ -237,6 +238,70 @@ export async function discoverBusiness(params: {
           sources.businessName = 'website_crawl';
         }
       }
+
+      // Refine category from page title and description if generic
+      if (!discoveredCategory || discoveredCategory.toLowerCase() === 'organization' || discoveredCategory.toLowerCase() === 'local business') {
+        const combinedText = `${pageTitle} ${discoveredDescription}`.toLowerCase();
+        const knownCategories = [
+          { label: 'Dentist / Dental Clinic', keywords: ['dentist', 'dental clinic', 'dentistry', 'orthodontics', 'teeth'] },
+          { label: 'Medical Clinic', keywords: ['medical clinic', 'doctor', 'physician', 'healthcare clinic'] },
+          { label: 'Chiropractor', keywords: ['chiropractor', 'chiropractic'] },
+          { label: 'Optometrist', keywords: ['optometrist', 'optometry', 'eye care'] },
+          { label: 'Law Firm', keywords: ['lawyer', 'attorney', 'law firm', 'legal services'] },
+          { label: 'Accounting Firm', keywords: ['accountant', 'cpa', 'accounting firm', 'tax services'] },
+          { label: 'Plumbing Service', keywords: ['plumber', 'plumbing'] },
+          { label: 'HVAC Contractor', keywords: ['hvac', 'air conditioning', 'heating and cooling'] },
+          { label: 'Electrician', keywords: ['electrician', 'electrical contractor'] },
+          { label: 'Roofing Contractor', keywords: ['roofing', 'roofer'] },
+          { label: 'Veterinary Clinic', keywords: ['veterinary', 'vet clinic', 'animal hospital'] },
+          { label: 'Real Estate Agency', keywords: ['real estate', 'realtor', 'property management'] },
+          { label: 'Digital Marketing Agency', keywords: ['marketing agency', 'seo agency', 'digital agency'] },
+          { label: 'Restaurant', keywords: ['restaurant', 'cafe', 'bistro', 'dining'] },
+          { label: 'Fitness Center', keywords: ['gym', 'fitness', 'crossfit', 'personal training'] },
+          { label: 'Auto Repair Shop', keywords: ['auto repair', 'car mechanic', 'auto service'] },
+          { label: 'Hair Salon', keywords: ['hair salon', 'barber', 'hair stylist'] },
+        ];
+        for (const cat of knownCategories) {
+          if (cat.keywords.some((kw) => combinedText.includes(kw))) {
+            discoveredCategory = cat.label;
+            sources.category = 'website_crawl';
+            break;
+          }
+        }
+      }
+
+      // Extract discovered services from text & description
+      if (discoveredServices.length === 0 && discoveredDescription) {
+        const commonServiceCandidates = [
+          'General Dentistry',
+          'Cosmetic Dentistry',
+          'Orthodontics',
+          'Dental Implants',
+          'Specialist Care',
+          'Teeth Whitening',
+          'Invisalign',
+          'Emergency Dental',
+          'Emergency Care',
+          'Preventative Maintenance',
+          'Consultations',
+          'Repairs & Installations',
+        ];
+        for (const s of commonServiceCandidates) {
+          if (discoveredDescription.toLowerCase().includes(s.toLowerCase())) {
+            discoveredServices.push(s);
+          }
+        }
+      }
+
+      // Extract street address from text/description if missing in Schema
+      if (!discoveredAddress && discoveredDescription) {
+        const addrMatch = discoveredDescription.match(/(?:located\s+(?:at|in)|address:?)\s*([0-9]{1,5}\s+[A-Za-z0-9\s,.-]+(?:Street|St|Road|Rd|Avenue|Ave|Boulevard|Blvd|Lane|Ln|Drive|Dr|Way|Square|Sq|Place|Pl|Parade|Pde)[^,.;]*)/i);
+        if (addrMatch && addrMatch[1]) {
+          const streetStr = addrMatch[1].trim();
+          discoveredAddress = cleanLocation ? `${streetStr}, ${cleanLocation}` : streetStr;
+          sources.address = 'website_crawl';
+        }
+      }
     }
   } catch (crawlErr) {
     console.warn('[Business Discovery] Website crawl notice:', crawlErr);
@@ -289,6 +354,59 @@ export async function discoverBusiness(params: {
       }
     } catch (gErr) {
       console.warn('[Business Discovery] Google Places search notice:', gErr);
+    }
+  }
+
+  // 2B. PROVIDER 2B: OpenStreetMap Photon Public Geocoding & Places (When GBP is not connected or restricted)
+  if (gbpSource === 'not_found' || !discoveredPostalCode || !discoveredCategory) {
+    try {
+      const photonQuery = [discoveredName || cleanProvidedName, cleanLocation, cleanCountry].filter(Boolean).join(' ');
+      if (photonQuery.length > 2) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 4500);
+        const pRes = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(photonQuery)}&limit=3`, {
+          signal: controller.signal,
+          headers: { 'User-Agent': 'Locora/1.0 (support@locoraai.com)' },
+        });
+        clearTimeout(timeout);
+        if (pRes.ok) {
+          const pData = await pRes.json();
+          if (pData.features && Array.isArray(pData.features) && pData.features.length > 0) {
+            const first = pData.features[0];
+            const p = first.properties || {};
+            if (!sourcesList.includes('OpenStreetMap Public Directory')) {
+              sourcesList.push('OpenStreetMap Public Directory');
+            }
+
+            if (!discoveredCategory && p.osm_value) {
+              discoveredCategory = p.osm_value.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+              sources.category = 'public_directory' as any;
+            }
+
+            if (p.postcode && !discoveredPostalCode) {
+              discoveredPostalCode = p.postcode;
+            }
+
+            if (p.city && !discoveredCity) {
+              discoveredCity = p.city;
+            }
+
+            if (p.state && !discoveredState) {
+              discoveredState = p.state;
+            }
+
+            if (!discoveredAddress && (p.housenumber || p.street)) {
+              const street = [p.housenumber, p.street].filter(Boolean).join(' ') || p.name || '';
+              if (street) {
+                discoveredAddress = [street, p.city || cleanLocation, p.state, p.postcode].filter(Boolean).join(', ');
+                sources.address = 'public_directory' as any;
+              }
+            }
+          }
+        }
+      }
+    } catch {
+      // Non-blocking OSM Photon query
     }
   }
 
@@ -569,6 +687,53 @@ export async function confirmAndSaveBusiness(
     // Non-blocking profile update
   }
 
+  // Dual-write to Locora disk database for complete permanent persistence
+  try {
+    saveBusinessRecordToLocoraDb({
+      id: savedBusiness.id,
+      ownerEmail: normalizedEmail,
+      userEmail: normalizedEmail,
+      identity: {
+        id: savedBusiness.id,
+        name: cleanName,
+        industry: cleanCategory,
+        category: cleanCategory,
+        phone: cleanPhone,
+        website: cleanWebsite,
+        email: cleanEmail,
+        address: cleanAddress,
+        city: cleanCity,
+        state: cleanState,
+        country: cleanCountry,
+        zip: cleanZip,
+      },
+      locations: [
+        {
+          id: `loc_${savedBusiness.id}`,
+          name: `${cleanName} (Main)`,
+          isMain: true,
+          address: cleanAddress,
+          city: cleanCity,
+          state: cleanState,
+          zip: cleanZip,
+          country: cleanCountry,
+          phone: cleanPhone,
+        },
+      ],
+      services: cleanServices,
+      serviceAreas: cleanServiceAreas,
+      goals: cleanGoals,
+      brandVoice: formData.brandVoice?.trim() || '',
+      targetAudience: formData.targetCustomers?.trim() || '',
+      planTier: 'agency',
+      status: 'active',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    } as any);
+  } catch (syncErr) {
+    console.warn('[Onboarding] Locora DB sync notice:', syncErr);
+  }
+
   return savedBusiness;
 }
 
@@ -685,7 +850,7 @@ Return ONLY a single valid JSON object with this exact shape:
 
   try {
     const ai = getGenAIClient();
-    const candidateModels = ['gemini-3.8-flash', 'gemini-2.5-flash'];
+    const candidateModels = ['gemini-3.8-flash', 'gemini-3.6-flash'];
 
     for (const modelToUse of candidateModels) {
       try {
@@ -832,6 +997,51 @@ Return ONLY a single valid JSON object with this exact shape:
     await syncDetectedGrowthOpportunities(businessId);
   } catch (oppErr) {
     console.warn('[Business Brain Creation] Opportunities detection notice:', oppErr);
+  }
+
+  // Dual-write brain to Locora disk database
+  try {
+    const existingBiz = await db.select().from(schema.businessesTable).where(eq(schema.businessesTable.id, businessId)).limit(1);
+    if (existingBiz.length > 0) {
+      const b = existingBiz[0];
+      saveBusinessRecordToLocoraDb({
+        id: b.id,
+        ownerEmail: b.ownerEmail,
+        userEmail: b.ownerEmail,
+        identity: {
+          id: b.id,
+          name: b.name,
+          industry: b.industry || 'Local Services',
+          category: b.category || 'Local Business',
+          phone: b.phone || '',
+          website: b.website || '',
+          email: b.email || b.ownerEmail,
+          address: primaryLoc?.address || '',
+          city: primaryLoc?.city || '',
+          state: primaryLoc?.state || '',
+          country: primaryLoc?.country || 'United States',
+          zip: primaryLoc?.zip || '',
+        },
+        services: (b.services as string[]) || [],
+        serviceAreas: (b.serviceAreas as string[]) || [],
+        goals: (b.goals as string[]) || [],
+        brandVoice: b.brandVoice || '',
+        targetAudience: b.targetAudience || '',
+        planTier: b.planTier || 'agency',
+        status: b.status || 'active',
+        businessBrain: {
+          score: computedHealthScore,
+          readinessScore: computedReadinessScore,
+          summary: defaultSummary,
+          swot: defaultSwot,
+          priorities: defaultPriorities,
+          lastSynthesizedAt: new Date().toISOString(),
+        },
+        updatedAt: new Date().toISOString(),
+      } as any);
+    }
+  } catch (syncBrainErr) {
+    console.warn('[Business Brain Creation] Locora DB brain sync notice:', syncBrainErr);
   }
 
   return {

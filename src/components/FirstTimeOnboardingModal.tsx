@@ -45,6 +45,8 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
     addBusiness,
     switchBusiness,
     refreshProductionDashboard,
+    refreshBusinessTruth,
+    setPriorityActions,
     setActiveTab,
     logActivity,
   } = useApp();
@@ -378,17 +380,24 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
       setBrainResult(brainJson);
       setIsSynthesizingBrain(false);
 
-      // Register business into AppContext
+      // Register business into AppContext with canonical database ID
       addBusiness({
+        id: confirmedBizId,
         name: updatedFormData.businessName,
         category: updatedFormData.businessCategory || 'Local Business',
         address: updatedFormData.address,
         city: updatedFormData.city,
         state: updatedFormData.state,
-        country: updatedFormData.country,
+        country: updatedFormData.country || 'Australia',
         zip: updatedFormData.postalCode,
         phone: updatedFormData.phone,
         website: updatedFormData.website,
+        email: updatedFormData.email,
+        description: updatedFormData.description,
+        healthScore: brainJson?.healthScore || brainJson?.readinessScore || 75,
+        services: updatedFormData.services || [],
+        gbpConnected: Boolean(updatedFormData.googleConnected),
+        tagline: updatedFormData.brandVoice || '',
       });
 
       logActivity(
@@ -405,11 +414,46 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
 
   // STEP 6: Completion action
   const handleLaunchDashboard = () => {
-    if (savedBusinessId) {
-      switchBusiness(savedBusinessId);
-      refreshProductionDashboard(savedBusinessId);
+    const bizId = savedBusinessId || (brainResult as any)?.businessId;
+    if (bizId) {
+      switchBusiness(bizId);
+      refreshProductionDashboard(bizId);
+      refreshBusinessTruth(bizId);
+    }
+    if (brainResult?.priorities && Array.isArray(brainResult.priorities) && brainResult.priorities.length > 0) {
+      setPriorityActions(brainResult.priorities.map((p: any, idx: number) => ({
+        id: p.id || `act_brain_${idx}`,
+        urgency: p.urgency || 'high',
+        urgencyLabel: p.urgencyLabel || (p.urgency === 'high' ? 'CRITICAL PRIORITY' : 'GROWTH OPPORTUNITY'),
+        title: p.title || 'Growth Opportunity',
+        problem: p.problem || p.description || p.title,
+        whyItMatters: p.whyItMatters || 'Synthesized by AI Business Brain.',
+        evidence: p.evidence || 'Verified Business Truth & Discovery',
+        expectedImpact: p.expectedImpact || 'Elevates local search ranking and revenue.',
+        actionType: p.actionType || 'custom',
+        actionLabel: p.actionLabel || 'Fix It',
+        recommendationTitle: p.recommendationTitle || p.title,
+        itemsToCreate: p.itemsToCreate || [],
+        isFixed: false,
+      })));
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('locora_onboarding_completed', 'true');
+      localStorage.setItem('locora_onboarding_done', 'true');
+      localStorage.removeItem('locora_pending_public_audit');
+      if (bizId) {
+        localStorage.setItem('locora_active_business_id', bizId);
+      }
     }
     setActiveTab('dashboard');
+    onClose();
+  };
+
+  const handleModalClose = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('locora_pending_public_audit');
+      localStorage.setItem('locora_onboarding_completed', 'true');
+    }
     onClose();
   };
 
@@ -431,7 +475,7 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
             </div>
             <button
               id="onboarding-close-btn"
-              onClick={onClose}
+              onClick={handleModalClose}
               className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
               title="Close Onboarding"
             >

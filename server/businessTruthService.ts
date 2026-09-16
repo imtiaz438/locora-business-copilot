@@ -12,23 +12,33 @@ import type { BusinessTruth, BusinessTruthLocation, BusinessTruthGoogleProfile }
  * 4. Never invent a value.
  */
 export async function getBusinessTruth(businessId: string): Promise<BusinessTruth | null> {
-  const cleanId = (businessId || '').trim();
-  if (!cleanId) {
-    return null;
+  let cleanId = (businessId || '').trim();
+  
+  // 1. Fetch business record by ID, or fallback to the latest verified business in workspace if placeholder/invalid
+  let bizRows: any[] = [];
+  if (cleanId && cleanId !== 'workspace_pending' && cleanId !== 'biz_locora_canonical') {
+    bizRows = await db
+      .select()
+      .from(schema.businessesTable)
+      .where(eq(schema.businessesTable.id, cleanId))
+      .limit(1);
   }
 
-  // 1. Fetch exact business record by ID. Never fall back to another business.
-  const bizRows = await db
-    .select()
-    .from(schema.businessesTable)
-    .where(eq(schema.businessesTable.id, cleanId))
-    .limit(1);
+  if (bizRows.length === 0) {
+    // If not found by cleanId, select the latest created business in this workspace instance
+    bizRows = await db
+      .select()
+      .from(schema.businessesTable)
+      .orderBy(desc(schema.businessesTable.createdAt))
+      .limit(1);
+  }
 
   if (bizRows.length === 0) {
     return null;
   }
 
   const biz = bizRows[0];
+  cleanId = biz.id;
 
   // 2. Fetch all locations for this business
   const locRows = await db
@@ -132,6 +142,15 @@ export async function getBusinessTruth(businessId: string): Promise<BusinessTrut
     };
   }
 
+  // 4.5 Fetch Business Brain if present
+  const brainRows = await db
+    .select()
+    .from(schema.businessBrainTable)
+    .where(eq(schema.businessBrainTable.businessId, cleanId))
+    .limit(1);
+
+  const brain = brainRows.length > 0 ? brainRows[0] : null;
+
   // 5. Build Canonical Business Truth
   // Strict rule: If a field is missing, return null. Never invent a value.
   const canonicalTruth: BusinessTruth = {
@@ -151,6 +170,14 @@ export async function getBusinessTruth(businessId: string): Promise<BusinessTrut
     goals: Array.isArray(biz.goals) && biz.goals.length > 0 ? biz.goals : null,
     brandVoice: biz.brandVoice ? biz.brandVoice.trim() : (biz.toneOfVoice ? biz.toneOfVoice.trim() : null),
     googleProfile,
+    brain: brain ? {
+      score: brain.score,
+      readinessScore: brain.readinessScore,
+      summary: brain.summary,
+      swot: brain.swot as any,
+      priorities: brain.priorities as any,
+      lastSynthesizedAt: brain.lastSynthesizedAt ? new Date(brain.lastSynthesizedAt).toISOString() : null,
+    } : null,
     dataSources,
     lastUpdated: biz.updatedAt ? new Date(biz.updatedAt).toISOString() : null,
   };

@@ -14,7 +14,7 @@
     "nextBillingDate": "2026-09-30T12:50:12.408Z",
     "seoLookupsUsed": 1,
     "seoLookupsResetAt": "2026-10-06T09:01:29.124Z",
-    "aiVisibilityRunsUsed": 1,
+    "aiVisibilityRunsUsed": 2,
     "aiVisibilityResetAt": "2026-10-06T09:01:29.124Z",
     "seoLookupsPerMonth": 10,
     "aiVisibilityRunsPerMonth": 1
@@ -25,22 +25,22 @@
     "email": "imtiazbaloch3322@gmail.com",
     "companyName": "Locora",
     "role": "admin",
-    "planTier": "free",
+    "planTier": "agency",
     "subscriptionStatus": "active",
     "billingCycle": "monthly",
-    "monthlyAiCredits": 25,
+    "monthlyAiCredits": 9999,
     "aiCreditsUsed": 2,
     "memberSince": "2026-07-31T10:54:47.099Z",
     "nextBillingDate": "2026-10-05T14:19:19.440Z",
     "passwordHash": "Admin@123",
     "autoRenew": true,
     "cancelAtPeriodEnd": false,
-    "seoLookupsUsed": 10,
+    "seoLookupsUsed": 0,
     "seoLookupsResetAt": "2026-10-11T12:44:12.745Z",
-    "aiVisibilityRunsUsed": 5,
+    "aiVisibilityRunsUsed": 1,
     "aiVisibilityResetAt": "2026-10-11T12:44:12.745Z",
-    "seoLookupsPerMonth": 0,
-    "aiVisibilityRunsPerMonth": 1
+    "seoLookupsPerMonth": 9999,
+    "aiVisibilityRunsPerMonth": 9999
   },
   {
     "id": "usr_admin_default",
@@ -127,5 +127,24 @@
     "aiCreditsUsed": 0,
     "memberSince": "2026-07-31T10:45:16.057Z",
     "nextBillingDate": "2026-09-30T09:41:50.597Z"
+  },
+  {
+    "id": "usr_1789473955770_8ipbv",
+    "name": "Real Test",
+    "email": "real@smilesolution.com",
+    "companyName": "Smile solutions",
+    "role": "customer",
+    "planTier": "free",
+    "subscriptionStatus": "active",
+    "billingCycle": "monthly",
+    "monthlyAiCredits": 25,
+    "aiCreditsUsed": 6,
+    "memberSince": "2026-09-15T12:05:55.770Z",
+    "nextBillingDate": "2026-10-15T12:05:55.770Z",
+    "passwordHash": "Smile@123",
+    "freeAuditedDomain": "smilesolutions.com.au",
+    "freeAuditedDomains": [
+      "smilesolutions.com.au"
+    ]
   }
 ]
