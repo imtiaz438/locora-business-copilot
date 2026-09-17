@@ -17,6 +17,11 @@ import {
   Github,
 } from 'lucide-react';
 import { LocoraLogo } from '../LocoraLogo';
+import {
+  navigateToMain,
+  navigateToDirectory,
+  isDirectorySubdomain,
+} from '../../utils/domain';
 
 export const PublicFooter: React.FC = () => {
   const { setActiveTab } = useApp();
@@ -54,6 +59,36 @@ export const PublicFooter: React.FC = () => {
   };
 
   const navigateTo = (path: string, tabId: string) => {
+    const isDir = isDirectorySubdomain();
+
+    // 1. If clicking Directory link:
+    if (tabId === 'directory' || tabId.startsWith('directory_') || path === '/directory') {
+      const dirPath = path === '/directory' ? '/' : path;
+      if (!isDir) {
+        navigateToDirectory(dirPath, () => {
+          window.history.pushState({}, '', path);
+          setActiveTab(tabId);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        return;
+      }
+      window.history.pushState({}, '', dirPath);
+      setActiveTab(tabId);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // 2. If currently on directory subdomain, return to main site for non-directory links:
+    if (isDir) {
+      navigateToMain(path, () => {
+        window.history.pushState({}, '', path);
+        setActiveTab(tabId);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      return;
+    }
+
+    // 3. Standard in-app navigation on main site:
     window.history.pushState({}, '', path);
     setActiveTab(tabId);
     window.scrollTo({ top: 0, behavior: 'smooth' });

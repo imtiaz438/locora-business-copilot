@@ -195,6 +195,59 @@ app.use((req, res, next) => {
     return res.redirect(301, `https://locoraai.com${req.originalUrl}`);
   }
 
+  // If visitor is accessing marketing or app-only content on the directory subdomain, 301 redirect to main website
+  if (
+    isDirectoryHost &&
+    !req.path.startsWith('/api/') &&
+    !req.path.startsWith('/assets/') &&
+    !req.path.includes('.') &&
+    (req.path === '/home' ||
+      req.path === '/pricing' ||
+      req.path === '/pricing-plans' ||
+      req.path === '/about' ||
+      req.path === '/contact' ||
+      req.path === '/privacy' ||
+      req.path === '/terms' ||
+      req.path === '/refund' ||
+      req.path === '/security' ||
+      req.path === '/agencies' ||
+      req.path === '/for-agencies' ||
+      req.path === '/products' ||
+      req.path.startsWith('/features') ||
+      req.path.startsWith('/use-cases') ||
+      req.path.startsWith('/resources') ||
+      req.path.startsWith('/blog') ||
+      req.path.startsWith('/for/'))
+  ) {
+    return res.redirect(301, `https://locoraai.com${req.originalUrl}`);
+  }
+
+  // If visitor accesses /directory on the main production domain (locoraai.com), 301 redirect to directory subdomain
+  const isMainHost = (allHosts.includes('locoraai.com') || allHosts.includes('www.locoraai.com')) && !isAppHost && !isDirectoryHost;
+  if (
+    isMainHost &&
+    !req.path.startsWith('/api/') &&
+    !req.path.endsWith('.xml') &&
+    !req.path.includes('.')
+  ) {
+    if (req.path === '/directory' || req.path === '/directory/') {
+      const search = req.originalUrl.includes('?') ? req.originalUrl.substring(req.originalUrl.indexOf('?')) : '';
+      return res.redirect(301, `https://directory.locoraai.com/${search}`);
+    }
+    if (req.path.startsWith('/directory/business/')) {
+      const slug = req.path.replace(/^\/directory\/business\//, '');
+      return res.redirect(301, `https://directory.locoraai.com/business/${slug}`);
+    }
+    if (req.path.startsWith('/directory/city/')) {
+      const slug = req.path.replace(/^\/directory\/city\//, '');
+      return res.redirect(301, `https://directory.locoraai.com/city/${slug}`);
+    }
+    if (req.path.startsWith('/directory/category/')) {
+      const slug = req.path.replace(/^\/directory\/category\//, '');
+      return res.redirect(301, `https://directory.locoraai.com/category/${slug}`);
+    }
+  }
+
   next();
 });
 

@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { DirectoryBusinessListing } from '../../types/directory';
 import { DirectoryPublicCheckupModal } from './DirectoryPublicCheckupModal';
+import { isDirectorySubdomain } from '../../utils/domain';
 
 interface DirectoryBusinessDetailViewProps {
   slug: string;
@@ -293,7 +294,8 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
   };
 
   const handleBackToDirectory = () => {
-    window.history.pushState({}, '', '/directory');
+    const isDir = isDirectorySubdomain();
+    window.history.pushState({}, '', isDir ? '/' : '/directory');
     window.dispatchEvent(new PopStateEvent('popstate'));
   };
 

@@ -9,7 +9,13 @@ import { AIActionApprovalModal } from './components/AIActionApprovalModal';
 import { GrowthStoreModal } from './components/GrowthStoreModal';
 import { GoogleBusinessSyncModal } from './components/GoogleBusinessSyncModal';
 import { SubscriptionInvoice } from './types';
-import { isAppSubdomain, isDirectorySubdomain, navigateToMain, navigateToDirectory } from './utils/domain';
+import {
+  isAppSubdomain,
+  isDirectorySubdomain,
+  navigateToMain,
+  navigateToDirectory,
+  isProductionCustomDomain,
+} from './utils/domain';
 
 // View Modules
 import { DashboardView } from './components/DashboardView';
@@ -184,6 +190,48 @@ const MainContent: React.FC = () => {
           rawPath === '/for-agencies'
         ) {
           navigateToMain(rawPath);
+          return;
+        }
+      }
+
+      if (isDirectory) {
+        // If visitor is on directory subdomain, non-directory routes (home, resources, features, pricing, etc.)
+        // must redirect back to the main website
+        const isDirectoryRoute =
+          rawPath === '/' ||
+          rawPath === '' ||
+          rawPath.startsWith('/directory') ||
+          rawPath.startsWith('/business/') ||
+          rawPath.startsWith('/biz/') ||
+          rawPath.startsWith('/city/') ||
+          rawPath.startsWith('/category/') ||
+          rawPath.startsWith('/api/');
+
+        if (!isDirectoryRoute) {
+          navigateToMain(rawPath);
+          return;
+        }
+      }
+
+      // If visitor is on the main production domain and navigates to /directory, redirect to directory subdomain:
+      if (!isApp && !isDirectory && isProductionCustomDomain()) {
+        if (rawPath === '/directory' || rawPath === '/directory/') {
+          navigateToDirectory('/');
+          return;
+        }
+        if (rawPath.startsWith('/directory/business/')) {
+          const slug = rawPath.replace(/^\/directory\/business\//, '');
+          navigateToDirectory(`/business/${slug}`);
+          return;
+        }
+        if (rawPath.startsWith('/directory/city/')) {
+          const slug = rawPath.replace(/^\/directory\/city\//, '');
+          navigateToDirectory(`/city/${slug}`);
+          return;
+        }
+        if (rawPath.startsWith('/directory/category/')) {
+          const slug = rawPath.replace(/^\/directory\/category\//, '');
+          navigateToDirectory(`/category/${slug}`);
           return;
         }
       }

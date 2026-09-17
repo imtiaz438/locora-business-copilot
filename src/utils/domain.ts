@@ -99,12 +99,14 @@ export const getAppSiteUrl = (path: string = '/dashboard'): string => {
 export const navigateToApp = (path: string = '/dashboard', inAppFallback?: () => void) => {
   if (typeof window === 'undefined') return;
 
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+
   if (isProductionCustomDomain() && !isAppSubdomain()) {
-    window.location.href = `https://${PRODUCTION_APP_DOMAIN}${path.startsWith('/') ? path : `/${path}`}`;
+    window.location.href = `https://${PRODUCTION_APP_DOMAIN}${cleanPath}`;
   } else if (inAppFallback) {
     inAppFallback();
   } else {
-    window.history.pushState({}, '', path.startsWith('/') ? path : `/${path}`);
+    window.history.pushState({}, '', cleanPath);
   }
 };
 
@@ -114,12 +116,27 @@ export const navigateToApp = (path: string = '/dashboard', inAppFallback?: () =>
 export const navigateToMain = (path: string = '/', inAppFallback?: () => void) => {
   if (typeof window === 'undefined') return;
 
-  if (isProductionCustomDomain() && isAppSubdomain()) {
-    window.location.href = `https://${PRODUCTION_MAIN_DOMAIN}${path.startsWith('/') ? path : `/${path}`}`;
-  } else if (inAppFallback) {
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+
+  // If running in production custom domain and currently on app or directory subdomain, cross-domain redirect to locoraai.com:
+  if (isProductionCustomDomain() && (isAppSubdomain() || isDirectorySubdomain())) {
+    window.location.href = `https://${PRODUCTION_MAIN_DOMAIN}${cleanPath}`;
+    return;
+  }
+
+  // Development/preview testing override support (?domain=directory or ?domain=app)
+  const searchParams = new URLSearchParams(window.location.search);
+  if (searchParams.get('domain') === 'directory' || searchParams.get('domain') === 'app') {
+    searchParams.delete('domain');
+    const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    window.location.href = `${cleanPath}${qs}`;
+    return;
+  }
+
+  if (inAppFallback) {
     inAppFallback();
   } else {
-    window.history.pushState({}, '', path.startsWith('/') ? path : `/${path}`);
+    window.history.pushState({}, '', cleanPath);
   }
 };
 
@@ -142,12 +159,17 @@ export const getDirectorySiteUrl = (path: string = '/'): string => {
 export const navigateToDirectory = (path: string = '/', inAppFallback?: () => void) => {
   if (typeof window === 'undefined') return;
 
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+
   if (isProductionCustomDomain() && !isDirectorySubdomain()) {
-    window.location.href = `https://${PRODUCTION_DIRECTORY_DOMAIN}${path.startsWith('/') ? path : `/${path}`}`;
-  } else if (inAppFallback) {
+    window.location.href = `https://${PRODUCTION_DIRECTORY_DOMAIN}${cleanPath}`;
+    return;
+  }
+
+  if (inAppFallback) {
     inAppFallback();
   } else {
-    window.history.pushState({}, '', path.startsWith('/') ? path : `/${path}`);
+    window.history.pushState({}, '', cleanPath === '/' ? '/directory' : cleanPath);
   }
 };
 

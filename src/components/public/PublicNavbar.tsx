@@ -20,7 +20,12 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { LocoraLogo } from '../LocoraLogo';
-import { navigateToApp } from '../../utils/domain';
+import {
+  navigateToApp,
+  navigateToMain,
+  navigateToDirectory,
+  isDirectorySubdomain,
+} from '../../utils/domain';
 
 export const PublicNavbar: React.FC = () => {
   const { activeTab, setActiveTab, user, logout } = useApp();
@@ -39,10 +44,49 @@ export const PublicNavbar: React.FC = () => {
   }, []);
 
   const navigateTo = (tab: string, path: string, hash?: string) => {
-    window.history.pushState({}, '', path);
-    setActiveTab(tab);
+    const isDir = isDirectorySubdomain();
     setOpenDropdown(null);
     setMobileMenuOpen(false);
+
+    // 1. If clicking Directory link:
+    if (tab === 'directory' || tab.startsWith('directory_')) {
+      const dirPath = path === '/directory' ? '/' : path;
+      if (!isDir) {
+        navigateToDirectory(dirPath, () => {
+          window.history.pushState({}, '', path);
+          setActiveTab(tab);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        return;
+      }
+      // Already on directory subdomain: in-app navigation
+      window.history.pushState({}, '', dirPath);
+      setActiveTab(tab);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // 2. If currently on directory subdomain, any non-directory link must return to the main site:
+    if (isDir) {
+      const targetUrl = hash ? `${path}#${hash}` : path;
+      navigateToMain(targetUrl, () => {
+        window.history.pushState({}, '', path);
+        setActiveTab(tab);
+        if (hash) {
+          setTimeout(() => {
+            const el = document.getElementById(hash);
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+      return;
+    }
+
+    // 3. Standard in-app navigation on main site:
+    window.history.pushState({}, '', path);
+    setActiveTab(tab);
     if (hash) {
       setTimeout(() => {
         const el = document.getElementById(hash);
