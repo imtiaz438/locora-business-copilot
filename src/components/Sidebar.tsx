@@ -26,6 +26,7 @@ import {
   Sparkles,
   Globe,
   ExternalLink,
+  Compass,
   Linkedin,
   Facebook,
 } from 'lucide-react';
@@ -193,6 +194,33 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
         </div>
 
         {/* Visual Divider & Profile / Billing */}
+        <div className="pt-3 border-t border-slate-200 space-y-1">
+          <div className="px-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-heading">
+            Public Presence
+          </div>
+
+          <button
+            onClick={() => {
+              window.history.pushState({}, '', '/directory');
+              handleNavClick('directory');
+            }}
+            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${
+              activeTab === 'directory' || activeTab.startsWith('directory_')
+                ? 'bg-[#059669] text-white font-semibold shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Compass className={`w-4 h-4 ${activeTab === 'directory' || activeTab.startsWith('directory_') ? 'text-white' : 'text-emerald-600'}`} />
+              <span>Locora Directory</span>
+            </div>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              Live
+            </span>
+          </button>
+        </div>
+
+        {/* Account & Billing */}
         <div className="pt-3 border-t border-slate-200 space-y-1">
           <div className="px-3 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider font-heading">
             Account & Billing

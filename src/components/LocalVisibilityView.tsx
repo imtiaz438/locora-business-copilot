@@ -7,6 +7,7 @@ import { PriorityAction } from '../types';
 import { AiVisibilityObservationsPanel } from './AiVisibilityObservationsPanel';
 import { DatasetFreshnessBadge } from './DatasetFreshnessBadge';
 import { ProviderAccessGate } from './ProviderAccessGate';
+import { DirectoryLeadAnalyticsTab } from './directory/DirectoryLeadAnalyticsTab';
 import {
   MapPin,
   Search,
@@ -61,7 +62,7 @@ export const LocalVisibilityView: React.FC = () => {
   const [serpResults, setSerpResults] = useState<any[]>([]);
   const [websiteIssues, setWebsiteIssues] = useState<WebsiteIssue[]>([]);
 
-  const [activeSubTab, setActiveSubTab] = useState<'visibility' | 'ai_visibility' | 'audit'>('visibility');
+  const [activeSubTab, setActiveSubTab] = useState<'visibility' | 'ai_visibility' | 'audit' | 'directory_leads'>('visibility');
   const [selectedAuditCategory, setSelectedAuditCategory] = useState<'content' | 'technical' | 'local' | 'schema'>('content');
   const [selectedFixItAction, setSelectedFixItAction] = useState<PriorityAction | null>(null);
 
@@ -427,6 +428,17 @@ export const LocalVisibilityView: React.FC = () => {
             <Layers className="w-3.5 h-3.5" />
             <span>Technical SEO Diagnostics</span>
           </button>
+          <button
+            onClick={() => setActiveSubTab('directory_leads')}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeSubTab === 'directory_leads'
+                ? 'bg-[#059669] text-white shadow-2xs'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+            }`}
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>Directory Leads & Analytics</span>
+          </button>
         </div>
       </section>
 
@@ -692,6 +704,11 @@ export const LocalVisibilityView: React.FC = () => {
             </div>
           )}
         </div>
+      )}
+
+      {/* TAB: DIRECTORY LEADS & ANALYTICS */}
+      {activeSubTab === 'directory_leads' && (
+        <DirectoryLeadAnalyticsTab activeBusiness={activeBusiness} />
       )}
 
       {/* 4. CONFIGURATION MODAL */}

@@ -452,6 +452,14 @@ export const businessesTable = pgTable('businesses', {
   brandVoice: text('brand_voice'),
   planTier: text('plan_tier').default('pro').notNull(), // 'free' | 'pro' | 'agency'
   status: text('status').default('active').notNull(),
+  // Directory & Programmatic Local SEO Extensions
+  isPublishedInDirectory: boolean('is_published_in_directory').default(false).notNull(),
+  categorySlug: text('category_slug').default('local-services'),
+  citySlug: text('city_slug').default('austin'),
+  cityName: text('city_name').default('Austin'),
+  stateCode: text('state_code').default('TX'),
+  mediaPhotos: jsonb('media_photos').$type<string[]>().default([]),
+  targetKeywords: jsonb('target_keywords').$type<string[]>().default([]),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -870,6 +878,29 @@ export const notificationsTable = pgTable('notifications', {
   isRead: boolean('is_read').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+// 31. Directory Leads (Directory Subdomain Inquiries & Monetization Tracking)
+export const directoryLeadsTable = pgTable('directory_leads', {
+  id: text('id').primaryKey(),
+  businessId: text('business_id').notNull().references(() => businessesTable.id, { onDelete: 'cascade' }),
+  businessName: text('business_name').notNull(),
+  fullName: text('full_name').notNull(),
+  email: text('email').notNull(),
+  phone: text('phone').notNull(),
+  serviceNeed: text('service_need').notNull(),
+  customerNotes: text('customer_notes'),
+  leadStatus: text('lead_status').default('NEW').notNull(), // 'NEW' | 'DISPATCHED' | 'LOCKED_UPGRADE_REQUIRED' | 'CONTACTED' | 'CONVERTED'
+  isUnlocked: boolean('is_unlocked').default(false).notNull(),
+  utmSource: text('utm_source').default('locora_directory').notNull(),
+  utmMedium: text('utm_medium'),
+  utmCampaign: text('utm_campaign'),
+  utmTerm: text('utm_term'),
+  utmContent: text('utm_content'),
+  referrer: text('referrer'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 
 
 

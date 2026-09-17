@@ -5156,5 +5156,3065 @@
       "crawlStartedAt": "2026-09-12T16:17:46.442Z",
       "crawlCompletedAt": "2026-09-12T16:17:48.555Z"
     }
+  },
+  {
+    "id": "chk_1789470923612_68ubhmv",
+    "website_url": "https://example.com/",
+    "normalized_url": "https://example.com/",
+    "user_id": null,
+    "business_id": null,
+    "status": "completed",
+    "started_at": "2026-09-15T11:15:23.527Z",
+    "completed_at": "2026-09-15T11:15:23.612Z",
+    "overall_score": 43,
+    "technical_score": 50,
+    "onpage_score": 57,
+    "local_score": 20,
+    "content_score": 14,
+    "performance_score": 100,
+    "schema_score": 0,
+    "pages_analyzed": 1,
+    "findings": [
+      {
+        "id": "top_issue_1",
+        "priority": 1,
+        "severity": "critical",
+        "title": "Weak or missing title tag on homepage.",
+        "description": "Homepage title tag is missing or suboptimal. The title tag is the #1 on-page organic ranking factor for search engines.",
+        "limitedEvidence": "<title>Example Domain</title> (14 characters)",
+        "category": "On-Page SEO",
+        "affectedUrl": "Homepage (/)",
+        "recommendation": "Configure a descriptive title tag (50-60 characters) following the format: [Primary Service] in [City, State] | [Business Name]."
+      },
+      {
+        "id": "top_issue_2",
+        "priority": 2,
+        "severity": "critical",
+        "title": "Homepage is missing a meta description.",
+        "description": "Homepage is missing a meta description. Search engines will extract random text snippets, resulting in lower click-through rates from searchers.",
+        "limitedEvidence": "Homepage is missing a meta description",
+        "category": "On-Page SEO",
+        "affectedUrl": "Homepage (/)",
+        "recommendation": "Write a concise, compelling 140-160 character meta description including your primary service and service location."
+      },
+      {
+        "id": "top_issue_3",
+        "priority": 3,
+        "severity": "critical",
+        "title": "LocalBusiness structured data is incomplete.",
+        "description": "LocalBusiness structured data is missing or incomplete. Search engines and map bots cannot verify operating hours, service catalog, or geo-coordinates.",
+        "limitedEvidence": "Missing Schema.org LocalBusiness markup",
+        "category": "Structured Data",
+        "affectedUrl": "Homepage (/)",
+        "recommendation": "Review and update this factor to improve local search rank."
+      }
+    ],
+    "discovered_business_data": {
+      "name": "Example Domain",
+      "phone": null,
+      "address": null,
+      "schemaTypes": [],
+      "hasLocalBusinessSchema": false,
+      "hasContactForm": false,
+      "hasMapEmbed": false,
+      "metaTitle": "Example Domain",
+      "metaDescription": "",
+      "h1Heading": "Example Domain"
+    },
+    "data_sources": [
+      "Website Crawl",
+      "Direct Socket Telemetry",
+      "Calculated by Locora"
+    ],
+    "crawler_version": "2.4.0",
+    "created_at": "2026-09-15T11:15:23.612Z",
+    "updated_at": "2026-09-15T11:15:23.612Z",
+    "cache_status": "live",
+    "fullResult": {
+      "auditId": "chk_1789470923612_68ubhmv",
+      "url": "https://example.com/",
+      "domain": "example.com",
+      "businessName": "Example Domain",
+      "analyzedAt": "2026-09-15T11:15:23.612Z",
+      "pagesCrawled": 1,
+      "overallScore": 43,
+      "scoring": {
+        "overallScore": 43,
+        "categories": {
+          "technicalSeo": {
+            "id": "technical_seo",
+            "name": "Technical SEO",
+            "score": 50,
+            "maxScore": 100,
+            "weight": 0.2,
+            "status": "needs_attention",
+            "checks": [
+              {
+                "id": "tech_https",
+                "name": "HTTPS",
+                "passed": true,
+                "pointsAwarded": 20,
+                "maxPoints": 20,
+                "evidence": "TLS/SSL handshake verified at https://example.com"
+              },
+              {
+                "id": "tech_sitemap",
+                "name": "Sitemap",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "sitemap.xml returned HTTP 404 (Not found at root)"
+              },
+              {
+                "id": "tech_canonical",
+                "name": "Canonical",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "Homepage is missing a canonical link tag"
+              },
+              {
+                "id": "tech_robots",
+                "name": "Robots.txt",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "robots.txt returned HTTP 404"
+              },
+              {
+                "id": "tech_indexability",
+                "name": "Indexability",
+                "passed": true,
+                "pointsAwarded": 15,
+                "maxPoints": 15,
+                "evidence": "Page returns HTTP 200 and does not restrict crawlers with noindex"
+              },
+              {
+                "id": "tech_broken_links",
+                "name": "Broken Links",
+                "passed": true,
+                "pointsAwarded": 15,
+                "maxPoints": 15,
+                "evidence": "All 0 crawled internal sample links returned healthy HTTP status"
+              }
+            ],
+            "explanation": "Calculated from live server response, SSL handshake, sitemap.xml, robots.txt, canonical tag, and link health."
+          },
+          "onPageSeo": {
+            "id": "onpage_seo",
+            "name": "On-Page SEO",
+            "score": 57,
+            "maxScore": 100,
+            "weight": 0.2,
+            "status": "fair",
+            "checks": [
+              {
+                "id": "onpage_title",
+                "name": "Title Tag",
+                "passed": false,
+                "pointsAwarded": 12,
+                "maxPoints": 20,
+                "evidence": "<title>Example Domain</title> (14 characters)"
+              },
+              {
+                "id": "onpage_description",
+                "name": "Meta Description",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "Homepage is missing a meta description"
+              },
+              {
+                "id": "onpage_h1",
+                "name": "Primary H1",
+                "passed": true,
+                "pointsAwarded": 20,
+                "maxPoints": 20,
+                "evidence": "1 primary H1 heading detected: \"Example Domain\""
+              },
+              {
+                "id": "onpage_hierarchy",
+                "name": "Heading Hierarchy",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "Page lacks structural H2 subheadings"
+              },
+              {
+                "id": "onpage_alt",
+                "name": "Image Alt Attributes",
+                "passed": true,
+                "pointsAwarded": 15,
+                "maxPoints": 15,
+                "evidence": "No images require alt attributes"
+              },
+              {
+                "id": "onpage_url",
+                "name": "Clean URL Structure",
+                "passed": true,
+                "pointsAwarded": 10,
+                "maxPoints": 10,
+                "evidence": "Clean, search-friendly canonical URL structure"
+              }
+            ],
+            "explanation": "Calculated from title length, meta description, single H1 heading hierarchy, image alt coverage, and URL format."
+          },
+          "localSeo": {
+            "id": "local_seo",
+            "name": "Local SEO",
+            "score": 20,
+            "maxScore": 100,
+            "weight": 0.2,
+            "status": "needs_attention",
+            "checks": [
+              {
+                "id": "local_name",
+                "name": "Business Name",
+                "passed": true,
+                "pointsAwarded": 20,
+                "maxPoints": 20,
+                "evidence": "Business name identified: \"Example Domain\""
+              },
+              {
+                "id": "local_phone",
+                "name": "Clickable Phone Link",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "No clickable telephone (tel:) link found in HTML"
+              },
+              {
+                "id": "local_address",
+                "name": "Physical Address",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "Physical street address not detected in page markup"
+              },
+              {
+                "id": "local_areacode",
+                "name": "Local Area Code",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "Non-geographic or missing local area code"
+              },
+              {
+                "id": "local_service_pages",
+                "name": "Service Subpages",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "No dedicated service subpages detected"
+              },
+              {
+                "id": "local_geo_signals",
+                "name": "Location Pages & Maps",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 10,
+                "evidence": "No dedicated location pages or map embeds found"
+              }
+            ],
+            "explanation": "Calculated from NAP footprint (Name, Phone, Address), local area codes, dedicated service pages, and geographic references."
+          },
+          "content": {
+            "id": "content",
+            "name": "Content",
+            "score": 14,
+            "maxScore": 100,
+            "weight": 0.15,
+            "status": "needs_attention",
+            "checks": [
+              {
+                "id": "content_depth",
+                "name": "Content Depth",
+                "passed": false,
+                "pointsAwarded": 6,
+                "maxPoints": 30,
+                "evidence": "Thin content detected (21 words, below 250 word benchmark)"
+              },
+              {
+                "id": "content_paragraphs",
+                "name": "Paragraph Flow",
+                "passed": false,
+                "pointsAwarded": 8,
+                "maxPoints": 20,
+                "evidence": "Low paragraph count (2 <p> tags)"
+              },
+              {
+                "id": "content_conversion",
+                "name": "Conversion Actions (CTA)",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 25,
+                "evidence": "Missing clear conversion CTA or lead capture mechanism"
+              },
+              {
+                "id": "content_services",
+                "name": "Service Descriptions",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "Service offerings not clearly articulated in page copy"
+              },
+              {
+                "id": "content_geo",
+                "name": "Local Context in Copy",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 10,
+                "evidence": "Page body copy lacks geographical locality keywords"
+              }
+            ],
+            "explanation": "Calculated from word count depth, paragraph readability, conversion calls-to-action, service clarity, and local relevance."
+          },
+          "structuredData": {
+            "id": "structured_data",
+            "name": "Structured Data",
+            "score": 0,
+            "maxScore": 100,
+            "weight": 0.1,
+            "status": "needs_attention",
+            "checks": [
+              {
+                "id": "struct_jsonld",
+                "name": "JSON-LD Script",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 25,
+                "evidence": "No Schema.org JSON-LD scripts found"
+              },
+              {
+                "id": "struct_localbiz",
+                "name": "LocalBusiness Schema",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 35,
+                "evidence": "Missing Schema.org LocalBusiness markup"
+              },
+              {
+                "id": "struct_org",
+                "name": "Organization / WebSite Schema",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "No Organization or WebSite schema detected"
+              },
+              {
+                "id": "struct_attrs",
+                "name": "Attribute Completeness",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "Structured data is missing phone, address, or operating hours"
+              }
+            ],
+            "explanation": "Calculated from JSON-LD implementation, LocalBusiness schema detection, entity markup, and attribute completeness."
+          },
+          "performance": {
+            "id": "performance",
+            "name": "Performance",
+            "score": 100,
+            "maxScore": 100,
+            "weight": 0.15,
+            "status": "good",
+            "checks": [
+              {
+                "id": "perf_ttfb",
+                "name": "Server TTFB Latency",
+                "passed": true,
+                "pointsAwarded": 30,
+                "maxPoints": 30,
+                "evidence": "Direct Time To First Byte measured at 46ms (Fast)"
+              },
+              {
+                "id": "perf_payload",
+                "name": "HTML Payload Size",
+                "passed": true,
+                "pointsAwarded": 25,
+                "maxPoints": 25,
+                "evidence": "Initial transferred HTML payload is 1 KB"
+              },
+              {
+                "id": "perf_viewport",
+                "name": "Mobile Viewport",
+                "passed": true,
+                "pointsAwarded": 25,
+                "maxPoints": 25,
+                "evidence": "Mobile responsive viewport tag configured (<meta name=\"viewport\">)"
+              },
+              {
+                "id": "perf_ssl",
+                "name": "Secure Transport Protocol",
+                "passed": true,
+                "pointsAwarded": 20,
+                "maxPoints": 20,
+                "evidence": "TLS/SSL encrypted transport verified"
+              }
+            ],
+            "explanation": "Calculated from direct socket Time To First Byte (TTFB), HTML transfer size, and mobile viewport readiness."
+          }
+        },
+        "formulaExplanation": "Overall Score = (Technical × 0.20) + (On-Page × 0.20) + (Local × 0.20) + (Content × 0.15) + (Structured Data × 0.10) + (Performance × 0.15). Deterministic math derived exclusively from live crawl data."
+      },
+      "gatedReport": {
+        "totalOpportunitiesCount": 20,
+        "visibleOpportunitiesCount": 3,
+        "lockedOpportunitiesCount": 17,
+        "topIssues": [
+          {
+            "id": "top_issue_1",
+            "priority": 1,
+            "severity": "critical",
+            "title": "Weak or missing title tag on homepage.",
+            "description": "Homepage title tag is missing or suboptimal. The title tag is the #1 on-page organic ranking factor for search engines.",
+            "limitedEvidence": "<title>Example Domain</title> (14 characters)",
+            "category": "On-Page SEO",
+            "affectedUrl": "Homepage (/)",
+            "recommendation": "Configure a descriptive title tag (50-60 characters) following the format: [Primary Service] in [City, State] | [Business Name]."
+          },
+          {
+            "id": "top_issue_2",
+            "priority": 2,
+            "severity": "critical",
+            "title": "Homepage is missing a meta description.",
+            "description": "Homepage is missing a meta description. Search engines will extract random text snippets, resulting in lower click-through rates from searchers.",
+            "limitedEvidence": "Homepage is missing a meta description",
+            "category": "On-Page SEO",
+            "affectedUrl": "Homepage (/)",
+            "recommendation": "Write a concise, compelling 140-160 character meta description including your primary service and service location."
+          },
+          {
+            "id": "top_issue_3",
+            "priority": 3,
+            "severity": "critical",
+            "title": "LocalBusiness structured data is incomplete.",
+            "description": "LocalBusiness structured data is missing or incomplete. Search engines and map bots cannot verify operating hours, service catalog, or geo-coordinates.",
+            "limitedEvidence": "Missing Schema.org LocalBusiness markup",
+            "category": "Structured Data",
+            "affectedUrl": "Homepage (/)",
+            "recommendation": "Review and update this factor to improve local search rank."
+          }
+        ],
+        "topPassedChecks": [
+          {
+            "id": "passed_chk_1",
+            "title": "HTTPS verified",
+            "limitedEvidence": "TLS/SSL handshake verified at https://example.com",
+            "category": "Technical SEO"
+          },
+          {
+            "id": "passed_chk_2",
+            "title": "Indexability verified",
+            "limitedEvidence": "Page returns HTTP 200 and does not restrict crawlers with noindex",
+            "category": "Technical SEO"
+          },
+          {
+            "id": "passed_chk_3",
+            "title": "Broken Links verified",
+            "limitedEvidence": "All 0 crawled internal sample links returned healthy HTTP status",
+            "category": "Technical SEO"
+          }
+        ],
+        "topOpportunities": [
+          {
+            "id": "opp_1",
+            "priority": 1,
+            "title": "Deploy Schema.org LocalBusiness JSON-LD markup",
+            "impact": "High Revenue Impact",
+            "category": "Structured Data",
+            "difficulty": "Quick Win",
+            "limitedEvidence": "0 LocalBusiness blocks detected in HTML"
+          },
+          {
+            "id": "opp_2",
+            "priority": 2,
+            "title": "Optimize homepage meta title and description",
+            "impact": "Immediate CTR Lift",
+            "category": "On-Page SEO",
+            "difficulty": "Quick Win",
+            "limitedEvidence": "Current title: Example Domain..."
+          },
+          {
+            "id": "opp_3",
+            "priority": 3,
+            "title": "Add direct click-to-call (tel:) links in navigation and footer",
+            "impact": "Mobile Call Lift",
+            "category": "Local SEO",
+            "difficulty": "Quick Win",
+            "limitedEvidence": "No clickable phone links detected"
+          }
+        ],
+        "nextStepRecommendation": {
+          "headline": "Address Structured Data first to capture local search visibility",
+          "summary": "Your Structured Data score is currently 0/100. Fixing the top findings in this category provides the fastest lift in Google Maps 3-pack rankings and local customer inquiries.",
+          "primaryFocus": "Structured Data"
+        },
+        "scanMetadata": {
+          "scanDateTime": "2026-09-15T11:15:23.612Z",
+          "pagesAnalyzedLabel": "1 page analyzed",
+          "dataSources": [
+            "Website Crawl",
+            "Direct Socket Telemetry",
+            "Calculated by Locora"
+          ]
+        },
+        "lockedFeaturesList": [
+          {
+            "feature": "Complete Page-by-Page Audit",
+            "description": "Detailed crawl logs, DOM tree diagnostics, and status codes for every internal URL."
+          },
+          {
+            "feature": "All 17 Additional Opportunities",
+            "description": "Full step-by-step action items with estimated revenue impact and copy-paste code snippets."
+          },
+          {
+            "feature": "Competitor Intelligence & Rank Tracking",
+            "description": "Monitor local competitors, 3-pack geo-grid rankings, and keyword movements daily."
+          },
+          {
+            "feature": "Google Business Profile & Review Sync",
+            "description": "Sync Google Maps reviews, automated AI review replies, and customer sentiment analytics."
+          },
+          {
+            "feature": "Autonomous AI Manager & Content Hub",
+            "description": "Let Locora AI draft localized landing pages, FAQ schema, and social updates on autopilot."
+          }
+        ]
+      },
+      "scores": {
+        "seo": 57,
+        "performance": 100,
+        "localPresence": 20,
+        "technicalSeo": 50,
+        "onPageSeo": 57,
+        "localSeo": 20,
+        "content": 14,
+        "structuredData": 0
+      },
+      "crawlStats": {
+        "latencyMs": 46,
+        "htmlSizeKb": 1,
+        "isSsl": true,
+        "httpStatus": 200,
+        "totalImages": 0,
+        "missingAltImages": 0,
+        "internalLinksCount": 0
+      },
+      "detectedBusinessData": {
+        "name": "Example Domain",
+        "phone": null,
+        "address": null,
+        "schemaTypes": [],
+        "hasLocalBusinessSchema": false,
+        "hasContactForm": false,
+        "hasMapEmbed": false,
+        "metaTitle": "Example Domain",
+        "metaDescription": "",
+        "h1Heading": "Example Domain"
+      },
+      "businessDiscovery": {
+        "businessName": {
+          "value": "Example Domain",
+          "source": "Source: Page Title",
+          "status": "found",
+          "displayValue": "Example Domain"
+        },
+        "displayName": {
+          "value": "Example Domain",
+          "source": "Source: Page Title",
+          "status": "found",
+          "displayValue": "Example Domain"
+        },
+        "phone": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "email": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "address": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "city": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "stateRegion": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "country": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "postalCode": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "services": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "serviceAreas": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "businessCategory": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "openingHours": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "website": {
+          "value": "https://example.com/",
+          "source": "Source: Website Crawl",
+          "status": "found",
+          "displayValue": "https://example.com/"
+        },
+        "socialLinks": {
+          "value": [],
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        }
+      },
+      "realSeoAnalysis": {
+        "technical": {
+          "https": {
+            "enabled": true,
+            "evidence": "Protocol: https:, SSL Handshake verified at example.com",
+            "details": "Website is served securely over HTTPS."
+          },
+          "crawlability": {
+            "status": "crawlable",
+            "metaRobots": null,
+            "evidence": "No restrictive robots meta tag detected on homepage."
+          },
+          "robotsTxt": {
+            "found": false,
+            "statusCode": 404,
+            "hasDisallow": false,
+            "sitemapFoundInRobots": false,
+            "evidence": "robots.txt returned HTTP 404."
+          },
+          "sitemapXml": {
+            "found": false,
+            "statusCode": 404,
+            "evidence": "sitemap.xml returned HTTP 404 (Not found at standard root)."
+          },
+          "canonicalTag": {
+            "present": false,
+            "canonicalUrl": null,
+            "matchesCurrentUrl": false,
+            "evidence": "Homepage is missing a canonical link tag."
+          },
+          "indexability": {
+            "isIndexable": true,
+            "evidence": "Page returns HTTP 200 and does not contain a noindex directive."
+          },
+          "redirectBehavior": {
+            "redirected": false,
+            "finalUrl": "https://example.com/",
+            "evidence": "Direct response without intermediate redirect hops."
+          },
+          "internalLinksHealth": {
+            "totalChecked": 0,
+            "brokenCount": 0,
+            "brokenLinks": [],
+            "evidence": "All 0 crawled internal sample links returned healthy HTTP status."
+          },
+          "httpStatusCode": {
+            "code": 200,
+            "evidence": "Server responded with HTTP 200 OK."
+          }
+        },
+        "onPage": {
+          "titleTag": {
+            "present": true,
+            "text": "Example Domain",
+            "length": 14,
+            "isOptimalLength": false,
+            "evidence": "<title>Example Domain</title> (14 characters)"
+          },
+          "metaDescription": {
+            "present": false,
+            "text": null,
+            "length": 0,
+            "isOptimalLength": false,
+            "evidence": "Homepage is missing a meta description."
+          },
+          "h1Heading": {
+            "present": true,
+            "count": 1,
+            "headings": [
+              "Example Domain"
+            ],
+            "evidence": "Found 1 H1 tag(s): \"Example Domain\""
+          },
+          "headingStructure": {
+            "h1Count": 1,
+            "h2Count": 0,
+            "h3Count": 0,
+            "hierarchyValid": false,
+            "evidence": "Heading distribution: 1 H1, 0 H2, 0 H3 tags."
+          },
+          "duplicateTitles": {
+            "hasDuplicates": false,
+            "evidence": "No duplicate page titles detected across crawled URLs."
+          },
+          "duplicateDescriptions": {
+            "hasDuplicates": false,
+            "evidence": "Unique meta descriptions confirmed across crawled pages."
+          },
+          "contentStructure": {
+            "wordCount": 21,
+            "paragraphCount": 2,
+            "thinContent": true,
+            "evidence": "21 readable words across 2 paragraph (<p>) blocks."
+          },
+          "imageAltAttributes": {
+            "totalImages": 0,
+            "missingAltCount": 0,
+            "compliantCount": 0,
+            "compliancePercentage": 100,
+            "evidence": "No images found on the homepage."
+          },
+          "internalLinking": {
+            "totalLinks": 0,
+            "distinctPages": 0,
+            "evidence": "Discovered 0 unique internal destination links across page navigation and body."
+          },
+          "urlStructure": {
+            "isClean": true,
+            "hasSuspiciousParams": false,
+            "evidence": "Canonical URL structure: https://example.com/"
+          }
+        },
+        "content": {
+          "thinContentSignal": {
+            "detected": true,
+            "wordCount": 21,
+            "verdict": "Thin content detected (< 250 words)",
+            "evidence": "Crawled homepage contains 21 text words."
+          },
+          "missingImportantElements": [
+            {
+              "element": "Meta Description",
+              "missing": true,
+              "importance": "High",
+              "evidence": "Homepage is missing a meta description."
+            },
+            {
+              "element": "Primary H1 Tag",
+              "missing": false,
+              "importance": "High",
+              "evidence": "H1 tag detected: \"Example Domain\""
+            },
+            {
+              "element": "Call To Action / Direct Booking",
+              "missing": true,
+              "importance": "Medium",
+              "evidence": "No direct booking or call-to-action buttons detected."
+            },
+            {
+              "element": "Telephone Link (href=\"tel:\")",
+              "missing": true,
+              "importance": "High for Local",
+              "evidence": "Homepage is missing a clickable tel: link."
+            }
+          ],
+          "serviceInformation": {
+            "detected": false,
+            "sampleServices": [],
+            "evidence": "No dedicated service listings detected in markup."
+          },
+          "locationRelevance": {
+            "detected": false,
+            "locationsFound": [],
+            "evidence": "No explicit geographic or city location terms detected in primary copy."
+          },
+          "contactInformation": {
+            "detected": false,
+            "methodsFound": [],
+            "evidence": "No phone or email detected in homepage DOM."
+          },
+          "usefulBusinessInformation": {
+            "detected": false,
+            "items": [],
+            "evidence": "Opening hours not found on website."
+          }
+        },
+        "structuredData": {
+          "hasJsonLd": false,
+          "totalBlocks": 0,
+          "detectedSchemas": {
+            "localBusiness": false,
+            "organization": false,
+            "webSite": false,
+            "webPage": false,
+            "service": false,
+            "faqPage": false,
+            "breadcrumbList": false,
+            "otherDetectedSchemas": []
+          },
+          "findings": [
+            {
+              "schema": "LocalBusiness",
+              "detected": false,
+              "evidence": "Homepage is missing Schema.org LocalBusiness structured data."
+            },
+            {
+              "schema": "Organization",
+              "detected": false,
+              "evidence": "Organization schema not detected."
+            },
+            {
+              "schema": "WebSite",
+              "detected": false,
+              "evidence": "WebSite schema not detected."
+            },
+            {
+              "schema": "WebPage",
+              "detected": false,
+              "evidence": "WebPage schema not detected."
+            },
+            {
+              "schema": "Service",
+              "detected": false,
+              "evidence": "Service schema not detected."
+            },
+            {
+              "schema": "FAQPage",
+              "detected": false,
+              "evidence": "FAQPage schema not detected."
+            },
+            {
+              "schema": "BreadcrumbList",
+              "detected": false,
+              "evidence": "BreadcrumbList schema not detected."
+            }
+          ]
+        }
+      },
+      "localSeoAnalysis": {
+        "signals": {
+          "businessName": {
+            "found": true,
+            "value": "Example Domain",
+            "evidence": "Discovered business name: \"Example Domain\" (Page Title)"
+          },
+          "address": {
+            "found": false,
+            "value": null,
+            "evidence": "Physical address not found on website."
+          },
+          "phone": {
+            "found": false,
+            "value": null,
+            "evidence": "Phone number not found on website."
+          },
+          "cityLocationReferences": {
+            "found": false,
+            "locations": [],
+            "evidence": "No explicit city references found on website."
+          },
+          "serviceAreas": {
+            "found": false,
+            "areas": [],
+            "evidence": "No explicit service area definitions found on website."
+          },
+          "contactInformation": {
+            "found": false,
+            "channels": [],
+            "evidence": "No direct contact channels detected on website."
+          },
+          "localBusinessSchema": {
+            "found": false,
+            "schemaType": null,
+            "evidence": "LocalBusiness JSON-LD schema is missing from website HTML."
+          },
+          "organizationSchema": {
+            "found": false,
+            "evidence": "Organization Schema not detected."
+          },
+          "servicePages": {
+            "found": false,
+            "pages": [],
+            "evidence": "No dedicated service subpages detected in site architecture."
+          },
+          "locationPages": {
+            "found": false,
+            "pages": [],
+            "evidence": "No dedicated location/city pages detected."
+          },
+          "localRelevanceSignals": {
+            "hasLocalPhone": false,
+            "hasMapEmbed": false,
+            "hasPhysicalAddressInFooter": false,
+            "evidence": "Local relevance signals: Local area code phone (No) • Google Maps Embed: No • Address in Footer: No."
+          }
+        },
+        "googleBusinessProfileNotice": {
+          "status": "not_connected",
+          "headline": "Google Business Profile data is not connected.",
+          "explanation": "Anonymous users have not authorized access to their private Google Business Profile. Locora does not display private Google Business Profile data or claim review counts for unauthenticated public visitors. This is a limitation, not an error.",
+          "actionRequired": "Connect your authorized Google Business Profile in your Locora workspace to sync live Google Maps reviews, 3-pack rank tracking, and customer feedback."
+        }
+      },
+      "performanceAnalysis": {
+        "provider": "google_pagespeed_insights",
+        "status": "not_configured",
+        "statusMessage": "Performance testing is currently unavailable.",
+        "socketTelemetry": {
+          "serverLatencyTtfbMs": 46,
+          "htmlPayloadSizeKb": 1,
+          "protocol": "HTTPS/TLS",
+          "httpStatusCode": 200,
+          "isSsl": true,
+          "evidence": "Measured direct Time To First Byte (TTFB) at 46ms with 1KB initial HTML payload."
+        }
+      },
+      "discoveredIssues": [
+        {
+          "id": "top_issue_1",
+          "severity": "critical",
+          "category": "On-Page SEO",
+          "title": "Weak or missing title tag on homepage.",
+          "description": "Homepage title tag is missing or suboptimal. The title tag is the #1 on-page organic ranking factor for search engines.",
+          "evidence": "<title>Example Domain</title> (14 characters)"
+        },
+        {
+          "id": "top_issue_2",
+          "severity": "critical",
+          "category": "On-Page SEO",
+          "title": "Homepage is missing a meta description.",
+          "description": "Homepage is missing a meta description. Search engines will extract random text snippets, resulting in lower click-through rates from searchers.",
+          "evidence": "Homepage is missing a meta description"
+        },
+        {
+          "id": "top_issue_3",
+          "severity": "critical",
+          "category": "Structured Data",
+          "title": "LocalBusiness structured data is incomplete.",
+          "description": "LocalBusiness structured data is missing or incomplete. Search engines and map bots cannot verify operating hours, service catalog, or geo-coordinates.",
+          "evidence": "Missing Schema.org LocalBusiness markup"
+        }
+      ],
+      "gatedTeasers": [
+        {
+          "id": "teaser_why",
+          "question": "Why is it happening?",
+          "title": "Deep Root-Cause & Code-Level Diagnostic",
+          "teaserDescription": "Inspect exact source-code line references, missing server response headers, DOM hierarchy conflicts, and CDN misconfigurations causing your score drops.",
+          "featureHighlight": "Full DOM Inspection & Header Health Breakdown",
+          "unlockedInPlan": "Included with Free Locora Account"
+        },
+        {
+          "id": "teaser_what_first",
+          "question": "What should I fix first?",
+          "title": "Revenue-Impact Prioritized Action Roadmap",
+          "teaserDescription": "Stop guessing what to tackle. Locora calculates which fixes deliver the fastest local search traffic and new customer calls, ordered by ROI.",
+          "featureHighlight": "Prioritized 10-Step Growth Sprint",
+          "unlockedInPlan": "Included with Free Locora Account"
+        },
+        {
+          "id": "teaser_how",
+          "question": "How do I fix it?",
+          "title": "One-Click Code & JSON-LD Schema Generator",
+          "teaserDescription": "Get copy-paste ready HTML, structured Schema.org JSON-LD tags, and optimized meta descriptions generated specifically for your business.",
+          "featureHighlight": "Instant Code Snippets & Schema Generator",
+          "unlockedInPlan": "Included with Free Locora Account"
+        },
+        {
+          "id": "teaser_ai_manager",
+          "question": "Can Locora do it for me?",
+          "title": "Locora Autonomous AI Copilot & Work Hub",
+          "teaserDescription": "Assign these audit tasks directly to Locora AI. The AI manager generates content drafts, client proposals, review responses, and tracks task completion.",
+          "featureHighlight": "Autonomous AI Business Manager",
+          "unlockedInPlan": "Included with Free Locora Account"
+        },
+        {
+          "id": "teaser_monitoring",
+          "question": "Did it improve & how am I performing over time?",
+          "title": "Continuous 24/7 Telemetry & Ranking Trackers",
+          "teaserDescription": "Connect Google Business Profile and search consoles to monitor daily 3-pack rank shifts, review velocity, and competitor movements automatically.",
+          "featureHighlight": "Real-Time Telemetry & Historic Audit Benchmarks",
+          "unlockedInPlan": "Included with Free Locora Account"
+        }
+      ],
+      "status": "completed",
+      "cacheStatus": "live",
+      "dataAge": "Live Crawl",
+      "crawlStartedAt": "2026-09-15T11:15:23.527Z",
+      "crawlCompletedAt": "2026-09-15T11:15:23.612Z"
+    }
+  },
+  {
+    "id": "chk_1789470931224_frgbr17",
+    "website_url": "https://example.com/",
+    "normalized_url": "https://example.com/",
+    "user_id": null,
+    "business_id": null,
+    "status": "completed",
+    "started_at": "2026-09-15T11:15:31.129Z",
+    "completed_at": "2026-09-15T11:15:31.224Z",
+    "overall_score": 43,
+    "technical_score": 50,
+    "onpage_score": 57,
+    "local_score": 20,
+    "content_score": 14,
+    "performance_score": 100,
+    "schema_score": 0,
+    "pages_analyzed": 1,
+    "findings": [
+      {
+        "id": "top_issue_1",
+        "priority": 1,
+        "severity": "critical",
+        "title": "Weak or missing title tag on homepage.",
+        "description": "Homepage title tag is missing or suboptimal. The title tag is the #1 on-page organic ranking factor for search engines.",
+        "limitedEvidence": "<title>Example Domain</title> (14 characters)",
+        "category": "On-Page SEO",
+        "affectedUrl": "Homepage (/)",
+        "recommendation": "Configure a descriptive title tag (50-60 characters) following the format: [Primary Service] in [City, State] | [Business Name]."
+      },
+      {
+        "id": "top_issue_2",
+        "priority": 2,
+        "severity": "critical",
+        "title": "Homepage is missing a meta description.",
+        "description": "Homepage is missing a meta description. Search engines will extract random text snippets, resulting in lower click-through rates from searchers.",
+        "limitedEvidence": "Homepage is missing a meta description",
+        "category": "On-Page SEO",
+        "affectedUrl": "Homepage (/)",
+        "recommendation": "Write a concise, compelling 140-160 character meta description including your primary service and service location."
+      },
+      {
+        "id": "top_issue_3",
+        "priority": 3,
+        "severity": "critical",
+        "title": "LocalBusiness structured data is incomplete.",
+        "description": "LocalBusiness structured data is missing or incomplete. Search engines and map bots cannot verify operating hours, service catalog, or geo-coordinates.",
+        "limitedEvidence": "Missing Schema.org LocalBusiness markup",
+        "category": "Structured Data",
+        "affectedUrl": "Homepage (/)",
+        "recommendation": "Review and update this factor to improve local search rank."
+      }
+    ],
+    "discovered_business_data": {
+      "name": "Example Domain",
+      "phone": null,
+      "address": null,
+      "schemaTypes": [],
+      "hasLocalBusinessSchema": false,
+      "hasContactForm": false,
+      "hasMapEmbed": false,
+      "metaTitle": "Example Domain",
+      "metaDescription": "",
+      "h1Heading": "Example Domain"
+    },
+    "data_sources": [
+      "Website Crawl",
+      "Direct Socket Telemetry",
+      "Calculated by Locora"
+    ],
+    "crawler_version": "2.4.0",
+    "created_at": "2026-09-15T11:15:31.224Z",
+    "updated_at": "2026-09-15T11:15:31.224Z",
+    "cache_status": "live",
+    "fullResult": {
+      "auditId": "chk_1789470931224_frgbr17",
+      "url": "https://example.com/",
+      "domain": "example.com",
+      "businessName": "Example Domain",
+      "analyzedAt": "2026-09-15T11:15:31.224Z",
+      "pagesCrawled": 1,
+      "overallScore": 43,
+      "scoring": {
+        "overallScore": 43,
+        "categories": {
+          "technicalSeo": {
+            "id": "technical_seo",
+            "name": "Technical SEO",
+            "score": 50,
+            "maxScore": 100,
+            "weight": 0.2,
+            "status": "needs_attention",
+            "checks": [
+              {
+                "id": "tech_https",
+                "name": "HTTPS",
+                "passed": true,
+                "pointsAwarded": 20,
+                "maxPoints": 20,
+                "evidence": "TLS/SSL handshake verified at https://example.com"
+              },
+              {
+                "id": "tech_sitemap",
+                "name": "Sitemap",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "sitemap.xml returned HTTP 404 (Not found at root)"
+              },
+              {
+                "id": "tech_canonical",
+                "name": "Canonical",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "Homepage is missing a canonical link tag"
+              },
+              {
+                "id": "tech_robots",
+                "name": "Robots.txt",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "robots.txt returned HTTP 404"
+              },
+              {
+                "id": "tech_indexability",
+                "name": "Indexability",
+                "passed": true,
+                "pointsAwarded": 15,
+                "maxPoints": 15,
+                "evidence": "Page returns HTTP 200 and does not restrict crawlers with noindex"
+              },
+              {
+                "id": "tech_broken_links",
+                "name": "Broken Links",
+                "passed": true,
+                "pointsAwarded": 15,
+                "maxPoints": 15,
+                "evidence": "All 0 crawled internal sample links returned healthy HTTP status"
+              }
+            ],
+            "explanation": "Calculated from live server response, SSL handshake, sitemap.xml, robots.txt, canonical tag, and link health."
+          },
+          "onPageSeo": {
+            "id": "onpage_seo",
+            "name": "On-Page SEO",
+            "score": 57,
+            "maxScore": 100,
+            "weight": 0.2,
+            "status": "fair",
+            "checks": [
+              {
+                "id": "onpage_title",
+                "name": "Title Tag",
+                "passed": false,
+                "pointsAwarded": 12,
+                "maxPoints": 20,
+                "evidence": "<title>Example Domain</title> (14 characters)"
+              },
+              {
+                "id": "onpage_description",
+                "name": "Meta Description",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "Homepage is missing a meta description"
+              },
+              {
+                "id": "onpage_h1",
+                "name": "Primary H1",
+                "passed": true,
+                "pointsAwarded": 20,
+                "maxPoints": 20,
+                "evidence": "1 primary H1 heading detected: \"Example Domain\""
+              },
+              {
+                "id": "onpage_hierarchy",
+                "name": "Heading Hierarchy",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "Page lacks structural H2 subheadings"
+              },
+              {
+                "id": "onpage_alt",
+                "name": "Image Alt Attributes",
+                "passed": true,
+                "pointsAwarded": 15,
+                "maxPoints": 15,
+                "evidence": "No images require alt attributes"
+              },
+              {
+                "id": "onpage_url",
+                "name": "Clean URL Structure",
+                "passed": true,
+                "pointsAwarded": 10,
+                "maxPoints": 10,
+                "evidence": "Clean, search-friendly canonical URL structure"
+              }
+            ],
+            "explanation": "Calculated from title length, meta description, single H1 heading hierarchy, image alt coverage, and URL format."
+          },
+          "localSeo": {
+            "id": "local_seo",
+            "name": "Local SEO",
+            "score": 20,
+            "maxScore": 100,
+            "weight": 0.2,
+            "status": "needs_attention",
+            "checks": [
+              {
+                "id": "local_name",
+                "name": "Business Name",
+                "passed": true,
+                "pointsAwarded": 20,
+                "maxPoints": 20,
+                "evidence": "Business name identified: \"Example Domain\""
+              },
+              {
+                "id": "local_phone",
+                "name": "Clickable Phone Link",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "No clickable telephone (tel:) link found in HTML"
+              },
+              {
+                "id": "local_address",
+                "name": "Physical Address",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "Physical street address not detected in page markup"
+              },
+              {
+                "id": "local_areacode",
+                "name": "Local Area Code",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "Non-geographic or missing local area code"
+              },
+              {
+                "id": "local_service_pages",
+                "name": "Service Subpages",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "No dedicated service subpages detected"
+              },
+              {
+                "id": "local_geo_signals",
+                "name": "Location Pages & Maps",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 10,
+                "evidence": "No dedicated location pages or map embeds found"
+              }
+            ],
+            "explanation": "Calculated from NAP footprint (Name, Phone, Address), local area codes, dedicated service pages, and geographic references."
+          },
+          "content": {
+            "id": "content",
+            "name": "Content",
+            "score": 14,
+            "maxScore": 100,
+            "weight": 0.15,
+            "status": "needs_attention",
+            "checks": [
+              {
+                "id": "content_depth",
+                "name": "Content Depth",
+                "passed": false,
+                "pointsAwarded": 6,
+                "maxPoints": 30,
+                "evidence": "Thin content detected (21 words, below 250 word benchmark)"
+              },
+              {
+                "id": "content_paragraphs",
+                "name": "Paragraph Flow",
+                "passed": false,
+                "pointsAwarded": 8,
+                "maxPoints": 20,
+                "evidence": "Low paragraph count (2 <p> tags)"
+              },
+              {
+                "id": "content_conversion",
+                "name": "Conversion Actions (CTA)",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 25,
+                "evidence": "Missing clear conversion CTA or lead capture mechanism"
+              },
+              {
+                "id": "content_services",
+                "name": "Service Descriptions",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "Service offerings not clearly articulated in page copy"
+              },
+              {
+                "id": "content_geo",
+                "name": "Local Context in Copy",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 10,
+                "evidence": "Page body copy lacks geographical locality keywords"
+              }
+            ],
+            "explanation": "Calculated from word count depth, paragraph readability, conversion calls-to-action, service clarity, and local relevance."
+          },
+          "structuredData": {
+            "id": "structured_data",
+            "name": "Structured Data",
+            "score": 0,
+            "maxScore": 100,
+            "weight": 0.1,
+            "status": "needs_attention",
+            "checks": [
+              {
+                "id": "struct_jsonld",
+                "name": "JSON-LD Script",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 25,
+                "evidence": "No Schema.org JSON-LD scripts found"
+              },
+              {
+                "id": "struct_localbiz",
+                "name": "LocalBusiness Schema",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 35,
+                "evidence": "Missing Schema.org LocalBusiness markup"
+              },
+              {
+                "id": "struct_org",
+                "name": "Organization / WebSite Schema",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "No Organization or WebSite schema detected"
+              },
+              {
+                "id": "struct_attrs",
+                "name": "Attribute Completeness",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "Structured data is missing phone, address, or operating hours"
+              }
+            ],
+            "explanation": "Calculated from JSON-LD implementation, LocalBusiness schema detection, entity markup, and attribute completeness."
+          },
+          "performance": {
+            "id": "performance",
+            "name": "Performance",
+            "score": 100,
+            "maxScore": 100,
+            "weight": 0.15,
+            "status": "good",
+            "checks": [
+              {
+                "id": "perf_ttfb",
+                "name": "Server TTFB Latency",
+                "passed": true,
+                "pointsAwarded": 30,
+                "maxPoints": 30,
+                "evidence": "Direct Time To First Byte measured at 48ms (Fast)"
+              },
+              {
+                "id": "perf_payload",
+                "name": "HTML Payload Size",
+                "passed": true,
+                "pointsAwarded": 25,
+                "maxPoints": 25,
+                "evidence": "Initial transferred HTML payload is 1 KB"
+              },
+              {
+                "id": "perf_viewport",
+                "name": "Mobile Viewport",
+                "passed": true,
+                "pointsAwarded": 25,
+                "maxPoints": 25,
+                "evidence": "Mobile responsive viewport tag configured (<meta name=\"viewport\">)"
+              },
+              {
+                "id": "perf_ssl",
+                "name": "Secure Transport Protocol",
+                "passed": true,
+                "pointsAwarded": 20,
+                "maxPoints": 20,
+                "evidence": "TLS/SSL encrypted transport verified"
+              }
+            ],
+            "explanation": "Calculated from direct socket Time To First Byte (TTFB), HTML transfer size, and mobile viewport readiness."
+          }
+        },
+        "formulaExplanation": "Overall Score = (Technical × 0.20) + (On-Page × 0.20) + (Local × 0.20) + (Content × 0.15) + (Structured Data × 0.10) + (Performance × 0.15). Deterministic math derived exclusively from live crawl data."
+      },
+      "gatedReport": {
+        "totalOpportunitiesCount": 20,
+        "visibleOpportunitiesCount": 3,
+        "lockedOpportunitiesCount": 17,
+        "topIssues": [
+          {
+            "id": "top_issue_1",
+            "priority": 1,
+            "severity": "critical",
+            "title": "Weak or missing title tag on homepage.",
+            "description": "Homepage title tag is missing or suboptimal. The title tag is the #1 on-page organic ranking factor for search engines.",
+            "limitedEvidence": "<title>Example Domain</title> (14 characters)",
+            "category": "On-Page SEO",
+            "affectedUrl": "Homepage (/)",
+            "recommendation": "Configure a descriptive title tag (50-60 characters) following the format: [Primary Service] in [City, State] | [Business Name]."
+          },
+          {
+            "id": "top_issue_2",
+            "priority": 2,
+            "severity": "critical",
+            "title": "Homepage is missing a meta description.",
+            "description": "Homepage is missing a meta description. Search engines will extract random text snippets, resulting in lower click-through rates from searchers.",
+            "limitedEvidence": "Homepage is missing a meta description",
+            "category": "On-Page SEO",
+            "affectedUrl": "Homepage (/)",
+            "recommendation": "Write a concise, compelling 140-160 character meta description including your primary service and service location."
+          },
+          {
+            "id": "top_issue_3",
+            "priority": 3,
+            "severity": "critical",
+            "title": "LocalBusiness structured data is incomplete.",
+            "description": "LocalBusiness structured data is missing or incomplete. Search engines and map bots cannot verify operating hours, service catalog, or geo-coordinates.",
+            "limitedEvidence": "Missing Schema.org LocalBusiness markup",
+            "category": "Structured Data",
+            "affectedUrl": "Homepage (/)",
+            "recommendation": "Review and update this factor to improve local search rank."
+          }
+        ],
+        "topPassedChecks": [
+          {
+            "id": "passed_chk_1",
+            "title": "HTTPS verified",
+            "limitedEvidence": "TLS/SSL handshake verified at https://example.com",
+            "category": "Technical SEO"
+          },
+          {
+            "id": "passed_chk_2",
+            "title": "Indexability verified",
+            "limitedEvidence": "Page returns HTTP 200 and does not restrict crawlers with noindex",
+            "category": "Technical SEO"
+          },
+          {
+            "id": "passed_chk_3",
+            "title": "Broken Links verified",
+            "limitedEvidence": "All 0 crawled internal sample links returned healthy HTTP status",
+            "category": "Technical SEO"
+          }
+        ],
+        "topOpportunities": [
+          {
+            "id": "opp_1",
+            "priority": 1,
+            "title": "Deploy Schema.org LocalBusiness JSON-LD markup",
+            "impact": "High Revenue Impact",
+            "category": "Structured Data",
+            "difficulty": "Quick Win",
+            "limitedEvidence": "0 LocalBusiness blocks detected in HTML"
+          },
+          {
+            "id": "opp_2",
+            "priority": 2,
+            "title": "Optimize homepage meta title and description",
+            "impact": "Immediate CTR Lift",
+            "category": "On-Page SEO",
+            "difficulty": "Quick Win",
+            "limitedEvidence": "Current title: Example Domain..."
+          },
+          {
+            "id": "opp_3",
+            "priority": 3,
+            "title": "Add direct click-to-call (tel:) links in navigation and footer",
+            "impact": "Mobile Call Lift",
+            "category": "Local SEO",
+            "difficulty": "Quick Win",
+            "limitedEvidence": "No clickable phone links detected"
+          }
+        ],
+        "nextStepRecommendation": {
+          "headline": "Address Structured Data first to capture local search visibility",
+          "summary": "Your Structured Data score is currently 0/100. Fixing the top findings in this category provides the fastest lift in Google Maps 3-pack rankings and local customer inquiries.",
+          "primaryFocus": "Structured Data"
+        },
+        "scanMetadata": {
+          "scanDateTime": "2026-09-15T11:15:31.224Z",
+          "pagesAnalyzedLabel": "1 page analyzed",
+          "dataSources": [
+            "Website Crawl",
+            "Direct Socket Telemetry",
+            "Calculated by Locora"
+          ]
+        },
+        "lockedFeaturesList": [
+          {
+            "feature": "Complete Page-by-Page Audit",
+            "description": "Detailed crawl logs, DOM tree diagnostics, and status codes for every internal URL."
+          },
+          {
+            "feature": "All 17 Additional Opportunities",
+            "description": "Full step-by-step action items with estimated revenue impact and copy-paste code snippets."
+          },
+          {
+            "feature": "Competitor Intelligence & Rank Tracking",
+            "description": "Monitor local competitors, 3-pack geo-grid rankings, and keyword movements daily."
+          },
+          {
+            "feature": "Google Business Profile & Review Sync",
+            "description": "Sync Google Maps reviews, automated AI review replies, and customer sentiment analytics."
+          },
+          {
+            "feature": "Autonomous AI Manager & Content Hub",
+            "description": "Let Locora AI draft localized landing pages, FAQ schema, and social updates on autopilot."
+          }
+        ]
+      },
+      "scores": {
+        "seo": 57,
+        "performance": 100,
+        "localPresence": 20,
+        "technicalSeo": 50,
+        "onPageSeo": 57,
+        "localSeo": 20,
+        "content": 14,
+        "structuredData": 0
+      },
+      "crawlStats": {
+        "latencyMs": 48,
+        "htmlSizeKb": 1,
+        "isSsl": true,
+        "httpStatus": 200,
+        "totalImages": 0,
+        "missingAltImages": 0,
+        "internalLinksCount": 0
+      },
+      "detectedBusinessData": {
+        "name": "Example Domain",
+        "phone": null,
+        "address": null,
+        "schemaTypes": [],
+        "hasLocalBusinessSchema": false,
+        "hasContactForm": false,
+        "hasMapEmbed": false,
+        "metaTitle": "Example Domain",
+        "metaDescription": "",
+        "h1Heading": "Example Domain"
+      },
+      "businessDiscovery": {
+        "businessName": {
+          "value": "Example Domain",
+          "source": "Source: Page Title",
+          "status": "found",
+          "displayValue": "Example Domain"
+        },
+        "displayName": {
+          "value": "Example Domain",
+          "source": "Source: Page Title",
+          "status": "found",
+          "displayValue": "Example Domain"
+        },
+        "phone": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "email": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "address": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "city": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "stateRegion": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "country": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "postalCode": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "services": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "serviceAreas": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "businessCategory": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "openingHours": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "website": {
+          "value": "https://example.com/",
+          "source": "Source: Website Crawl",
+          "status": "found",
+          "displayValue": "https://example.com/"
+        },
+        "socialLinks": {
+          "value": [],
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        }
+      },
+      "realSeoAnalysis": {
+        "technical": {
+          "https": {
+            "enabled": true,
+            "evidence": "Protocol: https:, SSL Handshake verified at example.com",
+            "details": "Website is served securely over HTTPS."
+          },
+          "crawlability": {
+            "status": "crawlable",
+            "metaRobots": null,
+            "evidence": "No restrictive robots meta tag detected on homepage."
+          },
+          "robotsTxt": {
+            "found": false,
+            "statusCode": 404,
+            "hasDisallow": false,
+            "sitemapFoundInRobots": false,
+            "evidence": "robots.txt returned HTTP 404."
+          },
+          "sitemapXml": {
+            "found": false,
+            "statusCode": 404,
+            "evidence": "sitemap.xml returned HTTP 404 (Not found at standard root)."
+          },
+          "canonicalTag": {
+            "present": false,
+            "canonicalUrl": null,
+            "matchesCurrentUrl": false,
+            "evidence": "Homepage is missing a canonical link tag."
+          },
+          "indexability": {
+            "isIndexable": true,
+            "evidence": "Page returns HTTP 200 and does not contain a noindex directive."
+          },
+          "redirectBehavior": {
+            "redirected": false,
+            "finalUrl": "https://example.com/",
+            "evidence": "Direct response without intermediate redirect hops."
+          },
+          "internalLinksHealth": {
+            "totalChecked": 0,
+            "brokenCount": 0,
+            "brokenLinks": [],
+            "evidence": "All 0 crawled internal sample links returned healthy HTTP status."
+          },
+          "httpStatusCode": {
+            "code": 200,
+            "evidence": "Server responded with HTTP 200 OK."
+          }
+        },
+        "onPage": {
+          "titleTag": {
+            "present": true,
+            "text": "Example Domain",
+            "length": 14,
+            "isOptimalLength": false,
+            "evidence": "<title>Example Domain</title> (14 characters)"
+          },
+          "metaDescription": {
+            "present": false,
+            "text": null,
+            "length": 0,
+            "isOptimalLength": false,
+            "evidence": "Homepage is missing a meta description."
+          },
+          "h1Heading": {
+            "present": true,
+            "count": 1,
+            "headings": [
+              "Example Domain"
+            ],
+            "evidence": "Found 1 H1 tag(s): \"Example Domain\""
+          },
+          "headingStructure": {
+            "h1Count": 1,
+            "h2Count": 0,
+            "h3Count": 0,
+            "hierarchyValid": false,
+            "evidence": "Heading distribution: 1 H1, 0 H2, 0 H3 tags."
+          },
+          "duplicateTitles": {
+            "hasDuplicates": false,
+            "evidence": "No duplicate page titles detected across crawled URLs."
+          },
+          "duplicateDescriptions": {
+            "hasDuplicates": false,
+            "evidence": "Unique meta descriptions confirmed across crawled pages."
+          },
+          "contentStructure": {
+            "wordCount": 21,
+            "paragraphCount": 2,
+            "thinContent": true,
+            "evidence": "21 readable words across 2 paragraph (<p>) blocks."
+          },
+          "imageAltAttributes": {
+            "totalImages": 0,
+            "missingAltCount": 0,
+            "compliantCount": 0,
+            "compliancePercentage": 100,
+            "evidence": "No images found on the homepage."
+          },
+          "internalLinking": {
+            "totalLinks": 0,
+            "distinctPages": 0,
+            "evidence": "Discovered 0 unique internal destination links across page navigation and body."
+          },
+          "urlStructure": {
+            "isClean": true,
+            "hasSuspiciousParams": false,
+            "evidence": "Canonical URL structure: https://example.com/"
+          }
+        },
+        "content": {
+          "thinContentSignal": {
+            "detected": true,
+            "wordCount": 21,
+            "verdict": "Thin content detected (< 250 words)",
+            "evidence": "Crawled homepage contains 21 text words."
+          },
+          "missingImportantElements": [
+            {
+              "element": "Meta Description",
+              "missing": true,
+              "importance": "High",
+              "evidence": "Homepage is missing a meta description."
+            },
+            {
+              "element": "Primary H1 Tag",
+              "missing": false,
+              "importance": "High",
+              "evidence": "H1 tag detected: \"Example Domain\""
+            },
+            {
+              "element": "Call To Action / Direct Booking",
+              "missing": true,
+              "importance": "Medium",
+              "evidence": "No direct booking or call-to-action buttons detected."
+            },
+            {
+              "element": "Telephone Link (href=\"tel:\")",
+              "missing": true,
+              "importance": "High for Local",
+              "evidence": "Homepage is missing a clickable tel: link."
+            }
+          ],
+          "serviceInformation": {
+            "detected": false,
+            "sampleServices": [],
+            "evidence": "No dedicated service listings detected in markup."
+          },
+          "locationRelevance": {
+            "detected": false,
+            "locationsFound": [],
+            "evidence": "No explicit geographic or city location terms detected in primary copy."
+          },
+          "contactInformation": {
+            "detected": false,
+            "methodsFound": [],
+            "evidence": "No phone or email detected in homepage DOM."
+          },
+          "usefulBusinessInformation": {
+            "detected": false,
+            "items": [],
+            "evidence": "Opening hours not found on website."
+          }
+        },
+        "structuredData": {
+          "hasJsonLd": false,
+          "totalBlocks": 0,
+          "detectedSchemas": {
+            "localBusiness": false,
+            "organization": false,
+            "webSite": false,
+            "webPage": false,
+            "service": false,
+            "faqPage": false,
+            "breadcrumbList": false,
+            "otherDetectedSchemas": []
+          },
+          "findings": [
+            {
+              "schema": "LocalBusiness",
+              "detected": false,
+              "evidence": "Homepage is missing Schema.org LocalBusiness structured data."
+            },
+            {
+              "schema": "Organization",
+              "detected": false,
+              "evidence": "Organization schema not detected."
+            },
+            {
+              "schema": "WebSite",
+              "detected": false,
+              "evidence": "WebSite schema not detected."
+            },
+            {
+              "schema": "WebPage",
+              "detected": false,
+              "evidence": "WebPage schema not detected."
+            },
+            {
+              "schema": "Service",
+              "detected": false,
+              "evidence": "Service schema not detected."
+            },
+            {
+              "schema": "FAQPage",
+              "detected": false,
+              "evidence": "FAQPage schema not detected."
+            },
+            {
+              "schema": "BreadcrumbList",
+              "detected": false,
+              "evidence": "BreadcrumbList schema not detected."
+            }
+          ]
+        }
+      },
+      "localSeoAnalysis": {
+        "signals": {
+          "businessName": {
+            "found": true,
+            "value": "Example Domain",
+            "evidence": "Discovered business name: \"Example Domain\" (Page Title)"
+          },
+          "address": {
+            "found": false,
+            "value": null,
+            "evidence": "Physical address not found on website."
+          },
+          "phone": {
+            "found": false,
+            "value": null,
+            "evidence": "Phone number not found on website."
+          },
+          "cityLocationReferences": {
+            "found": false,
+            "locations": [],
+            "evidence": "No explicit city references found on website."
+          },
+          "serviceAreas": {
+            "found": false,
+            "areas": [],
+            "evidence": "No explicit service area definitions found on website."
+          },
+          "contactInformation": {
+            "found": false,
+            "channels": [],
+            "evidence": "No direct contact channels detected on website."
+          },
+          "localBusinessSchema": {
+            "found": false,
+            "schemaType": null,
+            "evidence": "LocalBusiness JSON-LD schema is missing from website HTML."
+          },
+          "organizationSchema": {
+            "found": false,
+            "evidence": "Organization Schema not detected."
+          },
+          "servicePages": {
+            "found": false,
+            "pages": [],
+            "evidence": "No dedicated service subpages detected in site architecture."
+          },
+          "locationPages": {
+            "found": false,
+            "pages": [],
+            "evidence": "No dedicated location/city pages detected."
+          },
+          "localRelevanceSignals": {
+            "hasLocalPhone": false,
+            "hasMapEmbed": false,
+            "hasPhysicalAddressInFooter": false,
+            "evidence": "Local relevance signals: Local area code phone (No) • Google Maps Embed: No • Address in Footer: No."
+          }
+        },
+        "googleBusinessProfileNotice": {
+          "status": "not_connected",
+          "headline": "Google Business Profile data is not connected.",
+          "explanation": "Anonymous users have not authorized access to their private Google Business Profile. Locora does not display private Google Business Profile data or claim review counts for unauthenticated public visitors. This is a limitation, not an error.",
+          "actionRequired": "Connect your authorized Google Business Profile in your Locora workspace to sync live Google Maps reviews, 3-pack rank tracking, and customer feedback."
+        }
+      },
+      "performanceAnalysis": {
+        "provider": "google_pagespeed_insights",
+        "status": "not_configured",
+        "statusMessage": "Performance testing is currently unavailable.",
+        "socketTelemetry": {
+          "serverLatencyTtfbMs": 48,
+          "htmlPayloadSizeKb": 1,
+          "protocol": "HTTPS/TLS",
+          "httpStatusCode": 200,
+          "isSsl": true,
+          "evidence": "Measured direct Time To First Byte (TTFB) at 48ms with 1KB initial HTML payload."
+        }
+      },
+      "discoveredIssues": [
+        {
+          "id": "top_issue_1",
+          "severity": "critical",
+          "category": "On-Page SEO",
+          "title": "Weak or missing title tag on homepage.",
+          "description": "Homepage title tag is missing or suboptimal. The title tag is the #1 on-page organic ranking factor for search engines.",
+          "evidence": "<title>Example Domain</title> (14 characters)"
+        },
+        {
+          "id": "top_issue_2",
+          "severity": "critical",
+          "category": "On-Page SEO",
+          "title": "Homepage is missing a meta description.",
+          "description": "Homepage is missing a meta description. Search engines will extract random text snippets, resulting in lower click-through rates from searchers.",
+          "evidence": "Homepage is missing a meta description"
+        },
+        {
+          "id": "top_issue_3",
+          "severity": "critical",
+          "category": "Structured Data",
+          "title": "LocalBusiness structured data is incomplete.",
+          "description": "LocalBusiness structured data is missing or incomplete. Search engines and map bots cannot verify operating hours, service catalog, or geo-coordinates.",
+          "evidence": "Missing Schema.org LocalBusiness markup"
+        }
+      ],
+      "gatedTeasers": [
+        {
+          "id": "teaser_why",
+          "question": "Why is it happening?",
+          "title": "Deep Root-Cause & Code-Level Diagnostic",
+          "teaserDescription": "Inspect exact source-code line references, missing server response headers, DOM hierarchy conflicts, and CDN misconfigurations causing your score drops.",
+          "featureHighlight": "Full DOM Inspection & Header Health Breakdown",
+          "unlockedInPlan": "Included with Free Locora Account"
+        },
+        {
+          "id": "teaser_what_first",
+          "question": "What should I fix first?",
+          "title": "Revenue-Impact Prioritized Action Roadmap",
+          "teaserDescription": "Stop guessing what to tackle. Locora calculates which fixes deliver the fastest local search traffic and new customer calls, ordered by ROI.",
+          "featureHighlight": "Prioritized 10-Step Growth Sprint",
+          "unlockedInPlan": "Included with Free Locora Account"
+        },
+        {
+          "id": "teaser_how",
+          "question": "How do I fix it?",
+          "title": "One-Click Code & JSON-LD Schema Generator",
+          "teaserDescription": "Get copy-paste ready HTML, structured Schema.org JSON-LD tags, and optimized meta descriptions generated specifically for your business.",
+          "featureHighlight": "Instant Code Snippets & Schema Generator",
+          "unlockedInPlan": "Included with Free Locora Account"
+        },
+        {
+          "id": "teaser_ai_manager",
+          "question": "Can Locora do it for me?",
+          "title": "Locora Autonomous AI Copilot & Work Hub",
+          "teaserDescription": "Assign these audit tasks directly to Locora AI. The AI manager generates content drafts, client proposals, review responses, and tracks task completion.",
+          "featureHighlight": "Autonomous AI Business Manager",
+          "unlockedInPlan": "Included with Free Locora Account"
+        },
+        {
+          "id": "teaser_monitoring",
+          "question": "Did it improve & how am I performing over time?",
+          "title": "Continuous 24/7 Telemetry & Ranking Trackers",
+          "teaserDescription": "Connect Google Business Profile and search consoles to monitor daily 3-pack rank shifts, review velocity, and competitor movements automatically.",
+          "featureHighlight": "Real-Time Telemetry & Historic Audit Benchmarks",
+          "unlockedInPlan": "Included with Free Locora Account"
+        }
+      ],
+      "status": "completed",
+      "cacheStatus": "live",
+      "dataAge": "Live Crawl",
+      "crawlStartedAt": "2026-09-15T11:15:31.129Z",
+      "crawlCompletedAt": "2026-09-15T11:15:31.224Z"
+    }
+  },
+  {
+    "id": "chk_1789470954155_mat73dt",
+    "website_url": "https://example.com/",
+    "normalized_url": "https://example.com/",
+    "user_id": null,
+    "business_id": null,
+    "status": "completed",
+    "started_at": "2026-09-15T11:15:54.061Z",
+    "completed_at": "2026-09-15T11:15:54.155Z",
+    "overall_score": 43,
+    "technical_score": 50,
+    "onpage_score": 57,
+    "local_score": 20,
+    "content_score": 14,
+    "performance_score": 100,
+    "schema_score": 0,
+    "pages_analyzed": 1,
+    "findings": [
+      {
+        "id": "top_issue_1",
+        "priority": 1,
+        "severity": "critical",
+        "title": "Weak or missing title tag on homepage.",
+        "description": "Homepage title tag is missing or suboptimal. The title tag is the #1 on-page organic ranking factor for search engines.",
+        "limitedEvidence": "<title>Example Domain</title> (14 characters)",
+        "category": "On-Page SEO",
+        "affectedUrl": "Homepage (/)",
+        "recommendation": "Configure a descriptive title tag (50-60 characters) following the format: [Primary Service] in [City, State] | [Business Name]."
+      },
+      {
+        "id": "top_issue_2",
+        "priority": 2,
+        "severity": "critical",
+        "title": "Homepage is missing a meta description.",
+        "description": "Homepage is missing a meta description. Search engines will extract random text snippets, resulting in lower click-through rates from searchers.",
+        "limitedEvidence": "Homepage is missing a meta description",
+        "category": "On-Page SEO",
+        "affectedUrl": "Homepage (/)",
+        "recommendation": "Write a concise, compelling 140-160 character meta description including your primary service and service location."
+      },
+      {
+        "id": "top_issue_3",
+        "priority": 3,
+        "severity": "critical",
+        "title": "LocalBusiness structured data is incomplete.",
+        "description": "LocalBusiness structured data is missing or incomplete. Search engines and map bots cannot verify operating hours, service catalog, or geo-coordinates.",
+        "limitedEvidence": "Missing Schema.org LocalBusiness markup",
+        "category": "Structured Data",
+        "affectedUrl": "Homepage (/)",
+        "recommendation": "Review and update this factor to improve local search rank."
+      }
+    ],
+    "discovered_business_data": {
+      "name": "Example Domain",
+      "phone": null,
+      "address": null,
+      "schemaTypes": [],
+      "hasLocalBusinessSchema": false,
+      "hasContactForm": false,
+      "hasMapEmbed": false,
+      "metaTitle": "Example Domain",
+      "metaDescription": "",
+      "h1Heading": "Example Domain"
+    },
+    "data_sources": [
+      "Website Crawl",
+      "Direct Socket Telemetry",
+      "Calculated by Locora"
+    ],
+    "crawler_version": "2.4.0",
+    "created_at": "2026-09-15T11:15:54.155Z",
+    "updated_at": "2026-09-15T11:15:54.155Z",
+    "cache_status": "live",
+    "fullResult": {
+      "auditId": "chk_1789470954155_mat73dt",
+      "url": "https://example.com/",
+      "domain": "example.com",
+      "businessName": "Example Domain",
+      "analyzedAt": "2026-09-15T11:15:54.155Z",
+      "pagesCrawled": 1,
+      "overallScore": 43,
+      "scoring": {
+        "overallScore": 43,
+        "categories": {
+          "technicalSeo": {
+            "id": "technical_seo",
+            "name": "Technical SEO",
+            "score": 50,
+            "maxScore": 100,
+            "weight": 0.2,
+            "status": "needs_attention",
+            "checks": [
+              {
+                "id": "tech_https",
+                "name": "HTTPS",
+                "passed": true,
+                "pointsAwarded": 20,
+                "maxPoints": 20,
+                "evidence": "TLS/SSL handshake verified at https://example.com"
+              },
+              {
+                "id": "tech_sitemap",
+                "name": "Sitemap",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "sitemap.xml returned HTTP 404 (Not found at root)"
+              },
+              {
+                "id": "tech_canonical",
+                "name": "Canonical",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "Homepage is missing a canonical link tag"
+              },
+              {
+                "id": "tech_robots",
+                "name": "Robots.txt",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "robots.txt returned HTTP 404"
+              },
+              {
+                "id": "tech_indexability",
+                "name": "Indexability",
+                "passed": true,
+                "pointsAwarded": 15,
+                "maxPoints": 15,
+                "evidence": "Page returns HTTP 200 and does not restrict crawlers with noindex"
+              },
+              {
+                "id": "tech_broken_links",
+                "name": "Broken Links",
+                "passed": true,
+                "pointsAwarded": 15,
+                "maxPoints": 15,
+                "evidence": "All 0 crawled internal sample links returned healthy HTTP status"
+              }
+            ],
+            "explanation": "Calculated from live server response, SSL handshake, sitemap.xml, robots.txt, canonical tag, and link health."
+          },
+          "onPageSeo": {
+            "id": "onpage_seo",
+            "name": "On-Page SEO",
+            "score": 57,
+            "maxScore": 100,
+            "weight": 0.2,
+            "status": "fair",
+            "checks": [
+              {
+                "id": "onpage_title",
+                "name": "Title Tag",
+                "passed": false,
+                "pointsAwarded": 12,
+                "maxPoints": 20,
+                "evidence": "<title>Example Domain</title> (14 characters)"
+              },
+              {
+                "id": "onpage_description",
+                "name": "Meta Description",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "Homepage is missing a meta description"
+              },
+              {
+                "id": "onpage_h1",
+                "name": "Primary H1",
+                "passed": true,
+                "pointsAwarded": 20,
+                "maxPoints": 20,
+                "evidence": "1 primary H1 heading detected: \"Example Domain\""
+              },
+              {
+                "id": "onpage_hierarchy",
+                "name": "Heading Hierarchy",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "Page lacks structural H2 subheadings"
+              },
+              {
+                "id": "onpage_alt",
+                "name": "Image Alt Attributes",
+                "passed": true,
+                "pointsAwarded": 15,
+                "maxPoints": 15,
+                "evidence": "No images require alt attributes"
+              },
+              {
+                "id": "onpage_url",
+                "name": "Clean URL Structure",
+                "passed": true,
+                "pointsAwarded": 10,
+                "maxPoints": 10,
+                "evidence": "Clean, search-friendly canonical URL structure"
+              }
+            ],
+            "explanation": "Calculated from title length, meta description, single H1 heading hierarchy, image alt coverage, and URL format."
+          },
+          "localSeo": {
+            "id": "local_seo",
+            "name": "Local SEO",
+            "score": 20,
+            "maxScore": 100,
+            "weight": 0.2,
+            "status": "needs_attention",
+            "checks": [
+              {
+                "id": "local_name",
+                "name": "Business Name",
+                "passed": true,
+                "pointsAwarded": 20,
+                "maxPoints": 20,
+                "evidence": "Business name identified: \"Example Domain\""
+              },
+              {
+                "id": "local_phone",
+                "name": "Clickable Phone Link",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "No clickable telephone (tel:) link found in HTML"
+              },
+              {
+                "id": "local_address",
+                "name": "Physical Address",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "Physical street address not detected in page markup"
+              },
+              {
+                "id": "local_areacode",
+                "name": "Local Area Code",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "Non-geographic or missing local area code"
+              },
+              {
+                "id": "local_service_pages",
+                "name": "Service Subpages",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "No dedicated service subpages detected"
+              },
+              {
+                "id": "local_geo_signals",
+                "name": "Location Pages & Maps",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 10,
+                "evidence": "No dedicated location pages or map embeds found"
+              }
+            ],
+            "explanation": "Calculated from NAP footprint (Name, Phone, Address), local area codes, dedicated service pages, and geographic references."
+          },
+          "content": {
+            "id": "content",
+            "name": "Content",
+            "score": 14,
+            "maxScore": 100,
+            "weight": 0.15,
+            "status": "needs_attention",
+            "checks": [
+              {
+                "id": "content_depth",
+                "name": "Content Depth",
+                "passed": false,
+                "pointsAwarded": 6,
+                "maxPoints": 30,
+                "evidence": "Thin content detected (21 words, below 250 word benchmark)"
+              },
+              {
+                "id": "content_paragraphs",
+                "name": "Paragraph Flow",
+                "passed": false,
+                "pointsAwarded": 8,
+                "maxPoints": 20,
+                "evidence": "Low paragraph count (2 <p> tags)"
+              },
+              {
+                "id": "content_conversion",
+                "name": "Conversion Actions (CTA)",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 25,
+                "evidence": "Missing clear conversion CTA or lead capture mechanism"
+              },
+              {
+                "id": "content_services",
+                "name": "Service Descriptions",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 15,
+                "evidence": "Service offerings not clearly articulated in page copy"
+              },
+              {
+                "id": "content_geo",
+                "name": "Local Context in Copy",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 10,
+                "evidence": "Page body copy lacks geographical locality keywords"
+              }
+            ],
+            "explanation": "Calculated from word count depth, paragraph readability, conversion calls-to-action, service clarity, and local relevance."
+          },
+          "structuredData": {
+            "id": "structured_data",
+            "name": "Structured Data",
+            "score": 0,
+            "maxScore": 100,
+            "weight": 0.1,
+            "status": "needs_attention",
+            "checks": [
+              {
+                "id": "struct_jsonld",
+                "name": "JSON-LD Script",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 25,
+                "evidence": "No Schema.org JSON-LD scripts found"
+              },
+              {
+                "id": "struct_localbiz",
+                "name": "LocalBusiness Schema",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 35,
+                "evidence": "Missing Schema.org LocalBusiness markup"
+              },
+              {
+                "id": "struct_org",
+                "name": "Organization / WebSite Schema",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "No Organization or WebSite schema detected"
+              },
+              {
+                "id": "struct_attrs",
+                "name": "Attribute Completeness",
+                "passed": false,
+                "pointsAwarded": 0,
+                "maxPoints": 20,
+                "evidence": "Structured data is missing phone, address, or operating hours"
+              }
+            ],
+            "explanation": "Calculated from JSON-LD implementation, LocalBusiness schema detection, entity markup, and attribute completeness."
+          },
+          "performance": {
+            "id": "performance",
+            "name": "Performance",
+            "score": 100,
+            "maxScore": 100,
+            "weight": 0.15,
+            "status": "good",
+            "checks": [
+              {
+                "id": "perf_ttfb",
+                "name": "Server TTFB Latency",
+                "passed": true,
+                "pointsAwarded": 30,
+                "maxPoints": 30,
+                "evidence": "Direct Time To First Byte measured at 49ms (Fast)"
+              },
+              {
+                "id": "perf_payload",
+                "name": "HTML Payload Size",
+                "passed": true,
+                "pointsAwarded": 25,
+                "maxPoints": 25,
+                "evidence": "Initial transferred HTML payload is 1 KB"
+              },
+              {
+                "id": "perf_viewport",
+                "name": "Mobile Viewport",
+                "passed": true,
+                "pointsAwarded": 25,
+                "maxPoints": 25,
+                "evidence": "Mobile responsive viewport tag configured (<meta name=\"viewport\">)"
+              },
+              {
+                "id": "perf_ssl",
+                "name": "Secure Transport Protocol",
+                "passed": true,
+                "pointsAwarded": 20,
+                "maxPoints": 20,
+                "evidence": "TLS/SSL encrypted transport verified"
+              }
+            ],
+            "explanation": "Calculated from direct socket Time To First Byte (TTFB), HTML transfer size, and mobile viewport readiness."
+          }
+        },
+        "formulaExplanation": "Overall Score = (Technical × 0.20) + (On-Page × 0.20) + (Local × 0.20) + (Content × 0.15) + (Structured Data × 0.10) + (Performance × 0.15). Deterministic math derived exclusively from live crawl data."
+      },
+      "gatedReport": {
+        "totalOpportunitiesCount": 20,
+        "visibleOpportunitiesCount": 3,
+        "lockedOpportunitiesCount": 17,
+        "topIssues": [
+          {
+            "id": "top_issue_1",
+            "priority": 1,
+            "severity": "critical",
+            "title": "Weak or missing title tag on homepage.",
+            "description": "Homepage title tag is missing or suboptimal. The title tag is the #1 on-page organic ranking factor for search engines.",
+            "limitedEvidence": "<title>Example Domain</title> (14 characters)",
+            "category": "On-Page SEO",
+            "affectedUrl": "Homepage (/)",
+            "recommendation": "Configure a descriptive title tag (50-60 characters) following the format: [Primary Service] in [City, State] | [Business Name]."
+          },
+          {
+            "id": "top_issue_2",
+            "priority": 2,
+            "severity": "critical",
+            "title": "Homepage is missing a meta description.",
+            "description": "Homepage is missing a meta description. Search engines will extract random text snippets, resulting in lower click-through rates from searchers.",
+            "limitedEvidence": "Homepage is missing a meta description",
+            "category": "On-Page SEO",
+            "affectedUrl": "Homepage (/)",
+            "recommendation": "Write a concise, compelling 140-160 character meta description including your primary service and service location."
+          },
+          {
+            "id": "top_issue_3",
+            "priority": 3,
+            "severity": "critical",
+            "title": "LocalBusiness structured data is incomplete.",
+            "description": "LocalBusiness structured data is missing or incomplete. Search engines and map bots cannot verify operating hours, service catalog, or geo-coordinates.",
+            "limitedEvidence": "Missing Schema.org LocalBusiness markup",
+            "category": "Structured Data",
+            "affectedUrl": "Homepage (/)",
+            "recommendation": "Review and update this factor to improve local search rank."
+          }
+        ],
+        "topPassedChecks": [
+          {
+            "id": "passed_chk_1",
+            "title": "HTTPS verified",
+            "limitedEvidence": "TLS/SSL handshake verified at https://example.com",
+            "category": "Technical SEO"
+          },
+          {
+            "id": "passed_chk_2",
+            "title": "Indexability verified",
+            "limitedEvidence": "Page returns HTTP 200 and does not restrict crawlers with noindex",
+            "category": "Technical SEO"
+          },
+          {
+            "id": "passed_chk_3",
+            "title": "Broken Links verified",
+            "limitedEvidence": "All 0 crawled internal sample links returned healthy HTTP status",
+            "category": "Technical SEO"
+          }
+        ],
+        "topOpportunities": [
+          {
+            "id": "opp_1",
+            "priority": 1,
+            "title": "Deploy Schema.org LocalBusiness JSON-LD markup",
+            "impact": "High Revenue Impact",
+            "category": "Structured Data",
+            "difficulty": "Quick Win",
+            "limitedEvidence": "0 LocalBusiness blocks detected in HTML"
+          },
+          {
+            "id": "opp_2",
+            "priority": 2,
+            "title": "Optimize homepage meta title and description",
+            "impact": "Immediate CTR Lift",
+            "category": "On-Page SEO",
+            "difficulty": "Quick Win",
+            "limitedEvidence": "Current title: Example Domain..."
+          },
+          {
+            "id": "opp_3",
+            "priority": 3,
+            "title": "Add direct click-to-call (tel:) links in navigation and footer",
+            "impact": "Mobile Call Lift",
+            "category": "Local SEO",
+            "difficulty": "Quick Win",
+            "limitedEvidence": "No clickable phone links detected"
+          }
+        ],
+        "nextStepRecommendation": {
+          "headline": "Address Structured Data first to capture local search visibility",
+          "summary": "Your Structured Data score is currently 0/100. Fixing the top findings in this category provides the fastest lift in Google Maps 3-pack rankings and local customer inquiries.",
+          "primaryFocus": "Structured Data"
+        },
+        "scanMetadata": {
+          "scanDateTime": "2026-09-15T11:15:54.155Z",
+          "pagesAnalyzedLabel": "1 page analyzed",
+          "dataSources": [
+            "Website Crawl",
+            "Direct Socket Telemetry",
+            "Calculated by Locora"
+          ]
+        },
+        "lockedFeaturesList": [
+          {
+            "feature": "Complete Page-by-Page Audit",
+            "description": "Detailed crawl logs, DOM tree diagnostics, and status codes for every internal URL."
+          },
+          {
+            "feature": "All 17 Additional Opportunities",
+            "description": "Full step-by-step action items with estimated revenue impact and copy-paste code snippets."
+          },
+          {
+            "feature": "Competitor Intelligence & Rank Tracking",
+            "description": "Monitor local competitors, 3-pack geo-grid rankings, and keyword movements daily."
+          },
+          {
+            "feature": "Google Business Profile & Review Sync",
+            "description": "Sync Google Maps reviews, automated AI review replies, and customer sentiment analytics."
+          },
+          {
+            "feature": "Autonomous AI Manager & Content Hub",
+            "description": "Let Locora AI draft localized landing pages, FAQ schema, and social updates on autopilot."
+          }
+        ]
+      },
+      "scores": {
+        "seo": 57,
+        "performance": 100,
+        "localPresence": 20,
+        "technicalSeo": 50,
+        "onPageSeo": 57,
+        "localSeo": 20,
+        "content": 14,
+        "structuredData": 0
+      },
+      "crawlStats": {
+        "latencyMs": 49,
+        "htmlSizeKb": 1,
+        "isSsl": true,
+        "httpStatus": 200,
+        "totalImages": 0,
+        "missingAltImages": 0,
+        "internalLinksCount": 0
+      },
+      "detectedBusinessData": {
+        "name": "Example Domain",
+        "phone": null,
+        "address": null,
+        "schemaTypes": [],
+        "hasLocalBusinessSchema": false,
+        "hasContactForm": false,
+        "hasMapEmbed": false,
+        "metaTitle": "Example Domain",
+        "metaDescription": "",
+        "h1Heading": "Example Domain"
+      },
+      "businessDiscovery": {
+        "businessName": {
+          "value": "Example Domain",
+          "source": "Source: Page Title",
+          "status": "found",
+          "displayValue": "Example Domain"
+        },
+        "displayName": {
+          "value": "Example Domain",
+          "source": "Source: Page Title",
+          "status": "found",
+          "displayValue": "Example Domain"
+        },
+        "phone": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "email": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "address": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "city": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "stateRegion": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "country": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "postalCode": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "services": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "serviceAreas": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "businessCategory": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "openingHours": {
+          "value": null,
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        },
+        "website": {
+          "value": "https://example.com/",
+          "source": "Source: Website Crawl",
+          "status": "found",
+          "displayValue": "https://example.com/"
+        },
+        "socialLinks": {
+          "value": [],
+          "source": null,
+          "status": "not_found",
+          "displayValue": "Not found on website"
+        }
+      },
+      "realSeoAnalysis": {
+        "technical": {
+          "https": {
+            "enabled": true,
+            "evidence": "Protocol: https:, SSL Handshake verified at example.com",
+            "details": "Website is served securely over HTTPS."
+          },
+          "crawlability": {
+            "status": "crawlable",
+            "metaRobots": null,
+            "evidence": "No restrictive robots meta tag detected on homepage."
+          },
+          "robotsTxt": {
+            "found": false,
+            "statusCode": 404,
+            "hasDisallow": false,
+            "sitemapFoundInRobots": false,
+            "evidence": "robots.txt returned HTTP 404."
+          },
+          "sitemapXml": {
+            "found": false,
+            "statusCode": 404,
+            "evidence": "sitemap.xml returned HTTP 404 (Not found at standard root)."
+          },
+          "canonicalTag": {
+            "present": false,
+            "canonicalUrl": null,
+            "matchesCurrentUrl": false,
+            "evidence": "Homepage is missing a canonical link tag."
+          },
+          "indexability": {
+            "isIndexable": true,
+            "evidence": "Page returns HTTP 200 and does not contain a noindex directive."
+          },
+          "redirectBehavior": {
+            "redirected": false,
+            "finalUrl": "https://example.com/",
+            "evidence": "Direct response without intermediate redirect hops."
+          },
+          "internalLinksHealth": {
+            "totalChecked": 0,
+            "brokenCount": 0,
+            "brokenLinks": [],
+            "evidence": "All 0 crawled internal sample links returned healthy HTTP status."
+          },
+          "httpStatusCode": {
+            "code": 200,
+            "evidence": "Server responded with HTTP 200 OK."
+          }
+        },
+        "onPage": {
+          "titleTag": {
+            "present": true,
+            "text": "Example Domain",
+            "length": 14,
+            "isOptimalLength": false,
+            "evidence": "<title>Example Domain</title> (14 characters)"
+          },
+          "metaDescription": {
+            "present": false,
+            "text": null,
+            "length": 0,
+            "isOptimalLength": false,
+            "evidence": "Homepage is missing a meta description."
+          },
+          "h1Heading": {
+            "present": true,
+            "count": 1,
+            "headings": [
+              "Example Domain"
+            ],
+            "evidence": "Found 1 H1 tag(s): \"Example Domain\""
+          },
+          "headingStructure": {
+            "h1Count": 1,
+            "h2Count": 0,
+            "h3Count": 0,
+            "hierarchyValid": false,
+            "evidence": "Heading distribution: 1 H1, 0 H2, 0 H3 tags."
+          },
+          "duplicateTitles": {
+            "hasDuplicates": false,
+            "evidence": "No duplicate page titles detected across crawled URLs."
+          },
+          "duplicateDescriptions": {
+            "hasDuplicates": false,
+            "evidence": "Unique meta descriptions confirmed across crawled pages."
+          },
+          "contentStructure": {
+            "wordCount": 21,
+            "paragraphCount": 2,
+            "thinContent": true,
+            "evidence": "21 readable words across 2 paragraph (<p>) blocks."
+          },
+          "imageAltAttributes": {
+            "totalImages": 0,
+            "missingAltCount": 0,
+            "compliantCount": 0,
+            "compliancePercentage": 100,
+            "evidence": "No images found on the homepage."
+          },
+          "internalLinking": {
+            "totalLinks": 0,
+            "distinctPages": 0,
+            "evidence": "Discovered 0 unique internal destination links across page navigation and body."
+          },
+          "urlStructure": {
+            "isClean": true,
+            "hasSuspiciousParams": false,
+            "evidence": "Canonical URL structure: https://example.com/"
+          }
+        },
+        "content": {
+          "thinContentSignal": {
+            "detected": true,
+            "wordCount": 21,
+            "verdict": "Thin content detected (< 250 words)",
+            "evidence": "Crawled homepage contains 21 text words."
+          },
+          "missingImportantElements": [
+            {
+              "element": "Meta Description",
+              "missing": true,
+              "importance": "High",
+              "evidence": "Homepage is missing a meta description."
+            },
+            {
+              "element": "Primary H1 Tag",
+              "missing": false,
+              "importance": "High",
+              "evidence": "H1 tag detected: \"Example Domain\""
+            },
+            {
+              "element": "Call To Action / Direct Booking",
+              "missing": true,
+              "importance": "Medium",
+              "evidence": "No direct booking or call-to-action buttons detected."
+            },
+            {
+              "element": "Telephone Link (href=\"tel:\")",
+              "missing": true,
+              "importance": "High for Local",
+              "evidence": "Homepage is missing a clickable tel: link."
+            }
+          ],
+          "serviceInformation": {
+            "detected": false,
+            "sampleServices": [],
+            "evidence": "No dedicated service listings detected in markup."
+          },
+          "locationRelevance": {
+            "detected": false,
+            "locationsFound": [],
+            "evidence": "No explicit geographic or city location terms detected in primary copy."
+          },
+          "contactInformation": {
+            "detected": false,
+            "methodsFound": [],
+            "evidence": "No phone or email detected in homepage DOM."
+          },
+          "usefulBusinessInformation": {
+            "detected": false,
+            "items": [],
+            "evidence": "Opening hours not found on website."
+          }
+        },
+        "structuredData": {
+          "hasJsonLd": false,
+          "totalBlocks": 0,
+          "detectedSchemas": {
+            "localBusiness": false,
+            "organization": false,
+            "webSite": false,
+            "webPage": false,
+            "service": false,
+            "faqPage": false,
+            "breadcrumbList": false,
+            "otherDetectedSchemas": []
+          },
+          "findings": [
+            {
+              "schema": "LocalBusiness",
+              "detected": false,
+              "evidence": "Homepage is missing Schema.org LocalBusiness structured data."
+            },
+            {
+              "schema": "Organization",
+              "detected": false,
+              "evidence": "Organization schema not detected."
+            },
+            {
+              "schema": "WebSite",
+              "detected": false,
+              "evidence": "WebSite schema not detected."
+            },
+            {
+              "schema": "WebPage",
+              "detected": false,
+              "evidence": "WebPage schema not detected."
+            },
+            {
+              "schema": "Service",
+              "detected": false,
+              "evidence": "Service schema not detected."
+            },
+            {
+              "schema": "FAQPage",
+              "detected": false,
+              "evidence": "FAQPage schema not detected."
+            },
+            {
+              "schema": "BreadcrumbList",
+              "detected": false,
+              "evidence": "BreadcrumbList schema not detected."
+            }
+          ]
+        }
+      },
+      "localSeoAnalysis": {
+        "signals": {
+          "businessName": {
+            "found": true,
+            "value": "Example Domain",
+            "evidence": "Discovered business name: \"Example Domain\" (Page Title)"
+          },
+          "address": {
+            "found": false,
+            "value": null,
+            "evidence": "Physical address not found on website."
+          },
+          "phone": {
+            "found": false,
+            "value": null,
+            "evidence": "Phone number not found on website."
+          },
+          "cityLocationReferences": {
+            "found": false,
+            "locations": [],
+            "evidence": "No explicit city references found on website."
+          },
+          "serviceAreas": {
+            "found": false,
+            "areas": [],
+            "evidence": "No explicit service area definitions found on website."
+          },
+          "contactInformation": {
+            "found": false,
+            "channels": [],
+            "evidence": "No direct contact channels detected on website."
+          },
+          "localBusinessSchema": {
+            "found": false,
+            "schemaType": null,
+            "evidence": "LocalBusiness JSON-LD schema is missing from website HTML."
+          },
+          "organizationSchema": {
+            "found": false,
+            "evidence": "Organization Schema not detected."
+          },
+          "servicePages": {
+            "found": false,
+            "pages": [],
+            "evidence": "No dedicated service subpages detected in site architecture."
+          },
+          "locationPages": {
+            "found": false,
+            "pages": [],
+            "evidence": "No dedicated location/city pages detected."
+          },
+          "localRelevanceSignals": {
+            "hasLocalPhone": false,
+            "hasMapEmbed": false,
+            "hasPhysicalAddressInFooter": false,
+            "evidence": "Local relevance signals: Local area code phone (No) • Google Maps Embed: No • Address in Footer: No."
+          }
+        },
+        "googleBusinessProfileNotice": {
+          "status": "not_connected",
+          "headline": "Google Business Profile data is not connected.",
+          "explanation": "Anonymous users have not authorized access to their private Google Business Profile. Locora does not display private Google Business Profile data or claim review counts for unauthenticated public visitors. This is a limitation, not an error.",
+          "actionRequired": "Connect your authorized Google Business Profile in your Locora workspace to sync live Google Maps reviews, 3-pack rank tracking, and customer feedback."
+        }
+      },
+      "performanceAnalysis": {
+        "provider": "google_pagespeed_insights",
+        "status": "not_configured",
+        "statusMessage": "Performance testing is currently unavailable.",
+        "socketTelemetry": {
+          "serverLatencyTtfbMs": 49,
+          "htmlPayloadSizeKb": 1,
+          "protocol": "HTTPS/TLS",
+          "httpStatusCode": 200,
+          "isSsl": true,
+          "evidence": "Measured direct Time To First Byte (TTFB) at 49ms with 1KB initial HTML payload."
+        }
+      },
+      "discoveredIssues": [
+        {
+          "id": "top_issue_1",
+          "severity": "critical",
+          "category": "On-Page SEO",
+          "title": "Weak or missing title tag on homepage.",
+          "description": "Homepage title tag is missing or suboptimal. The title tag is the #1 on-page organic ranking factor for search engines.",
+          "evidence": "<title>Example Domain</title> (14 characters)"
+        },
+        {
+          "id": "top_issue_2",
+          "severity": "critical",
+          "category": "On-Page SEO",
+          "title": "Homepage is missing a meta description.",
+          "description": "Homepage is missing a meta description. Search engines will extract random text snippets, resulting in lower click-through rates from searchers.",
+          "evidence": "Homepage is missing a meta description"
+        },
+        {
+          "id": "top_issue_3",
+          "severity": "critical",
+          "category": "Structured Data",
+          "title": "LocalBusiness structured data is incomplete.",
+          "description": "LocalBusiness structured data is missing or incomplete. Search engines and map bots cannot verify operating hours, service catalog, or geo-coordinates.",
+          "evidence": "Missing Schema.org LocalBusiness markup"
+        }
+      ],
+      "gatedTeasers": [
+        {
+          "id": "teaser_why",
+          "question": "Why is it happening?",
+          "title": "Deep Root-Cause & Code-Level Diagnostic",
+          "teaserDescription": "Inspect exact source-code line references, missing server response headers, DOM hierarchy conflicts, and CDN misconfigurations causing your score drops.",
+          "featureHighlight": "Full DOM Inspection & Header Health Breakdown",
+          "unlockedInPlan": "Included with Free Locora Account"
+        },
+        {
+          "id": "teaser_what_first",
+          "question": "What should I fix first?",
+          "title": "Revenue-Impact Prioritized Action Roadmap",
+          "teaserDescription": "Stop guessing what to tackle. Locora calculates which fixes deliver the fastest local search traffic and new customer calls, ordered by ROI.",
+          "featureHighlight": "Prioritized 10-Step Growth Sprint",
+          "unlockedInPlan": "Included with Free Locora Account"
+        },
+        {
+          "id": "teaser_how",
+          "question": "How do I fix it?",
+          "title": "One-Click Code & JSON-LD Schema Generator",
+          "teaserDescription": "Get copy-paste ready HTML, structured Schema.org JSON-LD tags, and optimized meta descriptions generated specifically for your business.",
+          "featureHighlight": "Instant Code Snippets & Schema Generator",
+          "unlockedInPlan": "Included with Free Locora Account"
+        },
+        {
+          "id": "teaser_ai_manager",
+          "question": "Can Locora do it for me?",
+          "title": "Locora Autonomous AI Copilot & Work Hub",
+          "teaserDescription": "Assign these audit tasks directly to Locora AI. The AI manager generates content drafts, client proposals, review responses, and tracks task completion.",
+          "featureHighlight": "Autonomous AI Business Manager",
+          "unlockedInPlan": "Included with Free Locora Account"
+        },
+        {
+          "id": "teaser_monitoring",
+          "question": "Did it improve & how am I performing over time?",
+          "title": "Continuous 24/7 Telemetry & Ranking Trackers",
+          "teaserDescription": "Connect Google Business Profile and search consoles to monitor daily 3-pack rank shifts, review velocity, and competitor movements automatically.",
+          "featureHighlight": "Real-Time Telemetry & Historic Audit Benchmarks",
+          "unlockedInPlan": "Included with Free Locora Account"
+        }
+      ],
+      "status": "completed",
+      "cacheStatus": "live",
+      "dataAge": "Live Crawl",
+      "crawlStartedAt": "2026-09-15T11:15:54.061Z",
+      "crawlCompletedAt": "2026-09-15T11:15:54.155Z"
+    }
   }
 ]

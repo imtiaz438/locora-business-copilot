@@ -10,6 +10,25 @@
 
 export const PRODUCTION_MAIN_DOMAIN = 'locoraai.com';
 export const PRODUCTION_APP_DOMAIN = 'app.locoraai.com';
+export const PRODUCTION_DIRECTORY_DOMAIN = 'directory.locoraai.com';
+
+/**
+ * Checks if the current client session is running on the directory subdomain (directory.locoraai.com).
+ */
+export const isDirectorySubdomain = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location.hostname.toLowerCase();
+  const searchParams = new URLSearchParams(window.location.search);
+
+  // Testing override for development / preview environments
+  if (searchParams.get('domain') === 'directory') return true;
+
+  return (
+    hostname === PRODUCTION_DIRECTORY_DOMAIN ||
+    hostname.startsWith('directory.') ||
+    hostname.includes('directory-')
+  );
+};
 
 /**
  * Checks if the current client session is running on the app subdomain (app.locoraai.com).
@@ -21,7 +40,7 @@ export const isAppSubdomain = (): boolean => {
 
   // Testing override for development / preview environments
   if (searchParams.get('domain') === 'app') return true;
-  if (searchParams.get('domain') === 'main') return false;
+  if (searchParams.get('domain') === 'main' || searchParams.get('domain') === 'directory') return false;
 
   return (
     hostname === PRODUCTION_APP_DOMAIN ||
@@ -39,7 +58,8 @@ export const isProductionCustomDomain = (): boolean => {
   return (
     hostname === PRODUCTION_MAIN_DOMAIN ||
     hostname === `www.${PRODUCTION_MAIN_DOMAIN}` ||
-    hostname === PRODUCTION_APP_DOMAIN
+    hostname === PRODUCTION_APP_DOMAIN ||
+    hostname === PRODUCTION_DIRECTORY_DOMAIN
   );
 };
 
@@ -102,3 +122,32 @@ export const navigateToMain = (path: string = '/', inAppFallback?: () => void) =
     window.history.pushState({}, '', path.startsWith('/') ? path : `/${path}`);
   }
 };
+
+/**
+ * Returns the target URL for the directory site (directory.locoraai.com).
+ */
+export const getDirectorySiteUrl = (path: string = '/'): string => {
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  if (typeof window === 'undefined') return cleanPath;
+
+  if (isProductionCustomDomain()) {
+    return `https://${PRODUCTION_DIRECTORY_DOMAIN}${cleanPath}`;
+  }
+  return cleanPath;
+};
+
+/**
+ * Navigates to the directory site.
+ */
+export const navigateToDirectory = (path: string = '/', inAppFallback?: () => void) => {
+  if (typeof window === 'undefined') return;
+
+  if (isProductionCustomDomain() && !isDirectorySubdomain()) {
+    window.location.href = `https://${PRODUCTION_DIRECTORY_DOMAIN}${path.startsWith('/') ? path : `/${path}`}`;
+  } else if (inAppFallback) {
+    inAppFallback();
+  } else {
+    window.history.pushState({}, '', path.startsWith('/') ? path : `/${path}`);
+  }
+};
+

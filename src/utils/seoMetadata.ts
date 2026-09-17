@@ -312,6 +312,87 @@ export function resolveRouteMetadata(rawPath: string, host: string = ''): Resolv
   const pathWithoutQuery = rawPath.split('?')[0].split('#')[0];
   const cleanPath = pathWithoutQuery.replace(/^\/+|\/+$/g, '').trim().toLowerCase();
 
+  const isDirectoryHost =
+    normalizedHost.startsWith('directory.locoraai.com') ||
+    normalizedHost.startsWith('directory.') ||
+    normalizedHost.includes('directory-');
+
+  // Directory Subdomain or Directory Routes (/directory, /biz/*, /city/*, /category/*)
+  const isBizRoute = cleanPath.startsWith('biz/') || cleanPath.startsWith('business/') || cleanPath.startsWith('directory/business/');
+  const isCityRoute = cleanPath.startsWith('city/') || cleanPath.startsWith('directory/city/');
+  const isCategoryRoute = cleanPath.startsWith('category/') || cleanPath.startsWith('directory/category/');
+  const isDirRoot = isDirectoryHost || cleanPath === 'directory';
+
+  // Combined City + Category check: e.g. /directory/:city/:cat or /:city/:cat
+  const dirParts = cleanPath.startsWith('directory/') ? cleanPath.replace(/^directory\//, '').split('/') : cleanPath.split('/');
+  const isCityCatCombo = (cleanPath.startsWith('directory/') && dirParts.length === 2) || (
+    !isDirectoryHost && dirParts.length === 2 && !['features', 'resources', 'use-cases', 'for', 'api', 'checkout', 'billing', 'admin'].includes(dirParts[0])
+  );
+
+  if (isBizRoute) {
+    const slug = cleanPath.replace(/^directory\/business\//, '').replace(/^business\//, '').replace(/^biz\//, '').trim();
+    const formatted = slug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    const canonical = isDirectoryHost ? `https://directory.locoraai.com/business/${slug}` : `https://locoraai.com/biz/${slug}`;
+    return {
+      title: `${formatted} — Verified Reviews, Phone & Hours | Locora Directory`,
+      description: `View verified business profile, ratings, contact details, operating hours, and customer reviews for ${formatted} on Locora Directory.`,
+      canonicalUrl: canonical,
+      noIndex: false,
+      isDashboard: false,
+    };
+  }
+
+  if (isCityCatCombo) {
+    const citySlug = dirParts[0].trim();
+    const catSlug = dirParts[1].trim();
+    const formattedCity = citySlug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    const formattedCat = catSlug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    const canonical = isDirectoryHost ? `https://directory.locoraai.com/${citySlug}/${catSlug}` : `https://locoraai.com/${citySlug}/${catSlug}`;
+    return {
+      title: `Top Verified ${formattedCat} in ${formattedCity} | Locora Directory`,
+      description: `Find top verified ${formattedCat.toLowerCase()} in ${formattedCity}. Authentic Google Business reviews, operating hours, phone numbers, and direct quotes.`,
+      canonicalUrl: canonical,
+      noIndex: false,
+      isDashboard: false,
+    };
+  }
+
+  if (isCityRoute) {
+    const citySlug = cleanPath.replace(/^directory\/city\//, '').replace(/^city\//, '').trim();
+    const formattedCity = citySlug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    const canonical = isDirectoryHost ? `https://directory.locoraai.com/city/${citySlug}` : `https://locoraai.com/city/${citySlug}`;
+    return {
+      title: `Top Rated Local Businesses in ${formattedCity} | Locora Directory`,
+      description: `Find top-rated, certified local service providers, contractors, and specialists in ${formattedCity}.`,
+      canonicalUrl: canonical,
+      noIndex: false,
+      isDashboard: false,
+    };
+  }
+
+  if (isCategoryRoute) {
+    const catSlug = cleanPath.replace(/^directory\/category\//, '').replace(/^category\//, '').trim();
+    const formattedCat = catSlug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    const canonical = isDirectoryHost ? `https://directory.locoraai.com/category/${catSlug}` : `https://locoraai.com/category/${catSlug}`;
+    return {
+      title: `Best ${formattedCat} Services & Top Providers | Locora Directory`,
+      description: `Browse certified and reviewed ${formattedCat.toLowerCase()} companies and local pros in your area.`,
+      canonicalUrl: canonical,
+      noIndex: false,
+      isDashboard: false,
+    };
+  }
+
+  if (isDirRoot) {
+    return {
+      title: 'Locora Local Business Directory — Top Verified Local Service Pros',
+      description: 'Explore verified local businesses with authentic reviews, real-time hours, and certified services powered by Locora AI.',
+      canonicalUrl: isDirectoryHost ? 'https://directory.locoraai.com/' : 'https://locoraai.com/directory',
+      noIndex: false,
+      isDashboard: false,
+    };
+  }
+
   // 1. App Subdomain or Dashboard Routes: Blanket noindex, nofollow, NO homepage canonical
   if (isAppHost || DASHBOARD_ROUTES.has(cleanPath)) {
     const tabName = cleanPath || 'dashboard';

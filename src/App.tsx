@@ -9,7 +9,7 @@ import { AIActionApprovalModal } from './components/AIActionApprovalModal';
 import { GrowthStoreModal } from './components/GrowthStoreModal';
 import { GoogleBusinessSyncModal } from './components/GoogleBusinessSyncModal';
 import { SubscriptionInvoice } from './types';
-import { isAppSubdomain, navigateToMain } from './utils/domain';
+import { isAppSubdomain, isDirectorySubdomain, navigateToMain, navigateToDirectory } from './utils/domain';
 
 // View Modules
 import { DashboardView } from './components/DashboardView';
@@ -52,6 +52,8 @@ import { PrivacyPolicyView } from './components/public/PrivacyPolicyView';
 import { TermsOfServiceView } from './components/public/TermsOfServiceView';
 import { SecurityOverviewView } from './components/public/SecurityOverviewView';
 import { RefundPolicyView } from './components/public/RefundPolicyView';
+import { DirectoryHubView } from './components/directory/DirectoryHubView';
+import { DirectoryBusinessDetailView } from './components/directory/DirectoryBusinessDetailView';
 import { applyPageMetadata } from './utils/seoMetadata';
 import { resolveRouteFromPath } from './utils/routeUtils';
 
@@ -133,6 +135,7 @@ const PATH_TO_TAB: Record<string, string> = {
   'subscription': 'subscription',
   'settings': 'settings',
   'admin': 'admin',
+  'directory': 'directory',
   'checkout/success': 'dashboard',
   'billing/success': 'dashboard',
   'payment/success': 'dashboard',
@@ -164,6 +167,7 @@ const MainContent: React.FC = () => {
     const syncRouteFromLocation = () => {
       const rawPath = window.location.pathname;
       const isApp = isAppSubdomain();
+      const isDirectory = isDirectorySubdomain();
 
       if (isApp) {
         // Redirect marketing routes on app subdomain to main website
@@ -184,7 +188,7 @@ const MainContent: React.FC = () => {
         }
       }
 
-      const resolved = resolveRouteFromPath(rawPath, isApp);
+      const resolved = resolveRouteFromPath(rawPath, isApp, isDirectory);
       let targetTab = resolved.targetTab;
 
       if ((targetTab === 'login' || targetTab === 'signup') && user.isAuthenticated) {
@@ -328,6 +332,18 @@ const MainContent: React.FC = () => {
     if (activeTab === 'resources' || activeTab === 'resources_hub') return <ResourcesHubView />;
     if (activeTab.startsWith('resource_')) {
       return <ResourceDetailPage slug={activeTab.replace(/^resource_/, '')} />;
+    }
+
+    // Dynamic Layer 5: Local Business Directory (directory.locoraai.com & /directory)
+    if (activeTab === 'directory') return <DirectoryHubView />;
+    if (activeTab.startsWith('directory_biz_')) {
+      return <DirectoryBusinessDetailView slug={activeTab.replace(/^directory_biz_/, '')} />;
+    }
+    if (activeTab.startsWith('directory_city_')) {
+      return <DirectoryHubView initialCity={activeTab.replace(/^directory_city_/, '')} />;
+    }
+    if (activeTab.startsWith('directory_cat_')) {
+      return <DirectoryHubView initialCategory={activeTab.replace(/^directory_cat_/, '')} />;
     }
 
     // Other Public Routes

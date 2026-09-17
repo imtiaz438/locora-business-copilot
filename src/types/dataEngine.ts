@@ -51,6 +51,8 @@ export interface GbpData {
   connected: boolean;
   listingName: string;
   placeId?: string;
+  locationId?: string;
+  googleVerified?: boolean;
   mapsUrl?: string;
   rating: number;
   reviewCount: number;
@@ -263,6 +265,26 @@ export interface LocoraBusinessRecord {
   planTier: DataProviderTier;
   createdAt: string;
   updatedAt: string;
+  isPublishedInDirectory?: boolean;
+  directoryStatus?: 'DISCOVERED' | 'ELIGIBLE' | 'PUBLISHED' | 'CLAIM_PENDING' | 'CLAIMED' | 'VERIFIED';
+  isClaimed?: boolean;
+  claimedByEmail?: string | null;
+  googlePlaceId?: string;
+  sourceAttributions?: {
+    gbp?: string;
+    website?: string;
+    verification?: string;
+    [key: string]: string | undefined;
+  };
+  directoryMetrics?: {
+    profileViews: number;
+    phoneClicks: number;
+    websiteClicks: number;
+    quoteRequests: number;
+    claimClicks?: number;
+    claimConversions?: number;
+    lastViewedAt?: string | null;
+  };
 
   // 1. Identity & Profile
   identity: {

@@ -280,6 +280,11 @@ export const SettingsView: React.FC = () => {
     )
   );
 
+  const isWhiteLabelUnlocked = Boolean(
+    isAdmin ||
+    ['pro', 'agency', 'elite'].includes((user.planTier || '').toLowerCase())
+  );
+
   const [activeTab, setSettingsTab] = useState<'profile' | 'integrations' | 'account' | 'team' | 'billing'>('profile');
   const [profileForm, setProfileForm] = useState(() => ({
     ...businessProfile,
@@ -584,18 +589,18 @@ export const SettingsView: React.FC = () => {
                   Upload your custom business logo image or SVG to white-label client invoices, proposals, and reports.
                 </p>
               </div>
-              {user.planTier === 'pro' || user.planTier === 'elite' ? (
+              {isWhiteLabelUnlocked ? (
                 <span className="px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full text-xs font-bold shrink-0">
-                  White-Label Enabled ({user.planTier.toUpperCase()})
+                  White-Label Enabled ({(user.planTier || 'PRO').toUpperCase()})
                 </span>
               ) : (
                 <span className="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-bold shrink-0 flex items-center gap-1">
-                  <Lock className="w-3 h-3" /> Pro & Elite Exclusive
+                  <Lock className="w-3 h-3" /> Pro & Agency Exclusive
                 </span>
               )}
             </div>
 
-            {user.planTier === 'pro' || user.planTier === 'elite' ? (
+            {isWhiteLabelUnlocked ? (
               <>
                 <p className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 font-sans">
                   <strong>Note:</strong> This custom logo applies strictly to your business account&apos;s client documents (Invoices, Proposals, SEO Reports). It is independent and will never alter the main website platform navigation logo.
@@ -727,7 +732,7 @@ export const SettingsView: React.FC = () => {
                     <div>
                       <h4 className="text-sm font-bold font-heading text-white">White-Label Customization Locked</h4>
                       <p className="text-xs text-slate-300 font-sans mt-1 max-w-xl leading-relaxed">
-                        Free plan subscribers receive default verified Locora AI branding on client invoices, proposals, and SEO reports. Upgrade to <strong>Pro</strong> or <strong>Elite</strong> to upload your own custom business logo, replace default badges, and white-label all client deliverables.
+                        Free plan subscribers receive default verified Locora AI branding on client invoices, proposals, and SEO reports. Upgrade to <strong>Pro</strong> or <strong>Agency</strong> to upload your own custom business logo, replace default badges, and white-label all client deliverables.
                       </p>
                       <div className="mt-3 flex items-center gap-2 text-[11px] text-emerald-400 font-medium">
                         <ShieldCheck className="w-4 h-4 text-emerald-400" />
@@ -742,7 +747,7 @@ export const SettingsView: React.FC = () => {
                     className="px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 shrink-0 transition-all cursor-pointer font-sans"
                   >
                     <Sparkles className="w-4 h-4 text-emerald-200" />
-                    <span>Upgrade to Pro / Elite</span>
+                    <span>Upgrade to Pro / Agency</span>
                   </button>
                 </div>
               </div>
@@ -1007,6 +1012,47 @@ export const SettingsView: React.FC = () => {
                 onChange={(e) => setProfileForm({ ...profileForm, taxRate: Number(e.target.value) })}
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
               />
+            </div>
+
+            {/* Zero-Touch Directory Publishing Toggle */}
+            <div className="sm:col-span-2 p-4 rounded-xl bg-emerald-50/70 border border-emerald-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-900 font-heading">
+                    Publish to Public Business Directory
+                  </span>
+                  <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900">
+                    directory.locoraai.com
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+                  Automatically feature your verified Google Business Profile, live hours, rating, and customer inquiry quotes on our high-performance local directory.
+                </p>
+                {profileForm.isPublishedInDirectory !== false && (
+                  <div className="mt-2 flex items-center gap-3">
+                    <a
+                      href="https://directory.locoraai.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-emerald-700 hover:text-emerald-800 font-bold inline-flex items-center gap-1"
+                    >
+                      <Globe className="w-3 h-3" />
+                      <span>View Live Public Directory</span>
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  checked={profileForm.isPublishedInDirectory !== false}
+                  onChange={(e) => setProfileForm({ ...profileForm, isPublishedInDirectory: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+              </label>
             </div>
           </div>
 

@@ -1,7 +1,52 @@
 {
   "imtiazbaloch3322@gmail.com": {
-    "customers": [],
-    "projects": [],
+    "customers": [
+      {
+        "id": "cust_1789471025096",
+        "businessId": "biz_1789120717000_39xqd",
+        "userEmail": "imtiazbaloch3322@gmail.com",
+        "name": "Michael Scott",
+        "company": "Dunder Mifflin Paper Co",
+        "email": "mscott@dundermifflin.com",
+        "phone": "512-555-0199",
+        "address": "",
+        "source": "manual",
+        "status": "lead",
+        "value": 12500,
+        "tags": [],
+        "notes": "",
+        "lastContactAt": "2026-09-15T11:17:05.096Z",
+        "pipelineStage": "new_lead",
+        "service": "",
+        "createdAt": "2026-09-15T11:17:05.096Z",
+        "updatedAt": "2026-09-15T11:17:05.096Z"
+      }
+    ],
+    "projects": [
+      {
+        "id": "proj_1789471025280",
+        "businessId": "biz_1789120717000_39xqd",
+        "clientBusinessId": null,
+        "userEmail": "imtiazbaloch3322@gmail.com",
+        "name": "Austin Local SEO Sprint",
+        "title": "Austin Local SEO Sprint",
+        "customerId": null,
+        "customerName": "Dunder Mifflin Paper Co",
+        "client": "Dunder Mifflin Paper Co",
+        "status": "in_progress",
+        "priority": "medium",
+        "budget": 3500,
+        "startDate": "",
+        "targetDate": "",
+        "dueDate": "",
+        "owner": "",
+        "progress": 0,
+        "description": "",
+        "tasks": [],
+        "createdAt": "2026-09-15T11:17:05.281Z",
+        "updatedAt": "2026-09-15T11:17:05.281Z"
+      }
+    ],
     "invoices": [],
     "proposals": [
       {
@@ -50,6 +95,20 @@
     "conversations": [],
     "activityLogs": [
       {
+        "id": "act_1789469131175",
+        "type": "integrations",
+        "title": "Google Business Profile Synced",
+        "description": "Successfully linked live profile for Locora AI in local area",
+        "createdAt": "2026-09-15T10:45:31.175Z"
+      },
+      {
+        "id": "act_1789469130942",
+        "type": "profile",
+        "title": "Business Profile Updated",
+        "description": "Updated details for Workspace",
+        "createdAt": "2026-09-15T10:45:30.942Z"
+      },
+      {
         "id": "act_1789051604754",
         "type": "work",
         "title": "Proposal Generated",
@@ -78,6 +137,19 @@
         "createdAt": "2026-09-10T14:43:51.529Z"
       }
     ],
-    "invoicesCreatedCount": 0
+    "invoicesCreatedCount": 0,
+    "contentRecords": [
+      {
+        "id": "cnt_1789471025397",
+        "title": "Top 5 Local SEO Strategies for Austin Businesses",
+        "type": "blog_post",
+        "status": "draft",
+        "content": "Local search engine optimization requires structured citations and high review velocity...",
+        "userEmail": "imtiazbaloch3322@gmail.com",
+        "created_at": "2026-09-15T11:17:05.400Z",
+        "updated_at": "2026-09-15T11:17:05.400Z",
+        "created_by": "imtiazbaloch3322@gmail.com"
+      }
+    ]
   }
 }

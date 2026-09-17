@@ -339,6 +339,11 @@ export const PublicFooter: React.FC = () => {
                 </button>
               </li>
               <li>
+                <button onClick={() => navigateTo('/directory', 'directory')} className="font-semibold text-emerald-700 hover:text-[#059669] transition-colors cursor-pointer">
+                  Business Directory
+                </button>
+              </li>
+              <li>
                 <button onClick={() => navigateTo('/about', 'about')} className="hover:text-[#059669] transition-colors cursor-pointer">
                   About Us
                 </button>

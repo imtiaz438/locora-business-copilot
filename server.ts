@@ -51,6 +51,18 @@ import {
   synthesizeBusinessBrainFromRecord,
   getCachedLeadsFromLocoraDb,
   addAndDeduplicateLeads,
+  getPublishedDirectoryListings,
+  getDirectoryListingBySlug,
+  getBusinessRecordById,
+  recordDirectoryEvent,
+  claimDirectoryListingByBusinessId,
+  getDirectoryAnalytics,
+  createDirectoryLead,
+  markDirectoryLeadResponded,
+  convertDirectoryLead,
+  getDirectoryLeadsForBusiness,
+  getDirectoryEvents,
+  updateDirectoryProfileRecord,
 } from './server/locoraDataEngine.ts';
 import { executePublicCheckup, publicAuditsStore } from './server/publicCheckupEngine.ts';
 import { checkPublicRateLimit } from './server/publicSecurity.ts';
@@ -95,7 +107,7 @@ app.use((req, res, next) => {
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
-  // Subdomain & Hostname Routing for locoraai.com and app.locoraai.com
+  // Subdomain & Hostname Routing for locoraai.com, app.locoraai.com, and directory.locoraai.com
   const fHost = ((req.headers['x-forwarded-host'] as string) || '').toLowerCase();
   const hHost = ((req.headers.host as string) || '').toLowerCase();
   const rHost = ((req.hostname as string) || '').toLowerCase();
@@ -106,6 +118,12 @@ app.use((req, res, next) => {
     hHost.startsWith('app.') ||
     rHost.startsWith('app.') ||
     (Array.isArray(req.subdomains) && req.subdomains.includes('app'));
+  const isDirectoryHost =
+    allHosts.includes('directory.locoraai.com') ||
+    fHost.startsWith('directory.') ||
+    hHost.startsWith('directory.') ||
+    rHost.startsWith('directory.') ||
+    (Array.isArray(req.subdomains) && req.subdomains.includes('directory'));
   const isWwwHost = allHosts.includes('www.locoraai.com');
 
   // 301 permanently redirect www.locoraai.com to canonical bare domain (locoraai.com)
@@ -3264,7 +3282,7 @@ app.get('/api/public/checkup/:auditId', (req, res) => {
 
 app.post('/api/public/claim-audit', async (req, res) => {
   try {
-    const { auditId, userEmail } = req.body;
+    const { auditId, userEmail, businessId } = req.body;
     if (!auditId || !userEmail) {
       return res.status(400).json({ error: 'auditId and userEmail are required' });
     }
@@ -3273,12 +3291,14 @@ app.post('/api/public/claim-audit', async (req, res) => {
       return res.status(404).json({ error: 'Audit not found or expired' });
     }
     const cleanEmail = (userEmail || '').toLowerCase().trim();
+    const targetBizId = businessId || (audit as any).businessId;
     const biz = createOrGetBusinessForUser(
       cleanEmail,
       audit.businessName,
       audit.url,
       'Local Services',
-      audit.businessLocation || ''
+      audit.businessLocation || '',
+      targetBizId
     );
     if (biz) {
       claimPublicAuditRecord(auditId, cleanEmail, biz.id);
@@ -3705,32 +3725,70 @@ app.get('/api/data-engine/provider-matrix', (req, res) => {
 // PRODUCTION DATA ARCHITECTURE API ROUTES (STRICT BUSINESS-ID ISOLATION)
 // ============================================================================
 
+export class AuthorizationError extends Error {
+  status: number;
+  statusCode: number;
+  constructor(message = 'Forbidden: You do not have permission to access records for this business.') {
+    super(message);
+    this.name = 'AuthorizationError';
+    this.status = 403;
+    this.statusCode = 403;
+  }
+}
+
 async function resolveAuthenticatedBusiness(req: any, targetBizId?: string) {
   const cookieEmail = req.cookies?.auth_email;
-  const queryEmail = (req.query.email as string) || (req.headers['x-user-email'] as string) || '';
-  const email = (cookieEmail || queryEmail || '').toLowerCase().trim();
+  const headerEmail = req.headers['x-user-email'] as string;
+  const queryEmail = (req.query?.email as string) || (req.query?.userEmail as string);
+  const bodyEmail = (req.body?.userEmail as string) || (req.body?.email as string);
+  const callerEmail = (cookieEmail || headerEmail || queryEmail || bodyEmail || '').toLowerCase().trim();
+  const effectiveEmail = callerEmail || 'imtiazbaloch3322@gmail.com';
 
-  // 1. If specific businessId was requested and is not 'active'
+  // 1. If specific businessId was requested and is not a generic placeholder
   if (targetBizId && targetBizId !== 'active' && targetBizId !== 'workspace_pending' && targetBizId !== 'biz_locora_canonical') {
     const found = await dbService.getBusinessById(targetBizId);
-    if (found) {
-      return { business: found, ownerEmail: found.ownerEmail || email || 'workspace@locora.ai' };
+    if (!found) {
+      const err: any = new Error(`Business '${targetBizId}' not found.`);
+      err.status = 404;
+      err.statusCode = 404;
+      throw err;
     }
+
+    // MANDATORY SECURITY & MULTI-TENANCY:
+    // Resolve authorization from the authenticated user/business relationship.
+    // Never trust business_id supplied directly by the client without verifying ownership.
+    const ownerEmail = (found.ownerEmail || '').toLowerCase().trim();
+    if (callerEmail) {
+      if (ownerEmail && ownerEmail !== callerEmail) {
+        throw new AuthorizationError(`Forbidden: User '${callerEmail}' is not authorized to access business '${targetBizId}'.`);
+      }
+    } else {
+      // In development/workspace environment without explicit auth header, default to workspace user.
+      if (ownerEmail && ownerEmail !== effectiveEmail) {
+        throw new AuthorizationError(`Forbidden: Access denied to business '${targetBizId}'.`);
+      }
+    }
+
+    return { business: found, ownerEmail: found.ownerEmail || effectiveEmail };
   }
 
   // 2. Resolve by authenticated email or default to workspace user
-  const effectiveEmail = email || 'imtiazbaloch3322@gmail.com';
   let business = await dbService.ensureBusinessForUser(effectiveEmail);
   if (!business) {
-    const allBiz = await db
+    const userBusinesses = await db
       .select()
       .from(schema.businessesTable)
+      .where(eq(schema.businessesTable.ownerEmail, effectiveEmail))
       .orderBy(desc(schema.businessesTable.createdAt))
       .limit(1);
-    if (allBiz.length > 0) {
-      business = allBiz[0];
+
+    if (userBusinesses.length > 0) {
+      business = userBusinesses[0];
     } else {
-      throw new Error('Business not found for workspace');
+      const err: any = new Error('Business not found for user');
+      err.status = 404;
+      err.statusCode = 404;
+      throw err;
     }
   }
 
@@ -3752,7 +3810,7 @@ app.get('/api/production/dashboard/:businessId?', async (req, res) => {
   }
 });
 
-// 2. Businesses List
+// 2. Businesses List (Strictly Multi-Tenant: Scoped by Authenticated User)
 app.get('/api/production/businesses', async (req, res) => {
   try {
     const email = (
@@ -3762,10 +3820,20 @@ app.get('/api/production/businesses', async (req, res) => {
       ''
     ).toLowerCase().trim();
 
-    const list = await db
+    const effectiveEmail = email || 'imtiazbaloch3322@gmail.com';
+
+    let list = await db
       .select()
       .from(schema.businessesTable)
+      .where(eq(schema.businessesTable.ownerEmail, effectiveEmail))
       .orderBy(desc(schema.businessesTable.createdAt));
+
+    if (list.length === 0) {
+      const created = await dbService.ensureBusinessForUser(effectiveEmail);
+      if (created) {
+        list = [created];
+      }
+    }
 
     const enriched = await Promise.all(
       list.map(async (biz) => {
@@ -4233,10 +4301,9 @@ STRICT RULES:
 
 app.get('/api/datasets/freshness', async (req, res) => {
   try {
-    const businessId = (req.query.businessId as string) || '';
-    if (!businessId) {
-      return res.status(400).json({ success: false, error: 'businessId parameter required' });
-    }
+    const rawBizId = (req.query.businessId as string) || '';
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
+    const businessId = business.id;
     const conns = await dbService.getDataConnections(businessId);
     const gbpLocations = await dbService.getGoogleBusinessLocations(businessId).catch(() => []);
     const gbpLoc = gbpLocations.length > 0 ? gbpLocations[0] : null;
@@ -4317,7 +4384,7 @@ app.get('/api/datasets/freshness', async (req, res) => {
 
     res.json({ success: true, datasets });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
 
@@ -4798,7 +4865,8 @@ app.get('/api/business-truth/:businessId', async (req, res) => {
       return res.status(400).json({ success: false, error: 'businessId parameter is required' });
     }
 
-    const truth = await businessTruthService.getBusinessTruth(businessId);
+    const { business } = await resolveAuthenticatedBusiness(req, businessId);
+    const truth = await businessTruthService.getBusinessTruth(business.id);
     if (!truth) {
       return res.status(404).json({ success: false, error: 'Business not found', data: null });
     }
@@ -4806,18 +4874,19 @@ app.get('/api/business-truth/:businessId', async (req, res) => {
     res.json({ success: true, data: truth });
   } catch (err: any) {
     console.error('[API:BusinessTruth] Error retrieving canonical business truth:', err);
-    res.status(500).json({ success: false, error: err.message || 'Internal server error' });
+    res.status(err.status || 500).json({ success: false, error: err.message || 'Internal server error' });
   }
 });
 
 app.get('/api/business-truth', async (req, res) => {
   try {
-    const businessId = (req.query.businessId as string) || '';
-    if (!businessId) {
+    const rawId = (req.query.businessId as string) || '';
+    if (!rawId) {
       return res.status(400).json({ success: false, error: 'businessId query parameter is required' });
     }
 
-    const truth = await businessTruthService.getBusinessTruth(businessId);
+    const { business } = await resolveAuthenticatedBusiness(req, rawId);
+    const truth = await businessTruthService.getBusinessTruth(business.id);
     if (!truth) {
       return res.status(404).json({ success: false, error: 'Business not found', data: null });
     }
@@ -4825,7 +4894,7 @@ app.get('/api/business-truth', async (req, res) => {
     res.json({ success: true, data: truth });
   } catch (err: any) {
     console.error('[API:BusinessTruth] Error retrieving canonical business truth:', err);
-    res.status(500).json({ success: false, error: err.message || 'Internal server error' });
+    res.status(err.status || 500).json({ success: false, error: err.message || 'Internal server error' });
   }
 });
 
@@ -4857,7 +4926,7 @@ app.post('/api/ai-manager/query', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Query is required.' });
     }
 
-    let effectiveBizId = (
+    let targetBizId = (
       businessId ||
       req.body.businessContext?.businessId ||
       context?.businessId ||
@@ -4865,19 +4934,14 @@ app.post('/api/ai-manager/query', async (req, res) => {
       ''
     ).trim();
 
-    if (!effectiveBizId || effectiveBizId === 'workspace_pending' || effectiveBizId === 'biz_locora_canonical') {
-      const allBiz = await db.select().from(schema.businessesTable).limit(1);
-      if (allBiz.length > 0) {
-        effectiveBizId = allBiz[0].id;
-      } else {
-        return res.status(400).json({ success: false, error: 'businessId is required and no businesses exist in database.' });
-      }
-    }
+    const { business, ownerEmail } = await resolveAuthenticatedBusiness(req, targetBizId || undefined);
+    const effectiveBizId = business.id;
+    const effectiveUserEmail = userEmail || ownerEmail;
 
     const result = await aiManagerService.processAiManagerQuery({
       businessId: effectiveBizId,
       query: effectiveQuery,
-      userEmail,
+      userEmail: effectiveUserEmail,
       customers: customers || context?.customers,
       contentRecords: contentRecords || context?.contentRecords,
       workTasks: workTasks || context?.workTasks,
@@ -5923,6 +5987,29 @@ app.post('/api/workspace/business-profile', async (req, res) => {
               phone: updatedProfile.phone,
             }
           );
+
+          // Also keep LocoraDataEngine business record in sync for real directory serving
+          const locoraRec = getBusinessRecordById(primaryBiz.id) || getBusinessRecordFromLocoraDb(primaryBiz.id);
+          if (locoraRec) {
+            locoraRec.identity.name = updatedProfile.name || locoraRec.identity.name;
+            locoraRec.identity.category = updatedProfile.industry || locoraRec.identity.category;
+            locoraRec.identity.industry = updatedProfile.industry || locoraRec.identity.industry;
+            locoraRec.identity.website = updatedProfile.website || locoraRec.identity.website;
+            locoraRec.identity.phone = updatedProfile.phone || locoraRec.identity.phone;
+            locoraRec.identity.address = updatedProfile.address || locoraRec.identity.address;
+            locoraRec.identity.city = updatedProfile.city || locoraRec.identity.city;
+            locoraRec.identity.state = updatedProfile.state || locoraRec.identity.state;
+            locoraRec.identity.zip = updatedProfile.zip || locoraRec.identity.zip;
+            locoraRec.identity.country = updatedProfile.country || locoraRec.identity.country;
+            if (updatedProfile.services && Array.isArray(updatedProfile.services)) {
+              locoraRec.identity.services = updatedProfile.services;
+            }
+            if (updatedProfile.isPublishedInDirectory !== undefined) {
+              locoraRec.isPublishedInDirectory = updatedProfile.isPublishedInDirectory;
+            }
+            locoraRec.updatedAt = new Date().toISOString();
+            saveBusinessRecordToLocoraDb(locoraRec);
+          }
         }
       } catch (syncErr) {
         console.warn('[Business Profile] Error syncing business tables:', syncErr);
@@ -15027,7 +15114,20 @@ app.get('/sitemap.xml', (req, res) => {
       { path: '/resources/how-to-create-seo-proposal', priority: '0.85', changefreq: 'weekly' },
       { path: '/resources/google-business-profile-guide', priority: '0.85', changefreq: 'weekly' },
       { path: '/resources/local-seo-checklist', priority: '0.85', changefreq: 'weekly' },
+      { path: '/directory', priority: '0.9', changefreq: 'daily' },
     ];
+
+    // Add all published directory listings into sitemap
+    try {
+      const dirListings = getPublishedDirectoryListings();
+      dirListings.forEach(l => {
+        pages.push({
+          path: `/directory/business/${l.slug}`,
+          priority: '0.8',
+          changefreq: 'weekly'
+        });
+      });
+    } catch {}
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
     xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n`;
@@ -15049,6 +15149,542 @@ app.get('/sitemap.xml', (req, res) => {
   } catch (err: any) {
     console.error('Sitemap generation error:', err);
     res.status(500).send('Error generating sitemap');
+  }
+});
+
+// Dynamic Local Business Directory API Endpoints (directory.locoraai.com)
+app.get('/api/directory/listings', (req, res) => {
+  try {
+    const { category, city, query, page: rawPage, limit: rawLimit, all } = req.query;
+    const allPublished = getPublishedDirectoryListings();
+
+    const allCategories = Array.from(new Set(allPublished.map(l => l.categoryName).filter(Boolean))).sort();
+    const allCities = Array.from(new Set(allPublished.map(l => l.cityName).filter(Boolean))).sort();
+
+    let listings = [...allPublished];
+
+    if (category && String(category).toLowerCase() !== 'all') {
+      const catClean = String(category).toLowerCase().trim();
+      if (catClean === 'other' || catClean === 'other / uncategorized') {
+        // Defined top known categories
+        const standardKnown = [
+          'dentist', 'dental', 'software', 'ai marketing', 'plumb', 'hvac', 'roof',
+          'electric', 'lawyer', 'legal', 'medical', 'doctor', 'clinic', 'real estate',
+          'account', 'auto', 'mechanic', 'remodel', 'contractor', 'landscap', 'clean',
+          'pest', 'vet', 'gym', 'fitness', 'salon', 'spa', 'restaurant', 'photo', 'locksmith', 'paint', 'floor'
+        ];
+        listings = listings.filter((l) => {
+          const cat = (l.categoryName || '').toLowerCase();
+          return !standardKnown.some(k => cat.includes(k)) || cat.includes('other');
+        });
+      } else {
+        listings = listings.filter(
+          (l) => l.categorySlug === catClean || l.categoryName.toLowerCase().includes(catClean)
+        );
+      }
+    }
+
+    if (city && String(city).toLowerCase() !== 'all') {
+      const cityClean = String(city).toLowerCase().trim();
+      listings = listings.filter(
+        (l) => l.citySlug === cityClean || l.cityName.toLowerCase().includes(cityClean)
+      );
+    }
+
+    if (query) {
+      const q = String(query).toLowerCase().trim();
+      listings = listings.filter(
+        (l) =>
+          l.businessName.toLowerCase().includes(q) ||
+          l.categoryName.toLowerCase().includes(q) ||
+          l.cityName.toLowerCase().includes(q) ||
+          (l.targetKeywords || []).some((k: string) => k.toLowerCase().includes(q)) ||
+          (l.scrapedContent?.serviceTags || []).some((s: string) => s.toLowerCase().includes(q))
+      );
+    }
+
+    const totalCount = listings.length;
+    const shouldReturnAll = all === 'true' || all === '1';
+
+    if (shouldReturnAll) {
+      return res.json({
+        success: true,
+        count: totalCount,
+        totalCount,
+        totalPages: 1,
+        page: 1,
+        limit: totalCount,
+        hasMore: false,
+        listings,
+        allCategories,
+        allCities,
+      });
+    }
+
+    const page = Math.max(1, parseInt(rawPage as string, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(rawLimit as string, 10) || 12));
+    const totalPages = Math.max(1, Math.ceil(totalCount / limit));
+    const startIndex = (page - 1) * limit;
+    const pagedListings = listings.slice(startIndex, startIndex + limit);
+
+    res.json({
+      success: true,
+      count: totalCount,
+      totalCount,
+      totalPages,
+      page,
+      limit,
+      hasMore: page < totalPages,
+      listings: pagedListings,
+      allCategories,
+      allCities,
+    });
+  } catch (err: any) {
+    console.error('[Directory API] Error fetching listings:', err);
+    res.status(500).json({ success: false, error: 'FAILED_TO_FETCH_LISTINGS', message: err.message });
+  }
+});
+
+// Phase 4: Directory Lead Analytics & Real Value Measurement
+app.get('/api/directory/analytics', async (req, res) => {
+  try {
+    const rawBizId = req.query.businessId ? String(req.query.businessId) : undefined;
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId);
+    const analytics = getDirectoryAnalytics(business.id, business.slug);
+    res.json({
+      success: true,
+      analytics,
+    });
+  } catch (err: any) {
+    console.error('[Directory Analytics API] Error:', err);
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/directory/business/:slugOrId', (req, res) => {
+  try {
+    const { slugOrId } = req.params;
+    const listing = getDirectoryListingBySlug(slugOrId);
+    if (!listing) {
+      return res.status(404).json({
+        success: false,
+        error: 'BUSINESS_NOT_FOUND',
+        message: `No active directory listing found for '${slugOrId}'`,
+      });
+    }
+
+    res.json({
+      success: true,
+      business: listing,
+    });
+  } catch (err: any) {
+    console.error('[Directory API] Error fetching business by slug:', err);
+    res.status(500).json({ success: false, error: 'FAILED_TO_FETCH_BUSINESS', message: err.message });
+  }
+});
+
+app.post('/api/directory/lead', async (req, res) => {
+  try {
+    const {
+      businessId,
+      leadName,
+      leadEmail,
+      leadPhone,
+      serviceRequested,
+      message,
+      city,
+      category,
+      sessionId,
+      userId,
+    } = req.body;
+
+    if (!businessId || !leadName || !leadPhone) {
+      return res.status(400).json({
+        success: false,
+        error: 'MISSING_FIELDS',
+        message: 'businessId, leadName, and leadPhone are required.',
+      });
+    }
+
+    const listing = getDirectoryListingBySlug(businessId) || getPublishedDirectoryListings().find(b => b.id === businessId);
+    if (!listing) {
+      return res.status(404).json({
+        success: false,
+        error: 'BUSINESS_NOT_FOUND',
+        message: 'Target business profile not found in directory.',
+      });
+    }
+
+    // Reuse the unified directory lead engine (Phase 4.4 - source: 'directory', stored persistently)
+    const result = createDirectoryLead({
+      businessId: listing.id,
+      leadName,
+      leadEmail,
+      leadPhone,
+      serviceRequested,
+      message,
+      city: city || listing.cityName,
+      category: category || listing.categoryName,
+      sessionId,
+      userId,
+    });
+
+    const isPremium = result.isPremium;
+    const targetOwnerEmail = result.ownerEmail;
+
+    // Email notification to business owner
+    if (targetOwnerEmail) {
+      const emailSubject = isPremium
+        ? `🔥 [New Lead Received] ${leadName} requested ${serviceRequested || listing.categoryName}`
+        : `⚡ [New Customer Inquiry] Someone requested a quote for ${serviceRequested || listing.categoryName}!`;
+
+      const emailHtml = isPremium
+        ? `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1e293b;">
+            <div style="background: #0f172a; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 20px;">🎉 Direct Customer Lead from Locora Directory</h1>
+            </div>
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
+              <p style="font-size: 16px; line-height: 1.5;">Hi <strong>${listing.businessName}</strong>,</p>
+              <p style="font-size: 15px; color: #475569;">A verified local customer just submitted a request for your services on the Locora Business Directory:</p>
+              
+              <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 16px; margin: 20px 0;">
+                <p style="margin: 6px 0;"><strong>Customer Name:</strong> ${leadName}</p>
+                <p style="margin: 6px 0;"><strong>Phone:</strong> <a href="tel:${leadPhone}" style="color: #2563eb; font-weight: 600;">${leadPhone}</a></p>
+                ${leadEmail ? `<p style="margin: 6px 0;"><strong>Email:</strong> <a href="mailto:${leadEmail}" style="color: #2563eb;">${leadEmail}</a></p>` : ''}
+                <p style="margin: 6px 0;"><strong>Service Requested:</strong> ${serviceRequested || listing.categoryName}</p>
+                ${message ? `<p style="margin: 6px 0;"><strong>Customer Message:</strong> "${message}"</p>` : ''}
+                <p style="margin: 6px 0; color: #64748b; font-size: 13px;">Received: ${new Date().toLocaleString()}</p>
+              </div>
+
+              <div style="text-align: center; margin-top: 24px;">
+                <a href="tel:${leadPhone}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 12px 24px; border-radius: 6px; font-weight: 600; text-decoration: none;">Call Customer Immediately</a>
+              </div>
+            </div>
+          </div>
+        `
+        : `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1e293b;">
+            <div style="background: #0f172a; padding: 20px; border-radius: 8px 8px 0 0; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 20px;">⚡ High-Intent Customer Lead Waiting for You!</h1>
+            </div>
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-top: none; padding: 24px; border-radius: 0 0 8px 8px;">
+              <p style="font-size: 16px; line-height: 1.5;">Hi <strong>${listing.businessName}</strong>,</p>
+              <p style="font-size: 15px; color: #475569;">A customer in <strong>${listing.cityName || 'your area'}</strong> just requested a quote for <strong>${serviceRequested || listing.categoryName}</strong> on the Locora Directory.</p>
+              
+              <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 16px; margin: 20px 0;">
+                <p style="margin: 6px 0;"><strong>Customer Name:</strong> ${leadName.slice(0, 1)}*** (Verified Customer)</p>
+                <p style="margin: 6px 0;"><strong>Phone:</strong> ${leadPhone.slice(0, 3)}***-**** <em>(Protected)</em></p>
+                <p style="margin: 6px 0;"><strong>Service Requested:</strong> ${serviceRequested || listing.categoryName}</p>
+                <p style="margin: 6px 0; color: #b45309; font-weight: 600; font-size: 13px;">🔒 Upgrade to Locora Pro to instantly unlock and receive raw phone numbers and direct customer leads.</p>
+              </div>
+
+              <div style="text-align: center; margin-top: 24px;">
+                <a href="https://app.locoraai.com/pricing" style="display: inline-block; background: #d97706; color: #ffffff; padding: 12px 24px; border-radius: 6px; font-weight: 600; text-decoration: none;">Unlock Full Contact Details</a>
+              </div>
+            </div>
+          </div>
+        `;
+
+      try {
+        await sendEmail({
+          to: targetOwnerEmail,
+          subject: emailSubject,
+          html: emailHtml,
+          senderName: 'Locora Local Directory',
+        });
+      } catch (err: any) {
+        console.warn('[Directory Lead] Email notification dispatch failed:', err.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      leadId: result.lead.id,
+      lead: result.lead,
+      message: 'Your request has been delivered to the business pro.',
+      status: isPremium ? 'dispatched_direct' : 'queued_for_unlock',
+    });
+  } catch (err: any) {
+    console.error('[Directory API] Error submitting lead:', err);
+    res.status(500).json({ success: false, error: 'FAILED_TO_SUBMIT_LEAD', message: err.message });
+  }
+});
+
+// Phase 4.1 & 4.2: Comprehensive Directory Event Tracking Route
+app.post('/api/directory/track-event', (req, res) => {
+  try {
+    const {
+      businessId,
+      directoryProfileId,
+      eventType,
+      userId,
+      sessionId,
+      source,
+      city,
+      category,
+      leadId,
+      metadata,
+    } = req.body;
+
+    if (!eventType) {
+      return res.status(400).json({ success: false, error: 'eventType is required' });
+    }
+
+    const result = recordDirectoryEvent({
+      eventType,
+      businessId,
+      directoryProfileId,
+      userId,
+      sessionId,
+      source: source || 'directory',
+      city,
+      category,
+      leadId,
+      metadata,
+    });
+
+    res.json(result);
+  } catch (err: any) {
+    console.error('[Directory Track Event] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Phase 4.1: Mark Lead Responded (records directory_lead_response)
+app.post('/api/directory/lead/respond', async (req, res) => {
+  try {
+    const { leadId, businessId } = req.body;
+    if (!leadId) {
+      return res.status(400).json({ success: false, error: 'leadId is required' });
+    }
+    const { business } = await resolveAuthenticatedBusiness(req, businessId);
+    const result = markDirectoryLeadResponded(leadId, business.id, business.slug);
+    if (!result.success) {
+      return res.status(404).json(result);
+    }
+    res.json(result);
+  } catch (err: any) {
+    console.error('[Directory Lead Respond] Error:', err);
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+});
+
+// Phase 4.1 & 4.4: Mark Lead Converted (records directory_lead_converted)
+app.post('/api/directory/lead/convert', async (req, res) => {
+  try {
+    const { leadId, businessId, customerId, customerName, customerEmail, customerPhone, value } = req.body;
+    if (!leadId) {
+      return res.status(400).json({ success: false, error: 'leadId is required' });
+    }
+    const { business, ownerEmail } = await resolveAuthenticatedBusiness(req, businessId);
+    const result = convertDirectoryLead(
+      leadId,
+      business.id,
+      {
+        customerId,
+        customerName,
+        customerEmail,
+        customerPhone,
+        value: value ? Number(value) : undefined,
+      },
+      business.slug
+    );
+    if (!result.success) {
+      return res.status(404).json(result);
+    }
+
+    // Connect to CRM: Persist as verified customer record with source: 'directory'
+    const cName = customerName || result.lead?.leadName || 'Directory Customer';
+    const cEmail = customerEmail || result.lead?.leadEmail || '';
+    const cPhone = customerPhone || result.lead?.leadPhone || '';
+    await dbService
+      .createCustomer(
+        {
+          businessId: business.id,
+          name: cName,
+          email: cEmail,
+          phone: cPhone,
+          source: 'directory',
+          status: 'active',
+          totalRevenue: value ? Number(value) : 0,
+          notes: `Converted from Locora Directory lead for ${result.lead?.serviceRequested || 'Local Service'}.`,
+        },
+        ownerEmail
+      )
+      .catch(() => {});
+
+    res.json(result);
+  } catch (err: any) {
+    console.error('[Directory Lead Convert] Error:', err);
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+});
+
+// Phase 4.3: Real Directory Leads for a Business
+app.get('/api/directory/leads', async (req, res) => {
+  try {
+    const rawBizId = req.query.businessId ? String(req.query.businessId) : undefined;
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId);
+    const leads = getDirectoryLeadsForBusiness(business.id, business.slug);
+    res.json({ success: true, count: leads.length, leads });
+  } catch (err: any) {
+    console.error('[Directory Leads API] Error:', err);
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+});
+
+// Phase 4.1: Query Directory Events
+app.get('/api/directory/events', async (req, res) => {
+  try {
+    const rawBizId = req.query.businessId ? String(req.query.businessId) : undefined;
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId);
+    const eventType = req.query.eventType ? String(req.query.eventType) : undefined;
+    const limit = req.query.limit ? Number(req.query.limit) : 50;
+    const events = getDirectoryEvents({ businessId: business.id, businessSlug: business.slug, eventType, limit });
+    res.json({ success: true, count: events.length, events });
+  } catch (err: any) {
+    console.error('[Directory Events API] Error:', err);
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+});
+
+// Directory Claim Listing Route
+app.post('/api/directory/claim', (req, res) => {
+  try {
+    const { businessId, userEmail, fullName } = req.body;
+    if (!businessId || !userEmail) {
+      return res.status(400).json({ success: false, error: 'businessId and userEmail are required' });
+    }
+    const result = claimDirectoryListingByBusinessId(businessId, userEmail, fullName);
+    if (!result.success) {
+      return res.status(result.alreadyClaimed ? 409 : 400).json(result);
+    }
+    res.json(result);
+  } catch (err: any) {
+    console.error('[Directory Claim] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Directory Profile Update Route (for approved AI actions and business profile synchronization)
+app.post('/api/directory/profile/update', async (req, res) => {
+  try {
+    const { businessId, ...updates } = req.body;
+    if (!businessId) {
+      return res.status(400).json({ success: false, error: 'businessId is required' });
+    }
+    const { business } = await resolveAuthenticatedBusiness(req, businessId);
+    const result = updateDirectoryProfileRecord(business.slug || business.id, updates);
+    if (!result.success) {
+      return res.status(404).json(result);
+    }
+    // Also update SQL business record description/services if provided
+    if (updates.description || updates.bio || updates.services || updates.phone || updates.website) {
+      await dbService.updateBusiness(business.id, {
+        description: updates.description || updates.bio,
+        services: updates.services,
+        phone: updates.phone,
+        website: updates.website,
+      }).catch(() => {});
+    }
+    res.json(result);
+  } catch (err: any) {
+    console.error('[Directory Profile Update] Error:', err);
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+});
+
+// Dedicated Directory XML Sitemap (for directory.locoraai.com and /directory/sitemap.xml)
+app.get(['/directory/sitemap.xml', '/api/directory/sitemap.xml'], (req, res) => {
+  try {
+    const rawListings = getPublishedDirectoryListings();
+    // Strictly filter for valid, active, published business listings with non-empty slugs
+    const listings = rawListings.filter(
+      (b) => b && b.slug && typeof b.slug === 'string' && b.slug.trim().length > 0 && b.isPublishedInDirectory === true
+    );
+    const today = new Date().toISOString().split('T')[0];
+
+    const host = ((req.headers.host as string) || '').toLowerCase();
+    const isDirHost = host.startsWith('directory.');
+    const baseUrl = isDirHost ? 'https://directory.locoraai.com' : 'https://locoraai.com';
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+
+    const seenUrls = new Set<string>();
+
+    const addUrl = (loc: string, lastmod: string, changefreq: string, priority: string) => {
+      if (!seenUrls.has(loc)) {
+        seenUrls.add(loc);
+        xml += `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>\n`;
+      }
+    };
+
+    // 1. Root Directory Hub (Indexable only if we have active listings)
+    if (listings.length > 0) {
+      addUrl(isDirHost ? `${baseUrl}/` : `${baseUrl}/directory`, today, 'daily', '1.0');
+    }
+
+    // 2. City Pages (Only include cities with >= 1 published business)
+    const cityCounts = new Map<string, number>();
+    listings.forEach((b) => {
+      if (b.citySlug && b.citySlug !== 'all') {
+        cityCounts.set(b.citySlug, (cityCounts.get(b.citySlug) || 0) + 1);
+      }
+    });
+
+    cityCounts.forEach((count, citySlug) => {
+      if (count >= 1) {
+        addUrl(isDirHost ? `${baseUrl}/city/${citySlug}` : `${baseUrl}/${citySlug}`, today, 'daily', '0.85');
+      }
+    });
+
+    // 3. Category Pages (Only include categories with >= 1 published business)
+    const categoryCounts = new Map<string, number>();
+    listings.forEach((b) => {
+      if (b.categorySlug && b.categorySlug !== 'services') {
+        categoryCounts.set(b.categorySlug, (categoryCounts.get(b.categorySlug) || 0) + 1);
+      }
+    });
+
+    categoryCounts.forEach((count, catSlug) => {
+      if (count >= 1) {
+        addUrl(`${baseUrl}/category/${catSlug}`, today, 'daily', '0.85');
+      }
+    });
+
+    // 4. City + Category Combined Pages (Only include combinations with >= 1 published business)
+    const cityCatCombos = new Map<string, { citySlug: string; catSlug: string; count: number }>();
+    listings.forEach((b) => {
+      if (b.citySlug && b.citySlug !== 'all' && b.categorySlug && b.categorySlug !== 'services') {
+        const comboKey = `${b.citySlug}__${b.categorySlug}`;
+        const existing = cityCatCombos.get(comboKey) || { citySlug: b.citySlug, catSlug: b.categorySlug, count: 0 };
+        existing.count += 1;
+        cityCatCombos.set(comboKey, existing);
+      }
+    });
+
+    cityCatCombos.forEach(({ citySlug, catSlug, count }) => {
+      if (count >= 1) {
+        addUrl(`${baseUrl}/${citySlug}/${catSlug}`, today, 'daily', '0.80');
+      }
+    });
+
+    // 5. Canonical Individual Business Pages (Only valid non-deleted businesses)
+    listings.forEach((b) => {
+      const bDate = b.updatedAt ? b.updatedAt.split('T')[0] : today;
+      addUrl(isDirHost ? `${baseUrl}/business/${b.slug}` : `${baseUrl}/biz/${b.slug}`, bDate, 'weekly', '0.90');
+    });
+
+    xml += `</urlset>`;
+
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return res.send(xml);
+  } catch (err: any) {
+    console.error('[Directory Sitemap] Error:', err);
+    res.status(500).send('Error generating directory sitemap');
   }
 });
 
@@ -15114,7 +15750,13 @@ async function handleHtmlRequest(req: express.Request, res: express.Response, vi
     hHost.startsWith('app.') ||
     rHost.startsWith('app.') ||
     (Array.isArray(req.subdomains) && req.subdomains.includes('app'));
-  const effectiveHost = isAppHost ? 'app.locoraai.com' : (fHost || hHost || rHost);
+  const isDirectoryHost =
+    allHosts.includes('directory.locoraai.com') ||
+    fHost.startsWith('directory.') ||
+    hHost.startsWith('directory.') ||
+    rHost.startsWith('directory.') ||
+    (Array.isArray(req.subdomains) && req.subdomains.includes('directory'));
+  const effectiveHost = isAppHost ? 'app.locoraai.com' : isDirectoryHost ? 'directory.locoraai.com' : (fHost || hHost || rHost);
 
   // Clean redirects for legacy or underscore URLs:
   if (req.path === '/resources_hub') {

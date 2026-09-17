@@ -297,6 +297,18 @@ export const PublicNavbar: React.FC = () => {
             )}
           </div>
 
+          {/* DIRECTORY LINK */}
+          <button
+            onClick={() => navigateTo('directory', '/directory')}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+              activeTab === 'directory' || activeTab.startsWith('directory_')
+                ? 'bg-[#059669] text-white font-bold shadow-xs'
+                : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/70'
+            }`}
+          >
+            Directory
+          </button>
+
           {/* PRICING LINK */}
           <button
             onClick={() => navigateTo('pricing_public', '/pricing')}
@@ -418,6 +430,17 @@ export const PublicNavbar: React.FC = () => {
               className="text-left px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 pl-6"
             >
               · Competitor Radar
+            </button>
+            <button
+              onClick={() => navigateTo('directory', '/directory')}
+              className={`text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center justify-between ${
+                activeTab === 'directory' || activeTab.startsWith('directory_')
+                  ? 'bg-emerald-50 text-[#059669]'
+                  : 'text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <span>Local Business Directory</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">Live</span>
             </button>
             <button
               onClick={() => navigateTo('pricing_public', '/pricing')}

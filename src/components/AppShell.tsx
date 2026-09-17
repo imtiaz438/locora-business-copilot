@@ -106,7 +106,9 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     activeTab === 'privacy' ||
     activeTab === 'terms' ||
     activeTab === 'refund' ||
-    activeTab === 'security';
+    activeTab === 'security' ||
+    activeTab === 'directory' ||
+    activeTab.startsWith('directory_');
 
   // Render Public Website Layout
   if (isPublicRoute) {

@@ -41,6 +41,10 @@ import {
   CalendarCheck,
   BadgeAlert,
   BarChart3,
+  Globe,
+  Eye,
+  Building2,
+  MousePointerClick,
 } from 'lucide-react';
 
 interface GooglePostDraft {
@@ -64,6 +68,9 @@ interface ActionCardState {
     | 'leads_followup'
     | 'monthly_report'
     | 'weekly_work'
+    | 'directory_performance'
+    | 'directory_improvement'
+    | 'directory_leads_analysis'
     | 'generic';
   status: 'planning' | 'running_scan' | 'generated' | 'saved';
   prompt: string;
@@ -125,10 +132,38 @@ export const AiManagerView: React.FC = () => {
     'Find my biggest SEO opportunity.',
     'Show me unanswered reviews.',
     'Analyze my competitors.',
+    'How is my directory profile performing?',
+    'What can I improve on my directory profile?',
+    'How can I get more directory leads?',
+    'Why did my directory leads change?',
   ];
 
   // LOCORA SUGGESTS items connected to real modules
   const locoraSuggestions = [
+    {
+      id: 'sugg_directory_perf',
+      label: 'Directory Performance & Views',
+      query: 'How is my directory profile performing?',
+      type: 'leads' as const,
+    },
+    {
+      id: 'sugg_directory_improve',
+      label: 'Improve Directory Profile',
+      query: 'What can I improve on my directory profile?',
+      type: 'growth' as const,
+    },
+    {
+      id: 'sugg_directory_leads',
+      label: 'Get More Directory Leads',
+      query: 'How can I get more directory leads?',
+      type: 'leads' as const,
+    },
+    {
+      id: 'sugg_directory_variance',
+      label: 'Why Directory Leads Changed',
+      query: 'Why did my directory leads change?',
+      type: 'leads' as const,
+    },
     {
       id: 'sugg_content_plan',
       label: "Create this month's content plan",
@@ -466,6 +501,32 @@ export const AiManagerView: React.FC = () => {
     } catch (e) {
       console.error('Failed to add all weekly tasks:', e);
     }
+  };
+
+  // Trigger Section 33 AI Action Approval Modal for Directory Recommendations
+  const handleTriggerApprovalForOpportunity = (opp: any) => {
+    const actionId = `act_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const actionPayload = opp.payload || {};
+    const newAction: any = {
+      id: actionId,
+      type: opp.actionType || 'CREATE_DIRECTORY_TASK',
+      title: opp.title,
+      business_id: businessTruth?.businessId || activeBusiness?.id || 'biz_locora_canonical',
+      input: actionPayload,
+      output: typeof actionPayload === 'object' ? JSON.stringify(actionPayload, null, 2) : String(actionPayload || ''),
+      status: 'draft',
+      created_by: 'ai',
+      isSafeInternal: false,
+      explanation: {
+        diagnosis: opp.diagnosis || `Directory optimization opportunity identified: ${opp.title}`,
+        whyItMatters: opp.whyItMatters || 'Maximizes directory ranking, customer trust, and lead generation.',
+        previewSummary: `Target Action: ${opp.actionType || 'CREATE_DIRECTORY_TASK'}\n${JSON.stringify(actionPayload, null, 2)}`,
+        expectedImpact: opp.expectedImpact || 'Increased lead conversion and organic visibility',
+      },
+      createdAt: new Date().toISOString(),
+    };
+    createAIAction(newAction);
+    setSelectedAIActionForApproval(newAction);
   };
 
   // Generate Google Post Trigger using verified Business Truth
@@ -1766,6 +1827,610 @@ export const AiManagerView: React.FC = () => {
                         )}
                       </button>
                     </div>
+                  </div>
+                )}
+
+                {/* CASE: DIRECTORY PERFORMANCE CARD */}
+                {card.type === 'directory_performance' && card.data && (
+                  <div className="space-y-4">
+                    {/* Status & Verification Header */}
+                    <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                          <Building2 className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-bold font-heading">{card.data.businessName}</h4>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              card.data.isPublished ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700 text-slate-300'
+                            }`}>
+                              {card.data.isPublished ? 'Published Live' : 'Unpublished'}
+                            </span>
+                            {card.data.isClaimed ? (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" /> Claimed Owner
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3" /> Unclaimed Listing
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-300 mt-0.5">
+                            Locora Public Directory: <span className="font-mono text-emerald-300">directory.locoraai.com/biz/{card.data.slug}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {card.data.slug && (
+                        <a
+                          href={`https://directory.locoraai.com/biz/${card.data.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all self-start sm:self-auto cursor-pointer"
+                        >
+                          <Globe className="w-3.5 h-3.5" />
+                          <span>View Public Page</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Profile Completeness Bar */}
+                    <div className="p-3.5 rounded-2xl bg-white border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="font-bold text-slate-800 font-heading flex items-center gap-1.5">
+                            <span>Profile Completeness</span>
+                            <span className="text-[11px] text-slate-400 font-normal">({card.data.completenessScore || 0}% optimized)</span>
+                          </span>
+                          <span className="font-bold font-mono text-slate-900">{card.data.completenessScore || 0}%</span>
+                        </div>
+                        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              (card.data.completenessScore || 0) >= 80
+                                ? 'bg-emerald-500'
+                                : (card.data.completenessScore || 0) >= 50
+                                ? 'bg-amber-500'
+                                : 'bg-rose-500'
+                            }`}
+                            style={{ width: `${Math.min(100, Math.max(5, card.data.completenessScore || 0))}%` }}
+                          />
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleExecute("What can I improve on my directory profile?")}
+                        className="px-3.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs shrink-0 cursor-pointer flex items-center gap-1"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        <span>Audit & Improve</span>
+                      </button>
+                    </div>
+
+                    {/* 6 Real Metric Counters */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                      <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                          <span className="text-[9px] uppercase font-bold tracking-wider">Views</span>
+                          <Eye className="w-3.5 h-3.5 text-blue-500" />
+                        </div>
+                        <div className="text-lg font-black text-slate-900 font-heading">
+                          {(card.data.metrics?.profileViews || 0).toLocaleString()}
+                        </div>
+                        <span className="text-[10px] text-slate-500">Organic visitors</span>
+                      </div>
+
+                      <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                          <span className="text-[9px] uppercase font-bold tracking-wider">Calls</span>
+                          <Phone className="w-3.5 h-3.5 text-emerald-500" />
+                        </div>
+                        <div className="text-lg font-black text-emerald-700 font-heading">
+                          {(card.data.metrics?.phoneClicks || 0).toLocaleString()}
+                        </div>
+                        <span className="text-[10px] text-slate-500">Direct tap-to-call</span>
+                      </div>
+
+                      <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                          <span className="text-[9px] uppercase font-bold tracking-wider">Web Clicks</span>
+                          <MousePointerClick className="w-3.5 h-3.5 text-purple-500" />
+                        </div>
+                        <div className="text-lg font-black text-purple-700 font-heading">
+                          {(card.data.metrics?.websiteClicks || 0).toLocaleString()}
+                        </div>
+                        <span className="text-[10px] text-slate-500">Referrals</span>
+                      </div>
+
+                      <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                          <span className="text-[9px] uppercase font-bold tracking-wider">Quote Leads</span>
+                          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        </div>
+                        <div className="text-lg font-black text-amber-700 font-heading">
+                          {(card.data.metrics?.deliveredLeads ?? card.data.metrics?.quoteRequests ?? 0).toLocaleString()}
+                        </div>
+                        <span className="text-[10px] text-slate-500">To CRM</span>
+                      </div>
+
+                      <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                          <span className="text-[9px] uppercase font-bold tracking-wider">Inquiries</span>
+                          <Zap className="w-3.5 h-3.5 text-indigo-500" />
+                        </div>
+                        <div className="text-lg font-black text-indigo-700 font-heading">
+                          {(card.data.metrics?.totalInquiries || 0).toLocaleString()}
+                        </div>
+                        <span className="text-[10px] text-slate-500">{card.data.metrics?.inquiryRate || 0}% rate</span>
+                      </div>
+
+                      <div className="p-3 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                          <span className="text-[9px] uppercase font-bold tracking-wider">Converted</span>
+                          <CheckCircle2 className="w-3.5 h-3.5 text-teal-500" />
+                        </div>
+                        <div className="text-lg font-black text-teal-700 font-heading">
+                          {(card.data.metrics?.conversionsCount || 0).toLocaleString()}
+                        </div>
+                        <span className="text-[10px] text-slate-500">{card.data.metrics?.leadConversionRate || 0}% won</span>
+                      </div>
+                    </div>
+
+                    {/* Checkup Findings if present */}
+                    {card.data.checkup && (
+                      <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-slate-500 font-medium">Checkup SEO:</span>
+                            <span className="font-bold text-slate-900 font-mono">{card.data.checkup.seoScore ?? 'N/A'}/100</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-slate-500 font-medium">Mobile Speed:</span>
+                            <span className="font-bold text-slate-900 font-mono">{card.data.checkup.performanceScore ?? 'N/A'}/100</span>
+                          </div>
+                          {card.data.checkup.issuesCount > 0 && (
+                            <span className="text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                              {card.data.checkup.issuesCount} Technical Opportunities
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] text-slate-400">Grounded in live Google PSI & Crawl data</span>
+                      </div>
+                    )}
+
+                    {/* AI Opportunities & Actions */}
+                    {card.data.opportunities && card.data.opportunities.length > 0 && (
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                            <span>Actionable Directory Priorities ({card.data.opportunities.length})</span>
+                          </h5>
+                          <span className="text-[11px] text-slate-500">Requires User Approval</span>
+                        </div>
+
+                        {card.data.opportunities.map((opp: any, oIdx: number) => (
+                          <div
+                            key={opp.id || oIdx}
+                            className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-300 transition-all text-xs space-y-2"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${opp.urgency === 'high' ? 'bg-rose-500' : 'bg-blue-500'}`} />
+                                <span className="font-bold text-slate-900">{opp.title}</span>
+                              </div>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                opp.urgency === 'high' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-slate-100 text-slate-700'
+                              }`}>
+                                {opp.urgency === 'high' ? 'High Impact' : 'Recommended'}
+                              </span>
+                            </div>
+
+                            <p className="text-slate-600 text-[11px] bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                              <strong>Why it matters:</strong> {opp.whyItMatters}
+                              {opp.expectedImpact && (
+                                <span className="block text-emerald-700 font-semibold mt-1">
+                                  Expected Impact: {opp.expectedImpact}
+                                </span>
+                              )}
+                            </p>
+
+                            <div className="flex items-center justify-end gap-2 pt-1">
+                              <button
+                                onClick={() => handleTriggerApprovalForOpportunity(opp)}
+                                className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                              >
+                                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                                <span>Preview & Approve AI Action</span>
+                              </button>
+                              <button
+                                onClick={() => handleAddWeeklyActionTask(opp)}
+                                disabled={createdTaskIds[opp.id]}
+                                className={`px-3 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                                  createdTaskIds[opp.id]
+                                    ? 'bg-emerald-100 border-emerald-300 text-emerald-800 cursor-default'
+                                    : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                                }`}
+                              >
+                                {createdTaskIds[opp.id] ? (
+                                  <>
+                                    <Check className="w-3.5 h-3.5 text-emerald-700" />
+                                    <span>Added to Work ✓</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <ListTodo className="w-3.5 h-3.5 text-slate-500" />
+                                    <span>Add to Work Tasks</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Action recommendations & Lead sync prompt */}
+                    <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                      <div>
+                        <span className="font-bold text-emerald-950 block font-heading">
+                          Lead Flow Sync Active
+                        </span>
+                        <span className="text-[11px] text-emerald-900">
+                          Direct quote requests from your public listing automatically populate in your Customers & Leads pipeline.
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={() => setActiveTab('customers')}
+                        className="px-4 py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs flex items-center gap-1.5 transition-all shrink-0 cursor-pointer shadow-xs"
+                      >
+                        <Users className="w-3.5 h-3.5 text-amber-300" />
+                        <span>Open CRM & Leads</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* CASE: DIRECTORY IMPROVEMENT / AUDIT CARD */}
+                {card.type === 'directory_improvement' && card.data && (
+                  <div className="space-y-4">
+                    {/* Header with Score */}
+                    <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-base font-bold font-heading text-slate-900">Directory Profile Audit</h4>
+                          <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-mono">
+                            {card.data.businessName}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Complete profiles rank higher in local search, build instant consumer trust, and yield 2.8x more quote submissions.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                        <div className="text-right">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 block">Completeness</span>
+                          <span className="text-2xl font-black font-heading text-slate-900">
+                            {card.data.completenessScore || 0}%
+                          </span>
+                        </div>
+                        <div className="w-12 h-12 rounded-full border-4 border-slate-200 flex items-center justify-center font-bold text-xs text-slate-700 font-mono">
+                          {card.data.auditBreakdown ? `${card.data.auditBreakdown.filter((i: any) => i.passed).length}/10` : '—'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 10-Item Audit Checklist */}
+                    {card.data.auditBreakdown && (
+                      <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3">
+                        <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                          10-Point Directory Verification Checklist
+                        </h5>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          {card.data.auditBreakdown.map((item: any, iIdx: number) => (
+                            <div
+                              key={iIdx}
+                              className={`p-2.5 rounded-xl border flex items-start gap-2.5 transition-all ${
+                                item.passed
+                                  ? 'bg-emerald-50/50 border-emerald-100 text-slate-800'
+                                  : 'bg-rose-50/50 border-rose-100 text-slate-900'
+                              }`}
+                            >
+                              {item.passed ? (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                              ) : (
+                                <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold">{item.item}</span>
+                                  <span className={`text-[10px] font-semibold uppercase ${
+                                    item.passed ? 'text-emerald-700' : 'text-rose-600 font-bold'
+                                  }`}>
+                                    {item.passed ? 'Verified' : 'Missing'}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 mt-0.5">{item.detail}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Recommended Optimization Actions with Preview & Approval */}
+                    {card.data.opportunities && card.data.opportunities.length > 0 && (
+                      <div className="space-y-2.5">
+                        <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Immediate Optimization Actions</span>
+                        </h5>
+
+                        {card.data.opportunities.map((opp: any, oIdx: number) => (
+                          <div
+                            key={opp.id || oIdx}
+                            className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-2.5 text-xs"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-bold text-slate-900 text-sm">{opp.title}</span>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                opp.urgency === 'high' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-blue-50 text-blue-700'
+                              }`}>
+                                {opp.urgency === 'high' ? 'Priority' : 'Enhancement'}
+                              </span>
+                            </div>
+
+                            <p className="text-slate-600 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100 leading-relaxed">
+                              <strong>Diagnosis:</strong> {opp.diagnosis}
+                              <br />
+                              <strong>Why it matters:</strong> {opp.whyItMatters}
+                              {opp.expectedImpact && (
+                                <span className="block text-emerald-700 font-semibold mt-1">
+                                  Expected Impact: {opp.expectedImpact}
+                                </span>
+                              )}
+                            </p>
+
+                            <div className="flex items-center justify-end gap-2 pt-1">
+                              <button
+                                onClick={() => handleTriggerApprovalForOpportunity(opp)}
+                                className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                              >
+                                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                                <span>Preview & Approve AI Action</span>
+                              </button>
+                              <button
+                                onClick={() => handleAddWeeklyActionTask(opp)}
+                                disabled={createdTaskIds[opp.id]}
+                                className={`px-3.5 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-1.5 cursor-pointer ${
+                                  createdTaskIds[opp.id]
+                                    ? 'bg-emerald-100 border-emerald-300 text-emerald-800 cursor-default'
+                                    : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                                }`}
+                              >
+                                {createdTaskIds[opp.id] ? (
+                                  <>
+                                    <Check className="w-3.5 h-3.5 text-emerald-700" />
+                                    <span>Added to Work ✓</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <ListTodo className="w-3.5 h-3.5 text-slate-500" />
+                                    <span>Add to Work Tasks</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* CASE: DIRECTORY LEADS ANALYSIS & VARIANCE */}
+                {card.type === 'directory_leads_analysis' && card.data && (
+                  <div className="space-y-4">
+                    {/* Baseline Safeguard Notice if hasEnoughData === false */}
+                    {!card.data.hasEnoughData && (
+                      <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-start gap-3">
+                        <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold block">Strict Baseline Verification Notice</span>
+                          <span className="text-[11px] text-amber-800">
+                            Historical trend analysis requires at least two full tracking cycles to calculate statistically valid week-over-week variance. Displaying verified real-time volume below without speculation.
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Conversion Funnel */}
+                    <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-sm font-bold font-heading text-slate-900">Directory Conversion Funnel</h4>
+                          <p className="text-[11px] text-slate-500">Live conversion math from real visitor events</p>
+                        </div>
+                        <span className="font-mono text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                          {card.data.leadConversionRate || 0}% Lead-to-Customer Win Rate
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                          <span className="text-[10px] text-slate-400 uppercase font-bold block">1. Profile Views</span>
+                          <span className="text-lg font-black text-slate-900 font-heading">
+                            {(card.data.profileViews || 0).toLocaleString()}
+                          </span>
+                          <span className="text-[10px] text-slate-500 block">Top of funnel</span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                          <span className="text-[10px] text-slate-400 uppercase font-bold block">2. Inquiries</span>
+                          <span className="text-lg font-black text-indigo-700 font-heading">
+                            {(card.data.totalInquiries || 0).toLocaleString()}
+                          </span>
+                          <span className="text-[10px] text-slate-500 block">{card.data.inquiryRate || 0}% click rate</span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                          <span className="text-[10px] text-slate-400 uppercase font-bold block">3. Delivered Leads</span>
+                          <span className="text-lg font-black text-amber-700 font-heading">
+                            {(card.data.deliveredLeads || 0).toLocaleString()}
+                          </span>
+                          <span className="text-[10px] text-slate-500 block">In CRM pipeline</span>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                          <span className="text-[10px] text-slate-400 uppercase font-bold block">4. Won Customers</span>
+                          <span className="text-lg font-black text-teal-700 font-heading">
+                            {(card.data.conversionsCount || 0).toLocaleString()}
+                          </span>
+                          <span className="text-[10px] text-slate-500 block">Revenue generated</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Historical Lead Trend Card when data exists */}
+                    {card.data.hasEnoughData && card.data.leadTrends && (
+                      <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                        <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider">7-Day Lead Variance</h5>
+                        <div className="flex items-center gap-4 text-xs">
+                          <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex-1">
+                            <span className="text-[10px] text-slate-400 block">Prior 7 Days</span>
+                            <span className="text-base font-bold font-mono text-slate-700">
+                              {card.data.leadTrends.previous7DaysLeads} leads
+                            </span>
+                          </div>
+                          <span className="text-slate-400">→</span>
+                          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100 flex-1">
+                            <span className="text-[10px] text-emerald-600 block">Current 7 Days</span>
+                            <span className="text-base font-bold font-mono text-emerald-800">
+                              {card.data.leadTrends.last7DaysLeads} leads
+                            </span>
+                          </div>
+                          <div className="p-3 rounded-xl bg-slate-900 text-white flex-1">
+                            <span className="text-[10px] text-slate-300 block">Net Change</span>
+                            <span className={`text-base font-bold font-mono ${
+                              card.data.leadTrends.variance >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                            }`}>
+                              {card.data.leadTrends.variance >= 0 ? `+${card.data.leadTrends.variance}` : card.data.leadTrends.variance} leads
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Services in Demand */}
+                    {card.data.servicesWithInquiries && card.data.servicesWithInquiries.length > 0 && (
+                      <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-2.5">
+                        <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                          Services Receiving Inquiries
+                        </h5>
+                        <div className="space-y-1.5">
+                          {card.data.servicesWithInquiries.map((s: any, sIdx: number) => (
+                            <div key={sIdx} className="flex items-center justify-between text-xs p-2 rounded-xl bg-slate-50 border border-slate-100">
+                              <span className="font-semibold text-slate-800">{s.service}</span>
+                              <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                {s.count} {s.count === 1 ? 'inquiry' : 'inquiries'}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Uncontacted Leads Quick Action */}
+                    {card.data.uncontactedLeads && card.data.uncontactedLeads.length > 0 && (
+                      <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <div>
+                          <span className="font-bold text-amber-950 block font-heading flex items-center gap-1.5">
+                            <AlertTriangle className="w-4 h-4 text-amber-600" />
+                            <span>{card.data.uncontactedLeads.length} Uncontacted Directory Leads Awaiting Response</span>
+                          </span>
+                          <span className="text-[11px] text-amber-900">
+                            Responding within 5 minutes increases lead conversion by up to 391%.
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => setActiveTab('customers')}
+                          className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 transition-all shrink-0 cursor-pointer shadow-xs"
+                        >
+                          <Users className="w-3.5 h-3.5 text-amber-300" />
+                          <span>Respond in CRM</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Recommended Growth Actions with Preview & Approval */}
+                    {card.data.opportunities && card.data.opportunities.length > 0 && (
+                      <div className="space-y-2.5">
+                        <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Recommended Lead Growth Actions</span>
+                        </h5>
+
+                        {card.data.opportunities.map((opp: any, oIdx: number) => (
+                          <div
+                            key={opp.id || oIdx}
+                            className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-2.5 text-xs"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-bold text-slate-900 text-sm">{opp.title}</span>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                opp.urgency === 'high' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-blue-50 text-blue-700'
+                              }`}>
+                                {opp.urgency === 'high' ? 'Urgent' : 'Opportunity'}
+                              </span>
+                            </div>
+
+                            <p className="text-slate-600 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100 leading-relaxed">
+                              <strong>Why it matters:</strong> {opp.whyItMatters}
+                              {opp.expectedImpact && (
+                                <span className="block text-emerald-700 font-semibold mt-1">
+                                  Expected Impact: {opp.expectedImpact}
+                                </span>
+                              )}
+                            </p>
+
+                            <div className="flex items-center justify-end gap-2 pt-1">
+                              <button
+                                onClick={() => handleTriggerApprovalForOpportunity(opp)}
+                                className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                              >
+                                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                                <span>Preview & Approve AI Action</span>
+                              </button>
+                              <button
+                                onClick={() => handleAddWeeklyActionTask(opp)}
+                                disabled={createdTaskIds[opp.id]}
+                                className={`px-3.5 py-1.5 rounded-xl border font-bold text-xs flex items-center gap-1.5 cursor-pointer ${
+                                  createdTaskIds[opp.id]
+                                    ? 'bg-emerald-100 border-emerald-300 text-emerald-800 cursor-default'
+                                    : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                                }`}
+                              >
+                                {createdTaskIds[opp.id] ? (
+                                  <>
+                                    <Check className="w-3.5 h-3.5 text-emerald-700" />
+                                    <span>Added to Work ✓</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <ListTodo className="w-3.5 h-3.5 text-slate-500" />
+                                    <span>Add to Work Tasks</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 

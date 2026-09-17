@@ -263,6 +263,46 @@ export const GrowthCommandCenter: React.FC = () => {
         </div>
       </div>
 
+      {/* LOCORA DIRECTORY PRESENCE & INBOUND LEADS CARD */}
+      <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="space-y-2 max-w-2xl">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Locora Certified Directory
+            </span>
+            <span className="text-xs text-slate-500 font-medium">
+              Verified Public Presence
+            </span>
+          </div>
+          <h3 className="text-base sm:text-lg font-bold font-heading text-slate-900">
+            {businessName || 'Your Business'} is Live on Locora Local Directory
+          </h3>
+          <p className="text-xs text-slate-600 leading-relaxed max-w-xl font-sans">
+            Visitors in {businessCity || 'your local area'} can view your verified Google reviews, confirm opening hours, and submit direct quote requests with zero middleman fees.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0 w-full md:w-auto">
+          <a
+            href={`/biz/${activeBusiness?.directorySlug || activeBusiness?.id || 'smile-solutions'}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer font-sans"
+          >
+            <span>View Public Listing</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </a>
+          <button
+            onClick={() => setActiveTab('visibility')}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
+          >
+            <Users className="w-4 h-4" />
+            <span>Manage Directory Leads</span>
+          </button>
+        </div>
+      </div>
+
       {/* 1.8 AI BUSINESS BRAIN • VERIFIED STRATEGIC DOSSIER */}
       <section className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 text-white border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />

@@ -16,6 +16,7 @@ import {
   User,
   Zap,
   ExternalLink,
+  X,
 } from 'lucide-react';
 import { UserPlan } from '../../types';
 import { validateRealEmail } from '../../lib/emailValidation';
@@ -41,16 +42,65 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [pendingAudit, setPendingAudit] = useState<{ domain?: string; businessName?: string } | null>(null);
+  const [pendingDirectoryClaim, setPendingDirectoryClaim] = useState<{ businessId: string; businessName: string; slug: string; timestamp?: number } | null>(null);
+
+  const handleCancelDirectoryClaim = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('locora_pending_directory_claim');
+    }
+    setPendingDirectoryClaim(null);
+    setCompany('');
+  };
+
+  const handleCancelPendingAudit = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('locora_pending_public_audit');
+    }
+    setPendingAudit(null);
+    setCompany('');
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
+        const params = new URLSearchParams(window.location.search);
+        const hasClaimParam = params.get('claim') === 'true' || Boolean(params.get('businessId'));
+        const modeParam = params.get('mode');
+
+        if (modeParam === 'signup') {
+          setIsSignUp(true);
+        } else if (modeParam === 'login') {
+          setIsSignUp(false);
+        }
+
+        if (params.get('email')) {
+          setEmail(params.get('email')!);
+        }
+
         const raw = localStorage.getItem('locora_pending_public_audit');
         if (raw) {
           const parsed = JSON.parse(raw);
           setPendingAudit(parsed);
-          if (parsed.businessName) {
+          if (parsed.businessName && !hasClaimParam) {
             setCompany((curr) => curr || parsed.businessName);
+          }
+        }
+
+        const rawClaim = localStorage.getItem('locora_pending_directory_claim');
+        if (rawClaim) {
+          const parsedClaim = JSON.parse(rawClaim);
+          // Only auto-attach directory claim if user arrived via an explicit claim link (?claim=true or ?businessId=...)
+          // If the user navigated to /auth, /signup, or /login normally without claim intent, do NOT hijack their signup!
+          if (hasClaimParam) {
+            setPendingDirectoryClaim(parsedClaim);
+            if (parsedClaim.businessName) {
+              setCompany(parsedClaim.businessName);
+            }
+            setIsSignUp(true);
+          } else {
+            // Stale claim leftover from prior directory browsing session — clear it cleanly
+            localStorage.removeItem('locora_pending_directory_claim');
+            setPendingDirectoryClaim(null);
           }
         }
       } catch {}
@@ -800,18 +850,69 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
 
                 {/* Form Fields */}
                 <form onSubmit={handleSubmit} className="space-y-4 font-sans">
-                  {isSignUp && pendingAudit && (
-                    <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-950 flex items-start gap-2.5">
-                      <Sparkles className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
-                      <div className="space-y-0.5">
-                        <span className="font-bold block text-emerald-900 font-heading">
-                          🎯 Quick Checkup Preserved!
-                        </span>
-                        <span className="text-slate-600 block leading-relaxed font-sans">
-                          Creating your account will claim your scan for{' '}
-                          <strong className="text-slate-900">{pendingAudit.businessName || pendingAudit.domain}</strong> and initialize your verified Business Brain.
-                        </span>
+                  {isSignUp && pendingDirectoryClaim && (
+                    <div className="p-4 bg-emerald-50/95 border border-emerald-300 rounded-2xl text-xs text-emerald-950 space-y-3 shadow-xs animate-fadeIn">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-2.5">
+                          <Sparkles className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
+                          <div className="space-y-0.5">
+                            <span className="font-bold block text-emerald-900 font-heading text-sm">
+                              🏢 Claiming Directory Profile: {pendingDirectoryClaim.businessName}
+                            </span>
+                            <span className="text-slate-600 block leading-relaxed font-sans text-xs">
+                              You are connecting your new Locora account directly as the verified owner of{' '}
+                              <strong className="text-slate-900">{pendingDirectoryClaim.businessName}</strong>. This unlocks customer inquiries, verified reviews, and activates your Business Brain.
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleCancelDirectoryClaim}
+                          className="text-[11px] font-bold text-slate-600 hover:text-rose-600 px-2.5 py-1.5 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-lg shrink-0 transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
+                          title="Cancel claiming this business and create a fresh standard account"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          <span>Cancel & Register Different Business</span>
+                        </button>
                       </div>
+                      <div className="pt-2 border-t border-emerald-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-emerald-800">
+                        <span>Not your business? Cancel above to register your own company or agency.</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleCancelDirectoryClaim();
+                            setActiveTab('directory');
+                          }}
+                          className="font-semibold text-emerald-900 underline hover:text-emerald-950 cursor-pointer text-left"
+                        >
+                          Browse Directory (thousands of listings) →
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {isSignUp && pendingAudit && !pendingDirectoryClaim && (
+                    <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-950 flex items-start justify-between gap-2.5">
+                      <div className="flex items-start gap-2.5">
+                        <Sparkles className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
+                        <div className="space-y-0.5">
+                          <span className="font-bold block text-emerald-900 font-heading">
+                            🎯 Quick Checkup Preserved!
+                          </span>
+                          <span className="text-slate-600 block leading-relaxed font-sans">
+                            Creating your account will claim your scan for{' '}
+                            <strong className="text-slate-900">{pendingAudit.businessName || pendingAudit.domain}</strong> and initialize your verified Business Brain.
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleCancelPendingAudit}
+                        className="text-[11px] text-slate-500 hover:text-rose-600 p-1 rounded-md hover:bg-slate-100 transition-colors shrink-0 cursor-pointer"
+                        title="Dismiss scan and register fresh business"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   )}
 

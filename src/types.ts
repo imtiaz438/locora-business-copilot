@@ -1,3 +1,13 @@
+export enum DataSourceAttribution {
+  GOOGLE_BUSINESS_PROFILE = 'GOOGLE_BUSINESS_PROFILE',
+  GOOGLE_SEARCH_CONSOLE = 'GOOGLE_SEARCH_CONSOLE',
+  WEBSITE = 'WEBSITE',
+  USER_PROVIDED = 'USER_PROVIDED',
+  CALCULATED = 'CALCULATED',
+  AI_RECOMMENDATION = 'AI_RECOMMENDATION',
+  DIRECTORY_ACTIVITY = 'DIRECTORY_ACTIVITY',
+}
+
 export type AIProviderId = 'gemini' | 'openai' | 'claude' | 'perplexity' | 'deepseek' | 'groq' | 'opus' | 'cursor' | 'grok' | 'llama4' | 'apple_intelligence';
 
 export interface AIModelOption {
@@ -91,6 +101,16 @@ export interface BusinessProfile {
   logoUrl?: string;
   logoConfig?: CustomLogoConfig;
   gbpConnected?: boolean;
+  isPublishedInDirectory?: boolean;
+  directoryStatus?: 'DISCOVERED' | 'ELIGIBLE' | 'PUBLISHED' | 'CLAIM_PENDING' | 'CLAIMED' | 'VERIFIED';
+  isClaimed?: boolean;
+  directorySlug?: string;
+  sourceAttributions?: {
+    gbp?: string;
+    website?: string;
+    verification?: string;
+    [key: string]: string | undefined;
+  };
   // Core Business Brain Fields
   services?: string[];
   targetLocations?: string[];
@@ -287,6 +307,9 @@ export interface ClientBusiness {
   aiVisibilityLastCheckedAt?: string | null;
   externalDatasets?: ExternalDataset[];
   placeId?: string;
+  directorySlug?: string;
+  isPublishedInDirectory?: boolean;
+  isClaimed?: boolean;
   reviews?: any[];
   healthBreakdown?: {
     visibility: number;
@@ -1657,7 +1680,10 @@ export type AIActionType =
   | 'CREATE_REPORT'
   | 'ANALYZE_COMPETITOR'
   | 'ANALYZE_REVIEWS'
-  | 'CREATE_GROWTH_PLAN';
+  | 'CREATE_GROWTH_PLAN'
+  | 'UPDATE_DIRECTORY_PROFILE'
+  | 'CREATE_DIRECTORY_TASK'
+  | 'CREATE_DIRECTORY_CONTENT';
 
 export interface AIAction {
   id: string;
@@ -1707,3 +1733,5 @@ export interface GrowthStoreItem {
   features: string[];
   badge?: string;
 }
+
+

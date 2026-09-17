@@ -813,22 +813,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           } else {
             // First-time user with no business in DB yet
             let pendingAuditData: any = null;
+            let pendingDirectoryClaimData: any = null;
             if (typeof window !== 'undefined') {
               try {
                 const raw = localStorage.getItem('locora_pending_public_audit');
                 if (raw) pendingAuditData = JSON.parse(raw);
               } catch {}
+              try {
+                const rawClaim = localStorage.getItem('locora_pending_directory_claim');
+                if (rawClaim) pendingDirectoryClaimData = JSON.parse(rawClaim);
+              } catch {}
+            }
+
+            // If user came via Directory Claim flow, finalize claim on server
+            if (pendingDirectoryClaimData?.businessId) {
+              fetch('/api/directory/claim', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  businessId: pendingDirectoryClaimData.businessId,
+                  userEmail,
+                  fullName: newUser.name,
+                }),
+              }).catch(() => {});
             }
 
             setBusinessProfile((prev) => ({
               ...prev,
-              id: `bp_${newUser.id}`,
-              name: pendingAuditData?.businessName || companyName || prev.name,
+              id: pendingDirectoryClaimData?.businessId ? `bp_${pendingDirectoryClaimData.businessId}` : `bp_${newUser.id}`,
+              name: pendingDirectoryClaimData?.businessName || pendingAuditData?.businessName || companyName || prev.name,
               email: userEmail,
-              website: pendingAuditData?.domain || pendingAuditData?.url || prev.website,
-              phone: pendingAuditData?.detectedBusinessData?.phone || prev.phone,
-              address: pendingAuditData?.detectedBusinessData?.address || prev.address,
-              tagline: pendingAuditData?.detectedBusinessData?.metaDescription || prev.tagline,
+              website: pendingDirectoryClaimData?.websiteUrl || pendingAuditData?.domain || pendingAuditData?.url || prev.website,
+              phone: pendingDirectoryClaimData?.phone || pendingAuditData?.detectedBusinessData?.phone || prev.phone,
+              address: pendingDirectoryClaimData?.address || pendingAuditData?.detectedBusinessData?.address || prev.address,
+              tagline: pendingDirectoryClaimData?.tagline || pendingAuditData?.detectedBusinessData?.metaDescription || prev.tagline,
               updatedAt: new Date().toISOString(),
             }));
 
@@ -839,25 +857,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 body: JSON.stringify({
                   auditId: pendingAuditData.auditId,
                   userEmail,
+                  businessId: pendingDirectoryClaimData?.businessId || pendingAuditData.businessId,
                 }),
               }).catch(() => {});
             }
 
-            const newBizId = `biz_${newUser.id}`;
+            const newBizId = pendingDirectoryClaimData?.businessId || `biz_${newUser.id}`;
             const newBiz: ClientBusiness = {
               id: newBizId,
-              name: pendingAuditData?.businessName || companyName || 'My Business',
-              category: pendingAuditData?.detectedBusinessData?.schemaTypes?.[0] || 'Local Business',
-              tagline: pendingAuditData?.detectedBusinessData?.metaDescription || '',
+              name: pendingDirectoryClaimData?.businessName || pendingAuditData?.businessName || companyName || 'My Business',
+              category: pendingDirectoryClaimData?.categoryName || pendingAuditData?.detectedBusinessData?.schemaTypes?.[0] || 'Local Business',
+              tagline: pendingDirectoryClaimData?.tagline || pendingAuditData?.detectedBusinessData?.metaDescription || '',
               locationName: 'Main Location',
-              address: pendingAuditData?.detectedBusinessData?.address || '',
-              city: '',
-              state: '',
+              address: pendingDirectoryClaimData?.address || pendingAuditData?.detectedBusinessData?.address || '',
+              city: pendingDirectoryClaimData?.cityName || '',
+              state: pendingDirectoryClaimData?.stateCode || '',
               country: 'United States',
               zip: '',
-              phone: pendingAuditData?.detectedBusinessData?.phone || '',
-              website: pendingAuditData?.domain || pendingAuditData?.url || '',
-              healthScore: pendingAuditData?.overallScore || 70,
+              phone: pendingDirectoryClaimData?.phone || pendingAuditData?.detectedBusinessData?.phone || '',
+              website: pendingDirectoryClaimData?.websiteUrl || pendingAuditData?.domain || pendingAuditData?.url || '',
+              healthScore: pendingAuditData?.overallScore || 85,
               healthDelta: 0,
               highImpactCount: 2,
               opportunityCount: 3,
@@ -865,14 +884,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               isMainLocation: true,
               services: [],
               competitors: [],
-              googleRating: 0,
-              reviewCount: 0,
+              googleRating: pendingDirectoryClaimData?.averageRating || 0,
+              reviewCount: pendingDirectoryClaimData?.reviewCount || 0,
               unansweredReviews: 0,
-              gbpCompleteness: 0,
+              gbpCompleteness: 100,
             };
 
             setBusinesses([newBiz]);
             setActiveBusinessId(newBizId);
+
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('locora_businesses_list', JSON.stringify([newBiz]));
+              localStorage.setItem('locora_active_business_id', newBizId);
+              localStorage.removeItem('locora_pending_directory_claim');
+            }
 
             if (!alreadyCompletedOnboarding && (pendingAuditData || newUser.planTier === 'free')) {
               setTimeout(() => {
@@ -1606,25 +1631,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [selectedAIActionForApproval, setSelectedAIActionForApproval] = useState<AIAction | null>(null);
-
-  const approveAndExecuteAIAction = useCallback(async (actionId: string) => {
-    setAiActions((prev) => {
-      const next = prev.map((act) => {
-        if (act.id !== actionId) return act;
-        return {
-          ...act,
-          status: 'completed' as const,
-          approvedAt: new Date().toISOString(),
-          executedAt: new Date().toISOString(),
-        };
-      });
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('locora_ai_actions', JSON.stringify(next));
-      }
-      return next;
-    });
-    logActivity('ai_action_executed', 'AI Action Executed', `Action ${actionId} approved and executed successfully`);
-  }, []);
 
   const createAIAction = useCallback((action: Omit<AIAction, 'id' | 'createdAt'>) => {
     const newAction: AIAction = {
@@ -2404,6 +2410,72 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       method: 'DELETE',
     }).catch(() => {});
   };
+
+  const approveAndExecuteAIAction = useCallback(async (actionId: string) => {
+    let targetAct: AIAction | undefined;
+    setAiActions((prev) => {
+      const next = prev.map((act) => {
+        if (act.id !== actionId) return act;
+        targetAct = act;
+        return {
+          ...act,
+          status: 'completed' as const,
+          approvedAt: new Date().toISOString(),
+          executedAt: new Date().toISOString(),
+        };
+      });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('locora_ai_actions', JSON.stringify(next));
+      }
+      return next;
+    });
+
+    if (targetAct) {
+      const act = targetAct as AIAction;
+      if (act.type === 'CREATE_TASK' || act.type === 'CREATE_DIRECTORY_TASK') {
+        const tData = act.input?.taskData || {};
+        await addWorkTask({
+          businessId: act.business_id || 'biz_locora_canonical',
+          title: tData.title || act.title,
+          description: tData.description || act.explanation.previewSummary || act.explanation.diagnosis,
+          priority: tData.priority || 'high',
+          status: 'todo',
+          dueDate: tData.dueDate || new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0],
+        });
+      } else if (act.type === 'CREATE_SERVICE_PAGE' || act.type === 'CREATE_DIRECTORY_CONTENT') {
+        const cData = act.input?.contentData || {};
+        await addContentRecord({
+          business_id: act.business_id || 'biz_locora_canonical',
+          title: cData.title || act.title,
+          content_type: cData.contentType || 'landing_page',
+          platform: cData.platform || 'website',
+          status: 'draft',
+          source: 'business_brain',
+          created_by: 'AI Growth Manager',
+          AI_generated: true,
+          target_service: cData.targetService || 'Directory Service Offering',
+          target_location: cData.targetLocation || 'Local Service Area',
+          body: cData.body || act.explanation.previewSummary || 'Drafted content for directory optimization.',
+        });
+      } else if (act.type === 'UPDATE_DIRECTORY_PROFILE') {
+        try {
+          const updatePayload = act.input?.profileUpdates || {};
+          await fetch('/api/directory/profile/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              businessId: act.business_id,
+              ...updatePayload,
+            }),
+          });
+        } catch (e) {
+          console.warn('Profile update call completed with local fallback', e);
+        }
+      }
+    }
+
+    logActivity('ai_action_executed', 'AI Action Executed', `Action ${actionId} approved and executed successfully`);
+  }, [addWorkTask, addContentRecord, logActivity]);
 
   const createConversation = (title?: string) => {
     const newId = `conv_${Date.now()}`;

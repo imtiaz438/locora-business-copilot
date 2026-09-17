@@ -1004,11 +1004,18 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
-              onClick={() => onClaimAndUnlock('workspace')}
+              onClick={() => onClaimAndUnlock('save_and_improve')}
               className="px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer font-sans"
             >
-              <span>Create Your Free Locora Workspace</span>
+              <span>Save & Improve My Business</span>
               <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onClaimAndUnlock('claim_and_grow')}
+              className="px-5 py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer font-sans"
+            >
+              <span>Claim & Grow With Locora</span>
             </button>
             <button
               type="button"
@@ -1106,11 +1113,18 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
-              onClick={() => onClaimAndUnlock('dashboard')}
+              onClick={() => onClaimAndUnlock('save_and_improve')}
               className="px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer font-sans"
             >
-              <span>Create Your Free Locora Account</span>
+              <span>Save & Improve My Business</span>
               <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onClaimAndUnlock('claim_and_grow')}
+              className="px-5 py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer font-sans"
+            >
+              <span>Claim & Grow With Locora</span>
             </button>
             <button
               type="button"
