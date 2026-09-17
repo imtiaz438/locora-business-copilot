@@ -31,7 +31,17 @@ export const PublicNavbar: React.FC = () => {
   const { activeTab, setActiveTab, user, logout } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<'product' | 'solutions' | 'resources' | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 8);
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -98,25 +108,32 @@ export const PublicNavbar: React.FC = () => {
   };
 
   return (
-    <nav ref={navRef} className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs font-sans">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+    <nav
+      ref={navRef}
+      className={`sticky top-0 z-50 w-full font-sans transition-all duration-200 ${
+        isScrolled
+          ? 'bg-white/98 backdrop-blur-md border-b border-slate-200 shadow-md'
+          : 'bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs'
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-22 sm:h-24 flex items-center justify-between">
         {/* Brand Logo Lockup */}
         <div
           role="button"
           tabIndex={0}
           onClick={() => navigateTo('home', '/')}
           onKeyDown={(e) => e.key === 'Enter' && navigateTo('home', '/')}
-          className="flex items-center gap-3 text-left group focus:outline-none cursor-pointer"
+          className="flex items-center gap-3 text-left group focus:outline-none cursor-pointer py-2"
         >
-          <LocoraLogo className="w-12 h-12 flex-shrink-0 group-hover:scale-105 transition-transform duration-200" />
+          <LocoraLogo size={46} className="flex-shrink-0 group-hover:scale-105 transition-transform duration-200" />
         </div>
 
         {/* Desktop Navigation Links */}
-        <div className="hidden lg:flex items-center gap-1.5 bg-slate-100/90 p-1.5 rounded-full border border-slate-200/80">
+        <div className="hidden lg:flex items-center gap-1 bg-slate-100/90 p-1.5 rounded-full border border-slate-200/80">
           {/* HOME LINK */}
           <button
             onClick={() => navigateTo('home', '/')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-full text-xs sm:text-[13px] font-semibold transition-all cursor-pointer ${
               activeTab === 'home'
                 ? 'bg-slate-900 text-white shadow-xs'
                 : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/70'
@@ -129,7 +146,7 @@ export const PublicNavbar: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setOpenDropdown(openDropdown === 'product' ? null : 'product')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-4 py-2 rounded-full text-xs sm:text-[13px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'products' || openDropdown === 'product'
                   ? 'bg-slate-900 text-white'
                   : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/70'
@@ -367,12 +384,12 @@ export const PublicNavbar: React.FC = () => {
         </div>
 
         {/* Right Action Buttons */}
-        <div className="hidden md:flex items-center gap-2.5">
+        <div className="hidden md:flex items-center gap-3">
           {user.isAuthenticated ? (
             <>
               <button
                 onClick={() => navigateToApp('/dashboard', () => navigateTo('dashboard', '/dashboard'))}
-                className="px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer font-sans"
+                className="px-5 py-2.5 sm:py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer font-sans"
               >
                 <LayoutDashboard className="w-4 h-4" />
                 <span>Launch App</span>
@@ -382,10 +399,10 @@ export const PublicNavbar: React.FC = () => {
                   logout();
                   navigateTo('home', '/');
                 }}
-                className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+                className="px-4 py-2.5 sm:py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer font-sans"
                 title="Sign Out"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut className="w-4 h-4" />
                 <span>Sign Out</span>
               </button>
             </>
@@ -393,17 +410,17 @@ export const PublicNavbar: React.FC = () => {
             <>
               <button
                 onClick={() => navigateToApp('/login', () => navigateTo('login', '/login'))}
-                className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+                className="px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all flex items-center gap-2 cursor-pointer font-sans shadow-2xs"
               >
-                <LogIn className="w-3.5 h-3.5 text-[#059669]" />
+                <LogIn className="w-4 h-4 text-[#059669]" />
                 <span>Sign In</span>
               </button>
               <button
                 onClick={() => navigateTo('home', '/', 'hero-input')}
-                className="px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer font-sans group"
+                className="px-6 py-2.5 sm:py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer font-sans group"
               >
                 <span>Analyze My Business</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </button>
             </>
           )}
@@ -413,9 +430,10 @@ export const PublicNavbar: React.FC = () => {
         <div className="flex lg:hidden items-center gap-2">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 cursor-pointer"
+            className="p-3 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 cursor-pointer transition-colors"
+            aria-label="Toggle Navigation Menu"
           >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>

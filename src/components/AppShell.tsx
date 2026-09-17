@@ -53,11 +53,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   if (isApp && (!user.isAuthenticated || activeTab === 'login' || activeTab === 'signup')) {
     return (
       <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-emerald-600 selection:text-white">
-        <header className="h-16 px-6 border-b border-slate-200 bg-white/95 backdrop-blur-md flex items-center justify-between z-10 sticky top-0">
+        <header className="h-20 sm:h-22 px-6 border-b border-slate-200 bg-white/95 backdrop-blur-md flex items-center justify-between z-10 sticky top-0 shadow-xs">
           <div className="flex items-center gap-3">
-            <LocoraLogo className="w-8 h-8" />
-            <span className="font-heading font-black text-slate-900 text-lg tracking-tight">Locora</span>
-            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">App</span>
+            <LocoraLogo size={42} className="w-10 h-10" />
+            <span className="font-heading font-black text-slate-900 text-xl tracking-tight">Locora</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">App</span>
           </div>
           <a
             href={getMainSiteUrl('/')}

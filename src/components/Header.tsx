@@ -60,7 +60,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="h-16 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 shadow-2xs font-sans">
+    <header className="h-18 sm:h-20 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 shadow-xs font-sans">
       {/* Left: Mobile Menu Toggle & Top Business Selector */}
       <div className="flex items-center gap-3">
         <button

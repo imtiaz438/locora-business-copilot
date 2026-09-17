@@ -826,7 +826,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
 
           {/* Right Column: Instant Lead Quote Capture Form */}
           <div className="space-y-6">
-            <div id="quote-form" className="bg-white rounded-2xl border-2 border-emerald-500/20 p-6 shadow-md sticky top-24">
+            <div id="quote-form" className="bg-white rounded-2xl border-2 border-emerald-500/20 p-6 shadow-md sticky top-28 sm:top-32">
               <div className="mb-4">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1">
                   <Sparkles className="w-3.5 h-3.5" /> Instant Free Quote
