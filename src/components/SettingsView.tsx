@@ -8,6 +8,7 @@ import { LocoraLogo } from './LocoraLogo';
 import { SubscriptionInvoiceModal } from './SubscriptionInvoiceModal';
 import { GoogleAddressAutocomplete, LocationData } from './GoogleAddressAutocomplete';
 import { CountryAutocomplete } from './CountryAutocomplete';
+import { getDirectorySiteUrl, getDirectoryBusinessUrl } from '../utils/domain';
 import {
   Settings,
   Cpu,
@@ -1029,17 +1030,29 @@ export const SettingsView: React.FC = () => {
                   Automatically feature your verified Google Business Profile, live hours, rating, and customer inquiry quotes on our high-performance local directory.
                 </p>
                 {profileForm.isPublishedInDirectory !== false && (
-                  <div className="mt-2 flex items-center gap-3">
+                  <div className="mt-2.5 flex flex-wrap items-center gap-4">
                     <a
-                      href="https://directory.locoraai.com"
+                      href={getDirectorySiteUrl('/')}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[11px] text-emerald-700 hover:text-emerald-800 font-bold inline-flex items-center gap-1"
+                      className="text-[11px] text-emerald-700 hover:text-emerald-800 font-bold inline-flex items-center gap-1 cursor-pointer"
                     >
                       <Globe className="w-3 h-3" />
-                      <span>View Live Public Directory</span>
+                      <span>Browse Public Directory</span>
                       <ExternalLink className="w-2.5 h-2.5" />
                     </a>
+
+                    {(profileForm.id || businessProfile.directorySlug || businessProfile.id) && (
+                      <a
+                        href={getDirectoryBusinessUrl(businessProfile.directorySlug || profileForm.id || businessProfile.id || '')}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] text-slate-700 hover:text-slate-900 font-bold inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>View Your Live Listing</span>
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
+                    )}
                   </div>
                 )}
               </div>

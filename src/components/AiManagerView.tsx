@@ -5,6 +5,7 @@ import { PriorityAction } from '../types';
 import { generateFullReportSnapshot } from '../services/reportEngine';
 import { saveReportSnapshot } from '../services/reportStorageService';
 import { exportReportToPdf } from './reports/ReportPdfExport';
+import { getDirectoryBusinessUrl } from '../utils/domain';
 import {
   Bot,
   Sparkles,
@@ -1858,14 +1859,14 @@ export const AiManagerView: React.FC = () => {
                             )}
                           </div>
                           <p className="text-[11px] text-slate-300 mt-0.5">
-                            Locora Public Directory: <span className="font-mono text-emerald-300">directory.locoraai.com/biz/{card.data.slug}</span>
+                            Locora Public Directory: <a href={getDirectoryBusinessUrl(card.data.slug)} target="_blank" rel="noopener noreferrer" className="font-mono text-emerald-300 hover:underline inline-flex items-center gap-1">{getDirectoryBusinessUrl(card.data.slug)}<ExternalLink className="w-2.5 h-2.5" /></a>
                           </p>
                         </div>
                       </div>
 
                       {card.data.slug && (
                         <a
-                          href={`https://directory.locoraai.com/biz/${card.data.slug}`}
+                          href={getDirectoryBusinessUrl(card.data.slug)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all self-start sm:self-auto cursor-pointer"

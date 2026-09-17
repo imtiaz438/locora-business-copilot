@@ -142,6 +142,8 @@ export const navigateToMain = (path: string = '/', inAppFallback?: () => void) =
 
 /**
  * Returns the target URL for the directory site (directory.locoraai.com).
+ * In production custom domain, points to https://directory.locoraai.com
+ * In dev/preview, points to the local directory routes.
  */
 export const getDirectorySiteUrl = (path: string = '/'): string => {
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
@@ -150,7 +152,54 @@ export const getDirectorySiteUrl = (path: string = '/'): string => {
   if (isProductionCustomDomain()) {
     return `https://${PRODUCTION_DIRECTORY_DOMAIN}${cleanPath}`;
   }
+
+  // In dev / preview container:
+  if (cleanPath === '/' || cleanPath === '') {
+    return '/directory';
+  }
+  if (cleanPath.startsWith('/business/')) {
+    return `/biz/${cleanPath.replace('/business/', '')}`;
+  }
   return cleanPath;
+};
+
+/**
+ * Returns the live URL for a specific business on the directory.
+ * In production: https://directory.locoraai.com/business/:slug
+ * In preview / development: /biz/:slug
+ */
+export const getDirectoryBusinessUrl = (slug: string): string => {
+  const cleanSlug = (slug || '').trim();
+  if (isProductionCustomDomain()) {
+    return `https://${PRODUCTION_DIRECTORY_DOMAIN}/business/${cleanSlug}`;
+  }
+  return `/biz/${cleanSlug}`;
+};
+
+/**
+ * Returns the live URL for a specific city on the directory.
+ * In production: https://directory.locoraai.com/city/:citySlug
+ * In preview / development: /directory/city/:citySlug
+ */
+export const getDirectoryCityUrl = (citySlug: string): string => {
+  const cleanCity = (citySlug || '').trim();
+  if (isProductionCustomDomain()) {
+    return `https://${PRODUCTION_DIRECTORY_DOMAIN}/city/${cleanCity}`;
+  }
+  return `/city/${cleanCity}`;
+};
+
+/**
+ * Returns the live URL for a specific category on the directory.
+ * In production: https://directory.locoraai.com/category/:categorySlug
+ * In preview / development: /directory/category/:categorySlug
+ */
+export const getDirectoryCategoryUrl = (categorySlug: string): string => {
+  const cleanCat = (categorySlug || '').trim();
+  if (isProductionCustomDomain()) {
+    return `https://${PRODUCTION_DIRECTORY_DOMAIN}/category/${cleanCat}`;
+  }
+  return `/category/${cleanCat}`;
 };
 
 /**
@@ -169,7 +218,13 @@ export const navigateToDirectory = (path: string = '/', inAppFallback?: () => vo
   if (inAppFallback) {
     inAppFallback();
   } else {
-    window.history.pushState({}, '', cleanPath === '/' ? '/directory' : cleanPath);
+    const targetPath = cleanPath === '/' 
+      ? '/directory' 
+      : cleanPath.startsWith('/business/') 
+        ? `/biz/${cleanPath.replace('/business/', '')}` 
+        : cleanPath;
+    window.history.pushState({}, '', targetPath);
+    window.dispatchEvent(new PopStateEvent('popstate'));
   }
 };
 

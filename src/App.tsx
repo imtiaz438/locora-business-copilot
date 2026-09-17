@@ -213,8 +213,8 @@ const MainContent: React.FC = () => {
         }
       }
 
-      // If visitor is on the main production domain and navigates to /directory, redirect to directory subdomain:
-      if (!isApp && !isDirectory && isProductionCustomDomain()) {
+      // If visitor is on the main production domain or app subdomain and navigates to directory routes, redirect to directory subdomain:
+      if (!isDirectory && isProductionCustomDomain()) {
         if (rawPath === '/directory' || rawPath === '/directory/') {
           navigateToDirectory('/');
           return;
@@ -224,13 +224,33 @@ const MainContent: React.FC = () => {
           navigateToDirectory(`/business/${slug}`);
           return;
         }
+        if (rawPath.startsWith('/business/')) {
+          const slug = rawPath.replace(/^\/business\//, '');
+          navigateToDirectory(`/business/${slug}`);
+          return;
+        }
+        if (rawPath.startsWith('/biz/')) {
+          const slug = rawPath.replace(/^\/biz\//, '');
+          navigateToDirectory(`/business/${slug}`);
+          return;
+        }
         if (rawPath.startsWith('/directory/city/')) {
           const slug = rawPath.replace(/^\/directory\/city\//, '');
           navigateToDirectory(`/city/${slug}`);
           return;
         }
+        if (rawPath.startsWith('/city/')) {
+          const slug = rawPath.replace(/^\/city\//, '');
+          navigateToDirectory(`/city/${slug}`);
+          return;
+        }
         if (rawPath.startsWith('/directory/category/')) {
           const slug = rawPath.replace(/^\/directory\/category\//, '');
+          navigateToDirectory(`/category/${slug}`);
+          return;
+        }
+        if (rawPath.startsWith('/category/')) {
+          const slug = rawPath.replace(/^\/category\//, '');
           navigateToDirectory(`/category/${slug}`);
           return;
         }
@@ -386,6 +406,10 @@ const MainContent: React.FC = () => {
     if (activeTab === 'directory') return <DirectoryHubView />;
     if (activeTab.startsWith('directory_biz_')) {
       return <DirectoryBusinessDetailView slug={activeTab.replace(/^directory_biz_/, '')} />;
+    }
+    if (activeTab.startsWith('directory_city_cat_')) {
+      const parts = activeTab.replace(/^directory_city_cat_/, '').split('__');
+      return <DirectoryHubView initialCity={parts[0]} initialCategory={parts[1]} />;
     }
     if (activeTab.startsWith('directory_city_')) {
       return <DirectoryHubView initialCity={activeTab.replace(/^directory_city_/, '')} />;

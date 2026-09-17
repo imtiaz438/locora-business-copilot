@@ -28,6 +28,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { ClientBusiness } from '../../types';
+import { getDirectoryBusinessUrl } from '../../utils/domain';
 import { DirectoryBusinessAnalytics, DirectoryLeadItem, DirectoryEventRecord } from '../../types/directory';
 
 interface DirectoryLeadAnalyticsTabProps {
@@ -236,10 +237,10 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
 
             {biz?.slug && (
               <a
-                href={`/biz/${biz.slug}`}
+                href={getDirectoryBusinessUrl(biz.slug)}
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors flex items-center gap-1.5 shadow-xs"
+                className="px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <span>View Public Profile</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -266,9 +267,24 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                   ? `Directory Status: ${biz?.isClaimed ? 'Active & Owner Verified' : 'Live Directory Listing'}`
                   : 'Processing Directory Profile'}
               </span>
-              <span className="text-[11px] text-slate-500">
-                {biz?.slug ? `Public Directory Link: /biz/${biz.slug}` : 'Indexing directory profile...'}
-              </span>
+              <div className="text-[11px] text-slate-500 mt-0.5">
+                {biz?.slug ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <span>Public Directory Link:</span>
+                    <a
+                      href={getDirectoryBusinessUrl(biz.slug)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-700 hover:text-emerald-800 hover:underline font-mono font-bold inline-flex items-center gap-1"
+                    >
+                      {getDirectoryBusinessUrl(biz.slug)}
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </a>
+                  </span>
+                ) : (
+                  'Indexing directory profile...'
+                )}
+              </div>
             </div>
           </div>
 
@@ -437,10 +453,10 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
               </p>
               {biz?.slug && (
                 <a
-                  href={`/biz/${biz.slug}`}
+                  href={getDirectoryBusinessUrl(biz.slug)}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 transition-colors"
+                  className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
                 >
                   Test Quote Request on Your Listing <ArrowRight className="w-3.5 h-3.5" />
                 </a>

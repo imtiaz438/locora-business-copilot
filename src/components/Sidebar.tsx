@@ -1,7 +1,7 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
 import { LocoraLogo } from './LocoraLogo';
-import { navigateToMain } from '../utils/domain';
+import { navigateToMain, navigateToDirectory, getDirectorySiteUrl } from '../utils/domain';
 import {
   Home,
   LayoutDashboard,
@@ -199,25 +199,42 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
             Public Presence
           </div>
 
-          <button
-            onClick={() => {
-              window.history.pushState({}, '', '/directory');
-              handleNavClick('directory');
-            }}
-            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer ${
+          <div
+            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all duration-150 ${
               activeTab === 'directory' || activeTab.startsWith('directory_')
                 ? 'bg-[#059669] text-white font-semibold shadow-sm'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
-            <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => {
+                navigateToDirectory('/', () => {
+                  window.history.pushState({}, '', '/directory');
+                  handleNavClick('directory');
+                });
+              }}
+              className="flex items-center gap-2.5 flex-1 text-left cursor-pointer"
+              title="Navigate to Locora Public Directory"
+            >
               <Compass className={`w-4 h-4 ${activeTab === 'directory' || activeTab.startsWith('directory_') ? 'text-white' : 'text-emerald-600'}`} />
               <span>Locora Directory</span>
+            </button>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                Live
+              </span>
+              <a
+                href={getDirectorySiteUrl('/')}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open live directory site in new tab"
+                className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ExternalLink className="w-3 h-3" />
+              </a>
             </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Live
-            </span>
-          </button>
+          </div>
         </div>
 
         {/* Account & Billing */}

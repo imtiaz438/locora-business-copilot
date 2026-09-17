@@ -289,13 +289,21 @@ export function resolveRouteFromPath(rawPath: string, isApp: boolean = false, is
   if (cleanPath.startsWith('biz/')) {
     const slug = cleanPath.replace(/^biz\//, '').trim();
     if (slug) {
-      return { targetTab: `directory_biz_${slug}`, canonicalPath: `/biz/${slug}`, isCanonical: true };
+      return {
+        targetTab: `directory_biz_${slug}`,
+        canonicalPath: isDirectory ? `/business/${slug}` : `/biz/${slug}`,
+        isCanonical: isDirectory ? false : true,
+      };
     }
   }
   if (cleanPath.startsWith('business/')) {
     const slug = cleanPath.replace(/^business\//, '').trim();
     if (slug) {
-      return { targetTab: `directory_biz_${slug}`, canonicalPath: `/biz/${slug}`, isCanonical: false };
+      return {
+        targetTab: `directory_biz_${slug}`,
+        canonicalPath: isDirectory ? `/business/${slug}` : `/biz/${slug}`,
+        isCanonical: isDirectory ? true : false,
+      };
     }
   }
   if (cleanPath.startsWith('directory/business/')) {

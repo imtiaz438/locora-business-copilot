@@ -30,7 +30,13 @@ import {
 } from 'lucide-react';
 import { DirectoryBusinessListing } from '../../types/directory';
 import { DirectoryPublicCheckupModal } from './DirectoryPublicCheckupModal';
-import { isDirectorySubdomain } from '../../utils/domain';
+import {
+  isDirectorySubdomain,
+  navigateToDirectory,
+  getDirectoryBusinessUrl,
+  getDirectoryCityUrl,
+  getDirectoryCategoryUrl,
+} from '../../utils/domain';
 
 interface DirectoryBusinessDetailViewProps {
   slug: string;
@@ -146,7 +152,12 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
         canonEl.setAttribute('rel', 'canonical');
         document.head.appendChild(canonEl);
       }
-      canonEl.setAttribute('href', `https://locoraai.com/biz/${business.slug}`);
+      canonEl.setAttribute(
+        'href',
+        isDirectorySubdomain()
+          ? `https://directory.locoraai.com/business/${business.slug}`
+          : `https://locoraai.com/biz/${business.slug}`
+      );
 
       // Ensure indexable for valid published business profiles
       let robotsEl = document.querySelector('meta[name="robots"]');
@@ -385,42 +396,39 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
         '@type': 'ListItem',
         position: 1,
         name: 'Locora Directory',
-        item: 'https://locoraai.com/directory',
+        item: isDirectorySubdomain() ? 'https://directory.locoraai.com' : 'https://locoraai.com/directory',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: business.cityName,
-        item: `https://locoraai.com/city/${business.citySlug}`,
+        item: getDirectoryCityUrl(business.citySlug),
       },
       {
         '@type': 'ListItem',
         position: 3,
         name: business.categoryName,
-        item: `https://locoraai.com/category/${business.categorySlug}`,
+        item: getDirectoryCategoryUrl(business.categorySlug),
       },
       {
         '@type': 'ListItem',
         position: 4,
         name: business.businessName,
-        item: `https://locoraai.com/biz/${business.slug}`,
+        item: getDirectoryBusinessUrl(business.slug),
       },
     ],
   };
 
   const navigateToCity = () => {
-    window.history.pushState({}, '', `/city/${business.citySlug}`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigateToDirectory(`/city/${business.citySlug}`);
   };
 
   const navigateToCategory = () => {
-    window.history.pushState({}, '', `/category/${business.categorySlug}`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigateToDirectory(`/category/${business.categorySlug}`);
   };
 
   const navigateToCityCategory = () => {
-    window.history.pushState({}, '', `/${business.citySlug}/${business.categorySlug}`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigateToDirectory(`/${business.citySlug}/${business.categorySlug}`);
   };
 
   return (
@@ -1054,8 +1062,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
 
                   <button
                     onClick={() => {
-                      window.history.pushState({}, '', `/biz/${rel.slug}`);
-                      window.dispatchEvent(new PopStateEvent('popstate'));
+                      navigateToDirectory(`/business/${rel.slug}`);
                     }}
                     className="w-full mt-2 py-1.5 px-3 text-center text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer transition-colors"
                   >

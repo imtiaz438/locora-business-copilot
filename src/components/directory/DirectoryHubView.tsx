@@ -20,7 +20,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { DirectoryBusinessListing } from '../../types/directory';
-import { navigateToDirectory } from '../../utils/domain';
+import { navigateToDirectory, isDirectorySubdomain } from '../../utils/domain';
 import { GoogleAddressAutocomplete, LocationData } from '../GoogleAddressAutocomplete';
 import { STANDARD_DIRECTORY_CATEGORIES } from '../../constants/directoryCategories';
 
@@ -138,17 +138,18 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
       document.head.appendChild(robotsEl);
     }
 
+    const baseDirUrl = isDirectorySubdomain() ? 'https://directory.locoraai.com' : 'https://locoraai.com/directory';
     if (isSearchActive || isThinPage) {
       // Crawl trap and thin-page protection: Noindex arbitrary user search combinations or 0-result pages
       robotsEl.setAttribute('content', 'noindex, follow');
-      canonEl.setAttribute('href', 'https://locoraai.com/directory');
+      canonEl.setAttribute('href', baseDirUrl);
     } else {
       robotsEl.setAttribute('content', 'index, follow');
       const params = new URLSearchParams();
       if (selectedCategory !== 'all') params.set('category', selectedCategory);
       if (selectedCity !== 'all') params.set('city', selectedCity);
       const queryStr = params.toString();
-      canonEl.setAttribute('href', `https://locoraai.com/directory${queryStr ? '?' + queryStr : ''}`);
+      canonEl.setAttribute('href', `${baseDirUrl}${queryStr ? '?' + queryStr : ''}`);
     }
   }, [selectedCategory, selectedCity, searchQuery, listings.length, loading]);
 
@@ -234,8 +235,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
 
   const navigateToBusinessDetail = (biz: DirectoryBusinessListing) => {
     const slug = biz.slug || biz.id;
-    window.history.pushState({}, '', `/directory/business/${slug}`);
-    window.dispatchEvent(new PopStateEvent('popstate'));
+    navigateToDirectory(`/business/${slug}`);
   };
 
   // Compile combined categories: standard catalog + real database categories + "Other" at the end

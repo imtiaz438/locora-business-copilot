@@ -195,6 +195,47 @@ app.use((req, res, next) => {
     return res.redirect(301, `https://locoraai.com${req.originalUrl}`);
   }
 
+  // If visitor is accessing directory content on the app subdomain, 301 redirect to directory subdomain
+  if (
+    isAppHost &&
+    !req.path.startsWith('/api/') &&
+    !req.path.startsWith('/assets/') &&
+    !req.path.includes('.')
+  ) {
+    if (req.path === '/directory' || req.path === '/directory/') {
+      const search = req.originalUrl.includes('?') ? req.originalUrl.substring(req.originalUrl.indexOf('?')) : '';
+      return res.redirect(301, `https://directory.locoraai.com/${search}`);
+    }
+    if (req.path.startsWith('/directory/business/')) {
+      const slug = req.path.replace(/^\/directory\/business\//, '');
+      return res.redirect(301, `https://directory.locoraai.com/business/${slug}`);
+    }
+    if (req.path.startsWith('/business/')) {
+      const slug = req.path.replace(/^\/business\//, '');
+      return res.redirect(301, `https://directory.locoraai.com/business/${slug}`);
+    }
+    if (req.path.startsWith('/biz/')) {
+      const slug = req.path.replace(/^\/biz\//, '');
+      return res.redirect(301, `https://directory.locoraai.com/business/${slug}`);
+    }
+    if (req.path.startsWith('/directory/city/')) {
+      const slug = req.path.replace(/^\/directory\/city\//, '');
+      return res.redirect(301, `https://directory.locoraai.com/city/${slug}`);
+    }
+    if (req.path.startsWith('/city/')) {
+      const slug = req.path.replace(/^\/city\//, '');
+      return res.redirect(301, `https://directory.locoraai.com/city/${slug}`);
+    }
+    if (req.path.startsWith('/directory/category/')) {
+      const slug = req.path.replace(/^\/directory\/category\//, '');
+      return res.redirect(301, `https://directory.locoraai.com/category/${slug}`);
+    }
+    if (req.path.startsWith('/category/')) {
+      const slug = req.path.replace(/^\/category\//, '');
+      return res.redirect(301, `https://directory.locoraai.com/category/${slug}`);
+    }
+  }
+
   // If visitor is accessing marketing or app-only content on the directory subdomain, 301 redirect to main website
   if (
     isDirectoryHost &&
@@ -222,7 +263,7 @@ app.use((req, res, next) => {
     return res.redirect(301, `https://locoraai.com${req.originalUrl}`);
   }
 
-  // If visitor accesses /directory on the main production domain (locoraai.com), 301 redirect to directory subdomain
+  // If visitor accesses directory routes on the main production domain (locoraai.com), 301 redirect to directory subdomain
   const isMainHost = (allHosts.includes('locoraai.com') || allHosts.includes('www.locoraai.com')) && !isAppHost && !isDirectoryHost;
   if (
     isMainHost &&
@@ -238,12 +279,28 @@ app.use((req, res, next) => {
       const slug = req.path.replace(/^\/directory\/business\//, '');
       return res.redirect(301, `https://directory.locoraai.com/business/${slug}`);
     }
+    if (req.path.startsWith('/business/')) {
+      const slug = req.path.replace(/^\/business\//, '');
+      return res.redirect(301, `https://directory.locoraai.com/business/${slug}`);
+    }
+    if (req.path.startsWith('/biz/')) {
+      const slug = req.path.replace(/^\/biz\//, '');
+      return res.redirect(301, `https://directory.locoraai.com/business/${slug}`);
+    }
     if (req.path.startsWith('/directory/city/')) {
       const slug = req.path.replace(/^\/directory\/city\//, '');
       return res.redirect(301, `https://directory.locoraai.com/city/${slug}`);
     }
+    if (req.path.startsWith('/city/')) {
+      const slug = req.path.replace(/^\/city\//, '');
+      return res.redirect(301, `https://directory.locoraai.com/city/${slug}`);
+    }
     if (req.path.startsWith('/directory/category/')) {
       const slug = req.path.replace(/^\/directory\/category\//, '');
+      return res.redirect(301, `https://directory.locoraai.com/category/${slug}`);
+    }
+    if (req.path.startsWith('/category/')) {
+      const slug = req.path.replace(/^\/category\//, '');
       return res.redirect(301, `https://directory.locoraai.com/category/${slug}`);
     }
   }
