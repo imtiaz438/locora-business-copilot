@@ -57,13 +57,75 @@ export const GrowthView: React.FC = () => {
     addDocument,
     productionDashboard,
     refreshProductionDashboard,
+    latestWebsiteAudit,
+    setOnboardingModalOpen,
   } = useApp();
 
-  // Dynamic Pillar Metrics pulled from authentic active business and production dashboard
-  const liveVisScore = productionDashboard?.calculatedMetrics?.aiVisibilityScore ?? (typeof activeBusiness.rankingAvg === 'number' && activeBusiness.rankingAvg > 0 ? Math.round(Math.max(10, 100 - (activeBusiness.rankingAvg - 1) * 12)) : null);
-  const websiteAuditScore = productionDashboard?.collectedData?.latestCrawlRun?.perfScore ?? (productionDashboard?.calculatedMetrics?.criticalIssuesCount !== undefined ? Math.max(40, 100 - productionDashboard.calculatedMetrics.criticalIssuesCount * 12) : null);
+  // 1. Authenticity check: Has genuine crawl or website audit data been collected?
+  const hasRealAudit = Boolean(
+    (typeof latestWebsiteAudit?.scores?.performance === 'number' && latestWebsiteAudit.scores.performance > 0) ||
+    (typeof latestWebsiteAudit?.scores?.seo === 'number' && latestWebsiteAudit.scores.seo > 0) ||
+    (typeof productionDashboard?.collectedData?.latestCrawlRun?.perfScore === 'number' && productionDashboard.collectedData.latestCrawlRun.perfScore > 0) ||
+    (typeof productionDashboard?.collectedData?.latestCrawlRun?.seoScore === 'number' && productionDashboard.collectedData.latestCrawlRun.seoScore > 0)
+  );
+
+  // Conversion Audit Score: strictly null if no website audit or crawl has run yet.
+  // (Prevents new businesses from falsely showing 100 based on zero critical issues)
+  const websiteAuditScore: number | null = hasRealAudit
+    ? (productionDashboard?.collectedData?.latestCrawlRun?.perfScore ??
+       latestWebsiteAudit?.scores?.performance ??
+       productionDashboard?.collectedData?.latestCrawlRun?.seoScore ??
+       latestWebsiteAudit?.scores?.seo ??
+       null)
+    : null;
+
+  // 2. Authenticity check: Has genuine local rank tracking or AI visibility score been measured?
+  const hasRealRankData = Boolean(
+    (typeof activeBusiness.rankingAvg === 'number' && activeBusiness.rankingAvg > 0) ||
+    (typeof productionDashboard?.calculatedMetrics?.aiVisibilityScore === 'number' &&
+      productionDashboard.calculatedMetrics.aiVisibilityScore > 0)
+  );
+
+  const liveVisScore: number | null = hasRealRankData
+    ? (productionDashboard?.calculatedMetrics?.aiVisibilityScore &&
+       productionDashboard.calculatedMetrics.aiVisibilityScore > 0
+        ? productionDashboard.calculatedMetrics.aiVisibilityScore
+        : typeof activeBusiness.rankingAvg === 'number' && activeBusiness.rankingAvg > 0
+        ? Math.round(Math.max(10, 100 - (activeBusiness.rankingAvg - 1) * 12))
+        : null)
+    : null;
+
+  // 3. Google Business Profile & Customer Reputation
+  const isGbpConnected = Boolean(
+    activeBusiness.gbpConnected ||
+    (activeBusiness as any).googleConnected ||
+    productionDashboard?.collectedData?.googleProfile?.isVerified
+  );
+
   const googleReviewCount = productionDashboard?.collectedData?.reviews?.length || activeBusiness.reviewCount || 0;
-  const trustScore = activeBusiness.googleRating > 0 ? Math.round((activeBusiness.googleRating / 5) * 100) : null;
+
+  // Trust score: strictly null if GBP is not connected or no rating exists
+  const trustScore: number | null = isGbpConnected && activeBusiness.googleRating > 0
+    ? Math.round((activeBusiness.googleRating / 5) * 100)
+    : null;
+
+  // Reputation score: strictly null if no authentic reviews have been synced
+  const reputationScore: number | null = isGbpConnected && googleReviewCount > 0 && trustScore !== null
+    ? trustScore
+    : null;
+
+  // 4. Overall data check: Has this business started onboarding or synced any real data?
+  const hasBrainScore = Boolean(
+    (typeof productionDashboard?.businessBrain?.score === 'number' && productionDashboard.businessBrain.score > 0) ||
+    (typeof activeBusiness.healthScore === 'number' && activeBusiness.healthScore > 0)
+  );
+
+  const hasAnyData = Boolean(
+    hasRealAudit ||
+    hasRealRankData ||
+    (isGbpConnected && (activeBusiness.googleRating > 0 || googleReviewCount > 0)) ||
+    hasBrainScore
+  );
 
   const metrics = [
     {
@@ -85,25 +147,32 @@ export const GrowthView: React.FC = () => {
       score: websiteAuditScore,
       target: 85,
       color: 'amber',
-      status: websiteAuditScore !== null ? 'Audit active' : (activeBusiness.website ? 'No audit run yet' : 'No website connected'),
+      status: websiteAuditScore !== null ? 'Audit active' : (activeBusiness.website ? 'No audit run yet' : 'Awaiting onboarding'),
     },
     {
       label: 'Reputation',
-      score: trustScore,
+      score: reputationScore,
       target: 90,
       color: 'purple',
       status: googleReviewCount > 0 ? `${googleReviewCount} Reviews` : 'No reviews yet',
     },
   ];
 
-  // Growth Score and 4 Pillar Metrics
+  // Growth Score: strictly null for new businesses without authentic onboarding data
   const growthScore = useMemo(() => {
-    const validScores = [liveVisScore, trustScore, websiteAuditScore].filter((s): s is number => typeof s === 'number' && s > 0);
+    if (!hasAnyData) {
+      return null;
+    }
+    const validScores = [liveVisScore, trustScore, websiteAuditScore, reputationScore].filter(
+      (s): s is number => typeof s === 'number' && s > 0
+    );
     if (validScores.length > 0) {
       return Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length);
     }
-    return (typeof activeBusiness.healthScore === 'number' && activeBusiness.healthScore > 0) ? activeBusiness.healthScore : null;
-  }, [liveVisScore, trustScore, websiteAuditScore, activeBusiness.healthScore]);
+    return (typeof activeBusiness.healthScore === 'number' && activeBusiness.healthScore > 0)
+      ? activeBusiness.healthScore
+      : null;
+  }, [hasAnyData, liveVisScore, trustScore, websiteAuditScore, reputationScore, activeBusiness.healthScore]);
 
   // Dynamic Evidence-Bound Growth Opportunities
   const [opportunities, setOpportunities] = useState<GrowthOpportunity[]>([]);
@@ -465,13 +534,48 @@ export const GrowthView: React.FC = () => {
                   </>
                 ) : (
                   <span className="text-xs text-slate-500 font-medium ml-1">
-                    No data yet
+                    No data yet (Awaiting onboarding)
                   </span>
                 )}
               </div>
             </div>
           </div>
         </div>
+
+        {/* New user onboarding guide banner if no verified data exists yet */}
+        {!hasAnyData && (
+          <div className="bg-gradient-to-r from-emerald-50/90 via-teal-50/80 to-emerald-50/90 border border-emerald-200/90 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                <Sparkles className="w-5 h-5 text-emerald-700" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-emerald-950 font-heading">
+                  Growth Score & Conversion Pillars are Pending Onboarding Data
+                </h4>
+                <p className="text-xs text-emerald-800/80 mt-0.5">
+                  Locora scores require authentic verified data. Metrics remain at &mdash; until you complete initial onboarding, connect your Google Profile, or run a website audit.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setOnboardingModalOpen(true)}
+                className="px-3.5 py-2 bg-[#059669] hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer w-full sm:w-auto text-center shadow-xs"
+              >
+                Complete Onboarding
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('website_review')}
+                className="px-3 py-2 bg-white hover:bg-emerald-100/50 text-emerald-900 border border-emerald-300 rounded-xl text-xs font-bold transition-colors cursor-pointer w-full sm:w-auto text-center"
+              >
+                Run Audit
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* 4 Pillars Breakdown (Visibility 72, Trust 84, Conversion 76, Reputation 81) */}
         <div className="space-y-3">
@@ -780,7 +884,9 @@ export const GrowthView: React.FC = () => {
               Strategic Target
             </span>
             <h3 className="text-lg font-bold font-heading">
-              Next Milestone: Reach 85 Growth Score
+              {growthScore !== null
+                ? 'Next Milestone: Reach 85 Growth Score'
+                : 'Next Milestone: Complete Onboarding to Generate Growth Score'}
             </h3>
           </div>
           <button
@@ -793,7 +899,9 @@ export const GrowthView: React.FC = () => {
         </div>
 
         <p className="text-xs text-slate-300 leading-relaxed max-w-2xl">
-          Addressing detected issues across Google Business Profile, review response latency, and technical schema directly increases local 3-Pack rank prominence and customer call conversions.
+          {growthScore !== null
+            ? 'Addressing detected issues across Google Business Profile, review response latency, and technical schema directly increases local 3-Pack rank prominence and customer call conversions.'
+            : 'Locora operates strictly on authentic verified data with zero artificial scores. Connect your Google Business Profile, track search queries, or run an initial website audit to start calculating your live growth score.'}
         </p>
       </section>
 

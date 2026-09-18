@@ -211,9 +211,16 @@ export const GrowthCommandCenter: React.FC = () => {
   // 3. Conversion & Foundation Component
   const crawlSeo = latestWebsiteAudit?.scores?.seo || productionDashboard?.collectedData?.latestCrawlRun?.seoScore;
   const crawlPerf = latestWebsiteAudit?.scores?.performance || productionDashboard?.collectedData?.latestCrawlRun?.perfScore;
-  const hasFoundationData = typeof crawlSeo === 'number' && crawlSeo > 0;
+  const hasFoundationData = Boolean(
+    (typeof crawlSeo === 'number' && crawlSeo > 0) ||
+    (typeof crawlPerf === 'number' && crawlPerf > 0)
+  );
   const conversionFoundationScore: number | null = hasFoundationData
-    ? Math.round(typeof crawlPerf === 'number' && crawlPerf > 0 ? (crawlSeo + crawlPerf) / 2 : crawlSeo)
+    ? Math.round(
+        typeof crawlPerf === 'number' && crawlPerf > 0 && typeof crawlSeo === 'number' && crawlSeo > 0
+          ? (crawlSeo + crawlPerf) / 2
+          : (crawlPerf || crawlSeo || 0)
+      )
     : null;
 
   // 4. Client Operations Component
