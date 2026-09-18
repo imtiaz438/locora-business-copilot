@@ -550,57 +550,6 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
             </div>
           </div>
         </div>
-
-        {/* Business Owner Growth Banner */}
-        <div className="mt-12 mb-16 bg-gradient-to-r from-slate-900 via-slate-850 to-emerald-950 text-white rounded-3xl p-6 sm:p-10 border border-emerald-500/30 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              <Building2 className="w-3.5 h-3.5 text-emerald-400" />
-              For Business Owners
-            </div>
-            <h3 className="text-xl sm:text-2xl font-black text-white font-heading tracking-tight">
-              Grow Your Business with Locora
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
-              Is your business listed? Claim your free profile to update your services, receive customer quote requests, and use Locora to rank higher on Google Search & Maps.
-            </p>
-          </div>
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0 w-full md:w-auto">
-            <button
-              onClick={() => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                const searchInput = document.querySelector('input[placeholder*="Search business name"]') as HTMLInputElement;
-                if (searchInput) searchInput.focus();
-              }}
-              className="w-full sm:w-auto px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
-            >
-              <Search className="w-4 h-4 text-slate-950" />
-              <span>Find & Claim Your Business</span>
-            </button>
-            <a
-              href="/auth?mode=signup"
-              className="w-full sm:w-auto px-5 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
-            >
-              <Sparkles className="w-4 h-4 text-emerald-400" />
-              <span>Free Locora Account</span>
-            </a>
-          </div>
-        </div>
-
-        {/* Dynamic SEO Internal Linking Architecture */}
-        {seoResult && (
-          <div className="mt-12">
-            <DynamicInternalLinks
-              seoResult={seoResult}
-              mode="bottom_nav"
-              onNavigate={(path) => {
-                if (path.startsWith('/')) {
-                  window.location.href = path;
-                }
-              }}
-            />
-          </div>
-        )}
       </div>
 
       {/* Quote / Lead Request Modal */}

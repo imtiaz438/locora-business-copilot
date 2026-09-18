@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { WebsiteAuditResult, PublicCheckupResult } from '../../types';
 import { LocoraLogo } from '../LocoraLogo';
-import { OneTimeOffersSection } from '../OneTimeOffersSection';
 import { QuickCheckupReport } from './QuickCheckupReport';
 import { navigateToDirectory } from '../../utils/domain';
 import {
@@ -1990,12 +1989,7 @@ export const HomeView: React.FC = () => {
         </div>
       </section>
 
-      {/* 14 — ONE-TIME GROWTH STORE */}
-      <section className="max-w-6xl mx-auto px-6">
-        <OneTimeOffersSection />
-      </section>
-
-      {/* 15 — FAQ SECTION */}
+      {/* 14 — FAQ SECTION */}
       <section className="max-w-4xl mx-auto px-6 space-y-6">
         <div className="text-center space-y-2">
           <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 tracking-tight">

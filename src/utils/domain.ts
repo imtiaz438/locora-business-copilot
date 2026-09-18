@@ -164,14 +164,58 @@ export const getDirectorySiteUrl = (path: string = '/'): string => {
 };
 
 /**
- * Returns the live URL for a specific business on the directory.
- * In production: https://directory.locoraai.com/business/:slug
- * In preview / development: /biz/:slug
+ * Converts a business name or slug into a clean, URL-safe SEO slug.
+ * Explicitly rejects and strips raw IDs (like biz_...) and email strings.
  */
-export const getDirectoryBusinessUrl = (slug: string): string => {
-  const cleanSlug = (slug || '').trim();
+export const toCleanBusinessSlug = (text?: string): string => {
+  if (!text) return 'business';
+  let clean = text.toLowerCase().trim();
+
+  // If text looks like biz_email_com or contains email markers, sanitize
+  if (clean.startsWith('biz_') && (clean.includes('@') || clean.includes('_gmail') || clean.includes('_com'))) {
+    return 'business';
+  }
+  // If it is a raw timestamp ID like biz_1789712022298_2jv4f
+  if (clean.startsWith('biz_') && /^biz_\d+_[a-z0-9]+$/.test(clean)) {
+    return 'business';
+  }
+
+  // Convert to URL-safe hyphenated slug
+  clean = clean.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return clean || 'business';
+};
+
+/**
+ * Returns the live URL for a specific business on the directory.
+ * In production: https://directory.locoraai.com/biz/:slug
+ * In preview / development: /biz/:slug
+ * 
+ * Always resolves to a clean dynamic slug derived from real business name.
+ * Prevents raw user IDs and email addresses from ever being exposed publicly.
+ */
+export const getDirectoryBusinessUrl = (
+  slugOrBusiness?: string | { slug?: string; directorySlug?: string; name?: string; businessName?: string }
+): string => {
+  let cleanSlug = '';
+  if (typeof slugOrBusiness === 'string') {
+    cleanSlug = (slugOrBusiness || '').trim();
+  } else if (slugOrBusiness && typeof slugOrBusiness === 'object') {
+    cleanSlug = slugOrBusiness.slug || slugOrBusiness.directorySlug || '';
+    if (!cleanSlug || cleanSlug.startsWith('biz_') || cleanSlug.includes('@') || cleanSlug.includes('_gmail')) {
+      const name = slugOrBusiness.businessName || slugOrBusiness.name;
+      cleanSlug = name ? toCleanBusinessSlug(name) : 'locora';
+    }
+  }
+
+  // Guard against email addresses or raw internal IDs accidentally being passed as slug
+  if (!cleanSlug || cleanSlug.startsWith('biz_') || cleanSlug.includes('@') || cleanSlug.includes('_gmail') || cleanSlug.includes('_com')) {
+    cleanSlug = toCleanBusinessSlug(cleanSlug) === 'business' ? 'locora' : toCleanBusinessSlug(cleanSlug);
+  } else {
+    cleanSlug = toCleanBusinessSlug(cleanSlug);
+  }
+
   if (isProductionCustomDomain()) {
-    return `https://${PRODUCTION_DIRECTORY_DOMAIN}/business/${cleanSlug}`;
+    return `https://${PRODUCTION_DIRECTORY_DOMAIN}/biz/${cleanSlug}`;
   }
   return `/biz/${cleanSlug}`;
 };

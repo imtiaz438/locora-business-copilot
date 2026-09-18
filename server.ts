@@ -6319,9 +6319,13 @@ app.post('/api/gbp/sync-live', async (req, res) => {
     const bizId = payload.businessId || payload.id || `biz_${Date.now()}`;
 
     // Update in-memory and disk database
+    const bizSlug = (businessName || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || bizId;
+    const isPubExplicit = payload.isPublishedInDirectory !== undefined ? Boolean(payload.isPublishedInDirectory) : false;
     const record: any = {
       id: bizId,
+      slug: bizSlug,
       planTier: 'pro',
+      isPublishedInDirectory: isPubExplicit,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       identity: {
@@ -6402,6 +6406,7 @@ app.post('/api/gbp/sync-live', async (req, res) => {
         id: bizId,
         ownerEmail: userEmail || 'imtiazbaloch3322@gmail.com',
         name: businessName,
+        slug: bizSlug,
         category,
         industry: category,
         website,
@@ -6409,15 +6414,18 @@ app.post('/api/gbp/sync-live', async (req, res) => {
         services,
         planTier: 'agency',
         status: 'active',
+        isPublishedInDirectory: isPubExplicit,
       }).onConflictDoUpdate({
         target: schema.businessesTable.id,
         set: {
           name: businessName,
+          slug: bizSlug,
           category,
           industry: category,
           website,
           phone,
           services,
+          ...(payload.isPublishedInDirectory !== undefined ? { isPublishedInDirectory: Boolean(payload.isPublishedInDirectory) } : {}),
           updatedAt: new Date(),
         },
       });
@@ -6488,12 +6496,17 @@ app.post('/api/gbp/sync-live', async (req, res) => {
       console.warn('[GBP Sync Live] PostgreSQL sync notice:', pgGbpErr);
     }
 
+    invalidateDirectoryListingsCache();
+
     res.json({
       success: true,
       message: 'Google Business Profile successfully synced and stored in database',
       business: {
         id: bizId,
         name: businessName,
+        slug: bizSlug,
+        directorySlug: bizSlug,
+        isPublishedInDirectory: isPubExplicit,
         category,
         address,
         city,
@@ -6567,6 +6580,7 @@ app.post('/api/workspace/business-profile', async (req, res) => {
         const userBizList = await dbService.getBusinessesByOwner(userEmail);
         if (userBizList.length > 0) {
           const primaryBiz = userBizList[0];
+          const isPub = updatedProfile.isPublishedInDirectory !== undefined ? Boolean(updatedProfile.isPublishedInDirectory) : undefined;
           await dbService.updateBusiness(
             primaryBiz.id,
             {
@@ -6577,6 +6591,7 @@ app.post('/api/workspace/business-profile', async (req, res) => {
               phone: updatedProfile.phone,
               email: updatedProfile.email,
               description: updatedProfile.description,
+              ...(isPub !== undefined ? { isPublishedInDirectory: isPub } : {}),
             },
             {
               address: updatedProfile.address,
@@ -6587,6 +6602,11 @@ app.post('/api/workspace/business-profile', async (req, res) => {
               phone: updatedProfile.phone,
             }
           );
+
+          if (isPub !== undefined) {
+            await dbService.setBusinessDirectoryPublish(primaryBiz.id, isPub);
+            invalidateDirectoryListingsCache();
+          }
 
           // Also keep LocoraDataEngine business record in sync for real directory serving
           const locoraRec = getBusinessRecordById(primaryBiz.id) || getBusinessRecordFromLocoraDb(primaryBiz.id);
@@ -15870,6 +15890,11 @@ app.get('/sitemap.xml', async (req, res) => {
  * deduplicated by canonical id or slug.
  */
 async function getUnifiedPublishedListings(): Promise<any[]> {
+  const settings = await dbService.getDirectorySettings().catch(() => null);
+  if (settings && !settings.directoryEnabled) {
+    return [];
+  }
+
   const dbPublished = await dbService.getPublishedDirectoryListings().catch(() => []);
   const memPublished = getPublishedDirectoryListings();
 
@@ -15877,6 +15902,9 @@ async function getUnifiedPublishedListings(): Promise<any[]> {
   const allPublished: any[] = [];
 
   for (const item of dbPublished) {
+    if (item.isPublishedInDirectory !== true || item.directoryStatus === 'UNPUBLISHED') {
+      continue;
+    }
     const key = (item.id || item.slug || '').toLowerCase();
     if (key && !seenIds.has(key)) {
       seenIds.add(key);
@@ -15884,7 +15912,14 @@ async function getUnifiedPublishedListings(): Promise<any[]> {
     }
   }
 
+  const allowDiscovered = settings ? settings.allowDiscoveredUnclaimed : false;
   for (const item of memPublished) {
+    if (item.isPublishedInDirectory !== true || item.directoryStatus === 'UNPUBLISHED') {
+      continue;
+    }
+    if (!allowDiscovered && !item.isClaimed && item.directoryStatus !== 'CLAIMED') {
+      continue;
+    }
     const key = (item.id || item.slug || '').toLowerCase();
     if (key && !seenIds.has(key)) {
       seenIds.add(key);
@@ -16242,7 +16277,7 @@ app.get('/api/directory/analytics', async (req, res) => {
   }
 });
 
-app.get('/api/directory/business/:slugOrId', async (req, res) => {
+app.get(['/api/directory/business/:slugOrId', '/api/directory/biz/:slugOrId'], async (req, res) => {
   try {
     const { slugOrId } = req.params;
     let listing = await dbService.getDirectoryListingBySlugOrId(slugOrId);
@@ -16257,9 +16292,53 @@ app.get('/api/directory/business/:slugOrId', async (req, res) => {
       });
     }
 
+    const canonicalSlug = listing.slug || (listing.businessName ? listing.businessName.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') : 'locora');
+    const canonicalUrl = `https://directory.locoraai.com/biz/${canonicalSlug}`;
+
+    // STRICT DIRECTORY ACCESS CONTROL:
+    // Only published listings are visible to the public. If unpublished, only the business owner can preview.
+    const userEmail = (
+      (req.headers['x-user-email'] as string) ||
+      (req.query.userEmail as string) ||
+      ''
+    ).toLowerCase().trim();
+
+    const listingAny = listing as any;
+    const isOwner = Boolean(
+      userEmail &&
+      (
+        userEmail === (listingAny.ownerEmail || '').toLowerCase() ||
+        userEmail === (listingAny.email || '').toLowerCase() ||
+        userEmail === (listingAny.claimedByEmail || '').toLowerCase()
+      )
+    );
+
+    if (listing.isPublishedInDirectory !== true) {
+      if (isOwner) {
+        return res.json({
+          success: true,
+          business: {
+            ...listing,
+            isDraft: true,
+            isPublishedInDirectory: false,
+          },
+          canonicalSlug,
+          canonicalUrl,
+          previewMode: true,
+        });
+      }
+      return res.status(404).json({
+        success: false,
+        error: 'LISTING_NOT_PUBLISHED',
+        message: 'This business listing is not currently published on the public directory.',
+      });
+    }
+
     res.json({
       success: true,
       business: listing,
+      canonicalSlug,
+      canonicalUrl,
     });
   } catch (err: any) {
     console.error('[Directory API] Error fetching business by slug:', err);
@@ -16643,41 +16722,247 @@ app.post('/api/directory/claim', async (req, res) => {
   }
 });
 
-// Publish Directory Profile
-app.post('/api/directory/publish', async (req, res) => {
+// Check Directory Eligibility & Publishing State
+app.get('/api/directory/eligibility', async (req, res) => {
   try {
-    const { businessId } = req.body;
+    const businessId = (req.query.businessId as string) || undefined;
     const { business } = await resolveAuthenticatedBusiness(req, businessId);
-    const updated = await dbService.setBusinessDirectoryPublish(business.id, true);
-    
-    const memBiz = getBusinessRecordById(business.id);
-    if (memBiz) {
-      memBiz.isPublishedInDirectory = true;
-      saveBusinessRecordToLocoraDb(memBiz);
+
+    const eligibility = await dbService.getDirectoryEligibility(business.id);
+    const directoryProfile = await dbService.getDirectoryProfileByBusinessId(business.id);
+
+    // Status state machine: UNPUBLISHED | ELIGIBLE | PUBLISHED | CLAIM_PENDING | CLAIMED | VERIFIED | SUSPENDED
+    let status = directoryProfile?.status || 'UNPUBLISHED';
+    if (business.status === 'suspended') {
+      status = 'SUSPENDED';
+    } else if (business.isPublishedInDirectory) {
+      status = directoryProfile?.status === 'VERIFIED' ? 'VERIFIED' : 'PUBLISHED';
+    } else if (eligibility.eligible && status === 'UNPUBLISHED') {
+      status = 'ELIGIBLE';
     }
-    invalidateDirectoryListingsCache();
-    res.json({ success: true, isPublishedInDirectory: true, business: updated });
+
+    // Guarantee clean dynamic slug from business name, never raw IDs or emails
+    const rawSlug = business.slug || '';
+    const cleanDynamicSlug = (rawSlug && !rawSlug.startsWith('biz_') && !rawSlug.includes('@') && !rawSlug.includes('_gmail'))
+      ? rawSlug
+      : ((business.name || 'business').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'locora');
+
+    // If business in DB has missing or invalid slug, auto-update it
+    if (business.id && business.slug !== cleanDynamicSlug) {
+      try {
+        await db.update(schema.businessesTable)
+          .set({ slug: cleanDynamicSlug, updatedAt: new Date() })
+          .where(eq(schema.businessesTable.id, business.id));
+      } catch (slugUpdateErr) {
+        console.warn('[Directory Eligibility] Non-fatal error updating business slug:', slugUpdateErr);
+      }
+    }
+
+    const publicProfileUrl = `https://directory.locoraai.com/biz/${cleanDynamicSlug}`;
+
+    res.json({
+      success: true,
+      businessId: business.id,
+      businessName: business.name,
+      slug: cleanDynamicSlug,
+      isPublishedInDirectory: Boolean(business.isPublishedInDirectory),
+      status,
+      eligible: eligibility.eligible,
+      reasons: eligibility.reasons,
+      missingFields: eligibility.missingFields,
+      qualityStatus: eligibility.qualityStatus,
+      qualityScore: eligibility.qualityScore,
+      directoryProfile,
+      publicProfileUrl,
+    });
   } catch (err: any) {
-    res.status(err.status || 500).json({ success: false, error: err.message });
+    console.error('[Directory Eligibility] Error:', err);
+    res.status(err.status || err.statusCode || 500).json({ success: false, error: err.message });
   }
 });
 
-// Unpublish Directory Profile
+// Publish Directory Profile (Check Eligibility -> Generate Slug/SEO -> Upsert 1:1 directory_profile -> Publish)
+app.post('/api/directory/publish', async (req, res) => {
+  try {
+    const { businessId, force } = req.body;
+    // Security: Authenticate user & ensure caller owns the business. Never trust client-supplied business ID.
+    const { business } = await resolveAuthenticatedBusiness(req, businessId);
+
+    // Business cannot be deleted or suspended
+    if (business.status === 'deleted' || business.status === 'suspended') {
+      return res.status(400).json({
+        success: false,
+        error: `Business status is '${business.status}' and cannot be published to the directory.`,
+      });
+    }
+
+    const result = await dbService.publishBusinessToDirectory(business.id, { force });
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        eligible: false,
+        reasons: result.reasons,
+        missingFields: result.missingFields,
+        error: result.message || 'Business does not meet directory eligibility criteria.',
+      });
+    }
+
+    // Update memory cache if present
+    const memBiz = getBusinessRecordById(business.id);
+    if (memBiz) {
+      memBiz.isPublishedInDirectory = true;
+      if (result.slug) (memBiz as any).slug = result.slug;
+      saveBusinessRecordToLocoraDb(memBiz);
+    }
+    invalidateDirectoryListingsCache();
+
+    res.json({
+      success: true,
+      isPublishedInDirectory: true,
+      status: 'PUBLISHED',
+      slug: result.slug,
+      canonicalUrl: result.canonicalUrl,
+      directoryProfile: result.directoryProfile,
+      business: result.business,
+    });
+  } catch (err: any) {
+    console.error('[Directory Publish] Error:', err);
+    res.status(err.status || err.statusCode || 500).json({ success: false, error: err.message });
+  }
+});
+
+// Unpublish Directory Profile (Switches status = UNPUBLISHED, does NOT delete underlying business)
 app.post('/api/directory/unpublish', async (req, res) => {
   try {
     const { businessId } = req.body;
+    // Security: Authenticate caller ownership
     const { business } = await resolveAuthenticatedBusiness(req, businessId);
-    const updated = await dbService.setBusinessDirectoryPublish(business.id, false);
-    
+
+    const result = await dbService.unpublishBusinessFromDirectory(business.id);
+
     const memBiz = getBusinessRecordById(business.id);
     if (memBiz) {
       memBiz.isPublishedInDirectory = false;
       saveBusinessRecordToLocoraDb(memBiz);
     }
     invalidateDirectoryListingsCache();
-    res.json({ success: true, isPublishedInDirectory: false, business: updated });
+
+    res.json({
+      success: true,
+      isPublishedInDirectory: false,
+      status: 'UNPUBLISHED',
+      business: result.business,
+    });
   } catch (err: any) {
-    res.status(err.status || 500).json({ success: false, error: err.message });
+    console.error('[Directory Unpublish] Error:', err);
+    res.status(err.status || err.statusCode || 500).json({ success: false, error: err.message });
+  }
+});
+
+// Admin Global Directory Settings (ADMIN ONLY)
+app.get('/api/admin/directory/settings', async (req, res) => {
+  try {
+    if (!(await verifyAdminAccessAsync(req))) {
+      return res.status(403).json({ error: 'Access Denied. Admin privileges required.' });
+    }
+    const settings = await dbService.getDirectorySettings();
+    res.json({ success: true, settings });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/directory/settings', async (req, res) => {
+  try {
+    if (!(await verifyAdminAccessAsync(req))) {
+      return res.status(403).json({ error: 'Access Denied. Admin privileges required.' });
+    }
+    const updated = await dbService.updateDirectorySettings(req.body);
+    invalidateDirectoryListingsCache();
+    res.json({ success: true, settings: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Admin Directory Profiles Listing & Moderation (ADMIN ONLY)
+app.get('/api/admin/directory/profiles', async (req, res) => {
+  try {
+    if (!(await verifyAdminAccessAsync(req))) {
+      return res.status(403).json({ error: 'Access Denied. Admin privileges required.' });
+    }
+    const profiles = await db
+      .select({
+        id: schema.directoryProfilesTable.id,
+        businessId: schema.directoryProfilesTable.businessId,
+        businessName: schema.businessesTable.name,
+        ownerEmail: schema.businessesTable.ownerEmail,
+        status: schema.directoryProfilesTable.status,
+        slug: schema.directoryProfilesTable.slug,
+        publishedAt: schema.directoryProfilesTable.publishedAt,
+        lastSyncedAt: schema.directoryProfilesTable.lastSyncedAt,
+        qualityScore: schema.directoryProfilesTable.qualityScore,
+        qualityStatus: schema.directoryProfilesTable.qualityStatus,
+        isClaimed: schema.directoryProfilesTable.isClaimed,
+        isVerified: schema.directoryProfilesTable.isVerified,
+        cityName: schema.businessesTable.cityName,
+        category: schema.businessesTable.category,
+        isPublishedInDirectory: schema.businessesTable.isPublishedInDirectory,
+      })
+      .from(schema.directoryProfilesTable)
+      .leftJoin(schema.businessesTable, eq(schema.directoryProfilesTable.businessId, schema.businessesTable.id))
+      .orderBy(desc(schema.directoryProfilesTable.updatedAt));
+
+    res.json({ success: true, profiles });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/directory/profiles/:businessId/moderate', async (req, res) => {
+  try {
+    if (!(await verifyAdminAccessAsync(req))) {
+      return res.status(403).json({ error: 'Access Denied. Admin privileges required.' });
+    }
+    const { businessId } = req.params;
+    const { action } = req.body; // 'suspend' | 'restore' | 'verify' | 'unverify'
+
+    let newStatus = 'PUBLISHED';
+    let isPublished = true;
+
+    if (action === 'suspend') {
+      newStatus = 'SUSPENDED';
+      isPublished = false;
+    } else if (action === 'restore') {
+      newStatus = 'PUBLISHED';
+      isPublished = true;
+    }
+
+    const updatedProfile = await db
+      .update(schema.directoryProfilesTable)
+      .set({
+        ...(action === 'suspend' || action === 'restore' ? { status: newStatus } : {}),
+        ...(action === 'verify' ? { isVerified: true, status: 'VERIFIED' } : {}),
+        ...(action === 'unverify' ? { isVerified: false, status: 'PUBLISHED' } : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.directoryProfilesTable.businessId, businessId))
+      .returning();
+
+    if (action === 'suspend' || action === 'restore') {
+      await db
+        .update(schema.businessesTable)
+        .set({
+          isPublishedInDirectory: isPublished,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.businessesTable.id, businessId));
+    }
+
+    invalidateDirectoryListingsCache();
+    res.json({ success: true, profile: updatedProfile[0] });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

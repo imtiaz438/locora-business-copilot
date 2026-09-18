@@ -470,6 +470,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 gbpCompleteness: b.gbpConnected ? 100 : (existing?.gbpCompleteness || 0),
                 gbpConnected: b.gbpConnected || existing?.gbpConnected || false,
                 reviews: existing?.reviews || [],
+                slug: (b.slug && !b.slug.startsWith('biz_') && !b.slug.includes('@') && !b.slug.includes('_gmail'))
+                  ? b.slug
+                  : ((b.name || existing?.name || 'business').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'locora'),
+                directorySlug: (b.slug && !b.slug.startsWith('biz_') && !b.slug.includes('@') && !b.slug.includes('_gmail'))
+                  ? b.slug
+                  : ((b.name || existing?.name || 'business').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'locora'),
+                isPublishedInDirectory: b.isPublishedInDirectory !== undefined ? Boolean(b.isPublishedInDirectory) : (existing?.isPublishedInDirectory ?? false),
               };
             });
 
@@ -797,6 +804,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               gbpCompleteness: b.gbpConnected ? 100 : 0,
               gbpConnected: !!b.gbpConnected,
               reviews: [],
+              slug: (b.slug && !b.slug.startsWith('biz_') && !b.slug.includes('@') && !b.slug.includes('_gmail'))
+                ? b.slug
+                : ((b.name || 'business').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'locora'),
+              directorySlug: (b.slug && !b.slug.startsWith('biz_') && !b.slug.includes('@') && !b.slug.includes('_gmail'))
+                ? b.slug
+                : ((b.name || 'business').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'locora'),
+              isPublishedInDirectory: b.isPublishedInDirectory !== undefined ? Boolean(b.isPublishedInDirectory) : false,
             }));
 
             setBusinesses(mapped);
@@ -914,6 +928,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 reviewCount: pendingDirectoryClaimData?.reviewCount || 0,
                 unansweredReviews: 0,
                 gbpCompleteness: 0,
+                slug: pendingDirectoryClaimData?.slug || ((newBizName || 'business').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'locora'),
+                directorySlug: pendingDirectoryClaimData?.slug || ((newBizName || 'business').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'locora'),
+                isPublishedInDirectory: pendingDirectoryClaimData?.isPublishedInDirectory !== undefined ? Boolean(pendingDirectoryClaimData.isPublishedInDirectory) : false,
               };
 
               setBusinesses([newBiz]);
@@ -1952,8 +1969,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                   opportunityCount: 0,
                   healthyAreaCount: 0,
                   isMainLocation: true,
-                  directorySlug: b.slug,
-                  isPublishedInDirectory: b.isPublishedInDirectory ?? true,
+                  slug: (b.slug && !b.slug.startsWith('biz_') && !b.slug.includes('@') && !b.slug.includes('_gmail'))
+                    ? b.slug
+                    : ((b.name || 'business').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'locora'),
+                  directorySlug: (b.slug && !b.slug.startsWith('biz_') && !b.slug.includes('@') && !b.slug.includes('_gmail'))
+                    ? b.slug
+                    : ((b.name || 'business').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'locora'),
+                  isPublishedInDirectory: b.isPublishedInDirectory ?? false,
                   services: b.services || [],
                   competitors: [],
                   googleRating: typeof b.googleRating === 'number' ? b.googleRating : 0,

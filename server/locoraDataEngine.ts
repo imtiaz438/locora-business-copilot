@@ -885,7 +885,7 @@ export function deriveDirectoryStatus(
   if (b.isClaimed) {
     return (b.gbpData?.googleVerified || b.claimedByEmail) ? 'VERIFIED' : 'CLAIMED';
   }
-  if (b.isPublishedInDirectory !== false) {
+  if (b.isPublishedInDirectory === true) {
     return 'PUBLISHED';
   }
   if (b.identity?.name && (b.identity?.phone || b.identity?.website)) {

@@ -17,6 +17,7 @@ import {
   Send,
   Loader2,
   AlertCircle,
+  AlertTriangle,
   ThumbsUp,
   Building2,
   Award,
@@ -100,6 +101,15 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
         const data = await res.json();
         if (data.success && data.business) {
           setBusiness(data.business);
+          // If current route slug was an internal email or ID (like biz_imtiazbaloch3322_gmail_com),
+          // automatically rewrite the browser URL bar to the clean, valid public slug
+          if (data.business.slug && data.business.slug !== slug && typeof window !== 'undefined') {
+            const isDirDomain = window.location.hostname.includes('directory.locoraai.com');
+            const canonicalPath = isDirDomain ? `/business/${data.business.slug}` : `/biz/${data.business.slug}`;
+            try {
+              window.history.replaceState({}, '', canonicalPath);
+            } catch (_) {}
+          }
           setQuoteForm((prev) => ({
             ...prev,
             serviceNeed: data.business.categoryName || '',
@@ -441,6 +451,26 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchemaJsonLd) }}
       />
+
+      {/* Owner Unpublished Preview Banner */}
+      {(business.isDraft || business.isPublishedInDirectory === false) && (
+        <div className="bg-amber-600 text-white text-xs font-semibold px-4 py-2.5 shadow-sm">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 text-amber-200" />
+              <span>
+                <strong>Owner Preview Mode:</strong> This business listing is currently <strong>unpublished</strong> and not visible to the public. To make it live, complete required details and push it to the directory from <strong>Settings &gt; Directory</strong>.
+              </span>
+            </div>
+            <a
+              href="/app/settings"
+              className="px-3 py-1 bg-white text-amber-900 text-xs font-bold rounded-lg hover:bg-amber-50 shrink-0 transition-colors"
+            >
+              Go to Settings
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* Top Breadcrumb Bar */}
       <div className="bg-white border-b border-slate-200 py-3 px-4 sm:px-8">

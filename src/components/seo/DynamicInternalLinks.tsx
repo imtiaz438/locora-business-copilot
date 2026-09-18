@@ -37,7 +37,7 @@ export const DynamicInternalLinks: React.FC<DynamicInternalLinksProps> = ({
   const categoryLinks = links.filter((l) => l.type === 'category');
   const businessLinks = links.filter((l) => l.type === 'business');
 
-  if (links.length === 0 && breadcrumbs.length === 0) {
+  if (links.length === 0) {
     return null;
   }
 

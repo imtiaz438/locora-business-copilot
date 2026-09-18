@@ -9,6 +9,7 @@ import { SubscriptionInvoiceModal } from './SubscriptionInvoiceModal';
 import { GoogleAddressAutocomplete, LocationData } from './GoogleAddressAutocomplete';
 import { CountryAutocomplete } from './CountryAutocomplete';
 import { getDirectorySiteUrl, getDirectoryBusinessUrl } from '../utils/domain';
+import { DirectoryPublishingCard } from './DirectoryPublishingCard';
 import {
   Settings,
   Cpu,
@@ -277,7 +278,7 @@ const AccountSecuritySection: React.FC = () => {
 };
 
 export const SettingsView: React.FC = () => {
-  const { settings, updateSettings, businessProfile, updateBusinessProfile, updateActiveBusiness, user, updateUser, setCheckoutModalPlan, subscriptionInvoices } = useApp();
+  const { settings, updateSettings, businessProfile, updateBusinessProfile, activeBusiness, updateActiveBusiness, user, updateUser, setCheckoutModalPlan, subscriptionInvoices } = useApp();
 
   const isAdmin = Boolean(
     user.isAuthenticated && (
@@ -294,6 +295,7 @@ export const SettingsView: React.FC = () => {
   );
 
   const [activeTab, setSettingsTab] = useState<'profile' | 'integrations' | 'account' | 'team' | 'billing'>('profile');
+  const [profileSubTab, setProfileSubTab] = useState<'details' | 'directory' | 'logo'>('details');
   const [profileForm, setProfileForm] = useState(() => ({
     ...businessProfile,
     email: user.email || businessProfile.email || '',
@@ -304,6 +306,8 @@ export const SettingsView: React.FC = () => {
     businessGoals: businessProfile.businessGoals || [],
   }));
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [publishingDirectory, setPublishingDirectory] = useState(false);
+  const [directoryFeedback, setDirectoryFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const settingsMsgRef = useRef<HTMLDivElement>(null);
 
   // Billing & Auto-Renew state
@@ -514,6 +518,72 @@ export const SettingsView: React.FC = () => {
     setTimeout(() => setSavedSuccess(false), 2500);
   };
 
+  const handleToggleDirectory = async (publish: boolean) => {
+    setProfileForm((prev) => ({ ...prev, isPublishedInDirectory: publish }));
+    setPublishingDirectory(true);
+    setDirectoryFeedback(null);
+    try {
+      const endpoint = publish ? '/api/directory/publish' : '/api/directory/unpublish';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId: activeBusiness.id,
+          userEmail: user.email,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        updateBusinessProfile({ isPublishedInDirectory: publish });
+        setDirectoryFeedback({
+          type: 'success',
+          msg: publish
+            ? 'Business listing successfully published live to the public directory!'
+            : 'Business listing unpublished from public directory.',
+        });
+        setTimeout(() => setDirectoryFeedback(null), 4000);
+      } else {
+        setDirectoryFeedback({ type: 'error', msg: data.error || 'Failed to update directory status.' });
+      }
+    } catch (err: any) {
+      setDirectoryFeedback({ type: 'error', msg: err.message || 'Network error updating directory status.' });
+    } finally {
+      setPublishingDirectory(false);
+    }
+  };
+
+  const handlePushDirectoryNow = async () => {
+    setPublishingDirectory(true);
+    setDirectoryFeedback(null);
+    try {
+      const res = await fetch('/api/directory/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId: activeBusiness.id,
+          userEmail: user.email,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setProfileForm((prev) => ({ ...prev, isPublishedInDirectory: true }));
+        updateBusinessProfile({ isPublishedInDirectory: true });
+        setDirectoryFeedback({
+          type: 'success',
+          msg: '🎉 Profile pushed to business directory! Your verified listing is live.',
+        });
+        setTimeout(() => setDirectoryFeedback(null), 5000);
+      } else {
+        const errorMsg = data.reasons?.length ? data.reasons.join(' ') : (data.error || 'Failed to push business to directory.');
+        setDirectoryFeedback({ type: 'error', msg: errorMsg });
+      }
+    } catch (err: any) {
+      setDirectoryFeedback({ type: 'error', msg: err.message || 'Network error pushing to directory.' });
+    } finally {
+      setPublishingDirectory(false);
+    }
+  };
+
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-5xl mx-auto text-slate-900 font-sans">
       {/* Header */}
@@ -585,8 +655,71 @@ export const SettingsView: React.FC = () => {
       {/* TAB 2: BUSINESS PROFILE CONTEXT */}
       {activeTab === 'profile' && (
         <div className="space-y-6">
-          {/* Custom Brand Logo Customizer Box */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 shadow-2xs">
+          {/* Sub-tab navigation bar: Details / Directory / Logo */}
+          <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100 rounded-2xl w-fit border border-slate-200/80">
+            <button
+              type="button"
+              onClick={() => setProfileSubTab('details')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                profileSubTab === 'details'
+                  ? 'bg-white text-slate-900 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Building className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Profile Details</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setProfileSubTab('directory')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                profileSubTab === 'directory'
+                  ? 'bg-white text-emerald-900 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Directory</span>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold ${
+                profileForm.isPublishedInDirectory
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                  : 'bg-slate-200 text-slate-600'
+              }`}>
+                {profileForm.isPublishedInDirectory ? 'Live & Published' : 'Directory Settings'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setProfileSubTab('logo')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                profileSubTab === 'logo'
+                  ? 'bg-white text-slate-900 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <ImageIcon className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Invoice Logo</span>
+            </button>
+          </div>
+
+          {/* Sub-tab: DIRECTORY PUBLISHING */}
+          {profileSubTab === 'directory' && (
+            <DirectoryPublishingCard
+              activeBusiness={activeBusiness}
+              businessProfile={businessProfile}
+              user={user}
+              profileForm={profileForm}
+              setProfileForm={setProfileForm}
+              updateBusinessProfile={updateBusinessProfile}
+              onNavigateToProfileDetails={() => setProfileSubTab('details')}
+            />
+          )}
+
+          {/* Sub-tab: WHITE-LABEL LOGO */}
+          {profileSubTab === 'logo' && (
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-5 shadow-2xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
               <div>
                 <h3 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
@@ -761,7 +894,10 @@ export const SettingsView: React.FC = () => {
               </div>
             )}
           </div>
+          )}
 
+          {/* Sub-tab: PROFILE DETAILS FORM */}
+          {profileSubTab === 'details' && (
           <form onSubmit={handleSaveProfile} className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 text-xs font-sans shadow-2xs">
             <h3 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
               <Building className="w-4 h-4 text-[#059669]" />
@@ -1022,57 +1158,17 @@ export const SettingsView: React.FC = () => {
               />
             </div>
 
-            {/* Zero-Touch Directory Publishing Toggle */}
-            <div className="sm:col-span-2 p-4 rounded-xl bg-emerald-50/70 border border-emerald-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-900 font-heading">
-                    Publish to Public Business Directory
-                  </span>
-                  <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900">
-                    directory.locoraai.com
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
-                  Automatically feature your verified Google Business Profile, live hours, rating, and customer inquiry quotes on our high-performance local directory.
-                </p>
-                {profileForm.isPublishedInDirectory !== false && (
-                  <div className="mt-2.5 flex flex-wrap items-center gap-4">
-                    <a
-                      href={getDirectorySiteUrl('/')}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[11px] text-emerald-700 hover:text-emerald-800 font-bold inline-flex items-center gap-1 cursor-pointer"
-                    >
-                      <Globe className="w-3 h-3" />
-                      <span>Browse Public Directory</span>
-                      <ExternalLink className="w-2.5 h-2.5" />
-                    </a>
-
-                    {(profileForm.id || businessProfile.directorySlug || businessProfile.id) && (
-                      <a
-                        href={getDirectoryBusinessUrl(businessProfile.directorySlug || profileForm.id || businessProfile.id || '')}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[11px] text-slate-700 hover:text-slate-900 font-bold inline-flex items-center gap-1 cursor-pointer"
-                      >
-                        <span>View Your Live Listing</span>
-                        <ExternalLink className="w-2.5 h-2.5" />
-                      </a>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                <input
-                  type="checkbox"
-                  checked={profileForm.isPublishedInDirectory !== false}
-                  onChange={(e) => setProfileForm({ ...profileForm, isPublishedInDirectory: e.target.checked })}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
-              </label>
+            {/* Embedded Directory Publishing Card */}
+            <div className="sm:col-span-2">
+              <DirectoryPublishingCard
+                activeBusiness={activeBusiness}
+                businessProfile={businessProfile}
+                user={user}
+                profileForm={profileForm}
+                setProfileForm={setProfileForm}
+                updateBusinessProfile={updateBusinessProfile}
+                onNavigateToProfileDetails={() => setProfileSubTab('details')}
+              />
             </div>
           </div>
 
@@ -1092,6 +1188,7 @@ export const SettingsView: React.FC = () => {
             </button>
           </div>
         </form>
+        )}
         </div>
       )}
 

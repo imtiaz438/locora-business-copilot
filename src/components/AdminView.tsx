@@ -56,12 +56,13 @@ import {
 } from 'lucide-react';
 import { PlanProviderAccessSummary } from './PlanProviderAccessSummary';
 import { DataFreshnessPanel } from './DataFreshnessPanel';
+import { DirectoryAdminPanel } from './admin/DirectoryAdminPanel';
 
 export const AdminView: React.FC = () => {
   const { user, customers: clients = [], invoices, updateInvoiceStatus, businessProfile, updateBusinessProfile, updateSettings } = useApp();
 
   const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'users' | 'payments' | 'logo' | 'ai_tokens' | 'sales' | 'subscribers' | 'invoices' | 'dispatch' | 'email_server' | 'provider_access' | 'datasets'>('users');
+  const [activeTab, setActiveTab] = useState<'users' | 'payments' | 'logo' | 'ai_tokens' | 'sales' | 'subscribers' | 'invoices' | 'dispatch' | 'email_server' | 'provider_access' | 'datasets' | 'directory_rules'>('users');
   const [loading, setLoading] = useState<boolean>(false);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
   const [actionErrorMsg, setActionErrorMsg] = useState<string | null>(null);
@@ -1397,6 +1398,17 @@ export const AdminView: React.FC = () => {
         >
           <Database className="w-4 h-4 text-emerald-300" />
           <span>Datasets & Freshness</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('directory_rules')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'directory_rules' ? 'bg-[#059669] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
+          }`}
+        >
+          <Globe2 className="w-4 h-4 text-emerald-300" />
+          <span>Directory Controls</span>
         </button>
       </div>
 
@@ -3532,6 +3544,13 @@ export const AdminView: React.FC = () => {
       {activeTab === 'datasets' && (
         <div className="space-y-6">
           <DataFreshnessPanel />
+        </div>
+      )}
+
+      {/* TAB: GLOBAL DIRECTORY GOVERNANCE & MODERATION */}
+      {activeTab === 'directory_rules' && (
+        <div className="space-y-6">
+          <DirectoryAdminPanel />
         </div>
       )}
 

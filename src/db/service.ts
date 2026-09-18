@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { db, schema } from './index.ts';
-import { eq, desc, asc, or, and, isNull, inArray, ilike } from 'drizzle-orm';
+import { eq, ne, desc, asc, or, and, isNull, inArray, ilike } from 'drizzle-orm';
 
 // --- Business Profile ---
 export async function getBusinessProfile() {
@@ -2410,6 +2410,14 @@ export async function updateBusiness(
     }
   } catch {}
 
+  // Requirement 6: Auto-sync directory profile whenever canonical business data changes
+  try {
+    const { syncDirectoryProfileData } = await import('./directoryService.ts');
+    await syncDirectoryProfileData(businessId);
+  } catch (err) {
+    console.error('[Directory Sync] Failed to sync directory profile on business update:', err);
+  }
+
   return updatedBiz || null;
 }
 
@@ -3303,9 +3311,11 @@ export function maskDirectoryPhone(phone?: string): string {
 
 export async function getDirectoryListingBySlugOrId(slugOrId: string) {
   try {
-    const clean = slugOrId.toLowerCase().trim();
-    // Match by slug or id
-    const bizList = await db
+    const clean = (slugOrId || '').toLowerCase().trim();
+    if (!clean) return null;
+
+    // 1. Match by slug or id directly in businessesTable
+    let bizList = await db
       .select()
       .from(schema.businessesTable)
       .where(or(
@@ -3314,8 +3324,63 @@ export async function getDirectoryListingBySlugOrId(slugOrId: string) {
       ))
       .limit(1);
 
+    // 2. If not found, match by directoryProfilesTable.slug
+    if (bizList.length === 0) {
+      const dirProfiles = await db
+        .select()
+        .from(schema.directoryProfilesTable)
+        .where(eq(schema.directoryProfilesTable.slug, clean))
+        .limit(1);
+      if (dirProfiles.length > 0) {
+        bizList = await db
+          .select()
+          .from(schema.businessesTable)
+          .where(eq(schema.businessesTable.id, dirProfiles[0].businessId))
+          .limit(1);
+      }
+    }
+
+    // 3. If still not found and input contains email or email-derived ID like biz_imtiazbaloch3322_gmail_com
+    if (bizList.length === 0 && (clean.includes('_gmail_com') || clean.includes('@') || clean.startsWith('biz_'))) {
+      const extractedEmail = clean
+        .replace(/^biz_/, '')
+        .replace(/_gmail_com$/, '@gmail.com')
+        .replace(/_([a-z0-9-]+)_com$/, '@$1.com');
+
+      const userPrefix = clean.replace(/^biz_/, '').split('_')[0];
+
+      bizList = await db
+        .select()
+        .from(schema.businessesTable)
+        .where(or(
+          ilike(schema.businessesTable.ownerEmail, extractedEmail),
+          ilike(schema.businessesTable.email, extractedEmail),
+          ilike(schema.businessesTable.ownerEmail, `%${userPrefix}%`),
+          ilike(schema.businessesTable.email, `%${userPrefix}%`)
+        ))
+        .orderBy(desc(schema.businessesTable.createdAt))
+        .limit(1);
+    }
+
+    // 4. If still not found, match by business name dynamic slug
+    if (bizList.length === 0) {
+      const allBiz = await db.select().from(schema.businessesTable).limit(50);
+      const matched = allBiz.find((b) => {
+        const genSlug = (b.name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        return genSlug && genSlug === clean;
+      });
+      if (matched) {
+        bizList = [matched];
+      }
+    }
+
     if (bizList.length === 0) return null;
     const biz = bizList[0];
+
+    // Compute dynamic clean business slug (NEVER expose email or internal biz_ id)
+    const validDynamicSlug = (biz.slug && !biz.slug.startsWith('biz_') && !biz.slug.includes('@') && !biz.slug.includes('_gmail'))
+      ? biz.slug
+      : ((biz.name || 'business').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'locora');
 
     // Get location
     const locs = await db
@@ -3352,7 +3417,7 @@ export async function getDirectoryListingBySlugOrId(slugOrId: string) {
     return {
       id: biz.id,
       businessName: biz.name,
-      slug: biz.slug || biz.id,
+      slug: validDynamicSlug,
       websiteUrl: biz.website ? (biz.website.startsWith('http') ? biz.website : `https://${biz.website}`) : '',
       phone: loc?.phone || biz.phone || null,
       email: biz.email || null,
@@ -3415,15 +3480,37 @@ export async function getDirectoryListingBySlugOrId(slugOrId: string) {
 export async function getPublishedDirectoryListings() {
   try {
     const bizList = await db
-      .select()
+      .select({
+        biz: schema.businessesTable,
+        dirProfile: schema.directoryProfilesTable,
+      })
       .from(schema.businessesTable)
-      .where(eq(schema.businessesTable.isPublishedInDirectory, true))
+      .leftJoin(schema.directoryProfilesTable, eq(schema.businessesTable.id, schema.directoryProfilesTable.businessId))
+      .where(
+        and(
+          eq(schema.businessesTable.isPublishedInDirectory, true),
+          ne(schema.businessesTable.status, 'deleted'),
+          ne(schema.businessesTable.status, 'suspended')
+        )
+      )
       .orderBy(desc(schema.businessesTable.createdAt));
 
     const results: any[] = [];
-    for (const biz of bizList) {
-      const listing = await getDirectoryListingBySlugOrId(biz.id);
-      if (listing) results.push(listing);
+    for (const row of bizList) {
+      if (row.dirProfile && (row.dirProfile.status === 'SUSPENDED' || row.dirProfile.status === 'UNPUBLISHED')) {
+        continue;
+      }
+      const listing = await getDirectoryListingBySlugOrId(row.biz.id);
+      if (listing) {
+        if (row.dirProfile) {
+          (listing as any).directoryStatus = row.dirProfile.status;
+          (listing as any).qualityScore = row.dirProfile.qualityScore;
+          (listing as any).qualityStatus = row.dirProfile.qualityStatus;
+          (listing as any).isVerified = row.dirProfile.isVerified;
+          (listing as any).canonicalUrl = row.dirProfile.canonicalUrl;
+        }
+        results.push(listing);
+      }
     }
     return results;
   } catch (err) {
@@ -3727,5 +3814,18 @@ export async function setBusinessDirectoryPublish(businessId: string, isPublishe
     return null;
   }
 }
+
+// Re-export specialized directory service functions
+export {
+  getDirectoryEligibility,
+  getDirectorySettings,
+  updateDirectorySettings,
+  getDirectoryProfileByBusinessId,
+  publishBusinessToDirectory,
+  unpublishBusinessFromDirectory,
+  syncDirectoryProfileData,
+  detectDuplicateDirectoryProfile,
+  generateUniqueDirectorySlug,
+} from './directoryService.ts';
 
 

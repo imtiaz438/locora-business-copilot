@@ -22,6 +22,7 @@ export type DirectoryBusinessStatus =
 export interface DirectoryBusinessListing {
   id: string;
   ownerId?: string;
+  ownerEmail?: string | null;
   businessName: string;
   slug: string;
   websiteUrl: string;
@@ -34,6 +35,7 @@ export interface DirectoryBusinessListing {
   stateCode: string;
   planTier: 'free' | 'pro' | 'agency' | 'starter' | 'growth';
   isPublishedInDirectory: boolean;
+  isDraft?: boolean;
   directoryStatus?: DirectoryBusinessStatus;
   isClaimed?: boolean;
   claimedByEmail?: string | null;

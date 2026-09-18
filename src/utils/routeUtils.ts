@@ -291,8 +291,8 @@ export function resolveRouteFromPath(rawPath: string, isApp: boolean = false, is
     if (slug) {
       return {
         targetTab: `directory_biz_${slug}`,
-        canonicalPath: isDirectory ? `/business/${slug}` : `/biz/${slug}`,
-        isCanonical: isDirectory ? false : true,
+        canonicalPath: `/biz/${slug}`,
+        isCanonical: true,
       };
     }
   }
@@ -301,8 +301,8 @@ export function resolveRouteFromPath(rawPath: string, isApp: boolean = false, is
     if (slug) {
       return {
         targetTab: `directory_biz_${slug}`,
-        canonicalPath: isDirectory ? `/business/${slug}` : `/biz/${slug}`,
-        isCanonical: isDirectory ? true : false,
+        canonicalPath: `/biz/${slug}`,
+        isCanonical: true,
       };
     }
   }

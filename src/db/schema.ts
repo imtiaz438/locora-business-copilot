@@ -901,8 +901,52 @@ export const directoryLeadsTable = pgTable('directory_leads', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// 32. Directory Profiles (Canonical 1:1 Directory Representation)
+export const directoryProfilesTable = pgTable('directory_profiles', {
+  id: text('id').primaryKey(),
+  businessId: text('business_id').notNull().unique().references(() => businessesTable.id, { onDelete: 'cascade' }),
+  status: text('status').default('UNPUBLISHED').notNull(), // 'UNPUBLISHED' | 'ELIGIBLE' | 'PUBLISHED' | 'CLAIM_PENDING' | 'CLAIMED' | 'VERIFIED' | 'SUSPENDED'
+  slug: text('slug').unique(),
+  publishedAt: timestamp('published_at'),
+  lastSyncedAt: timestamp('last_synced_at').defaultNow().notNull(),
+  seoTitle: text('seo_title'),
+  seoDescription: text('seo_description'),
+  seoKeywords: jsonb('seo_keywords').$type<string[]>().default([]),
+  canonicalUrl: text('canonical_url'),
+  qualityScore: integer('quality_score').default(0).notNull(),
+  qualityStatus: text('quality_status').default('basic').notNull(), // 'basic' | 'good' | 'complete' | 'verified'
+  missingFields: jsonb('missing_fields').$type<string[]>().default([]),
+  eligibilityReasons: jsonb('eligibility_reasons').$type<string[]>().default([]),
+  isClaimed: boolean('is_claimed').default(false).notNull(),
+  isVerified: boolean('is_verified').default(false).notNull(),
+  source: text('source').default('owner_published').notNull(), // 'owner_published' | 'discovered'
+  metadata: jsonb('metadata').$type<Record<string, any>>().default({}),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
 
-
-
-
+// 33. Global Admin Directory Settings & Moderation Rules
+export const directorySettingsTable = pgTable('directory_settings', {
+  id: text('id').primaryKey().default('global'),
+  directoryEnabled: boolean('directory_enabled').default(true).notNull(),
+  selfPublishingEnabled: boolean('self_publishing_enabled').default(true).notNull(),
+  minRequiredData: jsonb('min_required_data').$type<{
+    name: boolean;
+    category: boolean;
+    city: boolean;
+    country: boolean;
+    contactInfo: boolean;
+  }>().default({
+    name: true,
+    category: true,
+    city: true,
+    country: true,
+    contactInfo: true,
+  }).notNull(),
+  allowedCountries: jsonb('allowed_countries').$type<string[]>().default(['United States', 'US', 'USA', 'Canada', 'CA', 'UK', 'United Kingdom', 'Australia', 'AU']).notNull(),
+  duplicateDetectionEnabled: boolean('duplicate_detection_enabled').default(true).notNull(),
+  allowDiscoveredUnclaimed: boolean('allow_discovered_unclaimed').default(false).notNull(),
+  requireAdminApproval: boolean('require_admin_approval').default(false).notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
 

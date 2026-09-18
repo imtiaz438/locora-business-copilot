@@ -16,8 +16,10 @@ import {
   ArrowRight,
   SearchX,
   Info,
+  ExternalLink,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { getDirectoryBusinessUrl } from '../utils/domain';
 
 interface GoogleBusinessSyncModalProps {
   isOpen: boolean;
@@ -97,6 +99,7 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
   // Syncing state
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncSuccess, setSyncSuccess] = useState(false);
+  const [syncedListingSlug, setSyncedListingSlug] = useState<string>('');
 
   // Manual Profile Fields setup states
   const [manualName, setManualName] = useState(
@@ -266,11 +269,9 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
       });
 
       logActivity('integrations', 'Google Business Profile Synced', `Successfully linked live profile for ${place.name} in ${place.city || 'local area'}`);
+      const resolvedSlug = responseData.business?.slug || responseData.business?.directorySlug || activeBusiness.slug || activeBusiness.id;
+      setSyncedListingSlug(resolvedSlug);
       setSyncSuccess(true);
-
-      setTimeout(() => {
-        onClose();
-      }, 1200);
     } catch (err: any) {
       alert(`Sync failed: ${err.message || 'Unknown error'}`);
     } finally {
@@ -354,11 +355,9 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
       });
 
       logActivity('settings', 'Profile Fields Updated', `Updated core business profile for ${manualName.trim()} in ${manualCity.trim() || 'local area'}`);
+      const resolvedSlug = responseData.business?.slug || responseData.business?.directorySlug || activeBusiness.slug || activeBusiness.id;
+      setSyncedListingSlug(resolvedSlug);
       setSyncSuccess(true);
-
-      setTimeout(() => {
-        onClose();
-      }, 1200);
     } catch (err: any) {
       alert(`Save failed: ${err.message || 'Unknown error'}`);
     } finally {
@@ -437,17 +436,48 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
         {/* Body */}
         <div className="p-6 overflow-y-auto flex-1">
           {syncSuccess ? (
-            <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
+            <div className="py-8 px-4 flex flex-col items-center justify-center text-center space-y-5">
               <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center animate-bounce shadow-sm">
                 <Check className="w-8 h-8" />
               </div>
-              <div>
-                <h4 className="text-lg font-bold font-heading text-slate-900">
-                  Data Successfully Synced & Stored!
+              <div className="space-y-2 max-w-md">
+                <h4 className="text-xl font-black font-heading text-slate-900 tracking-tight">
+                  Google Business Profile Linked & Published!
                 </h4>
-                <p className="text-xs text-slate-600 mt-1 max-w-sm">
-                  Your business profile, reviews, geographic rankings, and services have been saved to the database. All dashboard modules are now live.
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Your business identity, live Google reviews, ratings, hours, and location have been synced to your workspace and <strong className="text-slate-900">published live to the Locora Business Directory</strong>.
                 </p>
+              </div>
+
+              <div className="w-full max-w-sm p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-left space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs font-bold text-emerald-950">Live Directory Presence</span>
+                </div>
+                <p className="text-[11px] text-emerald-800 leading-relaxed">
+                  Customers browsing directory.locoraai.com can now discover your services, call directly, and submit instant quote inquiries.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-sm pt-2">
+                {syncedListingSlug ? (
+                  <a
+                    href={getDirectoryBusinessUrl(syncedListingSlug)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <span>View Directory Listing</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+                >
+                  Go to Dashboard
+                </button>
               </div>
             </div>
           ) : activeTab === 'search' ? (
