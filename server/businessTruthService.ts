@@ -2,7 +2,7 @@ import { db, schema } from '../src/db/index.ts';
 import { eq, desc } from 'drizzle-orm';
 import { DataSourceAttribution } from '../src/types.ts';
 import type { BusinessTruth, BusinessTruthLocation, BusinessTruthGoogleProfile } from '../src/types.ts';
-import { getBusinessRecordById, getAllBusinessRecordsFromLocoraDb } from './locoraDataEngine.ts';
+import { getBusinessRecordById } from './locoraDataEngine.ts';
 
 /**
  * CANONICAL BUSINESS TRUTH / BUSINESS BRAIN SERVICE
@@ -17,26 +17,21 @@ export async function getBusinessTruth(businessId: string): Promise<BusinessTrut
   const cleanId = (businessId || '').trim();
   const isGenericOrPending = !cleanId || cleanId === 'workspace_pending' || cleanId === 'biz_locora_canonical' || cleanId === 'active';
   
+  if (isGenericOrPending) {
+    return null;
+  }
+
   try {
     let bizRows: any[] = [];
-    if (!isGenericOrPending) {
-      bizRows = await db
-        .select()
-        .from(schema.businessesTable)
-        .where(eq(schema.businessesTable.id, cleanId))
-        .limit(1);
-      
-      // Strict rule: if a specific businessId was requested and not found, return null - NEVER substitute another business
-      if (bizRows.length === 0) {
-        return null;
-      }
-    } else {
-      // Only when generic/active was requested without an explicit ID, resolve the primary business
-      bizRows = await db
-        .select()
-        .from(schema.businessesTable)
-        .orderBy(desc(schema.businessesTable.createdAt))
-        .limit(1);
+    bizRows = await db
+      .select()
+      .from(schema.businessesTable)
+      .where(eq(schema.businessesTable.id, cleanId))
+      .limit(1);
+    
+    // Strict rule: if a specific businessId was requested and not found, return null - NEVER substitute another business
+    if (bizRows.length === 0) {
+      return null;
     }
 
     if (bizRows.length > 0) {
@@ -175,8 +170,11 @@ export async function getBusinessTruth(businessId: string): Promise<BusinessTrut
     console.warn('DB query in getBusinessTruth encountered an issue, falling back to locoraDataEngine:', err);
   }
 
-  // Fallback to in-memory/file-based canonical locoraDataEngine
-  const engineBiz = (cleanId ? getBusinessRecordById(cleanId) : undefined) || getAllBusinessRecordsFromLocoraDb()[0];
+  // Fallback to in-memory/file-based canonical locoraDataEngine strictly for this specific cleanId
+  if (!cleanId || isGenericOrPending) {
+    return null;
+  }
+  const engineBiz = getBusinessRecordById(cleanId);
   if (!engineBiz) {
     return null;
   }

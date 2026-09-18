@@ -112,6 +112,13 @@ const AccountSecuritySection: React.FC = () => {
         setDeleteError(data.error || 'Failed to delete account.');
         setDeletingAccount(false);
       } else {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('locora_active_business_id');
+          localStorage.removeItem('locora_business_profile');
+          localStorage.removeItem('locora_user_storage');
+          localStorage.removeItem('locora_workspace_data');
+        }
+        setShowDeleteModal(false);
         logout();
       }
     } catch (err) {

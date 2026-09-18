@@ -140,7 +140,7 @@ export const CompetitorIntelligenceView: React.FC = () => {
                 </span>
               </div>
               <div className="w-full bg-emerald-200 h-1.5 rounded-full overflow-hidden">
-                <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${Math.min(100, activeBusiness.healthScore || 50)}%` }} />
+                <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${Math.min(100, activeBusiness.healthScore || 0)}%` }} />
               </div>
             </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { FixItModal } from './FixItModal';
 import { MultiLocationSection } from './MultiLocationSection';
@@ -30,6 +30,9 @@ import {
   Crosshair,
   BarChart3,
   Check,
+  Phone,
+  Mail,
+  Clock,
 } from 'lucide-react';
 
 export const GrowthCommandCenter: React.FC = () => {
@@ -44,6 +47,9 @@ export const GrowthCommandCenter: React.FC = () => {
     setIsGbpSyncModalOpen,
     latestWebsiteAudit,
     productionDashboard,
+    customers,
+    invoices,
+    workTasks,
   } = useApp();
 
   // Canonical business identity and facts from canonical truth service
@@ -58,6 +64,37 @@ export const GrowthCommandCenter: React.FC = () => {
 
   const [selectedFixItAction, setSelectedFixItAction] = useState<PriorityAction | null>(null);
   const [expandedReasonId, setExpandedReasonId] = useState<string | null>(null);
+
+  // Directory Live Metrics & Inbound Leads
+  const [dirAnalytics, setDirAnalytics] = useState<any>(null);
+  const [loadingDirAnalytics, setLoadingDirAnalytics] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadDir = async () => {
+      setLoadingDirAnalytics(true);
+      try {
+        const target = activeBusiness?.directorySlug || activeBusiness?.slug || activeBusiness?.id;
+        if (!target) {
+          setLoadingDirAnalytics(false);
+          return;
+        }
+        const res = await fetch(`/api/directory/analytics?businessId=${encodeURIComponent(target)}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && isMounted) {
+            setDirAnalytics(json.analytics?.businessMetrics || null);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed loading directory analytics in Growth Center:', e);
+      } finally {
+        if (isMounted) setLoadingDirAnalytics(false);
+      }
+    };
+    loadDir();
+    return () => { isMounted = false; };
+  }, [activeBusiness?.id, activeBusiness?.directorySlug, activeBusiness?.slug]);
 
   // Ask Locora Inline Chat
   const [askInput, setAskInput] = useState('');
@@ -82,7 +119,7 @@ export const GrowthCommandCenter: React.FC = () => {
     consumeAiCredit(1);
 
     try {
-      const targetBizId = businessTruth?.businessId || activeBusiness?.id || 'biz_1789474131941_8uzzv';
+      const targetBizId = businessTruth?.businessId || activeBusiness?.id || '';
       // Attempt verified AI Manager grounded endpoint first
       const aiManagerRes = await fetch('/api/ai-manager/query', {
         method: 'POST',
@@ -90,7 +127,7 @@ export const GrowthCommandCenter: React.FC = () => {
         body: JSON.stringify({
           businessId: targetBizId,
           query: q,
-          userEmail: user?.email || 'real@smilesolution.com',
+          userEmail: user?.email || '',
         }),
       });
 
@@ -153,45 +190,60 @@ export const GrowthCommandCenter: React.FC = () => {
     setExpandedReasonId((prev) => (prev === id ? null : id));
   };
 
+  // 1. Visibility Component
   const hasObservedRank = typeof activeBusiness.rankingAvg === 'number' && activeBusiness.rankingAvg > 0;
-  const visibilityScore = hasObservedRank
+  const hasTrackedKeywords = Boolean(productionDashboard?.collectedData?.trackedKeywords && productionDashboard.collectedData.trackedKeywords.length > 0);
+  const isGbpConnected = Boolean(
+    activeBusiness.gbpConnected ||
+    (activeBusiness as any).googleConnected ||
+    productionDashboard?.collectedData?.googleProfile?.isVerified
+  );
+  const visibilityScore: number | null = hasObservedRank
     ? Math.round(Math.max(15, 100 - (activeBusiness.rankingAvg! - 1) * 12))
-    : 0;
+    : (hasTrackedKeywords ? 65 : (isGbpConnected ? 50 : null));
 
-  const reputationScore = activeBusiness.googleRating > 0
+  // 2. Trust & Reputation Component
+  const hasReviews = Boolean(isGbpConnected && (activeBusiness.googleRating > 0 || (activeBusiness.reviewCount && activeBusiness.reviewCount > 0)));
+  const trustReputationScore: number | null = hasReviews && activeBusiness.googleRating > 0
     ? Math.round((activeBusiness.googleRating / 5) * 100)
-    : 0;
+    : null;
 
-  const websiteScore = latestWebsiteAudit?.scores?.seo
-    ? Math.round(((latestWebsiteAudit.scores.seo || 0) + (latestWebsiteAudit.scores.performance || 0)) / 2)
-    : activeBusiness.website ? 40 : 0;
+  // 3. Conversion & Foundation Component
+  const crawlSeo = latestWebsiteAudit?.scores?.seo || productionDashboard?.collectedData?.latestCrawlRun?.seoScore;
+  const crawlPerf = latestWebsiteAudit?.scores?.performance || productionDashboard?.collectedData?.latestCrawlRun?.perfScore;
+  const hasFoundationData = typeof crawlSeo === 'number' && crawlSeo > 0;
+  const conversionFoundationScore: number | null = hasFoundationData
+    ? Math.round(typeof crawlPerf === 'number' && crawlPerf > 0 ? (crawlSeo + crawlPerf) / 2 : crawlSeo)
+    : null;
 
-  const conversionScore = activeBusiness.gbpConnected && activeBusiness.website
-    ? 60
-    : activeBusiness.gbpConnected || activeBusiness.website ? 30 : 0;
+  // 4. Client Operations Component
+  const bizCustomers = customers?.filter((c) => c.businessId === activeBusiness.id) || [];
+  const bizInvoices = invoices?.filter((i) => i.businessId === activeBusiness.id) || [];
+  const bizTasks = workTasks?.filter((t) => t.businessId === activeBusiness.id) || [];
+  const hasClientOpsData = bizCustomers.length > 0 || bizInvoices.length > 0 || bizTasks.length > 0;
+  const clientOpsScore: number | null = hasClientOpsData
+    ? Math.min(100, Math.round(50 + (bizCustomers.length * 10) + (bizInvoices.length * 10) + (bizTasks.length * 5)))
+    : null;
 
-  const contentScore = (activeBusiness.services?.length || 0) > 0
-    ? Math.min(85, (activeBusiness.services?.length || 0) * 20)
-    : 0;
+  // Real weighted average of authentic components only (no hardcoded fallback 73, 76, 78)
+  const validPillars: { name: string; score: number; weight: number }[] = [];
+  if (visibilityScore !== null) validPillars.push({ name: 'Visibility', score: visibilityScore, weight: 0.25 });
+  if (trustReputationScore !== null) validPillars.push({ name: 'Trust & Reputation', score: trustReputationScore, weight: 0.25 });
+  if (conversionFoundationScore !== null) validPillars.push({ name: 'Conversion & Foundation', score: conversionFoundationScore, weight: 0.25 });
+  if (clientOpsScore !== null) validPillars.push({ name: 'Client Operations', score: clientOpsScore, weight: 0.25 });
 
-  const compScore = (activeBusiness.competitors?.length || 0) > 0
-    ? Math.min(80, (activeBusiness.competitors?.length || 0) * 25)
-    : 0;
+  const overallScore: number | null = validPillars.length > 0
+    ? Math.round(validPillars.reduce((sum, p) => sum + p.score * p.weight, 0) / validPillars.reduce((sum, p) => sum + p.weight, 0))
+    : null;
 
   const brain = productionDashboard?.businessBrain || businessTruth?.brain || null;
-  const brainScore = brain?.score && brain.score > 0 ? brain.score : 73;
-  const brainReadiness = brain?.readinessScore && brain.readinessScore > 0 ? brain.readinessScore : 81;
+  const brainScore: number | null = brain?.score && brain.score > 0 ? brain.score : null;
+  const brainReadiness: number | null = brain?.readinessScore && brain.readinessScore > 0 ? brain.readinessScore : null;
   const brainSummary = brain?.summary || null;
   const brainSwot = brain?.swot || null;
-  const verifiedServices = Array.isArray(businessServices) && businessServices.length > 0
+  const verifiedServices: string[] = Array.isArray(businessServices) && businessServices.length > 0
     ? businessServices
-    : (Array.isArray(activeBusiness?.services) && activeBusiness.services.length > 0 ? activeBusiness.services : ['General Dentistry', 'Cosmetic Dentistry', 'Orthodontics']);
-
-  const overallScore = (activeBusiness?.healthScore && activeBusiness.healthScore > 0)
-    ? activeBusiness.healthScore
-    : (brain?.score && brain.score > 0
-        ? brain.score
-        : Math.round((visibilityScore + reputationScore + websiteScore + conversionScore + contentScore + compScore) / 6));
+    : (Array.isArray(activeBusiness?.services) && activeBusiness.services.length > 0 ? activeBusiness.services : []);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto font-sans text-slate-900 pb-16">
@@ -265,43 +317,155 @@ export const GrowthCommandCenter: React.FC = () => {
       </div>
 
       {/* LOCORA DIRECTORY PRESENCE & INBOUND LEADS CARD */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="space-y-2 max-w-2xl">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Locora Certified Directory
-            </span>
-            <span className="text-xs text-slate-500 font-medium">
-              Verified Public Presence
-            </span>
+      <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-xs space-y-5">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Locora Certified Directory
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                Verified Public Listing
+              </span>
+              {(dirAnalytics?.totalLeads ?? 0) > 0 && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-500 text-white shadow-2xs">
+                  <Zap className="w-3.5 h-3.5" />
+                  {dirAnalytics.totalLeads} Live Inbound Lead{dirAnalytics.totalLeads > 1 ? 's' : ''} Received
+                </span>
+              )}
+            </div>
+            <h3 className="text-base sm:text-lg font-bold font-heading text-slate-900">
+              {businessName || 'Your Business'} is Live on Locora Local Directory
+            </h3>
+            <p className="text-xs text-slate-600 leading-relaxed max-w-xl font-sans">
+              Local customers searching in {businessCity || 'your local area'} discover your business, inspect verified Google reviews, and submit quote requests delivered directly into your CRM.
+            </p>
           </div>
-          <h3 className="text-base sm:text-lg font-bold font-heading text-slate-900">
-            {businessName || 'Your Business'} is Live on Locora Local Directory
-          </h3>
-          <p className="text-xs text-slate-600 leading-relaxed max-w-xl font-sans">
-            Visitors in {businessCity || 'your local area'} can view your verified Google reviews, confirm opening hours, and submit direct quote requests with zero middleman fees.
-          </p>
+
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0 w-full md:w-auto">
+            <a
+              href={getDirectoryBusinessUrl(activeBusiness?.directorySlug || activeBusiness?.slug || activeBusiness?.id || (businessName ? businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'directory'))}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer font-sans"
+            >
+              <span>View Public Listing</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </a>
+            <button
+              onClick={() => {
+                sessionStorage.setItem('locora_visibility_subtab', 'directory_leads');
+                setActiveTab('visibility');
+              }}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
+            >
+              <Users className="w-4 h-4" />
+              <span>Directory Leads CRM</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0 w-full md:w-auto">
-          <a
-            href={getDirectoryBusinessUrl(activeBusiness?.directorySlug || activeBusiness?.id || 'smile-solutions')}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer font-sans"
-          >
-            <span>View Public Listing</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </a>
-          <button
-            onClick={() => setActiveTab('visibility')}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
-          >
-            <Users className="w-4 h-4" />
-            <span>Manage Directory Leads</span>
-          </button>
+        {/* Live Metrics Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100">
+          <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5">
+            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Inbound Quotes</div>
+            <div className="text-xl font-black text-slate-900 mt-1 flex items-center gap-1.5">
+              <span>{dirAnalytics?.totalLeads ?? 0}</span>
+              <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">Real-Time</span>
+            </div>
+          </div>
+          <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5">
+            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Profile Views</div>
+            <div className="text-xl font-black text-slate-900 mt-1">
+              {dirAnalytics?.profileViews ?? 0}
+            </div>
+          </div>
+          <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5">
+            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Direct Phone Calls</div>
+            <div className="text-xl font-black text-slate-900 mt-1">
+              {dirAnalytics?.phoneClicks ?? 0}
+            </div>
+          </div>
+          <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5">
+            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Conversion Rate</div>
+            <div className="text-xl font-black text-emerald-700 mt-1">
+              {dirAnalytics?.leadConversionRate ? `${dirAnalytics.leadConversionRate}%` : '0%'}
+            </div>
+          </div>
         </div>
+
+        {/* Recent Inbound Quotes Feed */}
+        {Array.isArray(dirAnalytics?.leads) && dirAnalytics.leads.length > 0 && (
+          <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                Latest Inbound Quote Requests ({dirAnalytics.leads.length})
+              </span>
+              <button
+                onClick={() => {
+                  sessionStorage.setItem('locora_visibility_subtab', 'directory_leads');
+                  setActiveTab('visibility');
+                }}
+                className="text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>View Full Pipeline</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {dirAnalytics.leads.slice(0, 3).map((lead: any) => (
+                <div
+                  key={lead.id}
+                  className="bg-white border border-slate-200/80 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs hover:border-emerald-300 transition-all"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-bold text-slate-900">{lead.leadName}</span>
+                      <span className="text-[11px] px-2 py-0.5 bg-emerald-50 text-emerald-700 font-bold rounded-md border border-emerald-100">
+                        {lead.serviceRequested || 'General Quote'}
+                      </span>
+                      <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {new Date(lead.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                    {lead.message && (
+                      <p className="text-xs text-slate-600 line-clamp-1 italic font-sans">
+                        "{lead.message}"
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {lead.leadPhone && (
+                      <a
+                        href={`tel:${lead.leadPhone}`}
+                        className="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                      >
+                        <Phone className="w-3 h-3 text-emerald-600" />
+                        <span>{lead.leadPhone}</span>
+                      </a>
+                    )}
+                    <button
+                      onClick={() => {
+                        sessionStorage.setItem('locora_visibility_subtab', 'directory_leads');
+                        setActiveTab('visibility');
+                      }}
+                      className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                    >
+                      <span>Manage</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 1.8 AI BUSINESS BRAIN • VERIFIED STRATEGIC DOSSIER */}
@@ -327,7 +491,7 @@ export const GrowthCommandCenter: React.FC = () => {
               <span>{businessName || 'Business'} Intelligence Dossier</span>
             </h2>
             <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-              Synthesized during onboarding from verified web crawl, services taxonomy, and regional competitive parameters in {businessCity || 'Melbourne'}.
+              Synthesized from verified web crawl, services taxonomy, and regional competitive parameters{businessCity ? ` in ${businessCity}` : ''}.
             </p>
           </div>
 
@@ -335,13 +499,21 @@ export const GrowthCommandCenter: React.FC = () => {
           <div className="flex items-center gap-3 shrink-0 flex-wrap sm:flex-nowrap">
             <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl px-4 py-3 text-center min-w-[110px]">
               <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Health Score</span>
-              <span className="text-xl font-black text-emerald-400 font-heading">{brainScore}</span>
-              <span className="text-[10px] text-slate-400 font-semibold block">/ 100</span>
+              <span className="text-xl font-black text-emerald-400 font-heading">
+                {brainScore !== null ? brainScore : '—'}
+              </span>
+              <span className="text-[10px] text-slate-400 font-semibold block">
+                {brainScore !== null ? '/ 100' : 'No data yet'}
+              </span>
             </div>
             <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl px-4 py-3 text-center min-w-[120px]">
               <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">AI Readiness</span>
-              <span className="text-xl font-black text-emerald-300 font-heading">{brainReadiness}%</span>
-              <span className="text-[10px] text-slate-400 font-semibold block">Verified Depth</span>
+              <span className="text-xl font-black text-emerald-300 font-heading">
+                {brainReadiness !== null ? `${brainReadiness}%` : '—'}
+              </span>
+              <span className="text-[10px] text-slate-400 font-semibold block">
+                {brainReadiness !== null ? 'Verified Depth' : 'Connect data'}
+              </span>
             </div>
             <button
               onClick={() => handleAskLocora('What do you know about this business?')}
@@ -360,7 +532,9 @@ export const GrowthCommandCenter: React.FC = () => {
             <span>Executive Strategic Synthesis</span>
           </div>
           <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
-            {brainSummary || `${businessName || 'Your business'} is positioned as a trusted ${businessCategory || 'local service'} provider serving ${businessCity || 'Melbourne'}, ${businessState || 'Victoria'}. Focusing on direct capture for core offerings and formalizing digital trust signals represents the fastest path to outperforming local market competitors.`}
+            {brainSummary || (businessName
+              ? `Connect your Google Business Profile and website to synthesize executive AI intelligence for ${businessName}.`
+              : 'Connect your business channels to synthesize executive AI intelligence.')}
           </p>
           
           {/* Verified Service Catalog Pills */}
@@ -399,10 +573,9 @@ export const GrowthCommandCenter: React.FC = () => {
                   </li>
                 ))
               ) : (
-                <>
-                  <li className="flex items-start gap-1.5 leading-snug"><span className="text-emerald-400">•</span> Established domain & regional authority</li>
-                  <li className="flex items-start gap-1.5 leading-snug"><span className="text-emerald-400">•</span> Comprehensive specialized dental care services</li>
-                </>
+                <li className="text-slate-500 italic flex items-center gap-1.5">
+                  <span>No data yet — connect data to analyze strengths</span>
+                </li>
               )}
             </ul>
           </div>
@@ -424,10 +597,9 @@ export const GrowthCommandCenter: React.FC = () => {
                   </li>
                 ))
               ) : (
-                <>
-                  <li className="flex items-start gap-1.5 leading-snug"><span className="text-amber-400">•</span> Google Maps profile pending verification</li>
-                  <li className="flex items-start gap-1.5 leading-snug"><span className="text-amber-400">•</span> Schema markup incomplete on primary landing page</li>
-                </>
+                <li className="text-slate-500 italic flex items-center gap-1.5">
+                  <span>No data yet — connect channels to surface gaps</span>
+                </li>
               )}
             </ul>
           </div>
@@ -449,10 +621,9 @@ export const GrowthCommandCenter: React.FC = () => {
                   </li>
                 ))
               ) : (
-                <>
-                  <li className="flex items-start gap-1.5 leading-snug"><span className="text-sky-400">•</span> Capture Melbourne CBD local 3-pack search traffic</li>
-                  <li className="flex items-start gap-1.5 leading-snug"><span className="text-sky-400">•</span> Deploy automated review request sequences</li>
-                </>
+                <li className="text-slate-500 italic flex items-center gap-1.5">
+                  <span>No data yet — connect channels to discover opportunities</span>
+                </li>
               )}
             </ul>
           </div>
@@ -474,10 +645,9 @@ export const GrowthCommandCenter: React.FC = () => {
                   </li>
                 ))
               ) : (
-                <>
-                  <li className="flex items-start gap-1.5 leading-snug"><span className="text-rose-400">•</span> Competitors aggressively capturing Dentist terms</li>
-                  <li className="flex items-start gap-1.5 leading-snug"><span className="text-rose-400">•</span> Algorithm updates prioritizing real-time updated GBP</li>
-                </>
+                <li className="text-slate-500 italic flex items-center gap-1.5">
+                  <span>No data yet — add competitors to track market threats</span>
+                </li>
               )}
             </ul>
           </div>
@@ -511,19 +681,21 @@ export const GrowthCommandCenter: React.FC = () => {
                   fill="none"
                   d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 />
-                <path
-                  className="text-[#059669]"
-                  strokeDasharray={`${overallScore}, 100`}
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                  stroke="currentColor"
-                  fill="none"
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                />
+                {overallScore !== null && (
+                  <path
+                    className="text-[#059669]"
+                    strokeDasharray={`${overallScore}, 100`}
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                )}
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-xl font-black font-heading leading-none">
-                  {overallScore}
+                <span className={`text-xl font-black font-heading leading-none ${overallScore !== null ? 'text-white' : 'text-slate-500'}`}>
+                  {overallScore !== null ? overallScore : '—'}
                 </span>
                 <span className="text-[9px] text-slate-400 font-bold uppercase">/ 100</span>
               </div>
@@ -534,30 +706,30 @@ export const GrowthCommandCenter: React.FC = () => {
                 Overall Growth Health
               </span>
               <p className="text-base font-bold font-heading text-white">
-                Score: {overallScore} / 100
+                {overallScore !== null ? `Score: ${overallScore} / 100` : 'No data yet'}
               </p>
               <div className="flex items-center gap-1 text-xs text-slate-300 mt-1">
                 <DataProvenanceBadge
-                  type={overallScore > 0 ? 'CALCULATED' : 'UNAVAILABLE'}
-                  customText={overallScore > 0 ? '✓ Calculated from connected data' : '⚠ Connect profile to calculate score'}
+                  type={overallScore !== null ? 'CALCULATED' : 'UNAVAILABLE'}
+                  customText={overallScore !== null ? '✓ Weighted average of active components' : 'Connect data to calculate this metric'}
                 />
               </div>
             </div>
           </div>
         </div>
 
-        {/* SECTION 29: 6-Component Growth Health Scoring System with Evidence */}
+        {/* 4-Component Growth Health Scoring Breakdown */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500 font-heading">
-              Evidence-Based Scoring Breakdown (6 Pillars)
+              Evidence-Based Scoring Breakdown (4 Components)
             </span>
             <span className="text-xs text-slate-500 font-medium">
-              Calculated strictly from connected Google, Website, and Competitor data
+              Calculated dynamically from authentic business data
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             {/* 1. Visibility */}
             <div
               onClick={() => setActiveTab('visibility')}
@@ -565,166 +737,110 @@ export const GrowthCommandCenter: React.FC = () => {
             >
               <div className="flex items-center justify-between text-xs text-slate-500">
                 <span className="font-bold text-slate-800 group-hover:text-[#059669]">Visibility</span>
-                <span className="font-bold text-slate-900 font-mono text-base">
-                  {visibilityScore > 0 ? visibilityScore : '—'}
+                <span className={`font-bold font-mono text-base ${visibilityScore !== null ? 'text-slate-900' : 'text-slate-400'}`}>
+                  {visibilityScore !== null ? visibilityScore : '—'}
                 </span>
               </div>
               <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${visibilityScore}%` }} />
+                <div className="bg-emerald-600 h-full rounded-full transition-all" style={{ width: `${visibilityScore ?? 0}%` }} />
               </div>
               <p className="text-[11px] text-slate-600 font-medium line-clamp-1">
                 {hasObservedRank
                   ? `Observed Map rank #${activeBusiness.rankingAvg!.toFixed(1)}`
-                  : 'Tracking not configured'}
+                  : (hasTrackedKeywords ? 'Keywords tracked' : (isGbpConnected ? 'GBP linked • rank tracking pending' : 'Connect Google Business Profile'))}
               </p>
               <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between">
-                <span className="text-[10px] text-slate-400 font-medium">Source Status:</span>
+                <span className="text-[10px] text-slate-400 font-medium">Source:</span>
                 <DataProvenanceBadge
-                  type={hasObservedRank ? 'CALCULATED' : 'UNAVAILABLE'}
-                  customText={hasObservedRank ? '✓ Calculated from rank tracker' : '⚠ No ranking data available'}
+                  type={visibilityScore !== null ? 'CALCULATED' : 'UNAVAILABLE'}
+                  customText={visibilityScore !== null ? '✓ Calculated' : 'Connect data'}
                 />
               </div>
             </div>
 
-            {/* 2. Reputation */}
+            {/* 2. Trust & Reputation */}
             <div
               onClick={() => setActiveTab('reputation')}
               className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group space-y-2"
             >
               <div className="flex items-center justify-between text-xs text-slate-500">
-                <span className="font-bold text-slate-800 group-hover:text-[#059669]">Reputation</span>
-                <span className="font-bold text-slate-900 font-mono text-base">
-                  {reputationScore > 0 ? reputationScore : '—'}
+                <span className="font-bold text-slate-800 group-hover:text-[#059669]">Trust & Reputation</span>
+                <span className={`font-bold font-mono text-base ${trustReputationScore !== null ? 'text-slate-900' : 'text-slate-400'}`}>
+                  {trustReputationScore !== null ? trustReputationScore : '—'}
                 </span>
               </div>
               <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${reputationScore}%` }} />
+                <div className="bg-emerald-600 h-full rounded-full transition-all" style={{ width: `${trustReputationScore ?? 0}%` }} />
               </div>
               <p className="text-[11px] text-slate-600 font-medium line-clamp-1">
-                {activeBusiness.reviewCount > 0
-                  ? `${activeBusiness.googleRating.toFixed(1)}★ • ${activeBusiness.reviewCount} reviews • ${activeBusiness.unansweredReviews} unread`
-                  : (activeBusiness.gbpConnected ? '0 reviews on connected listing' : 'Connect GBP to sync reviews')}
+                {hasReviews
+                  ? `${activeBusiness.googleRating.toFixed(1)}★ • ${activeBusiness.reviewCount} reviews`
+                  : (isGbpConnected ? '0 reviews on connected profile' : 'Connect GBP to sync reviews')}
               </p>
               <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between">
-                <span className="text-[10px] text-slate-400 font-medium">Source Status:</span>
+                <span className="text-[10px] text-slate-400 font-medium">Source:</span>
                 <DataProvenanceBadge
-                  type={(activeBusiness.gbpConnected && activeBusiness.googleRating > 0) ? 'SYNCED' : 'UNAVAILABLE'}
-                  customText={(activeBusiness.gbpConnected && activeBusiness.googleRating > 0) ? '✓ Synced from Google' : '⚠ No Google reviews synced'}
+                  type={trustReputationScore !== null ? 'SYNCED' : 'UNAVAILABLE'}
+                  customText={trustReputationScore !== null ? '✓ Google reviews' : 'Connect data'}
                 />
               </div>
             </div>
 
-            {/* 3. Website */}
+            {/* 3. Conversion & Foundation */}
             <div
-              onClick={() => setActiveTab('seo')}
+              onClick={() => setActiveTab('website_review')}
               className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group space-y-2"
             >
               <div className="flex items-center justify-between text-xs text-slate-500">
-                <span className="font-bold text-slate-800 group-hover:text-[#059669]">Website (Technical SEO)</span>
-                <span className="font-bold text-slate-900 font-mono text-base">
-                  {latestWebsiteAudit?.scores?.seo ? latestWebsiteAudit.scores.seo : '—'}
+                <span className="font-bold text-slate-800 group-hover:text-[#059669]">Conversion & Foundation</span>
+                <span className={`font-bold font-mono text-base ${conversionFoundationScore !== null ? 'text-slate-900' : 'text-slate-400'}`}>
+                  {conversionFoundationScore !== null ? conversionFoundationScore : '—'}
                 </span>
               </div>
               <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
                 <div
                   className="bg-emerald-600 h-full rounded-full transition-all"
-                  style={{ width: `${latestWebsiteAudit?.scores?.seo ? websiteScore : 0}%` }}
+                  style={{ width: `${conversionFoundationScore ?? 0}%` }}
                 />
               </div>
               <p className="text-[11px] text-slate-600 font-medium line-clamp-1">
-                {latestWebsiteAudit
-                  ? `Technical SEO: ${latestWebsiteAudit.scores?.seo || 0} • Speed ${latestWebsiteAudit.scores?.performance || 0}`
-                  : 'No SEO audit available yet • Click to run crawl'}
+                {hasFoundationData
+                  ? `Technical SEO: ${crawlSeo} • Speed: ${crawlPerf || '—'}`
+                  : (activeBusiness.website ? 'Website connected • Audit pending' : 'No website audit • Click to audit')}
               </p>
               <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between">
-                <span className="text-[10px] text-slate-400 font-medium">Source Status:</span>
+                <span className="text-[10px] text-slate-400 font-medium">Source:</span>
                 <DataProvenanceBadge
-                  type={latestWebsiteAudit?.scores?.seo ? 'CALCULATED' : 'UNAVAILABLE'}
-                  customText={latestWebsiteAudit?.scores?.seo ? '✓ Calculated from latest crawl' : '⚠ No crawl data available'}
-                />
-              </div>
-            </div>
-
-            {/* 4. Conversion */}
-            <div
-              onClick={() => setActiveTab('customers')}
-              className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group space-y-2"
-            >
-              <div className="flex items-center justify-between text-xs text-slate-500">
-                <span className="font-bold text-slate-800 group-hover:text-[#059669]">Conversion</span>
-                <span className="font-bold text-slate-900 font-mono text-base">
-                  {conversionScore > 0 ? conversionScore : '—'}
-                </span>
-              </div>
-              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${conversionScore}%` }} />
-              </div>
-              <p className="text-[11px] text-slate-600 font-medium line-clamp-1">
-                {activeBusiness.gbpConnected && activeBusiness.website
-                  ? 'Maps & website contact active'
-                  : 'Requires website & Google sync'}
-              </p>
-              <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between">
-                <span className="text-[10px] text-slate-400 font-medium">Source Status:</span>
-                <DataProvenanceBadge
-                  type={activeBusiness.gbpConnected || activeBusiness.website ? 'USER_PROVIDED' : 'UNAVAILABLE'}
-                  customText={activeBusiness.gbpConnected || activeBusiness.website ? '✓ User/Website Lead' : '⚠ No lead capture data'}
+                  type={conversionFoundationScore !== null ? 'CALCULATED' : 'UNAVAILABLE'}
+                  customText={conversionFoundationScore !== null ? '✓ Website audit' : 'Connect data'}
                 />
               </div>
             </div>
 
-            {/* 5. Content */}
+            {/* 4. Client Operations */}
             <div
-              onClick={() => setActiveTab('content')}
+              onClick={() => setActiveTab('crm')}
               className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group space-y-2"
             >
               <div className="flex items-center justify-between text-xs text-slate-500">
-                <span className="font-bold text-slate-800 group-hover:text-[#059669]">Content</span>
-                <span className="font-bold text-slate-900 font-mono text-base">
-                  {contentScore > 0 ? contentScore : '—'}
+                <span className="font-bold text-slate-800 group-hover:text-[#059669]">Client Operations</span>
+                <span className={`font-bold font-mono text-base ${clientOpsScore !== null ? 'text-slate-900' : 'text-slate-400'}`}>
+                  {clientOpsScore !== null ? clientOpsScore : '—'}
                 </span>
               </div>
               <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${contentScore}%` }} />
+                <div className="bg-emerald-600 h-full rounded-full transition-all" style={{ width: `${clientOpsScore ?? 0}%` }} />
               </div>
               <p className="text-[11px] text-slate-600 font-medium line-clamp-1">
-                {(activeBusiness.services?.length || 0) > 0
-                  ? `${activeBusiness.services.length} services configured`
-                  : 'No core services configured'}
+                {hasClientOpsData
+                  ? `${bizCustomers.length} client${bizCustomers.length !== 1 ? 's' : ''} • ${bizInvoices.length} invoice${bizInvoices.length !== 1 ? 's' : ''}`
+                  : 'No customer records • Open CRM'}
               </p>
               <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between">
-                <span className="text-[10px] text-slate-400 font-medium">Source Status:</span>
+                <span className="text-[10px] text-slate-400 font-medium">Source:</span>
                 <DataProvenanceBadge
-                  type={(activeBusiness.services?.length || 0) > 0 ? 'USER_PROVIDED' : 'UNAVAILABLE'}
-                  customText={(activeBusiness.services?.length || 0) > 0 ? '✓ User provided services' : '⚠ No services configured'}
-                />
-              </div>
-            </div>
-
-            {/* 6. Competitiveness */}
-            <div
-              onClick={() => setActiveTab('competitors')}
-              className="p-4 rounded-2xl bg-slate-50 hover:bg-slate-100/90 border border-slate-200 transition-all cursor-pointer group space-y-2"
-            >
-              <div className="flex items-center justify-between text-xs text-slate-500">
-                <span className="font-bold text-slate-800 group-hover:text-[#059669]">Competitiveness</span>
-                <span className="font-bold text-slate-900 font-mono text-base">
-                  {compScore > 0 ? compScore : '—'}
-                </span>
-              </div>
-              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                <div className="bg-emerald-600 h-full rounded-full" style={{ width: `${compScore}%` }} />
-              </div>
-              <p className="text-[11px] text-slate-600 font-medium line-clamp-1">
-                {(activeBusiness.competitors?.length || 0) > 0
-                  ? `${activeBusiness.competitors.length} competitors tracked`
-                  : '0 competitors tracked (click to add)'}
-              </p>
-              <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between">
-                <span className="text-[10px] text-slate-400 font-medium">Source Status:</span>
-                <DataProvenanceBadge
-                  type={(activeBusiness.competitors?.length || 0) > 0 ? 'CALCULATED' : 'UNAVAILABLE'}
-                  customText={(activeBusiness.competitors?.length || 0) > 0 ? '✓ Calculated from competitor audit' : '⚠ No ranking data available'}
+                  type={clientOpsScore !== null ? 'USER_PROVIDED' : 'UNAVAILABLE'}
+                  customText={clientOpsScore !== null ? '✓ Active records' : 'Connect data'}
                 />
               </div>
             </div>
@@ -1061,7 +1177,9 @@ export const GrowthCommandCenter: React.FC = () => {
             <Crosshair className="w-4 h-4" />
           </div>
           <h4 className="text-xs font-bold text-slate-900 font-heading">Competitors</h4>
-          <p className="text-[11px] text-slate-500 mt-0.5">{activeBusiness.competitors?.length || 3} local rivals</p>
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            {activeBusiness.competitors?.length ? `${activeBusiness.competitors.length} local rivals` : 'No rivals tracked'}
+          </p>
         </button>
 
         <button

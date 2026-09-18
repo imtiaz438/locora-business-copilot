@@ -316,7 +316,7 @@ export const AiVisibilityObservationsPanel: React.FC<AiVisibilityObservationsPan
 
           <div className="max-w-md mx-auto space-y-2">
             <h4 className="text-xl font-black font-heading text-slate-900">
-              AI visibility monitoring has not been run yet.
+              No AI visibility observations yet.
             </h4>
             <p className="text-xs text-slate-600 leading-relaxed">
               Locora will not display simulated percentages, synthetic visibility scores, or fake citations for {effectiveBusinessName}.

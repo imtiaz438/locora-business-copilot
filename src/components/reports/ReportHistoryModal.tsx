@@ -56,7 +56,7 @@ export const ReportHistoryModal: React.FC<ReportHistoryModalProps> = ({
           {snapshots.length === 0 ? (
             <div className="text-center py-12 text-slate-400">
               <Clock className="w-10 h-10 mx-auto mb-2 text-slate-300" />
-              <p className="text-sm font-medium text-slate-600">No saved snapshots yet</p>
+              <p className="text-sm font-medium text-slate-600">No reports yet.</p>
               <p className="text-xs text-slate-400 mt-1">
                 Click &quot;Generate Fresh Snapshot&quot; to freeze a real operational report snapshot.
               </p>

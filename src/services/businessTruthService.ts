@@ -31,7 +31,17 @@ export async function getBusinessTruth(businessId: string, forceFresh = false): 
   }
 
   try {
-    const res = await fetch(`/api/business-truth/${encodeURIComponent(cleanId)}`);
+    const headers: Record<string, string> = {};
+    if (typeof window !== 'undefined') {
+      const storedAuthEmail = localStorage.getItem('locora_auth_email');
+      if (storedAuthEmail) {
+        headers['x-user-email'] = storedAuthEmail;
+      }
+    }
+    const res = await fetch(`/api/business-truth/${encodeURIComponent(cleanId)}`, {
+      credentials: 'include',
+      headers,
+    });
     if (!res.ok) {
       if (res.status === 404) {
         // Strict: never substitute another business

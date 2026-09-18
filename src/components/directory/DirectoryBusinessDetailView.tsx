@@ -37,6 +37,8 @@ import {
   getDirectoryCityUrl,
   getDirectoryCategoryUrl,
 } from '../../utils/domain';
+import { useDynamicSeo } from '../../hooks/useDynamicSeo';
+import { DynamicInternalLinks } from '../seo/DynamicInternalLinks';
 
 interface DirectoryBusinessDetailViewProps {
   slug: string;
@@ -131,56 +133,50 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
     fetchBusiness();
   }, [slug]);
 
-  // Update dynamic document metadata and SEO guardrails when business profile loads
-  useEffect(() => {
-    if (business) {
-      document.title = `${business.businessName} — ${business.categoryName} in ${business.cityName}, ${business.stateCode || ''} | Locora Directory`;
-      const desc = `View verified Google Business profile, customer reviews, hours, phone number, and direct quote requests for ${business.businessName} in ${business.cityName}.`;
-      
-      let metaDescEl = document.querySelector('meta[name="description"]');
-      if (!metaDescEl) {
-        metaDescEl = document.createElement('meta');
-        metaDescEl.setAttribute('name', 'description');
-        document.head.appendChild(metaDescEl);
-      }
-      metaDescEl.setAttribute('content', desc);
+  // Dynamic Central SEO & GEO Keyword Engine integration
+  const businessServices = business?.scrapedContent?.serviceTags || business?.targetKeywords || [];
+  const businessPhone = business?.phone || business?.gbpData?.phone || undefined;
+  const businessAddress = business?.gbpData?.address || undefined;
+  const businessRating = business?.gbpData?.averageRating;
+  const businessReviews = business?.gbpData?.reviewCount;
+  const businessHours = business?.gbpData?.hours
+    ? Object.entries(business.gbpData.hours).map(([day, hrs]) => `${day}: ${hrs}`)
+    : undefined;
 
-      // Canonical URL management
-      let canonEl = document.querySelector('link[rel="canonical"]');
-      if (!canonEl) {
-        canonEl = document.createElement('link');
-        canonEl.setAttribute('rel', 'canonical');
-        document.head.appendChild(canonEl);
-      }
-      canonEl.setAttribute(
-        'href',
-        isDirectorySubdomain()
-          ? `https://directory.locoraai.com/business/${business.slug}`
-          : `https://locoraai.com/biz/${business.slug}`
-      );
-
-      // Ensure indexable for valid published business profiles
-      let robotsEl = document.querySelector('meta[name="robots"]');
-      if (!robotsEl) {
-        robotsEl = document.createElement('meta');
-        robotsEl.setAttribute('name', 'robots');
-        document.head.appendChild(robotsEl);
-      }
-      robotsEl.setAttribute('content', 'index, follow');
-    } else if (error && !loading) {
-      // SEO Safety: Prevent thin pages or 404 crawl traps from being indexed
-      let robotsEl = document.querySelector('meta[name="robots"]');
-      if (!robotsEl) {
-        robotsEl = document.createElement('meta');
-        robotsEl.setAttribute('name', 'robots');
-        document.head.appendChild(robotsEl);
-      }
-      robotsEl.setAttribute('content', 'noindex, nofollow');
-      
-      const canonEl = document.querySelector('link[rel="canonical"]');
-      if (canonEl) canonEl.remove();
-    }
-  }, [business, error, loading]);
+  const { seoResult } = useDynamicSeo({
+    pageType: 'business_detail',
+    businessName: business?.businessName,
+    businessSlug: business?.slug,
+    category: business?.categoryName,
+    city: business?.cityName,
+    services: businessServices,
+    phone: businessPhone,
+    website: business?.websiteUrl,
+    address: businessAddress,
+    rating: businessRating,
+    reviewCount: businessReviews,
+    openingHours: businessHours,
+    availableBusinessesCount: business ? 1 : 0,
+    availableBusinesses: business
+      ? [
+          {
+            id: business.id,
+            name: business.businessName,
+            slug: business.slug,
+            category: business.categoryName,
+            city: business.cityName,
+            services: businessServices,
+            phone: businessPhone,
+            website: business.websiteUrl,
+            address: businessAddress,
+            rating: businessRating,
+            reviewCount: businessReviews,
+            openingHours: businessHours,
+          },
+        ]
+      : [],
+    forceNoIndex: Boolean(error) || (!business && !loading),
+  });
 
   const handlePhoneClick = () => {
     trackDirectoryEvent('phone_click');
@@ -282,11 +278,14 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           businessId: business.id,
+          directoryProfileId: business.slug || slug,
           leadName: quoteForm.fullName,
           leadPhone: quoteForm.phone,
           leadEmail: quoteForm.email,
           serviceRequested: quoteForm.serviceNeed || business.categoryName,
           message: quoteForm.message,
+          city: business.cityName,
+          category: business.categoryName,
         }),
       });
       const data = await res.json();
@@ -576,12 +575,17 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                     <a
                       href={business.websiteUrl}
                       target="_blank"
-                      rel="noopener noreferrer"
+                      rel={isPremium ? "noopener" : "nofollow noopener"}
                       onClick={handleWebsiteClick}
                       className="text-emerald-600 hover:underline font-semibold flex items-center gap-1"
                     >
                       Visit Official Website
                       <ExternalLink className="w-3 h-3 text-slate-400" />
+                      {isPremium && (
+                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                          DoFollow Citation
+                        </span>
+                      )}
                     </a>
                   </div>
                 )}
@@ -709,7 +713,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
 
       {/* Main 2-Column Body */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           {/* Left 2 Columns: Services, Overview, Hours, Reviews */}
           <div className="lg:col-span-2 space-y-8">
             {/* About & Verified Synced Content */}
@@ -826,7 +830,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
 
           {/* Right Column: Instant Lead Quote Capture Form */}
           <div className="space-y-6">
-            <div id="quote-form" className="bg-white rounded-2xl border-2 border-emerald-500/20 p-6 shadow-md sticky top-28 sm:top-32">
+            <div id="quote-form" className="bg-white rounded-2xl border-2 border-emerald-500/20 p-6 shadow-md relative">
               <div className="mb-4">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1">
                   <Sparkles className="w-3.5 h-3.5" /> Instant Free Quote
@@ -1015,62 +1019,114 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
           </div>
         </div>
 
-        {/* Related Businesses in this City / Category (Internal Linking for SEO) */}
-        {relatedBusinesses.length > 0 && (
+        {/* Competitor Shielding for Pro Listings vs Competitors Grid for Free Listings */}
+        {isPremium ? (
           <div className="mt-12 pt-8 border-t border-slate-200">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 font-heading">
-                  More Verified Businesses in {business.cityName}
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Explore top-rated service providers and local contractors in your immediate area.
-                </p>
-              </div>
-              <button
-                onClick={navigateToCity}
-                className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 cursor-pointer"
-              >
-                View all in {business.cityName} <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {relatedBusinesses.map((rel) => (
-                <div
-                  key={rel.id || rel.slug}
-                  className="p-4 bg-white rounded-xl border border-slate-200 hover:border-emerald-300 hover:shadow-xs transition-all space-y-2 flex flex-col justify-between"
-                >
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block">
-                      {rel.categoryName}
-                    </span>
-                    <h4 className="text-xs font-bold text-slate-900 line-clamp-1">
-                      {rel.businessName}
-                    </h4>
-                    <p className="text-[11px] text-slate-500 line-clamp-1">
-                      {rel.cityName}, {rel.stateCode}
-                    </p>
-                    {typeof rel.gbpData?.averageRating === 'number' && rel.gbpData.averageRating > 0 && (
-                      <div className="flex items-center gap-1 text-[11px] text-amber-600 font-semibold pt-0.5">
-                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                        <span>{rel.gbpData.averageRating.toFixed(1)}</span>
-                        <span className="text-slate-400">({rel.gbpData.reviewCount || 0})</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      navigateToDirectory(`/business/${rel.slug}`);
-                    }}
-                    className="w-full mt-2 py-1.5 px-3 text-center text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer transition-colors"
-                  >
-                    View Profile
-                  </button>
+            <div className="p-6 bg-gradient-to-r from-emerald-50/80 via-white to-amber-50/80 rounded-2xl border border-emerald-200/80 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                  <ShieldCheck className="w-6 h-6" />
                 </div>
-              ))}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+                      Exclusive Pro Verified Guarantee
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-500">100% Verified Profile</span>
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900 font-heading mt-1">
+                    Direct Client Guarantee with {business.businessName}
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-0.5 max-w-xl">
+                    This business is an authorized, high-priority service provider. Inquiries submitted here are routed directly to the verified owner with priority response time.
+                  </p>
+                </div>
+              </div>
+
+              {business.phone && (
+                <a
+                  href={`tel:${business.phone}`}
+                  onClick={handlePhoneClick}
+                  className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-2 shrink-0 cursor-pointer"
+                >
+                  <Phone className="w-4 h-4" />
+                  <span>Call Directly: {business.phone}</span>
+                </a>
+              )}
             </div>
+          </div>
+        ) : (
+          relatedBusinesses.length > 0 && (
+            <div className="mt-12 pt-8 border-t border-slate-200">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 font-heading">
+                    More Verified Businesses in {business.cityName}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Explore top-rated service providers and local contractors in your immediate area.
+                  </p>
+                </div>
+                <button
+                  onClick={navigateToCity}
+                  className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 cursor-pointer"
+                >
+                  View all in {business.cityName} <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {relatedBusinesses.map((rel) => (
+                  <div
+                    key={rel.id || rel.slug}
+                    className="p-4 bg-white rounded-xl border border-slate-200 hover:border-emerald-300 hover:shadow-xs transition-all space-y-2 flex flex-col justify-between"
+                  >
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block">
+                        {rel.categoryName}
+                      </span>
+                      <h4 className="text-xs font-bold text-slate-900 line-clamp-1">
+                        {rel.businessName}
+                      </h4>
+                      <p className="text-[11px] text-slate-500 line-clamp-1">
+                        {rel.cityName}, {rel.stateCode}
+                      </p>
+                      {typeof rel.gbpData?.averageRating === 'number' && rel.gbpData.averageRating > 0 && (
+                        <div className="flex items-center gap-1 text-[11px] text-amber-600 font-semibold pt-0.5">
+                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                          <span>{rel.gbpData.averageRating.toFixed(1)}</span>
+                          <span className="text-slate-400">({rel.gbpData.reviewCount || 0})</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        navigateToDirectory(`/business/${rel.slug}`);
+                      }}
+                      className="w-full mt-2 py-1.5 px-3 text-center text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer transition-colors"
+                    >
+                      View Profile
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        )}
+
+        {/* Dynamic SEO Internal Linking Architecture */}
+        {seoResult && (
+          <div className="mt-14">
+            <DynamicInternalLinks
+              seoResult={seoResult}
+              mode="detailed_grid"
+              onNavigate={(path) => {
+                if (path.startsWith('/')) {
+                  window.location.href = path;
+                }
+              }}
+            />
           </div>
         )}
       </div>

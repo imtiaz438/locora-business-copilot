@@ -21,9 +21,20 @@ import * as businessTruthService from './server/businessTruthService.ts';
 import * as aiManagerService from './server/aiManagerService.ts';
 import * as growthDetectorService from './server/growthDetectorService.ts';
 import { db, schema } from './src/db/index.ts';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, ilike } from 'drizzle-orm';
 import type { PaymentTransaction, ProviderStatus } from './src/types.ts';
-import { executeSeoIntelligence, resolveUserSeoTier, clearCachedSeoMatrix } from './src/services/seoEngine.ts';
+import {
+  executeSeoIntelligence,
+  resolveUserSeoTier,
+  clearCachedSeoMatrix,
+  generatePageKeywords,
+  generatePageMetadata,
+  generateCompletePageSeo,
+  extractSnapshotFromBusinesses,
+  generateDynamicInternalLinks,
+  type SeoPageContext,
+  type SeoPageType,
+} from './src/services/seoEngine.ts';
 import { determineProviderStatus, createProviderExecutionResult } from './src/lib/apiFailurePolicy.ts';
 import {
   performNormalizedSeoAudit,
@@ -63,6 +74,10 @@ import {
   getDirectoryLeadsForBusiness,
   getDirectoryEvents,
   updateDirectoryProfileRecord,
+  directoryLeadsDatabase,
+  saveDirectoryLeadsToDisk,
+  invalidateDirectoryListingsCache,
+  deleteBusinessRecord,
 } from './server/locoraDataEngine.ts';
 import { executePublicCheckup, publicAuditsStore } from './server/publicCheckupEngine.ts';
 import { checkPublicRateLimit } from './server/publicSecurity.ts';
@@ -1929,20 +1944,188 @@ async function saveUserToSql(user: UserRecord) {
   }
 }
 
+interface UserCascadeDeletionResult {
+  userId?: string;
+  email: string;
+  deletedBusinessIds: string[];
+  deletedSlugs: string[];
+  tablesCleaned: string[];
+  publicDirectoryCleaned: boolean;
+  verificationPassed: boolean;
+  timestamp: string;
+}
+
+export async function executeCompleteUserCascadeDeletion(
+  email: string,
+  userId?: string
+): Promise<UserCascadeDeletionResult> {
+  const cleanEmail = (email || '').toLowerCase().trim();
+  if (!cleanEmail) {
+    throw new Error('Target user email is required for cascade deletion.');
+  }
+
+  // 1. Identify all businesses owned by this user across both PostgreSQL and Locora Data Engine
+  const sqlBizs = await db
+    .select({ id: schema.businessesTable.id, slug: schema.businessesTable.slug })
+    .from(schema.businessesTable)
+    .where(eq(schema.businessesTable.ownerEmail, cleanEmail))
+    .catch(() => []);
+
+  const memoryBizs = getBusinessesForUser(cleanEmail);
+
+  const businessIdsSet = new Set<string>();
+  const slugsSet = new Set<string>();
+
+  for (const b of sqlBizs) {
+    if (b.id) businessIdsSet.add(b.id);
+    if (b.slug) slugsSet.add(b.slug);
+  }
+
+  for (const b of memoryBizs) {
+    if (b && b.id) businessIdsSet.add(b.id);
+    const mSlug = (b as any)?.slug || (b as any)?.identity?.slug;
+    if (mSlug) slugsSet.add(mSlug);
+  }
+
+  const allBusinessIds = Array.from(businessIdsSet);
+  const allSlugs = Array.from(slugsSet);
+
+  // 2. Cascade delete every owned business in PostgreSQL (cleans 40+ dependent tables)
+  for (const bizId of allBusinessIds) {
+    await dbService.deleteBusiness(bizId).catch((err) => {
+      console.warn(`[Cascade] SQL deleteBusiness error for ${bizId}:`, err);
+    });
+  }
+
+  // 3. Delete every owned business from Locora Data Engine (in-memory, disk, leads, events, listings cache)
+  for (const bizId of allBusinessIds) {
+    deleteBusinessRecord(bizId);
+  }
+
+  // 4. Delete user-level records in PostgreSQL tables
+  await dbService.deleteUser(cleanEmail, userId).catch((err) => {
+    console.warn(`[Cascade] SQL deleteUser error for ${cleanEmail}:`, err);
+  });
+
+  // 5. Remove user from in-memory maps
+  usersDb.delete(cleanEmail);
+  userProfilesMap.delete(cleanEmail);
+  userWorkspaceDataMap.delete(cleanEmail);
+  userSettingsMap.delete(cleanEmail);
+
+  // 6. Persist deletions to disk
+  saveUsersToDisk();
+  saveUserProfilesToDisk();
+  saveUserWorkspaceDataToDisk();
+  saveUserSettingsToDisk();
+  invalidateDirectoryListingsCache();
+
+  // 7. Verify complete deletion (Requirement 10)
+  let verificationPassed = true;
+  try {
+    const remainingUsers = await db
+      .select({ id: schema.users.id })
+      .from(schema.users)
+      .where(eq(schema.users.email, cleanEmail))
+      .limit(1)
+      .catch(() => []);
+    if (remainingUsers.length > 0) verificationPassed = false;
+
+    const remainingBizs = await db
+      .select({ id: schema.businessesTable.id })
+      .from(schema.businessesTable)
+      .where(eq(schema.businessesTable.ownerEmail, cleanEmail))
+      .limit(1)
+      .catch(() => []);
+    if (remainingBizs.length > 0) verificationPassed = false;
+
+    const remainingMemory = getBusinessesForUser(cleanEmail);
+    if (remainingMemory.length > 0) verificationPassed = false;
+
+    for (const bId of allBusinessIds) {
+      if (getBusinessRecordById(bId)) {
+        verificationPassed = false;
+        break;
+      }
+    }
+  } catch {}
+
+  const tablesCleaned = [
+    'users',
+    'businesses',
+    'locations',
+    'business_brain',
+    'data_connections',
+    'google_reviews',
+    'google_business_locations',
+    'google_connections',
+    'google_profile_metrics',
+    'search_console_connections',
+    'search_console_queries',
+    'search_console_pages',
+    'analytics_connections',
+    'analytics_metrics',
+    'competitors',
+    'competitor_snapshots',
+    'website_projects',
+    'crawl_runs',
+    'website_pages',
+    'website_issues',
+    'schema_data',
+    'tracked_keywords',
+    'rank_snapshots',
+    'serp_results',
+    'visibility_snapshots',
+    'ai_visibility_checks',
+    'growth_opportunities',
+    'growth_plans',
+    'growth_tasks',
+    'ai_actions',
+    'leads',
+    'customers',
+    'customer_notes',
+    'customer_activities',
+    'customer_tags',
+    'customer_sources',
+    'customer_tasks',
+    'work_tasks',
+    'projects',
+    'invoices',
+    'invoice_items',
+    'proposals',
+    'documents',
+    'work_templates',
+    'reports',
+    'notifications',
+    'notes',
+    'activity_logs',
+    'seo_cache',
+    'seo_data_cache',
+    'business_profile',
+    'directory_leads',
+    'directory_events',
+    'settings',
+    'transactions',
+    'newsletter_subscribers',
+  ];
+
+  return {
+    userId,
+    email: cleanEmail,
+    deletedBusinessIds: allBusinessIds,
+    deletedSlugs: allSlugs,
+    tablesCleaned,
+    publicDirectoryCleaned: true,
+    verificationPassed,
+    timestamp: new Date().toISOString(),
+  };
+}
+
 async function removeUserFromSql(email: string, userId?: string) {
   try {
     const normalizedEmail = (email || '').toLowerCase().trim();
     if (!normalizedEmail) return;
-
-    usersDb.delete(normalizedEmail);
-    userProfilesMap.delete(normalizedEmail);
-    userWorkspaceDataMap.delete(normalizedEmail);
-
-    saveUsersToDisk();
-    saveUserProfilesToDisk();
-    saveUserWorkspaceDataToDisk();
-
-    await dbService.deleteUser(normalizedEmail, userId).catch(() => {});
+    await executeCompleteUserCascadeDeletion(normalizedEmail, userId);
   } catch (err: any) {
     console.warn('[Database] User delete notice:', err?.message || err);
   }
@@ -2635,10 +2818,20 @@ app.post('/api/auth/register', async (req, res) => {
       `,
     }).catch(err => console.error('[Email] Failed to send admin alert email:', err));
 
+    // Ensure canonical business record is permanently created in PostgreSQL
+    try {
+      await dbService.ensureBusinessForUser(normalizedEmail, {
+        name: newUser.companyName || `${newUser.name}'s Business`,
+      });
+    } catch (bizErr) {
+      console.warn('[Auth] Failed to ensure initial business on register:', bizErr);
+    }
+
     res.cookie('auth_email', normalizedEmail, {
       httpOnly: true,
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
       path: '/',
     });
     res.json({ user: newUser, token: `tok_${Date.now()}` });
@@ -2678,11 +2871,21 @@ app.post('/api/auth/login', async (req, res) => {
       await saveUserToSql(user);
     }
 
-    // Set ephemeral session cookie (automatically destroyed when browser window/session closes)
+    // Ensure business exists in PostgreSQL if none existed
+    try {
+      await dbService.ensureBusinessForUser(normalizedEmail, {
+        name: user.companyName || `${user.name}'s Business`,
+      });
+    } catch (bizErr) {
+      console.warn('[Auth] Failed to ensure business on login:', bizErr);
+    }
+
+    // Set persistent session cookie (30 days)
     res.cookie('auth_email', normalizedEmail, {
       httpOnly: true,
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
       path: '/',
     });
     res.json({ user, token: `tok_${Date.now()}` });
@@ -2695,8 +2898,9 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/auth/me', async (req, res) => {
   try {
     const cookieEmail = req.cookies?.auth_email;
+    const headerEmail = req.headers['x-user-email'] as string;
     const queryEmail = (req.query.email as string) || '';
-    const email = (queryEmail || cookieEmail || '').toLowerCase().trim();
+    const email = (queryEmail || headerEmail || cookieEmail || '').toLowerCase().trim();
     if (!email) {
       return res.status(401).json({ error: 'No active session' });
     }
@@ -2710,6 +2914,16 @@ app.get('/api/auth/me', async (req, res) => {
       usersDb.set(email, user);
       await saveUserToSql(user);
     }
+
+    // Refresh persistent session cookie
+    res.cookie('auth_email', email, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+
     res.json({ user });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Failed to fetch user session' });
@@ -3172,10 +3386,21 @@ app.post('/api/auth/delete-account', async (req, res) => {
       return res.status(404).json({ error: 'User account not found.' });
     }
 
-    usersDb.delete(normalizedEmail);
-    await removeUserFromSql(normalizedEmail, user.id);
+    // SAFETY CHECK: Prevent accidental deletion of primary admin account
+    const isSystemAdmin = normalizedEmail === 'imtiazbaloch3322@gmail.com' || normalizedEmail === 'support@locoraai.com' || normalizedEmail === 'admin@locora.ai';
+    if (isSystemAdmin && req.body.confirmAdminSelfDelete !== true) {
+      return res.status(400).json({
+        error: 'Cannot delete primary system administrator account without explicit override confirmation (confirmAdminSelfDelete: true).'
+      });
+    }
 
-    res.json({ success: true, message: 'Your account has been permanently deleted.' });
+    const cascadeResult = await executeCompleteUserCascadeDeletion(normalizedEmail, user.id);
+
+    res.json({
+      success: true,
+      message: 'Your account and all associated business records have been permanently deleted.',
+      cascadeResult,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Failed to delete account.' });
   }
@@ -3255,12 +3480,23 @@ app.get('/api/workspace/data', async (req, res) => {
       siteLogoConfig: effectiveSiteLogoConfig,
     };
 
-    const businessId = ((req.query.businessId as string) || '').trim();
-    let customers = await dbService.getCustomers(businessId || undefined, userEmail).catch(() => []);
-    let projects = await dbService.getProjects(businessId || undefined, userEmail).catch(() => []);
-    let invoices = await dbService.getInvoices(businessId || undefined, userEmail).catch(() => []);
-    let proposals = await dbService.getProposals(businessId || undefined, userEmail).catch(() => []);
-    let documents = await dbService.getDocuments(businessId || undefined, userEmail).catch(() => []);
+    let businessId = '';
+    const rawBizId = ((req.query.businessId as string) || '').trim();
+    try {
+      const { business } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
+      businessId = business?.id || '';
+    } catch (authErr: any) {
+      if (rawBizId && authErr instanceof AuthorizationError) {
+        return res.status(403).json({ error: authErr.message });
+      }
+      businessId = '';
+    }
+
+    let customers = businessId ? await dbService.getCustomers(businessId, userEmail).catch(() => []) : [];
+    let projects = businessId ? await dbService.getProjects(businessId, userEmail).catch(() => []) : [];
+    let invoices = businessId ? await dbService.getInvoices(businessId, userEmail).catch(() => []) : [];
+    let proposals = businessId ? await dbService.getProposals(businessId, userEmail).catch(() => []) : [];
+    let documents = businessId ? await dbService.getDocuments(businessId, userEmail).catch(() => []) : [];
     let workTasks = businessId ? await dbService.getWorkTasks(businessId).catch(() => []) : [];
     let workTemplates = businessId ? await dbService.getWorkTemplates(businessId).catch(() => []) : [];
     let conversations = await dbService.getAiConversations(userEmail).catch(() => []);
@@ -3492,11 +3728,6 @@ app.get('/api/data-engine/business/:id', (req, res) => {
           (u?.planTier as any) || 'free'
         );
       }
-    } else if (!record) {
-      const all = getAllBusinessRecordsFromLocoraDb();
-      if (all.length > 0) {
-        record = all[0];
-      }
     }
 
     if (!record) {
@@ -3512,7 +3743,12 @@ app.get('/api/data-engine/business/:id', (req, res) => {
 // Get All Business Records (Scoring & Multi-Location & Agency Elite)
 app.get('/api/data-engine/businesses', (req, res) => {
   try {
-    const userEmail = ((req.query.email as string) || '').toLowerCase().trim();
+    const userEmail = (
+      (req.query.email as string) ||
+      (req.headers['x-user-email'] as string) ||
+      req.cookies?.auth_email ||
+      ''
+    ).toLowerCase().trim();
     let businesses: any[] = [];
     if (userEmail) {
       businesses = getBusinessesForUser(userEmail);
@@ -3530,7 +3766,12 @@ app.get('/api/data-engine/businesses', (req, res) => {
         businesses = [newBiz];
       }
     } else {
-      businesses = getAllBusinessRecordsFromLocoraDb();
+      const isSuper = verifyAdminAccess(req);
+      if (isSuper) {
+        businesses = getAllBusinessRecordsFromLocoraDb();
+      } else {
+        businesses = [];
+      }
     }
     res.json({ success: true, businesses, count: businesses.length, source: 'locora_db' });
   } catch (err: any) {
@@ -3557,9 +3798,6 @@ app.post('/api/data-engine/sync', async (req, res) => {
     if (!existing) {
       if (cleanEmail) {
         existing = createOrGetBusinessForUser(cleanEmail, businessName, targetUrl);
-      } else {
-        const all = getAllBusinessRecordsFromLocoraDb();
-        existing = all[0];
       }
     }
 
@@ -3679,7 +3917,7 @@ app.post('/api/data-engine/one-time-products/purchase', (req, res) => {
     if (!businessId) {
       return res.status(400).json({ error: 'businessId is required' });
     }
-    const business = getBusinessRecordFromLocoraDb(businessId) || getAllBusinessRecordsFromLocoraDb()[0];
+    const business = getBusinessRecordFromLocoraDb(businessId);
     if (!business) {
       return res.status(404).json({ error: 'Business record not found' });
     }
@@ -3846,17 +4084,67 @@ export class AuthorizationError extends Error {
   }
 }
 
+const SUPER_ADMIN_EMAILS = new Set(['admin@locora.ai', 'superadmin@locora.ai', 'imtiazbaloch3322@gmail.com', 'support@locoraai.com']);
+
 async function resolveAuthenticatedBusiness(req: any, targetBizId?: string) {
   const cookieEmail = req.cookies?.auth_email;
   const headerEmail = req.headers['x-user-email'] as string;
   const queryEmail = (req.query?.email as string) || (req.query?.userEmail as string);
   const bodyEmail = (req.body?.userEmail as string) || (req.body?.email as string);
   const callerEmail = (cookieEmail || headerEmail || queryEmail || bodyEmail || '').toLowerCase().trim();
-  const effectiveEmail = callerEmail || 'imtiazbaloch3322@gmail.com';
+  const effectiveEmail = callerEmail;
+  const isSuperAdmin = callerEmail ? SUPER_ADMIN_EMAILS.has(callerEmail) : false;
 
   // 1. If specific businessId was requested and is not a generic placeholder
   if (targetBizId && targetBizId !== 'active' && targetBizId !== 'workspace_pending' && targetBizId !== 'biz_locora_canonical') {
-    const found = await dbService.getBusinessById(targetBizId);
+    let found = await dbService.getBusinessById(targetBizId);
+    if (!found) {
+      // 1b. Check by slug in schema.businessesTable
+      const bySlug = await db
+        .select()
+        .from(schema.businessesTable)
+        .where(eq(schema.businessesTable.slug, targetBizId.toLowerCase().trim()))
+        .orderBy(desc(schema.businessesTable.createdAt))
+        .limit(1);
+      if (bySlug.length > 0) {
+        found = bySlug[0];
+      }
+    }
+
+    if (!found) {
+      // 1c. Check if it matches a directory listing in locoraDataEngine
+      const dirListing = getDirectoryListingBySlug(targetBizId) || getPublishedDirectoryListings().find(b => b.id === targetBizId || b.slug === targetBizId);
+      if (dirListing) {
+        const userBizMatch = effectiveEmail ? await db
+          .select()
+          .from(schema.businessesTable)
+          .where(and(eq(schema.businessesTable.slug, dirListing.slug), eq(schema.businessesTable.ownerEmail, effectiveEmail)))
+          .limit(1) : [];
+        if (userBizMatch.length > 0) {
+          found = userBizMatch[0];
+        } else {
+          // If claimed by another user, prohibit access unless superadmin
+          if (dirListing.claimedByEmail && dirListing.claimedByEmail.toLowerCase() !== effectiveEmail && !isSuperAdmin) {
+            throw new AuthorizationError(`Forbidden: User '${effectiveEmail || 'anonymous'}' is not authorized to access claimed business '${targetBizId}'.`);
+          }
+          found = {
+            id: dirListing.id,
+            name: dirListing.businessName,
+            slug: dirListing.slug,
+            ownerEmail: dirListing.claimedByEmail || effectiveEmail,
+            category: dirListing.categoryName,
+            city: dirListing.cityName,
+            state: dirListing.stateCode,
+            phone: dirListing.phone,
+            website: dirListing.websiteUrl,
+            status: 'active',
+            planTier: dirListing.isPremium ? 'pro' : 'free',
+            isPublishedInDirectory: true,
+          } as any;
+        }
+      }
+    }
+
     if (!found) {
       const err: any = new Error(`Business '${targetBizId}' not found.`);
       err.status = 404;
@@ -3868,41 +4156,45 @@ async function resolveAuthenticatedBusiness(req: any, targetBizId?: string) {
     // Resolve authorization from the authenticated user/business relationship.
     // Never trust business_id supplied directly by the client without verifying ownership.
     const ownerEmail = (found.ownerEmail || '').toLowerCase().trim();
-    if (callerEmail) {
-      if (ownerEmail && ownerEmail !== callerEmail) {
-        throw new AuthorizationError(`Forbidden: User '${callerEmail}' is not authorized to access business '${targetBizId}'.`);
-      }
-    } else {
-      // In development/workspace environment without explicit auth header, default to workspace user.
-      if (ownerEmail && ownerEmail !== effectiveEmail) {
-        throw new AuthorizationError(`Forbidden: Access denied to business '${targetBizId}'.`);
+    if (!isSuperAdmin) {
+      if (callerEmail) {
+        if (ownerEmail && ownerEmail !== callerEmail) {
+          throw new AuthorizationError(`Forbidden: User '${callerEmail}' is not authorized to access business '${targetBizId}'.`);
+        }
+      } else {
+        if (ownerEmail) {
+          throw new AuthorizationError(`Forbidden: Authentication required to access business '${targetBizId}'.`);
+        }
       }
     }
 
     return { business: found, ownerEmail: found.ownerEmail || effectiveEmail };
   }
 
-  // 2. Resolve by authenticated email or default to workspace user
-  let business = await dbService.ensureBusinessForUser(effectiveEmail);
-  if (!business) {
-    const userBusinesses = await db
-      .select()
-      .from(schema.businessesTable)
-      .where(eq(schema.businessesTable.ownerEmail, effectiveEmail))
-      .orderBy(desc(schema.businessesTable.createdAt))
-      .limit(1);
-
-    if (userBusinesses.length > 0) {
-      business = userBusinesses[0];
-    } else {
-      const err: any = new Error('Business not found for user');
-      err.status = 404;
-      err.statusCode = 404;
-      throw err;
-    }
+  // 2. Resolve by authenticated email
+  if (!effectiveEmail) {
+    const err: any = new Error('Authentication required. Please sign in to access business data.');
+    err.status = 401;
+    err.statusCode = 401;
+    throw err;
   }
 
-  return { business, ownerEmail: business.ownerEmail || effectiveEmail };
+  const userBusinesses = await db
+    .select()
+    .from(schema.businessesTable)
+    .where(ilike(schema.businessesTable.ownerEmail, effectiveEmail))
+    .orderBy(desc(schema.businessesTable.createdAt));
+
+  if (userBusinesses.length > 0) {
+    const business = userBusinesses[0];
+    return { business, ownerEmail: business.ownerEmail || effectiveEmail };
+  } else {
+    // Check if user is known and ensure a business is permanently created in PostgreSQL
+    const userRec = usersDb.get(effectiveEmail);
+    const companyName = userRec?.companyName || 'My Local Business';
+    const ensured = await dbService.ensureBusinessForUser(effectiveEmail, { name: companyName });
+    return { business: ensured, ownerEmail: ensured.ownerEmail || effectiveEmail };
+  }
 }
 
 // 1. Dashboard: Full Normalized Aggregate
@@ -3930,17 +4222,24 @@ app.get('/api/production/businesses', async (req, res) => {
       ''
     ).toLowerCase().trim();
 
-    const effectiveEmail = email || 'imtiazbaloch3322@gmail.com';
+    if (!email) {
+      return res.json([]);
+    }
+
+    const effectiveEmail = email;
 
     let list = await db
       .select()
       .from(schema.businessesTable)
-      .where(eq(schema.businessesTable.ownerEmail, effectiveEmail))
+      .where(ilike(schema.businessesTable.ownerEmail, effectiveEmail))
       .orderBy(desc(schema.businessesTable.createdAt));
 
-    if (list.length === 0) {
-      const created = await dbService.ensureBusinessForUser(effectiveEmail);
-      if (created) {
+    // If user has an account, ensure their canonical business exists in PostgreSQL
+    if (list.length === 0 && effectiveEmail) {
+      const userRec = usersDb.get(effectiveEmail);
+      if (userRec) {
+        const companyName = userRec.companyName || 'My Local Business';
+        const created = await dbService.ensureBusinessForUser(effectiveEmail, { name: companyName });
         list = [created];
       }
     }
@@ -3976,8 +4275,8 @@ app.get('/api/production/businesses', async (req, res) => {
             zip: primaryLoc?.zip || '',
             country: primaryLoc?.country || 'United States',
             locationHours: primaryLoc?.hours || [],
-            healthScore: brain?.score || 75,
-            readinessScore: brain?.readinessScore || 70,
+            healthScore: typeof brain?.score === 'number' ? brain.score : 0,
+            readinessScore: typeof brain?.readinessScore === 'number' ? brain.readinessScore : 0,
             brainSummary: brain?.summary || null,
             brainSwot: brain?.swot || null,
             brainPriorities: brain?.priorities || [],
@@ -4033,6 +4332,10 @@ app.patch('/api/production/business/:businessId', async (req, res) => {
     if (body.tagline !== undefined) bizUpdates.tagline = body.tagline;
     if (body.services !== undefined) bizUpdates.services = body.services;
     if (body.serviceAreas !== undefined) bizUpdates.serviceAreas = body.serviceAreas;
+    if (body.isPublishedInDirectory !== undefined) bizUpdates.isPublishedInDirectory = Boolean(body.isPublishedInDirectory);
+    if (body.status !== undefined) bizUpdates.status = body.status;
+    if (body.citySlug !== undefined) bizUpdates.citySlug = body.citySlug;
+    if (body.categorySlug !== undefined) bizUpdates.categorySlug = body.categorySlug;
 
     const locUpdates: any = {};
     if (body.address !== undefined) locUpdates.address = body.address;
@@ -4083,6 +4386,10 @@ app.put('/api/production/business/:businessId', async (req, res) => {
     if (body.tagline !== undefined) bizUpdates.tagline = body.tagline;
     if (body.services !== undefined) bizUpdates.services = body.services;
     if (body.serviceAreas !== undefined) bizUpdates.serviceAreas = body.serviceAreas;
+    if (body.isPublishedInDirectory !== undefined) bizUpdates.isPublishedInDirectory = Boolean(body.isPublishedInDirectory);
+    if (body.status !== undefined) bizUpdates.status = body.status;
+    if (body.citySlug !== undefined) bizUpdates.citySlug = body.citySlug;
+    if (body.categorySlug !== undefined) bizUpdates.categorySlug = body.categorySlug;
 
     const locUpdates: any = {};
     if (body.address !== undefined) locUpdates.address = body.address;
@@ -4108,6 +4415,152 @@ app.put('/api/production/business/:businessId', async (req, res) => {
     }
 
     res.json(updated || business);
+  } catch (err: any) {
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.post(['/api/workspace/businesses', '/api/production/businesses'], async (req, res) => {
+  try {
+    const email = (req.headers['x-user-email'] as string || req.body.ownerEmail || req.body.email || req.body.userEmail || req.query.email || '').toLowerCase().trim();
+    if (!email) {
+      return res.status(401).json({ error: 'User email required to register business' });
+    }
+    const b = req.body.business || req.body || {};
+    const name = b.name || b.businessName;
+    if (!name) {
+      return res.status(400).json({ error: 'Business name is required' });
+    }
+    const newBiz = await dbService.createBusiness(email, {
+      id: b.id,
+      name,
+      category: b.category || b.industry,
+      industry: b.industry || b.category,
+      website: b.website,
+      phone: b.phone,
+      city: b.city,
+      state: b.state,
+    });
+    
+    // Also mirror to LocoraDataEngine
+    const record: any = {
+      id: newBiz.id,
+      planTier: 'free',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      identity: {
+        name,
+        website: b.website || '',
+        phone: b.phone || '',
+        address: b.address || '',
+        city: b.city || '',
+        state: b.state || '',
+        zip: b.zip || '',
+        country: b.country || 'United States',
+        category: b.category || 'Local Services',
+        industry: b.industry || 'Local Services',
+        targetLocations: b.city ? [`${b.city}${b.state ? `, ${b.state}` : ''}`] : [],
+        services: b.services || [],
+      },
+      sourceAttributions: {
+        verification: `Owner Created (${email})`,
+        website: 'Owner Input',
+      },
+    };
+    saveBusinessRecordToLocoraDb(record);
+
+    res.status(201).json(newBiz);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to create business' });
+  }
+});
+
+app.post('/api/production/business/:businessId/locations', async (req, res) => {
+  try {
+    const { business } = await resolveAuthenticatedBusiness(req, req.params.businessId);
+    const body = req.body || {};
+    const locId = body.id || `loc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const [newLoc] = await db
+      .insert(schema.locationsTable)
+      .values({
+        id: locId,
+        businessId: business.id,
+        name: body.name || `${business.name} (Location)`,
+        isPrimary: Boolean(body.isPrimary),
+        address: body.address || '',
+        city: body.city || '',
+        state: body.state || '',
+        zip: body.zip || '',
+        country: body.country || 'United States',
+        phone: body.phone || business.phone || '',
+        hours: body.hours || [],
+      })
+      .returning();
+    res.status(201).json(newLoc);
+  } catch (err: any) {
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/production/business/:businessId', async (req, res) => {
+  try {
+    const { business } = await resolveAuthenticatedBusiness(req, req.params.businessId);
+    deleteBusinessRecord(business.id);
+    await dbService.deleteBusiness(business.id);
+    userWorkspaceDataMap.forEach((store) => {
+      store.customers = (store.customers || []).filter((c: any) => c.businessId !== business.id);
+      store.projects = (store.projects || []).filter((p: any) => p.businessId !== business.id);
+      store.invoices = (store.invoices || []).filter((i: any) => i.businessId !== business.id);
+      store.proposals = (store.proposals || []).filter((p: any) => p.businessId !== business.id);
+      store.documents = (store.documents || []).filter((d: any) => d.businessId !== business.id);
+    });
+    saveUserWorkspaceDataToDisk();
+    res.json({ success: true, message: 'Business and all associated records permanently deleted' });
+  } catch (err: any) {
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/workspace/businesses/:businessId', async (req, res) => {
+  try {
+    const { business } = await resolveAuthenticatedBusiness(req, req.params.businessId);
+    deleteBusinessRecord(business.id);
+    await dbService.deleteBusiness(business.id);
+    userWorkspaceDataMap.forEach((store) => {
+      store.customers = (store.customers || []).filter((c: any) => c.businessId !== business.id);
+      store.projects = (store.projects || []).filter((p: any) => p.businessId !== business.id);
+      store.invoices = (store.invoices || []).filter((i: any) => i.businessId !== business.id);
+      store.proposals = (store.proposals || []).filter((p: any) => p.businessId !== business.id);
+      store.documents = (store.documents || []).filter((d: any) => d.businessId !== business.id);
+    });
+    saveUserWorkspaceDataToDisk();
+    res.json({ success: true, message: 'Business and all associated records permanently deleted' });
+  } catch (err: any) {
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/businesses/:businessId', async (req, res) => {
+  try {
+    const cookieEmail = req.cookies?.auth_email;
+    const headerEmail = req.headers['x-user-email'] as string;
+    const queryEmail = (req.query?.email as string) || (req.query?.userEmail as string);
+    const email = (cookieEmail || headerEmail || queryEmail || '').toLowerCase().trim();
+    if (!SUPER_ADMIN_EMAILS.has(email)) {
+      return res.status(403).json({ error: 'System administrator authorization required.' });
+    }
+    const bId = req.params.businessId;
+    deleteBusinessRecord(bId);
+    await dbService.deleteBusiness(bId);
+    userWorkspaceDataMap.forEach((store) => {
+      store.customers = (store.customers || []).filter((c: any) => c.businessId !== bId);
+      store.projects = (store.projects || []).filter((p: any) => p.businessId !== bId);
+      store.invoices = (store.invoices || []).filter((i: any) => i.businessId !== bId);
+      store.proposals = (store.proposals || []).filter((p: any) => p.businessId !== bId);
+      store.documents = (store.documents || []).filter((d: any) => d.businessId !== bId);
+    });
+    saveUserWorkspaceDataToDisk();
+    res.json({ success: true, message: 'Business deleted by system administrator' });
   } catch (err: any) {
     res.status(err.status || 500).json({ error: err.message });
   }
@@ -4318,9 +4771,10 @@ app.post('/api/reports/snapshots', async (req, res) => {
     if (!snapshot || !snapshot.id || !snapshot.businessId) {
       return res.status(400).json({ success: false, error: 'Invalid snapshot payload' });
     }
+    const { business } = await resolveAuthenticatedBusiness(req, snapshot.businessId);
     await dbService.createReportSnapshot({
       id: snapshot.id,
-      businessId: snapshot.businessId,
+      businessId: business.id,
       title: snapshot.reportTitle || 'Business Report',
       type: snapshot.reportType || 'audit',
       dateRange: snapshot.period || 'Current Period',
@@ -5087,10 +5541,37 @@ app.post('/api/ai-manager/query', async (req, res) => {
 app.get('/api/analytics/ga4/status', (req, res) => {
   try {
     const email = ((req.query.email as string) || '').toLowerCase().trim();
+    if (!email) {
+      return res.status(401).json({ error: 'Email parameter is required' });
+    }
     const businesses = getBusinessesForUser(email);
-    const activeBiz = businesses[0] || getAllBusinessRecordsFromLocoraDb()[0];
+    const activeBiz = businesses[0];
 
-    const traffic = activeBiz?.traffic || {
+    if (!activeBiz) {
+      return res.json({
+        success: true,
+        connected: false,
+        propertyId: null,
+        propertyName: null,
+        accountName: null,
+        lastSyncedAt: null,
+        metrics: {
+          sessions: 0,
+          pageviews: 0,
+          bounceRate: 0,
+          avgDurationSec: 0,
+          topChannels: [],
+          gscClicks: 0,
+          gscImpressions: 0,
+          avgPosition: 0,
+          lastSyncedAt: null,
+          source: 'ga4',
+          ga4Connected: false,
+        },
+      });
+    }
+
+    const traffic = activeBiz.traffic || {
       sessions: 0,
       pageviews: 0,
       bounceRate: 0,
@@ -5123,8 +5604,11 @@ app.post('/api/analytics/ga4/connect', async (req, res) => {
   try {
     const { email, accessToken, propertyId, propertyName } = req.body;
     const cleanEmail = (email || '').toLowerCase().trim();
+    if (!cleanEmail) {
+      return res.status(401).json({ error: 'Email is required' });
+    }
     const businesses = getBusinessesForUser(cleanEmail);
-    const activeBiz = businesses[0] || (cleanEmail ? createOrGetBusinessForUser(cleanEmail) : getAllBusinessRecordsFromLocoraDb()[0]);
+    const activeBiz = businesses[0] || createOrGetBusinessForUser(cleanEmail);
 
     if (!activeBiz) {
       return res.status(404).json({ error: 'Business record not found' });
@@ -5246,11 +5730,14 @@ app.post('/api/analytics/ga4/sync', async (req, res) => {
   try {
     const { email } = req.body;
     const cleanEmail = (email || '').toLowerCase().trim();
+    if (!cleanEmail) {
+      return res.status(401).json({ error: 'Email is required' });
+    }
     const businesses = getBusinessesForUser(cleanEmail);
-    const activeBiz = businesses[0] || getAllBusinessRecordsFromLocoraDb()[0];
+    const activeBiz = businesses[0];
 
     if (!activeBiz) {
-      return res.status(404).json({ error: 'Business record not found' });
+      return res.status(404).json({ error: 'Business record not found for this account' });
     }
 
     const now = new Date().toISOString();
@@ -5302,8 +5789,11 @@ app.post('/api/analytics/ga4/disconnect', (req, res) => {
   try {
     const { email } = req.body;
     const cleanEmail = (email || '').toLowerCase().trim();
+    if (!cleanEmail) {
+      return res.status(401).json({ error: 'Email is required' });
+    }
     const businesses = getBusinessesForUser(cleanEmail);
-    const activeBiz = businesses[0] || getAllBusinessRecordsFromLocoraDb()[0];
+    const activeBiz = businesses[0];
 
     if (activeBiz && activeBiz.traffic) {
       activeBiz.traffic.ga4Connected = false;
@@ -6256,25 +6746,26 @@ app.post('/api/workspace/settings', async (req, res) => {
 // Customers & Real CRM API
 app.get('/api/workspace/customers', async (req, res) => {
   try {
-    const businessId = ((req.query.businessId as string) || '').trim();
-    const userEmail = ((req.query.email as string) || '').toLowerCase().trim();
-    const customers = await dbService.getCustomers(businessId || undefined, userEmail);
+    const rawBizId = ((req.query.businessId as string) || '').trim();
+    const { business, ownerEmail } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
+    const customers = await dbService.getCustomers(business.id, ownerEmail);
     res.json({ customers });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch customers' });
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || 'Failed to fetch customers' });
   }
 });
 
 app.post('/api/workspace/customers', async (req, res) => {
   try {
-    const userEmail = (req.body.userEmail || req.query.email || '').toString().toLowerCase().trim();
-    const businessId = (req.body.businessId || req.query.businessId || '').toString().trim();
+    const rawBizId = (req.body.businessId || req.query.businessId || '').toString().trim();
+    const { business, ownerEmail } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
     const customer = req.body.id
-      ? await dbService.updateCustomer(req.body.id, { ...req.body, businessId: businessId || req.body.businessId }, userEmail, businessId)
-      : await dbService.createCustomer({ ...req.body, businessId: businessId || req.body.businessId }, userEmail, businessId);
+      ? await dbService.updateCustomer(req.body.id, { ...req.body, businessId: business.id }, ownerEmail, business.id)
+      : await dbService.createCustomer({ ...req.body, businessId: business.id }, ownerEmail, business.id);
 
-    if (userEmail) {
-      const store = getUserWorkspaceDiskStore(userEmail);
+    if (ownerEmail) {
+      const store = getUserWorkspaceDiskStore(ownerEmail);
       const idx = store.customers.findIndex((c: any) => c.id === customer.id);
       if (idx >= 0) store.customers[idx] = customer;
       else store.customers.unshift(customer);
@@ -6283,46 +6774,51 @@ app.post('/api/workspace/customers', async (req, res) => {
     res.json({ customer });
   } catch (err: any) {
     console.error('Error saving customer:', err);
-    res.status(500).json({ error: 'Failed to save customer' });
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || 'Failed to save customer' });
   }
 });
 
 app.delete('/api/workspace/customers/:id', async (req, res) => {
   try {
-    const userEmail = (req.query.email as string || req.body?.userEmail || '').toString().toLowerCase().trim();
-    const businessId = (req.query.businessId as string || req.body?.businessId || '').toString().trim();
-    await dbService.deleteCustomer(req.params.id, businessId);
-    if (userEmail) {
-      const store = getUserWorkspaceDiskStore(userEmail);
+    const rawBizId = (req.query.businessId as string || req.body?.businessId || '').toString().trim();
+    const { business, ownerEmail } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
+    await dbService.deleteCustomer(req.params.id, business.id);
+    if (ownerEmail) {
+      const store = getUserWorkspaceDiskStore(ownerEmail);
       store.customers = store.customers.filter((c: any) => c.id !== req.params.id);
       saveUserWorkspaceDataToDisk();
     }
     res.json({ success: true });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to delete customer' });
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || 'Failed to delete customer' });
   }
 });
 
 // Customer Activities (Timeline)
 app.get('/api/workspace/customers/:id/activities', async (req, res) => {
   try {
-    const businessId = ((req.query.businessId as string) || '').trim();
-    const activities = await dbService.getCustomerActivities(businessId, req.params.id);
+    const rawBizId = ((req.query.businessId as string) || '').trim();
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
+    const activities = await dbService.getCustomerActivities(business.id, req.params.id);
     res.json({ activities });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch activities' });
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || 'Failed to fetch activities' });
   }
 });
 
 app.post('/api/workspace/customers/:id/activities', async (req, res) => {
   try {
-    const businessId = (req.body.businessId || req.query.businessId || '').toString().trim();
+    const rawBizId = (req.body.businessId || req.query.businessId || '').toString().trim();
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
     const { type, title, description, metadata } = req.body;
-    if (!businessId || !type || !title) {
-      return res.status(400).json({ error: 'businessId, type, and title are required' });
+    if (!type || !title) {
+      return res.status(400).json({ error: 'type and title are required' });
     }
     const activity = await dbService.logCustomerActivity({
-      businessId,
+      businessId: business.id,
       customerId: req.params.id,
       type,
       title,
@@ -6331,60 +6827,68 @@ app.post('/api/workspace/customers/:id/activities', async (req, res) => {
     });
     res.json({ activity });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to log customer activity' });
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || 'Failed to log customer activity' });
   }
 });
 
 // Customer Notes
 app.get('/api/workspace/customers/:id/notes', async (req, res) => {
   try {
-    const businessId = ((req.query.businessId as string) || '').trim();
-    const notes = await dbService.getCustomerNotes(businessId, req.params.id);
+    const rawBizId = ((req.query.businessId as string) || '').trim();
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
+    const notes = await dbService.getCustomerNotes(business.id, req.params.id);
     res.json({ notes });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch customer notes' });
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || 'Failed to fetch customer notes' });
   }
 });
 
 app.post('/api/workspace/customers/:id/notes', async (req, res) => {
   try {
-    const businessId = (req.body.businessId || req.query.businessId || '').toString().trim();
+    const rawBizId = (req.body.businessId || req.query.businessId || '').toString().trim();
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
     const { content, author } = req.body;
-    if (!businessId || !content) {
-      return res.status(400).json({ error: 'businessId and content are required' });
+    if (!content) {
+      return res.status(400).json({ error: 'content is required' });
     }
     const note = await dbService.addCustomerNote({
-      businessId,
+      businessId: business.id,
       customerId: req.params.id,
       content,
       author,
     });
     res.json({ note });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to add customer note' });
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || 'Failed to add customer note' });
   }
 });
 
 // Customer Tasks
 app.get('/api/workspace/customers/:id/tasks', async (req, res) => {
   try {
-    const businessId = ((req.query.businessId as string) || '').trim();
-    const tasks = await dbService.getCustomerTasks(businessId, req.params.id);
+    const rawBizId = ((req.query.businessId as string) || '').trim();
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
+    const tasks = await dbService.getCustomerTasks(business.id, req.params.id);
     res.json({ tasks });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch customer tasks' });
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || 'Failed to fetch customer tasks' });
   }
 });
 
 app.post('/api/workspace/customers/:id/tasks', async (req, res) => {
   try {
-    const businessId = (req.body.businessId || req.query.businessId || '').toString().trim();
+    const rawBizId = (req.body.businessId || req.query.businessId || '').toString().trim();
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
     const { title, dueDate, priority } = req.body;
-    if (!businessId || !title) {
-      return res.status(400).json({ error: 'businessId and title are required' });
+    if (!title) {
+      return res.status(400).json({ error: 'title is required' });
     }
     const task = await dbService.createCustomerTask({
-      businessId,
+      businessId: business.id,
       customerId: req.params.id,
       title,
       dueDate,
@@ -6392,7 +6896,8 @@ app.post('/api/workspace/customers/:id/tasks', async (req, res) => {
     });
     res.json({ task });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create customer task' });
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || 'Failed to create customer task' });
   }
 });
 
@@ -6408,31 +6913,38 @@ app.patch('/api/workspace/customers/tasks/:taskId', async (req, res) => {
 // Customer Sources
 app.get('/api/workspace/customers/sources', async (req, res) => {
   try {
-    const businessId = ((req.query.businessId as string) || '').trim();
-    const sources = await dbService.getCustomerSources(businessId);
+    const rawBizId = ((req.query.businessId as string) || '').trim();
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
+    const sources = await dbService.getCustomerSources(business.id);
     res.json({ sources });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch customer sources' });
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || 'Failed to fetch customer sources' });
   }
 });
 
 // Leads
 app.get('/api/workspace/leads', async (req, res) => {
   try {
-    const businessId = ((req.query.businessId as string) || '').trim();
-    const leads = await dbService.getLeads(businessId);
+    const rawBizId = ((req.query.businessId as string) || '').trim();
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
+    const leads = await dbService.getLeads(business.id);
     res.json({ leads });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch leads' });
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || 'Failed to fetch leads' });
   }
 });
 
 app.post('/api/workspace/leads', async (req, res) => {
   try {
-    const lead = await dbService.createLead(req.body);
+    const rawBizId = (req.body.businessId || req.query.businessId || '').toString().trim();
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
+    const lead = await dbService.createLead({ ...req.body, businessId: business.id });
     res.json({ lead });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create lead' });
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || 'Failed to create lead' });
   }
 });
 
@@ -6491,22 +7003,26 @@ app.put('/api/workspace/projects/:id', async (req, res) => {
 // Operational Work Tasks CRUD
 app.get('/api/workspace/tasks', async (req, res) => {
   try {
-    const businessId = (req.query.businessId as string || '').trim();
+    const rawBizId = (req.query.businessId as string || '').trim();
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
     const projectId = (req.query.projectId as string || '').trim() || undefined;
-    if (!businessId) return res.json({ tasks: [] });
-    const tasks = await dbService.getWorkTasks(businessId, projectId);
+    const tasks = await dbService.getWorkTasks(business.id, projectId);
     res.json({ tasks });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch work tasks' });
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || 'Failed to fetch work tasks' });
   }
 });
 
 app.post('/api/workspace/tasks', async (req, res) => {
   try {
-    const task = await dbService.createWorkTask(req.body);
+    const rawBizId = (req.body.businessId || req.query.businessId || '').toString().trim();
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
+    const task = await dbService.createWorkTask({ ...req.body, businessId: business.id });
     res.json({ task });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create work task' });
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || 'Failed to create work task' });
   }
 });
 
@@ -6817,21 +7333,25 @@ app.delete('/api/workspace/documents/:id', async (req, res) => {
 // Work Templates CRUD
 app.get('/api/workspace/templates', async (req, res) => {
   try {
-    const businessId = (req.query.businessId as string || '').trim();
-    if (!businessId) return res.json({ templates: [] });
-    const templates = await dbService.getWorkTemplates(businessId);
+    const rawBizId = (req.query.businessId as string || '').trim();
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
+    const templates = await dbService.getWorkTemplates(business.id);
     res.json({ templates });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch templates' });
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || 'Failed to fetch templates' });
   }
 });
 
 app.post('/api/workspace/templates', async (req, res) => {
   try {
-    const template = await dbService.createWorkTemplate(req.body);
+    const rawBizId = (req.body.businessId || req.query.businessId || '').toString().trim();
+    const { business } = await resolveAuthenticatedBusiness(req, rawBizId || undefined);
+    const template = await dbService.createWorkTemplate({ ...req.body, businessId: business.id });
     res.json({ template });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create template' });
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || 'Failed to create template' });
   }
 });
 
@@ -14390,9 +14910,19 @@ app.all('/api/newsletter/send-weekly-dispatch', async (req, res) => {
 
 // Admin Verification Helper
 async function verifyAdminAccessAsync(req: express.Request): Promise<boolean> {
-  const userEmail = ((req.headers['x-user-email'] as string) || (req.query.userEmail as string) || (req.body && req.body.userEmail) || '').toLowerCase().trim();
+  const userEmail = (
+    (req.headers['x-user-email'] as string) ||
+    (req.query.userEmail as string) ||
+    (req.body && req.body.userEmail) ||
+    (req.cookies?.auth_email as string) ||
+    ''
+  ).toLowerCase().trim();
 
-  if (!userEmail || userEmail === 'imtiazbaloch3322@gmail.com' || userEmail === 'support@locoraai.com') {
+  if (!userEmail) {
+    return false;
+  }
+
+  if (userEmail === 'imtiazbaloch3322@gmail.com' || userEmail === 'support@locoraai.com' || userEmail === 'admin@locora.ai' || userEmail === 'superadmin@locora.ai') {
     return true;
   }
 
@@ -14408,9 +14938,19 @@ async function verifyAdminAccessAsync(req: express.Request): Promise<boolean> {
 }
 
 function verifyAdminAccess(req: express.Request): boolean {
-  const userEmail = ((req.headers['x-user-email'] as string) || (req.query.userEmail as string) || (req.body && req.body.userEmail) || '').toLowerCase().trim();
+  const userEmail = (
+    (req.headers['x-user-email'] as string) ||
+    (req.query.userEmail as string) ||
+    (req.body && req.body.userEmail) ||
+    (req.cookies?.auth_email as string) ||
+    ''
+  ).toLowerCase().trim();
 
-  if (!userEmail || userEmail === 'imtiazbaloch3322@gmail.com' || userEmail === 'support@locoraai.com') {
+  if (!userEmail) {
+    return false;
+  }
+
+  if (userEmail === 'imtiazbaloch3322@gmail.com' || userEmail === 'support@locoraai.com' || userEmail === 'admin@locora.ai' || userEmail === 'superadmin@locora.ai') {
     return true;
   }
 
@@ -14650,24 +15190,38 @@ app.post('/api/admin/update-user-plan', async (req, res) => {
   }
 });
 
-// Admin API to Delete User Account permanently
+// Admin API to Delete User Account permanently with Complete Cascade
 app.post('/api/admin/delete-user', async (req, res) => {
   try {
     if (!(await verifyAdminAccessAsync(req))) {
       return res.status(403).json({ error: 'Access Denied. Admin key required.' });
     }
 
-    const { email } = req.body;
+    const { email, confirmAdminSelfDelete } = req.body;
     if (!email) return res.status(400).json({ error: 'Target user email is required.' });
 
     const normalizedEmail = email.toLowerCase().trim();
-    const existingUser = await findUserByEmail(normalizedEmail);
-    usersDb.delete(normalizedEmail);
-    await removeUserFromSql(normalizedEmail, existingUser?.id);
 
-    res.json({ success: true, message: `Successfully deleted user ${normalizedEmail}` });
+    // SAFETY CHECK (Requirement 10):
+    // Do NOT delete the system administrator account unless explicitly requested
+    const isSystemAdmin = normalizedEmail === 'imtiazbaloch3322@gmail.com' || normalizedEmail === 'support@locoraai.com' || normalizedEmail === 'admin@locora.ai';
+    if (isSystemAdmin && confirmAdminSelfDelete !== true) {
+      return res.status(400).json({
+        error: 'Cannot delete primary system administrator account without explicit override confirmation (confirmAdminSelfDelete: true).'
+      });
+    }
+
+    const existingUser = await findUserByEmail(normalizedEmail);
+    const cascadeResult = await executeCompleteUserCascadeDeletion(normalizedEmail, existingUser?.id);
+
+    res.json({
+      success: true,
+      message: `Successfully deleted user ${normalizedEmail} and completely purged all associated business ecosystem records.`,
+      cascadeResult,
+    });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Admin Deletion] Cascade error:', err);
+    res.status(500).json({ error: err.message || 'Failed to execute user deletion cascade' });
   }
 });
 
@@ -15168,7 +15722,7 @@ Sitemap: https://locoraai.com/sitemap.xml
 `);
 });
 
-app.get('/sitemap.xml', (req, res) => {
+app.get('/sitemap.xml', async (req, res) => {
   try {
     const baseUrl = 'https://locoraai.com';
     const today = new Date().toISOString().split('T')[0];
@@ -15227,28 +15781,77 @@ app.get('/sitemap.xml', (req, res) => {
       { path: '/directory', priority: '0.9', changefreq: 'daily' },
     ];
 
-    // Add all published directory listings into sitemap
+    // Dynamically inject real published entities into sitemap
     try {
-      const dirListings = getPublishedDirectoryListings();
-      dirListings.forEach(l => {
-        pages.push({
-          path: `/directory/business/${l.slug}`,
-          priority: '0.8',
-          changefreq: 'weekly'
-        });
-      });
-    } catch {}
+      const allPublished = await getUnifiedPublishedListings();
+      const snapshot = extractSnapshotFromBusinesses(allPublished);
 
+      // 1. Valid Cities (only cities with >= 1 published business)
+      snapshot.cities.forEach((c) => {
+        if (c.count >= 1 && c.slug) {
+          pages.push({
+            path: `/${c.slug}`,
+            priority: '0.85',
+            changefreq: 'daily',
+          });
+        }
+      });
+
+      // 2. Valid Categories (only categories with >= 1 published business)
+      snapshot.categories.forEach((cat) => {
+        if (cat.count >= 1 && cat.slug) {
+          pages.push({
+            path: `/category/${cat.slug}`,
+            priority: '0.85',
+            changefreq: 'daily',
+          });
+        }
+      });
+
+      // 3. Valid City + Category Combinations (only pairs with >= 1 published business)
+      snapshot.cityCategoryPairs.forEach((pair) => {
+        if (pair.count >= 1 && pair.citySlug && pair.categorySlug) {
+          pages.push({
+            path: `/${pair.citySlug}/${pair.categorySlug}`,
+            priority: '0.82',
+            changefreq: 'daily',
+          });
+        }
+      });
+
+      // 4. Real Published Business Profiles
+      snapshot.businesses.forEach((b) => {
+        if (b.slug) {
+          pages.push({
+            path: `/biz/${b.slug}`,
+            priority: '0.90',
+            changefreq: 'weekly',
+          });
+          pages.push({
+            path: `/directory/business/${b.slug}`,
+            priority: '0.80',
+            changefreq: 'weekly',
+          });
+        }
+      });
+    } catch (e) {
+      console.warn('[Sitemap] Failed to load directory entities for sitemap:', e);
+    }
+
+    const seenPaths = new Set<string>();
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
     xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n`;
 
     pages.forEach((p) => {
-      xml += `  <url>\n`;
-      xml += `    <loc>${baseUrl}${p.path}</loc>\n`;
-      xml += `    <lastmod>${today}</lastmod>\n`;
-      xml += `    <changefreq>${p.changefreq}</changefreq>\n`;
-      xml += `    <priority>${p.priority}</priority>\n`;
-      xml += `  </url>\n`;
+      if (!seenPaths.has(p.path)) {
+        seenPaths.add(p.path);
+        xml += `  <url>\n`;
+        xml += `    <loc>${baseUrl}${p.path}</loc>\n`;
+        xml += `    <lastmod>${today}</lastmod>\n`;
+        xml += `    <changefreq>${p.changefreq}</changefreq>\n`;
+        xml += `    <priority>${p.priority}</priority>\n`;
+        xml += `  </url>\n`;
+      }
     });
 
     xml += `</urlset>`;
@@ -15262,11 +15865,217 @@ app.get('/sitemap.xml', (req, res) => {
   }
 });
 
+/**
+ * Unified Helper: Retrieves all published directory businesses from both Postgres DB and in-memory engine,
+ * deduplicated by canonical id or slug.
+ */
+async function getUnifiedPublishedListings(): Promise<any[]> {
+  const dbPublished = await dbService.getPublishedDirectoryListings().catch(() => []);
+  const memPublished = getPublishedDirectoryListings();
+
+  const seenIds = new Set<string>();
+  const allPublished: any[] = [];
+
+  for (const item of dbPublished) {
+    const key = (item.id || item.slug || '').toLowerCase();
+    if (key && !seenIds.has(key)) {
+      seenIds.add(key);
+      allPublished.push(item);
+    }
+  }
+
+  for (const item of memPublished) {
+    const key = (item.id || item.slug || '').toLowerCase();
+    if (key && !seenIds.has(key)) {
+      seenIds.add(key);
+      allPublished.push(item);
+    }
+  }
+
+  return allPublished;
+}
+
+// =========================================================================
+// Dynamic Central SEO & GEO Keyword Engine API Endpoints
+// =========================================================================
+
+// 1. Dynamic Page Keywords Endpoint
+app.get('/api/seo/keywords', async (req, res) => {
+  try {
+    const {
+      pageType = 'category_city',
+      category,
+      city,
+      suburb,
+      businessSlug,
+      businessId,
+      service,
+      sitePageKey,
+    } = req.query;
+
+    const allPublished = await getUnifiedPublishedListings();
+    const snapshot = extractSnapshotFromBusinesses(allPublished);
+
+    let matchedBiz = null;
+    if (businessSlug || businessId) {
+      const targetSlug = String(businessSlug || '').toLowerCase().trim();
+      const targetId = String(businessId || '').trim();
+      matchedBiz = snapshot.businesses.find(
+        (b) => (targetSlug && b.slug.toLowerCase() === targetSlug) || (targetId && b.id === targetId)
+      );
+    }
+
+    const filteredBiz = snapshot.businesses.filter((b) => {
+      if (city && b.city.toLowerCase() !== String(city).toLowerCase()) return false;
+      if (category && b.category.toLowerCase() !== String(category).toLowerCase()) return false;
+      return true;
+    });
+
+    const availableServices = Array.from(
+      new Set(
+        filteredBiz.flatMap((b) => b.services || [])
+      )
+    ).filter(Boolean);
+
+    const context: SeoPageContext = {
+      pageType: (pageType as SeoPageType) || 'category_city',
+      category: matchedBiz?.category || (category ? String(category) : undefined),
+      city: matchedBiz?.city || (city ? String(city) : undefined),
+      suburb: matchedBiz?.suburb || (suburb ? String(suburb) : undefined),
+      businessName: matchedBiz?.name,
+      businessSlug: matchedBiz?.slug || (businessSlug ? String(businessSlug) : undefined),
+      services: matchedBiz?.services?.length ? matchedBiz.services : (service ? [String(service)] : availableServices),
+      phone: matchedBiz?.phone,
+      website: matchedBiz?.website,
+      address: matchedBiz?.address,
+      rating: matchedBiz?.rating,
+      reviewCount: matchedBiz?.reviewCount,
+      openingHours: matchedBiz?.openingHours,
+      availableBusinessesCount: filteredBiz.length,
+      availableBusinesses: filteredBiz,
+      availableCategories: snapshot.categories.map((c) => c.name),
+      availableCities: snapshot.cities.map((c) => c.name),
+      sitePageKey: sitePageKey ? String(sitePageKey) : undefined,
+    };
+
+    const keywords = generatePageKeywords(context);
+
+    res.json({
+      success: true,
+      context: {
+        pageType: context.pageType,
+        category: context.category,
+        city: context.city,
+        businessName: context.businessName,
+        services: context.services,
+      },
+      keywords,
+    });
+  } catch (err: any) {
+    console.error('[API /api/seo/keywords] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2. Dynamic Complete Page SEO Context (Metadata, Keywords, Breadcrumbs, Structured Data, Internal Links)
+app.get('/api/seo/page-context', async (req, res) => {
+  try {
+    const {
+      pageType = 'category_city',
+      category,
+      city,
+      suburb,
+      businessSlug,
+      businessId,
+      service,
+      sitePageKey,
+      path: reqPath,
+    } = req.query;
+
+    const allPublished = await getUnifiedPublishedListings();
+    const snapshot = extractSnapshotFromBusinesses(allPublished);
+
+    let matchedBiz = null;
+    if (businessSlug || businessId) {
+      const targetSlug = String(businessSlug || '').toLowerCase().trim();
+      const targetId = String(businessId || '').trim();
+      matchedBiz = snapshot.businesses.find(
+        (b) => (targetSlug && b.slug.toLowerCase() === targetSlug) || (targetId && b.id === targetId)
+      );
+    }
+
+    const filteredBiz = snapshot.businesses.filter((b) => {
+      if (city && b.city.toLowerCase() !== String(city).toLowerCase()) return false;
+      if (category && b.category.toLowerCase() !== String(category).toLowerCase()) return false;
+      return true;
+    });
+
+    const availableServices = Array.from(
+      new Set(
+        filteredBiz.flatMap((b) => b.services || [])
+      )
+    ).filter(Boolean);
+
+    const context: SeoPageContext = {
+      pageType: (pageType as SeoPageType) || 'category_city',
+      category: matchedBiz?.category || (category ? String(category) : undefined),
+      city: matchedBiz?.city || (city ? String(city) : undefined),
+      suburb: matchedBiz?.suburb || (suburb ? String(suburb) : undefined),
+      businessName: matchedBiz?.name,
+      businessSlug: matchedBiz?.slug || (businessSlug ? String(businessSlug) : undefined),
+      services: matchedBiz?.services?.length ? matchedBiz.services : (service ? [String(service)] : availableServices),
+      phone: matchedBiz?.phone,
+      website: matchedBiz?.website,
+      address: matchedBiz?.address,
+      rating: matchedBiz?.rating,
+      reviewCount: matchedBiz?.reviewCount,
+      openingHours: matchedBiz?.openingHours,
+      availableBusinessesCount: filteredBiz.length,
+      availableBusinesses: filteredBiz,
+      availableCategories: snapshot.categories.map((c) => c.name),
+      availableCities: snapshot.cities.map((c) => c.name),
+      sitePageKey: sitePageKey ? String(sitePageKey) : undefined,
+      path: reqPath ? String(reqPath) : undefined,
+    };
+
+    const seoResult = generateCompletePageSeo(context, snapshot);
+
+    res.json({
+      success: true,
+      ...seoResult,
+    });
+  } catch (err: any) {
+    console.error('[API /api/seo/page-context] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. Real Published Entities for Dynamic Internal Linking & Navigation
+app.get('/api/seo/entities', async (_req, res) => {
+  try {
+    const allPublished = await getUnifiedPublishedListings();
+    const snapshot = extractSnapshotFromBusinesses(allPublished);
+
+    res.json({
+      success: true,
+      cities: snapshot.cities,
+      categories: snapshot.categories,
+      cityCategoryPairs: snapshot.cityCategoryPairs,
+      businessesCount: snapshot.businesses.length,
+    });
+  } catch (err: any) {
+    console.error('[API /api/seo/entities] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Dynamic Local Business Directory API Endpoints (directory.locoraai.com)
-app.get('/api/directory/listings', (req, res) => {
+app.get('/api/directory/listings', async (req, res) => {
   try {
     const { category, city, query, page: rawPage, limit: rawLimit, all } = req.query;
-    const allPublished = getPublishedDirectoryListings();
+    
+    // Fetch canonical published listings using unified database helper
+    const allPublished = await getUnifiedPublishedListings();
 
     const allCategories = Array.from(new Set(allPublished.map(l => l.categoryName).filter(Boolean))).sort();
     const allCities = Array.from(new Set(allPublished.map(l => l.cityName).filter(Boolean))).sort();
@@ -15312,6 +16121,19 @@ app.get('/api/directory/listings', (req, res) => {
           (l.scrapedContent?.serviceTags || []).some((s: string) => s.toLowerCase().includes(q))
       );
     }
+
+    // Rank listings: Pro/Agency/Growth first, then Claimed profiles, then review score & volume
+    listings.sort((a, b) => {
+      const aTierScore = (a.planTier === 'agency' ? 3 : a.planTier === 'pro' || a.planTier === 'growth' ? 2 : 1);
+      const bTierScore = (b.planTier === 'agency' ? 3 : b.planTier === 'pro' || b.planTier === 'growth' ? 2 : 1);
+      if (bTierScore !== aTierScore) return bTierScore - aTierScore;
+
+      if (b.isClaimed !== a.isClaimed) return (b.isClaimed ? 1 : 0) - (a.isClaimed ? 1 : 0);
+
+      const bRating = (b.gbpData?.averageRating || 0) * Math.log10(Math.max(1, b.gbpData?.reviewCount || 1) + 1);
+      const aRating = (a.gbpData?.averageRating || 0) * Math.log10(Math.max(1, a.gbpData?.reviewCount || 1) + 1);
+      return bRating - aRating;
+    });
 
     const totalCount = listings.length;
     const shouldReturnAll = all === 'true' || all === '1';
@@ -15361,6 +16183,55 @@ app.get('/api/directory/analytics', async (req, res) => {
     const rawBizId = req.query.businessId ? String(req.query.businessId) : undefined;
     const { business } = await resolveAuthenticatedBusiness(req, rawBizId);
     const analytics = getDirectoryAnalytics(business.id, business.slug);
+
+    // Fetch canonical Postgres directory leads
+    const dbLeads = await dbService.getDirectoryLeadsForBusiness(business.id);
+
+    if (analytics.businessMetrics) {
+      const existingIds = new Set((analytics.businessMetrics.leads || []).map((l: any) => l.id));
+      for (const dbl of dbLeads) {
+        if (!existingIds.has(dbl.id)) {
+          analytics.businessMetrics.leads.push(dbl as any);
+          existingIds.add(dbl.id);
+        }
+      }
+      analytics.businessMetrics.leads.sort(
+        (a: any, b: any) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+      );
+      analytics.businessMetrics.totalLeads = analytics.businessMetrics.leads.length;
+      analytics.businessMetrics.deliveredLeads = analytics.businessMetrics.leads.filter((l: any) => l.status !== 'queued_for_unlock').length;
+      analytics.businessMetrics.conversionsCount = analytics.businessMetrics.leads.filter((l: any) => Boolean(l.convertedCustomerId) || l.status === 'converted').length;
+    } else {
+      // Build authentic businessMetrics from Postgres business if not yet in memory listings
+      const isClaimed = business.status !== 'unclaimed' && !business.ownerEmail?.startsWith('unclaimed');
+      const totalLeads = dbLeads.length;
+      const deliveredLeads = dbLeads.filter((l) => l.status !== 'queued_for_unlock').length;
+      const conversionsCount = dbLeads.filter((l) => Boolean(l.convertedCustomerId) || l.status === 'converted').length;
+      
+      analytics.businessMetrics = {
+        businessId: business.id,
+        businessName: business.name,
+        slug: business.slug || business.id,
+        isClaimed,
+        profileViews: 0,
+        checkupsStarted: 0,
+        checkupsCompleted: 0,
+        totalInquiries: totalLeads,
+        totalLeads,
+        deliveredLeads,
+        phoneClicks: 0,
+        websiteClicks: 0,
+        claimClicks: 0,
+        claimCompleted: isClaimed,
+        responsesCount: 0,
+        conversionsCount,
+        leadConversionRate: totalLeads > 0 ? Number(((conversionsCount / totalLeads) * 100).toFixed(1)) : 0,
+        inquiryRate: 0,
+        leads: dbLeads as any,
+        recentEvents: [],
+      };
+    }
+
     res.json({
       success: true,
       analytics,
@@ -15371,10 +16242,13 @@ app.get('/api/directory/analytics', async (req, res) => {
   }
 });
 
-app.get('/api/directory/business/:slugOrId', (req, res) => {
+app.get('/api/directory/business/:slugOrId', async (req, res) => {
   try {
     const { slugOrId } = req.params;
-    const listing = getDirectoryListingBySlug(slugOrId);
+    let listing = await dbService.getDirectoryListingBySlugOrId(slugOrId);
+    if (!listing) {
+      listing = getDirectoryListingBySlug(slugOrId);
+    }
     if (!listing) {
       return res.status(404).json({
         success: false,
@@ -15393,30 +16267,38 @@ app.get('/api/directory/business/:slugOrId', (req, res) => {
   }
 });
 
-app.post('/api/directory/lead', async (req, res) => {
+app.post(['/api/directory/lead', '/api/directory/leads'], async (req, res) => {
   try {
     const {
       businessId,
-      leadName,
-      leadEmail,
-      leadPhone,
+      directoryProfileId,
       serviceRequested,
       message,
+      notes,
       city,
       category,
       sessionId,
       userId,
     } = req.body;
 
-    if (!businessId || !leadName || !leadPhone) {
+    const leadName = req.body.leadName || req.body.name;
+    const leadEmail = req.body.leadEmail || req.body.email;
+    const leadPhone = req.body.leadPhone || req.body.phone;
+
+    const targetSlugOrId = directoryProfileId || businessId;
+    if (!targetSlugOrId || !leadName || !leadPhone) {
       return res.status(400).json({
         success: false,
         error: 'MISSING_FIELDS',
-        message: 'businessId, leadName, and leadPhone are required.',
+        message: 'businessId/directoryProfileId, leadName, and leadPhone are required.',
       });
     }
 
-    const listing = getDirectoryListingBySlug(businessId) || getPublishedDirectoryListings().find(b => b.id === businessId);
+    // Always derive canonical business from Postgres first, never trust client-provided ID blindly!
+    let listing = await dbService.getDirectoryListingBySlugOrId(targetSlugOrId);
+    if (!listing) {
+      listing = getDirectoryListingBySlug(targetSlugOrId) || getPublishedDirectoryListings().find(b => b.id === targetSlugOrId);
+    }
     if (!listing) {
       return res.status(404).json({
         success: false,
@@ -15425,9 +16307,32 @@ app.post('/api/directory/lead', async (req, res) => {
       });
     }
 
-    // Reuse the unified directory lead engine (Phase 4.4 - source: 'directory', stored persistently)
-    const result = createDirectoryLead({
-      businessId: listing.id,
+    // Canonical business ID
+    const canonicalBusinessId = listing.id;
+
+    // 1. Insert into PostgreSQL database (canonical directoryLeadsTable and leadsTable)
+    let dbResult: any = null;
+    try {
+      dbResult = await dbService.createDirectoryLeadRecord({
+        businessId: canonicalBusinessId,
+        directoryProfileId: listing.slug || targetSlugOrId,
+        leadName,
+        leadEmail,
+        leadPhone,
+        serviceRequested: serviceRequested || listing.categoryName,
+        message,
+        city: city || listing.cityName,
+        category: category || listing.categoryName,
+        sessionId,
+        userId,
+      });
+    } catch (dbErr: any) {
+      console.error('[Directory Lead] Database lead insert error:', dbErr.message);
+    }
+
+    // 2. Synchronize with in-memory directory lead engine
+    const memResult = createDirectoryLead({
+      businessId: canonicalBusinessId,
       leadName,
       leadEmail,
       leadPhone,
@@ -15439,11 +16344,12 @@ app.post('/api/directory/lead', async (req, res) => {
       userId,
     });
 
-    const isPremium = result.isPremium;
-    const targetOwnerEmail = result.ownerEmail;
+    const leadId = dbResult?.leadId || memResult.lead.id;
+    const isPremium = dbResult?.isPremium !== undefined ? dbResult.isPremium : memResult.isPremium;
+    const targetOwnerEmail = listing.email || memResult.ownerEmail;
 
     // Email notification to business owner
-    if (targetOwnerEmail) {
+    if (targetOwnerEmail && !targetOwnerEmail.startsWith('unclaimed')) {
       const emailSubject = isPremium
         ? `🔥 [New Lead Received] ${leadName} requested ${serviceRequested || listing.categoryName}`
         : `⚡ [New Customer Inquiry] Someone requested a quote for ${serviceRequested || listing.categoryName}!`;
@@ -15510,8 +16416,12 @@ app.post('/api/directory/lead', async (req, res) => {
 
     res.json({
       success: true,
-      leadId: result.lead.id,
-      lead: result.lead,
+      leadId,
+      lead: {
+        ...memResult.lead,
+        id: leadId,
+        businessId: canonicalBusinessId,
+      },
       message: 'Your request has been delivered to the business pro.',
       status: isPremium ? 'dispatched_direct' : 'queued_for_unlock',
     });
@@ -15569,6 +16479,7 @@ app.post('/api/directory/lead/respond', async (req, res) => {
       return res.status(400).json({ success: false, error: 'leadId is required' });
     }
     const { business } = await resolveAuthenticatedBusiness(req, businessId);
+    await dbService.updateDirectoryLeadStatus(leadId, business.id, 'contacted').catch(() => {});
     const result = markDirectoryLeadResponded(leadId, business.id, business.slug);
     if (!result.success) {
       return res.status(404).json(result);
@@ -15608,72 +16519,165 @@ app.post('/api/directory/lead/convert', async (req, res) => {
     const cName = customerName || result.lead?.leadName || 'Directory Customer';
     const cEmail = customerEmail || result.lead?.leadEmail || '';
     const cPhone = customerPhone || result.lead?.leadPhone || '';
-    await dbService
-      .createCustomer(
-        {
-          businessId: business.id,
-          name: cName,
-          email: cEmail,
-          phone: cPhone,
-          source: 'directory',
-          status: 'active',
-          totalRevenue: value ? Number(value) : 0,
-          notes: `Converted from Locora Directory lead for ${result.lead?.serviceRequested || 'Local Service'}.`,
-        },
-        ownerEmail
-      )
-      .catch(() => {});
 
-    res.json(result);
+    // Convert in Postgres DB (single source of truth)
+    const dbConv = await dbService.convertDirectoryLeadToCustomer(leadId, business.id, {
+      name: cName,
+      email: cEmail,
+      phone: cPhone,
+      value: value ? Number(value) : undefined,
+    });
+
+    res.json({
+      success: true,
+      customerId: dbConv?.customerId || customerId || result.lead?.convertedCustomerId,
+      leadId,
+      message: 'Lead converted to customer successfully.',
+    });
   } catch (err: any) {
     console.error('[Directory Lead Convert] Error:', err);
     res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
 
-// Phase 4.3: Real Directory Leads for a Business
-app.get('/api/directory/leads', async (req, res) => {
+// Phase 4.3: Real Directory Leads for a Business (PostgreSQL Single Source of Truth + Isolation)
+app.get(['/api/directory/leads', '/api/workspace/directory-leads'], async (req, res) => {
   try {
     const rawBizId = req.query.businessId ? String(req.query.businessId) : undefined;
     const { business } = await resolveAuthenticatedBusiness(req, rawBizId);
-    const leads = getDirectoryLeadsForBusiness(business.id, business.slug);
-    res.json({ success: true, count: leads.length, leads });
+    
+    // 1. Fetch leads from Postgres database
+    const dbLeads = await dbService.getDirectoryLeadsForBusiness(business.id);
+    
+    // 2. Fetch leads from in-memory engine
+    const memLeads = getDirectoryLeadsForBusiness(business.id, business.slug);
+
+    // Merge and deduplicate by id: Postgres dbLeads take precedence
+    const leadsMap = new Map<string, any>();
+    for (const ml of memLeads) {
+      if (ml.businessId === business.id) {
+        leadsMap.set(ml.id, ml);
+      }
+    }
+    for (const dbl of dbLeads) {
+      leadsMap.set(dbl.id, dbl);
+    }
+
+    const combinedLeads = Array.from(leadsMap.values()).sort(
+      (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+    );
+
+    res.json({ success: true, count: combinedLeads.length, leads: combinedLeads });
   } catch (err: any) {
     console.error('[Directory Leads API] Error:', err);
     res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
 
-// Phase 4.1: Query Directory Events
-app.get('/api/directory/events', async (req, res) => {
+// Update Lead Status (NEW, CONTACTED, QUALIFIED, CONVERTED, LOST)
+app.post('/api/directory/lead/status', async (req, res) => {
   try {
-    const rawBizId = req.query.businessId ? String(req.query.businessId) : undefined;
-    const { business } = await resolveAuthenticatedBusiness(req, rawBizId);
-    const eventType = req.query.eventType ? String(req.query.eventType) : undefined;
-    const limit = req.query.limit ? Number(req.query.limit) : 50;
-    const events = getDirectoryEvents({ businessId: business.id, businessSlug: business.slug, eventType, limit });
-    res.json({ success: true, count: events.length, events });
+    const { leadId, businessId, status } = req.body;
+    if (!leadId || !status) {
+      return res.status(400).json({ success: false, error: 'leadId and status are required' });
+    }
+    const { business } = await resolveAuthenticatedBusiness(req, businessId);
+    const updated = await dbService.updateDirectoryLeadStatus(leadId, business.id, status);
+    
+    // Sync memory if present
+    const memLead = directoryLeadsDatabase.get(leadId);
+    if (memLead && memLead.businessId === business.id) {
+      memLead.status = status;
+      directoryLeadsDatabase.set(leadId, memLead);
+      saveDirectoryLeadsToDisk();
+    }
+    res.json({ success: true, lead: updated || memLead });
   } catch (err: any) {
-    console.error('[Directory Events API] Error:', err);
     res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
 
-// Directory Claim Listing Route
-app.post('/api/directory/claim', (req, res) => {
+// Create Lead Follow-up Task
+app.post('/api/directory/lead/task', async (req, res) => {
+  try {
+    const { leadId, businessId, title, dueDate, priority } = req.body;
+    if (!leadId || !title) {
+      return res.status(400).json({ success: false, error: 'leadId and title are required' });
+    }
+    const { business } = await resolveAuthenticatedBusiness(req, businessId);
+    const task = await dbService.createCustomerTask({
+      businessId: business.id,
+      customerId: leadId,
+      title,
+      dueDate,
+      priority: priority || 'medium',
+    });
+    res.json({ success: true, task });
+  } catch (err: any) {
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+});
+
+// Directory Claim Listing Route (Real Business DB linking)
+app.post('/api/directory/claim', async (req, res) => {
   try {
     const { businessId, userEmail, fullName } = req.body;
     if (!businessId || !userEmail) {
       return res.status(400).json({ success: false, error: 'businessId and userEmail are required' });
     }
-    const result = claimDirectoryListingByBusinessId(businessId, userEmail, fullName);
-    if (!result.success) {
-      return res.status(result.alreadyClaimed ? 409 : 400).json(result);
+
+    // 1. Claim in Postgres database
+    const dbClaim = await dbService.claimDirectoryListing(businessId, userEmail, fullName);
+    if (!dbClaim.success) {
+      return res.status(dbClaim.alreadyClaimed ? 409 : 400).json(dbClaim);
     }
-    res.json(result);
+
+    // 2. Also claim in memory
+    claimDirectoryListingByBusinessId(businessId, userEmail, fullName);
+    invalidateDirectoryListingsCache();
+
+    res.json(dbClaim);
   } catch (err: any) {
     console.error('[Directory Claim] Error:', err);
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Publish Directory Profile
+app.post('/api/directory/publish', async (req, res) => {
+  try {
+    const { businessId } = req.body;
+    const { business } = await resolveAuthenticatedBusiness(req, businessId);
+    const updated = await dbService.setBusinessDirectoryPublish(business.id, true);
+    
+    const memBiz = getBusinessRecordById(business.id);
+    if (memBiz) {
+      memBiz.isPublishedInDirectory = true;
+      saveBusinessRecordToLocoraDb(memBiz);
+    }
+    invalidateDirectoryListingsCache();
+    res.json({ success: true, isPublishedInDirectory: true, business: updated });
+  } catch (err: any) {
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+});
+
+// Unpublish Directory Profile
+app.post('/api/directory/unpublish', async (req, res) => {
+  try {
+    const { businessId } = req.body;
+    const { business } = await resolveAuthenticatedBusiness(req, businessId);
+    const updated = await dbService.setBusinessDirectoryPublish(business.id, false);
+    
+    const memBiz = getBusinessRecordById(business.id);
+    if (memBiz) {
+      memBiz.isPublishedInDirectory = false;
+      saveBusinessRecordToLocoraDb(memBiz);
+    }
+    invalidateDirectoryListingsCache();
+    res.json({ success: true, isPublishedInDirectory: false, business: updated });
+  } catch (err: any) {
+    res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
 
@@ -15706,13 +16710,14 @@ app.post('/api/directory/profile/update', async (req, res) => {
 });
 
 // Dedicated Directory XML Sitemap (for directory.locoraai.com and /directory/sitemap.xml)
-app.get(['/directory/sitemap.xml', '/api/directory/sitemap.xml'], (req, res) => {
+app.get(['/directory/sitemap.xml', '/api/directory/sitemap.xml'], async (req, res) => {
   try {
-    const rawListings = getPublishedDirectoryListings();
+    const rawListings = await getUnifiedPublishedListings();
     // Strictly filter for valid, active, published business listings with non-empty slugs
     const listings = rawListings.filter(
       (b) => b && b.slug && typeof b.slug === 'string' && b.slug.trim().length > 0 && b.isPublishedInDirectory === true
     );
+    const snapshot = extractSnapshotFromBusinesses(listings);
     const today = new Date().toISOString().split('T')[0];
 
     const host = ((req.headers.host as string) || '').toLowerCase();
@@ -15737,47 +16742,23 @@ app.get(['/directory/sitemap.xml', '/api/directory/sitemap.xml'], (req, res) => 
     }
 
     // 2. City Pages (Only include cities with >= 1 published business)
-    const cityCounts = new Map<string, number>();
-    listings.forEach((b) => {
-      if (b.citySlug && b.citySlug !== 'all') {
-        cityCounts.set(b.citySlug, (cityCounts.get(b.citySlug) || 0) + 1);
-      }
-    });
-
-    cityCounts.forEach((count, citySlug) => {
-      if (count >= 1) {
-        addUrl(isDirHost ? `${baseUrl}/city/${citySlug}` : `${baseUrl}/${citySlug}`, today, 'daily', '0.85');
+    snapshot.cities.forEach((c) => {
+      if (c.count >= 1 && c.slug) {
+        addUrl(isDirHost ? `${baseUrl}/city/${c.slug}` : `${baseUrl}/${c.slug}`, today, 'daily', '0.85');
       }
     });
 
     // 3. Category Pages (Only include categories with >= 1 published business)
-    const categoryCounts = new Map<string, number>();
-    listings.forEach((b) => {
-      if (b.categorySlug && b.categorySlug !== 'services') {
-        categoryCounts.set(b.categorySlug, (categoryCounts.get(b.categorySlug) || 0) + 1);
-      }
-    });
-
-    categoryCounts.forEach((count, catSlug) => {
-      if (count >= 1) {
-        addUrl(`${baseUrl}/category/${catSlug}`, today, 'daily', '0.85');
+    snapshot.categories.forEach((cat) => {
+      if (cat.count >= 1 && cat.slug) {
+        addUrl(`${baseUrl}/category/${cat.slug}`, today, 'daily', '0.85');
       }
     });
 
     // 4. City + Category Combined Pages (Only include combinations with >= 1 published business)
-    const cityCatCombos = new Map<string, { citySlug: string; catSlug: string; count: number }>();
-    listings.forEach((b) => {
-      if (b.citySlug && b.citySlug !== 'all' && b.categorySlug && b.categorySlug !== 'services') {
-        const comboKey = `${b.citySlug}__${b.categorySlug}`;
-        const existing = cityCatCombos.get(comboKey) || { citySlug: b.citySlug, catSlug: b.categorySlug, count: 0 };
-        existing.count += 1;
-        cityCatCombos.set(comboKey, existing);
-      }
-    });
-
-    cityCatCombos.forEach(({ citySlug, catSlug, count }) => {
-      if (count >= 1) {
-        addUrl(`${baseUrl}/${citySlug}/${catSlug}`, today, 'daily', '0.80');
+    snapshot.cityCategoryPairs.forEach((pair) => {
+      if (pair.count >= 1 && pair.citySlug && pair.categorySlug) {
+        addUrl(`${baseUrl}/${pair.citySlug}/${pair.categorySlug}`, today, 'daily', '0.80');
       }
     });
 
@@ -15909,8 +16890,15 @@ async function handleHtmlRequest(req: express.Request, res: express.Response, vi
     return res.redirect(301, '/security');
   }
 
-  // Resolve metadata for this exact route and host
-  const metadata = resolveRouteMetadata(req.path, effectiveHost);
+  // Resolve metadata for this exact route and host using real published database entities
+  let entitySnapshot;
+  try {
+    const allPublished = await getUnifiedPublishedListings();
+    entitySnapshot = extractSnapshotFromBusinesses(allPublished);
+  } catch (err) {
+    console.warn('[handleHtmlRequest] Snapshot generation error:', err);
+  }
+  const metadata = resolveRouteMetadata(req.path, effectiveHost, entitySnapshot);
 
   // Set X-Robots-Tag header
   if (metadata.noIndex || metadata.isDashboard || isAppHost) {

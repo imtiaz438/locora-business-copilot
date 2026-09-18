@@ -46,14 +46,14 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     customers: {
       icon: Users,
       iconColor: 'text-emerald-600 bg-emerald-50 border-emerald-200',
-      title: 'Your CRM is ready',
+      title: 'No customers yet.',
       description: 'Add your first lead or connect an existing source.',
       buttonText: 'Add Lead',
     },
     opportunities: {
       icon: Sparkles,
       iconColor: 'text-purple-600 bg-purple-50 border-purple-200',
-      title: 'No opportunities detected yet',
+      title: 'No opportunities yet.',
       description: 'Run an autonomous scan of your local digital footprint to find untapped growth vectors.',
       buttonText: 'Run Market Scan',
     },

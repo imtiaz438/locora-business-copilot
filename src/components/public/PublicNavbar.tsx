@@ -116,16 +116,16 @@ export const PublicNavbar: React.FC = () => {
           : 'bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-22 sm:h-24 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4.5 min-h-[84px] sm:min-h-[92px] flex items-center justify-between">
         {/* Brand Logo Lockup */}
         <div
           role="button"
           tabIndex={0}
           onClick={() => navigateTo('home', '/')}
           onKeyDown={(e) => e.key === 'Enter' && navigateTo('home', '/')}
-          className="flex items-center gap-3 text-left group focus:outline-none cursor-pointer py-2"
+          className="flex items-center gap-3 text-left group focus:outline-none cursor-pointer py-1"
         >
-          <LocoraLogo size={46} className="flex-shrink-0 group-hover:scale-105 transition-transform duration-200" />
+          <LocoraLogo size={52} className="flex-shrink-0 group-hover:scale-105 transition-transform duration-200" />
         </div>
 
         {/* Desktop Navigation Links */}

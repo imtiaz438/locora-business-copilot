@@ -184,7 +184,7 @@ Let me know which one you'd like to inspect or generate!`;
         {
           id: `a_${Date.now()}`,
           role: 'assistant',
-          content: `Here is the AI Manager diagnostic for **${activeBusiness.name}**:\n\nOur priority recommendation is implementing the **${priorityActions[0]?.title || 'high-intent service landing page'}** and addressing the **${activeBusiness.unansweredReviews || 0} unanswered customer reviews**. This will raise your overall Growth Health score from **${activeBusiness.healthScore || 75} to ${(activeBusiness.healthScore || 75) + 10}+** within 14 days.`,
+          content: `Here is the AI Manager diagnostic for **${activeBusiness.name}**:\n\nOur priority recommendation is implementing the **${priorityActions[0]?.title || 'high-intent service landing page'}** and addressing the **${activeBusiness.unansweredReviews || 0} unanswered customer reviews**. ${activeBusiness.healthScore > 0 ? `This will raise your overall Growth Health score from **${activeBusiness.healthScore} to ${Math.min(100, activeBusiness.healthScore + 10)}+** within 14 days.` : 'This will establish your initial Growth Health score and unlock verified local search presence within 14 days.'}`,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);

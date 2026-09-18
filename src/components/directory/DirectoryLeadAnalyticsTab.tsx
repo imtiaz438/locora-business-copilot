@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useApp } from '../../context/AppContext';
 import {
   Building2,
   ExternalLink,
@@ -52,6 +53,8 @@ interface AnalyticsApiResponse {
 }
 
 export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps> = ({ activeBusiness }) => {
+  const { businesses, switchBusiness } = useApp();
+  const [selectedBizId, setSelectedBizId] = useState<string>(activeBusiness.id);
   const [data, setData] = useState<AnalyticsApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,11 +66,17 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
   const [convertModalLead, setConvertModalLead] = useState<DirectoryLeadItem | null>(null);
   const [convertRevenue, setConvertRevenue] = useState<string>('500');
 
+  useEffect(() => {
+    setSelectedBizId(activeBusiness.id);
+  }, [activeBusiness.id]);
+
   const fetchAnalytics = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/directory/analytics?businessId=${encodeURIComponent(activeBusiness.id)}`);
+      const targetBiz = businesses.find((b) => b.id === selectedBizId) || activeBusiness;
+      const targetQuery = targetBiz.directorySlug || targetBiz.slug || targetBiz.id;
+      const res = await fetch(`/api/directory/analytics?businessId=${encodeURIComponent(targetQuery)}`);
       if (!res.ok) throw new Error('Failed to load directory analytics');
       const json = await res.json();
       if (json.success) {
@@ -84,7 +93,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
 
   useEffect(() => {
     fetchAnalytics();
-  }, [activeBusiness.id]);
+  }, [selectedBizId, activeBusiness.id]);
 
   const biz = data?.businessMetrics;
   const isListingActive = Boolean(biz);
@@ -199,6 +208,18 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
     }
   };
 
+  if (businesses.length === 0 || !activeBusiness || !activeBusiness.id) {
+    return (
+      <div className="bg-white rounded-3xl border border-slate-200/90 p-12 text-center space-y-4 shadow-xs">
+        <Building2 className="w-12 h-12 text-slate-300 mx-auto" />
+        <h4 className="text-base font-bold text-slate-800">No business connected yet.</h4>
+        <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+          Connect or register a business in your workspace to manage directory leads, inbound inquiries, and visibility analytics.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-150">
       {/* Top Banner: Status & Real-time Verification */}
@@ -216,10 +237,33 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                 Attribution: source = directory
               </span>
             </div>
-            <h3 className="text-xl sm:text-2xl font-black font-heading text-slate-900 tracking-tight flex items-center gap-2.5">
-              <Building2 className="w-6 h-6 text-emerald-600 shrink-0" />
-              <span>{activeBusiness.name} — Directory Value & Conversion</span>
-            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <h3 className="text-xl sm:text-2xl font-black font-heading text-slate-900 tracking-tight flex items-center gap-2.5">
+                <Building2 className="w-6 h-6 text-emerald-600 shrink-0" />
+                <span>{(businesses.find(b => b.id === selectedBizId)?.name || activeBusiness.name)} — Directory Value & Conversion</span>
+              </h3>
+
+              {businesses.length > 1 && (
+                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/90 rounded-xl px-3 py-1.5 shadow-2xs">
+                  <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Active Business:</span>
+                  <select
+                    value={selectedBizId}
+                    onChange={(e) => {
+                      const newId = e.target.value;
+                      setSelectedBizId(newId);
+                      switchBusiness(newId);
+                    }}
+                    className="text-xs font-bold bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                  >
+                    {businesses.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.name} ({b.city || b.category || 'Location'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
             <p className="text-xs text-slate-500 max-w-2xl leading-relaxed">
               Verifiable measurement of whether your directory presence drives authentic business outcomes: profile impressions, instant website checkups, direct customer leads, owner response time, and converted customer value.
             </p>
@@ -447,7 +491,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
           {leadsList.length === 0 ? (
             <div className="text-center py-12 px-4 rounded-2xl bg-slate-50 border border-dashed border-slate-300">
               <FileText className="w-10 h-10 text-slate-400 mx-auto mb-3" />
-              <h5 className="text-sm font-bold text-slate-700">No Inbound Leads Yet</h5>
+              <h5 className="text-sm font-bold text-slate-700">No Directory leads yet.</h5>
               <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 leading-relaxed">
                 When visitors request quotes or service estimates from your public directory profile, they will appear here in real time.
               </p>

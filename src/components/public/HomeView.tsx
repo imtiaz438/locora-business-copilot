@@ -4,10 +4,12 @@ import { WebsiteAuditResult, PublicCheckupResult } from '../../types';
 import { LocoraLogo } from '../LocoraLogo';
 import { OneTimeOffersSection } from '../OneTimeOffersSection';
 import { QuickCheckupReport } from './QuickCheckupReport';
+import { navigateToDirectory } from '../../utils/domain';
 import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
+  BadgeCheck,
   Zap,
   TrendingUp,
   FileSpreadsheet,
@@ -104,9 +106,6 @@ export const HomeView: React.FC = () => {
 
   // FAQ State
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
-
-  // Pricing Toggle State
-  const [pricingCycle, setPricingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   const crawlStages = [
     'Queued • Resolving target domain, DNS & validating safety...',
@@ -309,18 +308,32 @@ export const HomeView: React.FC = () => {
           {/* Eyebrow Pill */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#10b981]/15 border border-[#10b981]/30 text-[#6ee7b7] text-xs font-semibold font-heading tracking-wider uppercase">
             <LocoraLogo assetType="hero" size={20} className="w-5 h-5" />
-            <span>AI Business OS + Local SEO Copilot</span>
+            <span>AI Business OS • Local SEO Copilot • Verified Directory</span>
           </div>
 
           {/* Core Title */}
           <h1 className="text-4xl sm:text-[56px] lg:text-[62px] font-bold font-heading text-white tracking-tight leading-[1.12]">
-            Your AI Manager for <span className="text-[#6ee7b7]">Local Business Growth</span>
+            Your AI Manager & <span className="text-[#6ee7b7]">Verified Local Directory</span>
           </h1>
 
           {/* Subtitle */}
           <p className="text-base sm:text-lg text-emerald-100/90 max-w-2xl mx-auto leading-relaxed font-sans">
-            Locora analyzes your business, finds what’s holding you back, and tells you exactly what to do next.
+            Audit your business, dominate the Google Maps 3-Pack, and get discovered by local customers and 2026 AI search engines through the Locora Verified Directory.
           </p>
+
+          {/* Directory Quick Navigation Banner */}
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigateToDirectory()}
+              className="w-full sm:w-auto px-5 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 hover:text-white rounded-full text-xs font-bold transition-all inline-flex items-center justify-center gap-2 cursor-pointer font-heading shadow-md"
+            >
+              <Building2 className="w-4 h-4 text-[#6ee7b7]" />
+              <span>Explore Verified Business Directory</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+            <span className="text-xs text-emerald-200/70 font-sans hidden sm:inline">or run a real-time site audit below:</span>
+          </div>
 
           {/* Website Input + CTA */}
           <form id="hero-input" onSubmit={handleHeroSubmit} className="max-w-xl mx-auto pt-2 space-y-3">
@@ -417,19 +430,42 @@ export const HomeView: React.FC = () => {
             </div>
           </form>
 
+          {/* Popular Directory Categories Quick Jump */}
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-1.5 text-xs text-emerald-100/90">
+            <span className="font-semibold text-[#6ee7b7] mr-1 flex items-center gap-1">
+              <BadgeCheck className="w-3.5 h-3.5" />
+              Verified Directory:
+            </span>
+            {['Dentists', 'HVAC Repair', 'Plumbers', 'Contractors', 'Auto Care', 'Med Spas', 'Law Firms'].map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => navigateToDirectory()}
+                className="px-2.5 py-1 bg-white/10 hover:bg-white/20 border border-white/15 rounded-full text-emerald-100 hover:text-white transition-colors cursor-pointer text-[11px]"
+              >
+                {cat}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => navigateToDirectory()}
+              className="px-2 py-1 text-[#6ee7b7] hover:underline font-bold transition-colors cursor-pointer text-[11px]"
+            >
+              Browse All Categories →
+            </button>
+          </div>
+
           {/* Capabilities Badge Line */}
-          <div className="pt-4 flex flex-wrap items-center justify-center gap-3 text-xs text-emerald-100/75 font-heading">
-            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> SEO</span>
+          <div className="pt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-emerald-100/75 font-heading">
+            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> Verified Directory</span>
             <span>•</span>
-            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> Google Business</span>
+            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> Maps 3-Pack Authority</span>
             <span>•</span>
-            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> Reviews</span>
+            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> 2026 AI Search (GEO)</span>
             <span>•</span>
-            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> Competitors</span>
+            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> Zero-Fee Direct Quotes</span>
             <span>•</span>
-            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> Content</span>
-            <span>•</span>
-            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> Growth</span>
+            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> 1-Click Verification</span>
           </div>
 
           {/* Analyzing Progress State */}
@@ -1640,6 +1676,185 @@ export const HomeView: React.FC = () => {
         </div>
       </section>
 
+      {/* 04.5 — NEW FEATURE: VERIFIED LOCAL BUSINESS DIRECTORY */}
+      <section id="business-directory-feature" className="max-w-6xl mx-auto px-6 space-y-12">
+        <div className="text-center space-y-3 max-w-3xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>New Feature · Verified Directory Network</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-slate-900 tracking-tight">
+            The Locora Verified Local Business Directory
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600 font-sans leading-relaxed">
+            Connect with high-intent local customers looking for accredited service professionals. Every listing is fortified with Google Business Profile synchronization, Schema.org LocalBusiness structured data, verified reviews, and Generative Engine Optimization (GEO) citations across 2026 AI search engines.
+          </p>
+        </div>
+
+        {/* 4 Feature Pillars */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-3 hover:border-emerald-300 hover:shadow-md transition-all">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#059669] flex items-center justify-center">
+              <BadgeCheck className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold font-heading text-slate-900">Accredited Trust Badge</h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-sans">
+              Google Business Profile synchronization, active operating hours, license verification, and authentic reviews give consumers instant confidence over unverified competitors.
+            </p>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-3 hover:border-emerald-300 hover:shadow-md transition-all">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#059669] flex items-center justify-center">
+              <Bot className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold font-heading text-slate-900">2026 AI Search (GEO)</h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-sans">
+              Engineered with full Schema.org structured data and entity graph markup, enabling ChatGPT, Google Gemini, and Perplexity to cite and recommend your business in conversational search.
+            </p>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-3 hover:border-emerald-300 hover:shadow-md transition-all">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#059669] flex items-center justify-center">
+              <MapPin className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold font-heading text-slate-900">Hyper-Local SEO Pages</h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-sans">
+              Programmatic city and category hubs (e.g. Austin Dentists, Miami HVAC) built to index cleanly on search engines and capture organic high-intent local customer queries.
+            </p>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-3 hover:border-emerald-300 hover:shadow-md transition-all">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#059669] flex items-center justify-center">
+              <DollarSign className="w-5 h-5" />
+            </div>
+            <h3 className="text-base font-bold font-heading text-slate-900">0% Commission Leads</h3>
+            <p className="text-xs text-slate-600 leading-relaxed font-sans">
+              Customers call, visit, or submit free quote requests straight into your business CRM. Zero broker commissions, zero lead auctions, and zero hidden referral fees.
+            </p>
+          </div>
+        </div>
+
+        {/* Interactive Directory Showcase Card */}
+        <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-3xl p-8 sm:p-10 border border-slate-800 shadow-xl space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Left: Verified Listing Mockup Card */}
+            <div className="lg:col-span-7 bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 space-y-5 backdrop-blur-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-700/60 pb-4">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold font-heading">
+                  <BadgeCheck className="w-4 h-4 text-emerald-400" />
+                  <span>Locora Verified Business</span>
+                </div>
+                <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Google Business Synced
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h4 className="text-xl font-bold font-heading text-white">Apex Heating & Air Conditioning</h4>
+                  <div className="flex items-center gap-1 text-amber-400 text-xs font-bold">
+                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    <span>4.9</span>
+                    <span className="text-slate-400 font-normal">(142 verified reviews)</span>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-300 flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>Austin, TX • South Congress Metro • Serving Central Texas</span>
+                </p>
+              </div>
+
+              {/* Service Badges */}
+              <div className="flex flex-wrap gap-2 pt-1">
+                {['24/7 Emergency AC Repair', 'Heat Pump Installation', 'Ductless Mini-Splits', 'Seasonal Tune-Up'].map((svc, idx) => (
+                  <span key={idx} className="px-2.5 py-1 rounded-lg bg-slate-700/70 border border-slate-600/50 text-[11px] text-slate-200 font-medium">
+                    {svc}
+                  </span>
+                ))}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigateToDirectory()}
+                  className="w-full sm:w-auto px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-sans shadow-md"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Request Direct Quote (0% Fee)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigateToDirectory()}
+                  className="w-full sm:w-auto px-4 py-2.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans"
+                >
+                  <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Call Direct: (512) 555-0198</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Right: Directory Ecosystem & Quick Category Discovery */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="space-y-2">
+                <h4 className="text-lg font-bold font-heading text-white">Explore By Service Category</h4>
+                <p className="text-xs text-slate-400 leading-relaxed font-sans">
+                  Browse accredited local businesses across thousands of indexed categories with authentic reviews and verified ratings.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { name: 'Dentists', count: '450+' },
+                  { name: 'HVAC & AC', count: '380+' },
+                  { name: 'Plumbing', count: '320+' },
+                  { name: 'Contractors', count: '290+' },
+                  { name: 'Auto Repair', count: '410+' },
+                  { name: 'Med Spas', count: '210+' },
+                  { name: 'Law Firms', count: '180+' },
+                  { name: 'Electricians', count: '260+' },
+                ].map((cat, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => navigateToDirectory()}
+                    className="p-2.5 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-emerald-400/50 rounded-xl text-left transition-all flex items-center justify-between cursor-pointer group"
+                  >
+                    <span className="text-xs font-semibold text-slate-200 group-hover:text-emerald-300 transition-colors">
+                      {cat.name}
+                    </span>
+                    <span className="text-[10px] text-slate-400 bg-slate-700/50 px-1.5 py-0.5 rounded font-mono">
+                      {cat.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigateToDirectory()}
+                  className="w-full sm:w-auto px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer font-heading uppercase tracking-wider"
+                >
+                  <Search className="w-4 h-4" />
+                  <span>Browse Directory Listings</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigateToDirectory()}
+                  className="w-full sm:w-auto px-5 py-3 bg-white/10 hover:bg-white/15 border border-white/20 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer font-heading"
+                >
+                  <Building2 className="w-4 h-4 text-emerald-400" />
+                  <span>Claim or Add Business</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 05 — WHO LOCORA IS BUILT FOR (SOLUTIONS BY INDUSTRY) */}
       <section id="industry-solutions" className="max-w-6xl mx-auto px-6 space-y-8">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
@@ -1750,145 +1965,28 @@ export const HomeView: React.FC = () => {
         </div>
       </section>
 
-      {/* 13 — PRICING SECTION ($0 / $29 / $99) */}
-      <section id="pricing" className="max-w-6xl mx-auto px-6 space-y-10">
-        <div className="text-center space-y-3 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider">
-            <Zap className="w-3.5 h-3.5" />
-            <span>Transparent Plans</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-slate-900 tracking-tight">
-            Plans Built for True Local Growth
-          </h2>
-          <p className="text-slate-600 text-sm">
-            Start for free to discover what's holding you back, or scale with our Pro and Agency tiers.
-          </p>
-
-          <div className="pt-2 flex items-center justify-center gap-3">
-            <span className={`text-xs font-bold font-heading ${pricingCycle === 'monthly' ? 'text-slate-900' : 'text-slate-500'}`}>
-              Monthly
-            </span>
-            <button
-              onClick={() => setPricingCycle(pricingCycle === 'monthly' ? 'yearly' : 'monthly')}
-              className="w-12 h-7 bg-slate-200 rounded-full p-1 relative transition-colors border border-slate-300 cursor-pointer"
-            >
-              <div
-                className={`w-5 h-5 rounded-full bg-[#059669] transition-transform ${
-                  pricingCycle === 'yearly' ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
-            <span className={`text-xs font-bold font-heading ${pricingCycle === 'yearly' ? 'text-slate-900' : 'text-slate-500'}`}>
-              Annual (Save Up to 28%)
-            </span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* FREE */}
-          <div className="bg-white border border-slate-200 rounded-3xl p-8 space-y-6 flex flex-col justify-between hover:shadow-md transition-all">
-            <div className="space-y-4">
-              <div className="inline-block px-3 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold font-heading">
-                Explorer
-              </div>
-              <h3 className="text-2xl font-bold font-heading text-slate-900">Free Forever</h3>
-              <p className="text-xs text-slate-500">For business owners exploring what is holding their growth back.</p>
-              <div className="text-3xl sm:text-4xl font-black font-heading text-slate-900">$0 <span className="text-xs font-medium text-slate-400">/ forever</span></div>
-
-              <div className="space-y-2 pt-2 text-xs text-slate-700">
-                <div>✓ 1 Business context</div>
-                <div>✓ AI Business Checkup & Diagnosis</div>
-                <div>✓ Basic Business Brain</div>
-                <div>✓ Basic Local SEO Audit</div>
-                <div>✓ 1 Competitor tracked</div>
-                <div>✓ 5 Tracked opportunities</div>
-                <div>✓ 10 Review analyses / month</div>
-                <div>✓ No credit card required</div>
-              </div>
+      {/* 13 — PRICING CALLOUT BANNER (MODELS MOVED TO /pricing) */}
+      <section id="pricing" className="max-w-5xl mx-auto px-6">
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6 hover:border-emerald-300 transition-all">
+          <div className="space-y-2 text-center sm:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider">
+              <Zap className="w-3.5 h-3.5" />
+              <span>Transparent Pricing</span>
             </div>
-
-            <button
-              onClick={() => {
-                setActiveTab('signup');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-all cursor-pointer font-sans"
-            >
-              Start Free Checkup
-            </button>
+            <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 tracking-tight">
+              Predictable Plans for Solo Businesses & Agencies
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 font-sans max-w-xl leading-relaxed">
+              Explore our flexible subscription plans—including our free Forever Explorer plan, Pro AI Growth ($29/mo), and multi-client Agency Elite ($99/mo)—with full feature comparisons and guarantees.
+            </p>
           </div>
-
-          {/* PRO $29 */}
-          <div className="bg-white border-2 border-[#059669] rounded-3xl p-8 space-y-6 flex flex-col justify-between shadow-xl relative">
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#059669] text-white text-[10px] font-black uppercase tracking-wider rounded-full shadow-sm font-heading">
-              MOST POPULAR
-            </div>
-
-            <div className="space-y-4">
-              <div className="inline-block px-3 py-1 bg-emerald-50 text-[#059669] rounded-lg text-xs font-bold font-heading">
-                Pro Growth
-              </div>
-              <h3 className="text-2xl font-bold font-heading text-slate-900">AI Business Manager</h3>
-              <p className="text-xs text-slate-500">For 1 business ready for proactive growth and Maps dominance.</p>
-              <div className="text-3xl sm:text-4xl font-black font-heading text-slate-900">
-                {pricingCycle === 'yearly' ? '$249' : '$29'}{' '}
-                <span className="text-xs font-medium text-slate-400">{pricingCycle === 'yearly' ? '/ year ($20.75/mo)' : '/ month'}</span>
-              </div>
-
-              <div className="space-y-2 pt-2 text-xs text-slate-700">
-                <div className="font-bold text-slate-900">✓ Full Business Brain & AI Growth Manager</div>
-                <div>✓ AI Local SEO Copilot (Maps 3-Pack)</div>
-                <div>✓ AI Reputation Manager (200 actions/mo)</div>
-                <div>✓ Competitor Intelligence (5 tracked)</div>
-                <div>✓ 50 Tracked search opportunities</div>
-                <div>✓ 2026 AI Search Visibility (ChatGPT & Perplexity)</div>
-                <div>✓ 30-Day Growth Plan auto-execution</div>
-                <div>✓ Unlimited CRM, Proposals & Invoices</div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setCheckoutModalPlan('pro', pricingCycle)}
-              className="w-full py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
-            >
-              <span>Upgrade to Pro ($29/mo)</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* AGENCY $99 */}
-          <div className="bg-white border border-slate-200 rounded-3xl p-8 space-y-6 flex flex-col justify-between hover:shadow-md transition-all">
-            <div className="space-y-4">
-              <div className="inline-block px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold font-heading">
-                Agency Elite
-              </div>
-              <h3 className="text-2xl font-bold font-heading text-slate-900">AI Client Manager</h3>
-              <p className="text-xs text-slate-500">Manage 10, 50, or 100 client accounts autonomously.</p>
-              <div className="text-3xl sm:text-4xl font-black font-heading text-slate-900">
-                {pricingCycle === 'yearly' ? '$790' : '$99'}{' '}
-                <span className="text-xs font-medium text-slate-400">{pricingCycle === 'yearly' ? '/ year ($65.80/mo)' : '/ month'}</span>
-              </div>
-
-              <div className="space-y-2 pt-2 text-xs text-slate-700">
-                <div className="font-bold text-indigo-950">✓ Everything in Pro for 10 Businesses</div>
-                <div>✓ 10 Dedicated Business Brains</div>
-                <div>✓ AI Client Monitoring & Automated Scans</div>
-                <div>✓ Bulk Analysis & Review Actions</div>
-                <div>✓ White-Label Executive Client PDF Reports</div>
-                <div>✓ Custom Client Portals & Dashboards</div>
-                <div>✓ Up to 5 Team Member Seats</div>
-                <div>✓ Full Agency Branding & Custom Logo</div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setCheckoutModalPlan('agency', pricingCycle)}
-              className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-all cursor-pointer font-sans flex items-center justify-center gap-2"
-            >
-              <span>Get Agency Client Manager ($99/mo)</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            onClick={() => navigateTo('pricing_public', '/pricing')}
+            className="px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-2 shrink-0 cursor-pointer font-heading uppercase tracking-wider"
+          >
+            <span>View All Pricing Plans</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </section>
 

@@ -23,6 +23,9 @@ import { DirectoryBusinessListing } from '../../types/directory';
 import { navigateToDirectory, isDirectorySubdomain } from '../../utils/domain';
 import { GoogleAddressAutocomplete, LocationData } from '../GoogleAddressAutocomplete';
 import { STANDARD_DIRECTORY_CATEGORIES } from '../../constants/directoryCategories';
+import { useDynamicSeo } from '../../hooks/useDynamicSeo';
+import { DynamicInternalLinks } from '../seo/DynamicInternalLinks';
+import type { SeoPageType } from '../../lib/seo/types';
 
 interface DirectoryHubViewProps {
   initialCategory?: string;
@@ -107,51 +110,36 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
     }
   }, [selectedCategory, selectedCity]);
 
-  // SEO Guardrails: Prevent crawl traps, thin pages, and duplicate content
-  useEffect(() => {
-    const isSearchActive = Boolean(searchQuery.trim());
-    const isThinPage = listings.length === 0 && !loading;
-    
-    // Set dynamic, descriptive page title
-    let title = 'Locora Local Business Directory — Verified Local Pros & Services';
-    if (selectedCategory !== 'all' && selectedCity !== 'all') {
-      title = `${selectedCategory} in ${selectedCity} — Verified Directory | Locora AI`;
-    } else if (selectedCategory !== 'all') {
-      title = `Best ${selectedCategory} Near You — Locora Business Directory`;
-    } else if (selectedCity !== 'all') {
-      title = `Top Rated Businesses & Services in ${selectedCity} | Locora Directory`;
-    }
-    document.title = title;
+  // Dynamic Central SEO & GEO Keyword System integration
+  const pageType: SeoPageType =
+    selectedCategory !== 'all' && selectedCity !== 'all'
+      ? 'category_city'
+      : selectedCategory !== 'all'
+      ? 'category_hub'
+      : selectedCity !== 'all'
+      ? 'city_hub'
+      : 'directory_hub';
 
-    // Canonical link management
-    let canonEl = document.querySelector('link[rel="canonical"]');
-    if (!canonEl) {
-      canonEl = document.createElement('link');
-      canonEl.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonEl);
-    }
+  const isSearchActive = Boolean(searchQuery.trim());
+  const isThinPage = listings.length === 0 && !loading;
 
-    let robotsEl = document.querySelector('meta[name="robots"]');
-    if (!robotsEl) {
-      robotsEl = document.createElement('meta');
-      robotsEl.setAttribute('name', 'robots');
-      document.head.appendChild(robotsEl);
-    }
-
-    const baseDirUrl = isDirectorySubdomain() ? 'https://directory.locoraai.com' : 'https://locoraai.com/directory';
-    if (isSearchActive || isThinPage) {
-      // Crawl trap and thin-page protection: Noindex arbitrary user search combinations or 0-result pages
-      robotsEl.setAttribute('content', 'noindex, follow');
-      canonEl.setAttribute('href', baseDirUrl);
-    } else {
-      robotsEl.setAttribute('content', 'index, follow');
-      const params = new URLSearchParams();
-      if (selectedCategory !== 'all') params.set('category', selectedCategory);
-      if (selectedCity !== 'all') params.set('city', selectedCity);
-      const queryStr = params.toString();
-      canonEl.setAttribute('href', `${baseDirUrl}${queryStr ? '?' + queryStr : ''}`);
-    }
-  }, [selectedCategory, selectedCity, searchQuery, listings.length, loading]);
+  const { seoResult } = useDynamicSeo({
+    pageType,
+    category: selectedCategory !== 'all' ? selectedCategory : undefined,
+    city: selectedCity !== 'all' ? selectedCity : undefined,
+    availableBusinessesCount: listings.length,
+    availableBusinesses: listings.map((l) => ({
+      id: l.id,
+      name: l.businessName,
+      slug: l.slug,
+      category: l.categoryName,
+      city: l.cityName,
+      services: l.scrapedContent?.serviceTags || l.targetKeywords || [],
+      rating: l.gbpData?.averageRating,
+      reviewCount: l.gbpData?.reviewCount,
+    })),
+    forceNoIndex: isSearchActive || isThinPage,
+  });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -391,9 +379,15 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
         ) : listings.length === 0 ? (
           <div className="py-20 text-center bg-white rounded-2xl border border-slate-200 p-8 mt-6">
             <Building2 className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-slate-800">No matching business listings found</h3>
+            <h3 className="text-base font-bold text-slate-800">
+              {selectedCategory === 'all' && selectedCity === 'all' && !searchQuery.trim()
+                ? 'No directory listings yet.'
+                : 'No matching business listings found'}
+            </h3>
             <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-              Try broadening your search term, selecting a different category, or resetting your location filter.
+              {selectedCategory === 'all' && selectedCity === 'all' && !searchQuery.trim()
+                ? 'No businesses are currently published in the directory.'
+                : 'Try broadening your search term, selecting a different category, or resetting your location filter.'}
             </p>
             <button
               onClick={() => { setSelectedCategory('all'); setSelectedCity('all'); setCityInputText(''); setSearchQuery(''); }}
@@ -592,6 +586,21 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
             </a>
           </div>
         </div>
+
+        {/* Dynamic SEO Internal Linking Architecture */}
+        {seoResult && (
+          <div className="mt-12">
+            <DynamicInternalLinks
+              seoResult={seoResult}
+              mode="bottom_nav"
+              onNavigate={(path) => {
+                if (path.startsWith('/')) {
+                  window.location.href = path;
+                }
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Quote / Lead Request Modal */}

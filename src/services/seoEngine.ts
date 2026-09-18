@@ -159,3 +159,6 @@ export async function executeSeoIntelligence(params: SeoEngineRequest): Promise<
       : `Live SEO Audit retrieved via ${audit.attribution}`,
   };
 }
+
+// Re-export complete Dynamic SEO/GEO Keyword Engine
+export * from '../lib/seo/index.ts';

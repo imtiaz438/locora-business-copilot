@@ -532,7 +532,7 @@ export const CRMView: React.FC = () => {
 
             <div className="max-w-md mx-auto space-y-2">
               <h3 className="text-xl font-bold font-heading text-slate-900">
-                No customers or leads yet.
+                No customers yet.
               </h3>
               <p className="text-sm text-slate-600 leading-relaxed">
                 Connect your website form or add your first customer.

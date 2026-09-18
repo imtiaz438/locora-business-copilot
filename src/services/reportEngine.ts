@@ -347,39 +347,42 @@ export function calculateReportMetrics(
   // ==========================================
   switch (reportType) {
     case 'business_health': {
+      const realHealthScore = productionDashboard?.calculatedMetrics?.healthScore;
+      const realAiReadiness = productionDashboard?.calculatedMetrics?.aiReadinessScore;
+
       keyMetrics.push(
         {
           id: 'health_score',
           label: 'Business Health Score',
-          value: productionDashboard?.calculatedMetrics?.healthScore || 85,
+          value: typeof realHealthScore === 'number' ? realHealthScore : null,
           unit: '/ 100',
-          delta: '+4 pts',
-          deltaType: 'positive',
+          delta: null,
           source: 'Locora Business Brain',
           period,
-          status: 'synced',
+          status: typeof realHealthScore === 'number' ? 'synced' : 'not_connected',
+          notConnectedMessage: 'No data yet — connect data to calculate score',
           lastSyncedAt: brainSource?.lastSyncedAt,
           benchmark: 'Local Market Average: 68',
         },
         {
           id: 'ai_readiness',
           label: 'AI Knowledge Readiness',
-          value: businessTruth?.googleProfile ? 85 : (activeBusiness.gbpCompleteness || 80),
+          value: typeof realAiReadiness === 'number' ? realAiReadiness : null,
           unit: '%',
-          delta: '+10%',
-          deltaType: 'positive',
+          delta: null,
           source: 'Locora Business Brain',
           period,
-          status: 'synced',
+          status: typeof realAiReadiness === 'number' ? 'synced' : 'not_connected',
+          notConnectedMessage: 'No data yet — configure Business Brain',
           lastSyncedAt: brainSource?.lastSyncedAt,
         },
         {
           id: 'gbp_reviews',
           label: 'Google Reviews',
           value: isGbpConnected ? `${activeBusiness.reviewCount || 0} reviews` : null,
-          previousValue: isGbpConnected ? `${Math.max(0, (activeBusiness.reviewCount || 0) - 2)} reviews` : null,
-          delta: isGbpConnected ? '+2 this period' : null,
-          deltaType: 'positive',
+          previousValue: null,
+          delta: null,
+          deltaType: 'neutral',
           source: 'Google Business Profile',
           period,
           status: isGbpConnected ? 'synced' : 'not_connected',
@@ -390,7 +393,7 @@ export function calculateReportMetrics(
           id: 'customer_contacts',
           label: 'Total CRM Contacts',
           value: customers.length,
-          delta: `+${activeLeads.length} leads`,
+          delta: activeLeads.length > 0 ? `+${activeLeads.length} leads` : null,
           deltaType: 'positive',
           source: 'Locora CRM',
           period,
@@ -401,7 +404,7 @@ export function calculateReportMetrics(
           id: 'paid_revenue',
           label: 'Collected Revenue',
           value: `$${paidTotal.toLocaleString()}`,
-          delta: `${paidInvoices.length} paid invoices`,
+          delta: paidInvoices.length > 0 ? `${paidInvoices.length} paid invoices` : null,
           deltaType: 'positive',
           source: 'Locora Work Billing',
           period,
@@ -411,13 +414,13 @@ export function calculateReportMetrics(
         {
           id: 'website_health',
           label: 'Website SEO & Technical Health',
-          value: hasWebsite ? (effectiveSeoScore ? `${effectiveSeoScore} / 100` : '92 / 100 — Optimized') : null,
-          delta: hasWebsite ? (criticalIssues.length === 0 ? 'Zero Blocking Errors' : `${criticalIssues.length} issues to resolve`) : null,
+          value: hasWebsite && effectiveSeoScore ? `${effectiveSeoScore} / 100` : null,
+          delta: hasWebsite && effectiveSeoScore ? (criticalIssues.length === 0 ? 'Zero Blocking Errors' : `${criticalIssues.length} issues to resolve`) : null,
           deltaType: criticalIssues.length === 0 ? 'positive' : 'neutral',
           source: 'Locora Technical Page Crawler',
           period,
-          status: hasWebsite ? 'synced' : 'not_connected',
-          notConnectedMessage: 'Not available — connect website',
+          status: (hasWebsite && effectiveSeoScore) ? 'synced' : 'not_connected',
+          notConnectedMessage: 'Not available — run website audit',
           lastSyncedAt: crawlSource?.lastSyncedAt,
           benchmark: 'Industry Benchmark: 80 / 100',
         },
@@ -550,37 +553,37 @@ export function calculateReportMetrics(
         {
           id: 'seo_score',
           label: 'Technical SEO Score',
-          value: hasWebsite ? (effectiveSeoScore ? `${effectiveSeoScore} / 100` : '92 / 100 — Optimized') : null,
-          delta: hasWebsite ? (criticalIssues.length === 0 ? 'Zero Blocking Errors' : `${criticalIssues.length} issues`) : null,
+          value: hasWebsite && effectiveSeoScore ? `${effectiveSeoScore} / 100` : null,
+          delta: hasWebsite && effectiveSeoScore ? (criticalIssues.length === 0 ? 'Zero Blocking Errors' : `${criticalIssues.length} issues`) : null,
           deltaType: criticalIssues.length === 0 ? 'positive' : 'negative',
           source: 'Locora Website Crawl',
           period,
-          status: hasWebsite ? 'synced' : 'not_connected',
-          notConnectedMessage: 'Not available — connect website',
+          status: (hasWebsite && effectiveSeoScore) ? 'synced' : 'not_connected',
+          notConnectedMessage: 'Not available — run website audit',
           lastSyncedAt: crawlSource?.lastSyncedAt,
         },
         {
           id: 'critical_issues',
           label: 'Critical Crawl Errors',
-          value: hasWebsite ? criticalIssues.length : null,
-          delta: criticalIssues.length === 0 ? 'Zero Blockers' : `${criticalIssues.length} must resolve`,
+          value: hasWebsite && effectiveSeoScore ? criticalIssues.length : null,
+          delta: hasWebsite && effectiveSeoScore ? (criticalIssues.length === 0 ? 'Zero Blockers' : `${criticalIssues.length} must resolve`) : null,
           deltaType: criticalIssues.length === 0 ? 'positive' : 'negative',
           source: 'Locora Website Crawl',
           period,
-          status: hasWebsite ? 'synced' : 'not_connected',
-          notConnectedMessage: 'Not available — connect website',
+          status: (hasWebsite && effectiveSeoScore) ? 'synced' : 'not_connected',
+          notConnectedMessage: 'Not available — run website audit',
           lastSyncedAt: crawlSource?.lastSyncedAt,
         },
         {
           id: 'mobile_index',
           label: 'Mobile Core Web Vitals',
-          value: hasWebsite ? (crawlRun?.perfScore ? `${crawlRun.perfScore} / 100` : '94 / 100 (Fast)') : null,
-          delta: hasWebsite ? 'Responsive & Valid' : null,
+          value: hasWebsite && crawlRun?.perfScore ? `${crawlRun.perfScore} / 100` : null,
+          delta: hasWebsite && crawlRun?.perfScore ? 'Performance Monitored' : null,
           deltaType: 'positive',
           source: 'Locora Website Audit',
           period,
-          status: hasWebsite ? 'synced' : 'not_connected',
-          notConnectedMessage: 'Not available — connect website',
+          status: (hasWebsite && crawlRun?.perfScore) ? 'synced' : 'not_connected',
+          notConnectedMessage: 'Not available — run website audit',
           lastSyncedAt: crawlSource?.lastSyncedAt,
         }
       );
@@ -1052,33 +1055,37 @@ export function calculateReportMetrics(
     });
   }
 
-  if (hasWebsite) {
+  if (hasWebsite && (crawlRun || effectiveSeoScore)) {
     whatChangedItems.push({
       title: 'Connected Website & Technical SEO',
       delta: `${activeBusiness.website || 'Target Website'} Monitored`,
       detail: criticalIssues.length === 0
-        ? `Website health verified (${crawlRun?.seoScore || 92}/100); Core Web Vitals passing with zero blocking crawl errors`
+        ? (effectiveSeoScore ? `Website health verified (${effectiveSeoScore}/100); Core Web Vitals monitored` : 'Website domain verified and monitored')
         : `${criticalIssues.length} technical issues detected on site crawl`,
       source: 'Locora Technical Page Crawler',
       type: criticalIssues.length === 0 ? 'positive' : 'negative',
     });
   }
 
-  whatChangedItems.push({
-    title: 'CRM Customer Activity',
-    delta: `${customers.length} Contacts (${activeLeads.length} Leads, ${activeClients.length} Clients)`,
-    detail: 'Customer records verified and segmented in Locora CRM',
-    source: 'Locora CRM',
-    type: 'positive',
-  });
+  if (customers.length > 0) {
+    whatChangedItems.push({
+      title: 'CRM Customer Activity',
+      delta: `${customers.length} Contacts (${activeLeads.length} Leads, ${activeClients.length} Clients)`,
+      detail: 'Customer records verified and segmented in Locora CRM',
+      source: 'Locora CRM',
+      type: 'positive',
+    });
+  }
 
-  whatChangedItems.push({
-    title: 'Billing & Cash Flow',
-    delta: `$${paidTotal.toLocaleString()} Collected Revenue`,
-    detail: `${paidInvoices.length} paid invoices recorded; $${pendingTotal.toLocaleString()} pending in ${pendingInvoices.length} invoices`,
-    source: 'Locora Work Billing',
-    type: paidTotal > 0 ? 'positive' : 'neutral',
-  });
+  if (paidTotal > 0 || pendingTotal > 0) {
+    whatChangedItems.push({
+      title: 'Billing & Cash Flow',
+      delta: `$${paidTotal.toLocaleString()} Collected Revenue`,
+      detail: `${paidInvoices.length} paid invoices recorded; $${pendingTotal.toLocaleString()} pending in ${pendingInvoices.length} invoices`,
+      source: 'Locora Work Billing',
+      type: paidTotal > 0 ? 'positive' : 'neutral',
+    });
+  }
 
   // ==========================================
   // DETAILED FINDINGS
@@ -1100,14 +1107,14 @@ export function calculateReportMetrics(
     }
   );
 
-  if (hasWebsite) {
+  if (hasWebsite && (crawlRun || effectiveSeoScore)) {
     detailedFindings.push({
       id: 'finding_website',
       category: 'Website Health & Organic Groundwork',
       title: 'Technical Website Crawl & Performance Audit',
       findings: [
         `Monitored Website URL: ${activeBusiness.website}`,
-        `Technical Crawl Score: ${crawlRun?.seoScore || 92} / 100`,
+        `Technical Crawl Score: ${effectiveSeoScore ? `${effectiveSeoScore} / 100` : 'Pending crawl audit'}`,
         `Critical Crawl Errors: ${criticalIssues.length} identified`,
         `Security Status: Verified HTTPS / SSL active`,
       ],
@@ -1324,3 +1331,112 @@ export async function generateFullReportSnapshot(
 
   return snapshot;
 }
+
+/**
+ * Checks whether a business possesses authentic data required for a specific report type.
+ * Never generates report snapshots containing fake or empty placeholders for fresh accounts.
+ */
+export function hasRelevantDataForReport(
+  reportType: ReportType,
+  input: {
+    activeBusiness: any;
+    productionDashboard?: any;
+    businessTruth?: any;
+    customers?: any[];
+    invoices?: any[];
+    contentRecords?: any[];
+    workTasks?: any[];
+    projects?: any[];
+    latestWebsiteAudit?: any;
+  }
+): boolean {
+  const {
+    activeBusiness,
+    productionDashboard,
+    businessTruth,
+    customers = [],
+    invoices = [],
+    contentRecords = [],
+    workTasks = [],
+    projects = [],
+    latestWebsiteAudit,
+  } = input;
+
+  if (!activeBusiness) return false;
+
+  const isGbpConnected = Boolean(
+    activeBusiness.gbpConnected ||
+    activeBusiness.googleConnected ||
+    (activeBusiness.reviewCount && activeBusiness.reviewCount > 0)
+  );
+
+  const crawlRun = productionDashboard?.collectedData?.latestCrawlRun;
+  const hasCrawlData = Boolean(
+    crawlRun ||
+    latestWebsiteAudit ||
+    (productionDashboard?.collectedData?.websiteIssues && productionDashboard.collectedData.websiteIssues.length > 0)
+  );
+
+  const hasRankings = Boolean(
+    (productionDashboard?.collectedData?.trackedKeywords && productionDashboard.collectedData.trackedKeywords.length > 0) ||
+    (typeof activeBusiness.rankingAvg === 'number' && activeBusiness.rankingAvg > 0)
+  );
+
+  const hasGsc = Boolean(
+    productionDashboard?.collectedData?.searchConsoleQueries &&
+    productionDashboard.collectedData.searchConsoleQueries.length > 0
+  );
+
+  const hasGa4 = Boolean(
+    productionDashboard?.collectedData?.analyticsMetrics &&
+    productionDashboard.collectedData.analyticsMetrics.sessions > 0
+  );
+
+  const hasCrm = Boolean(
+    customers.some((c: any) => c.businessId === activeBusiness.id)
+  );
+
+  const hasBillingOrWork = Boolean(
+    invoices.some((i: any) => i.businessId === activeBusiness.id) ||
+    workTasks.some((t: any) => t.businessId === activeBusiness.id) ||
+    projects.some((p: any) => p.businessId === activeBusiness.id)
+  );
+
+  const hasContent = Boolean(
+    contentRecords.some((r: any) => r.business_id === activeBusiness.id || r.businessId === activeBusiness.id)
+  );
+
+  const hasReviews = Boolean(
+    isGbpConnected &&
+    ((activeBusiness.reviewCount && activeBusiness.reviewCount > 0) || (activeBusiness.googleRating && activeBusiness.googleRating > 0))
+  );
+
+  switch (reportType) {
+    case 'business_health':
+      return Boolean(
+        (businessTruth && businessTruth.isCanonical) ||
+        (typeof productionDashboard?.calculatedMetrics?.healthScore === 'number' && productionDashboard.calculatedMetrics.healthScore > 0) ||
+        hasReviews ||
+        hasCrawlData ||
+        hasCrm ||
+        hasBillingOrWork
+      );
+    case 'local_seo':
+      return Boolean(isGbpConnected || hasCrawlData || hasRankings);
+    case 'seo_performance':
+      return Boolean(hasGsc || hasGa4 || hasCrawlData);
+    case 'reputation':
+      return Boolean(hasReviews);
+    case 'growth':
+      return Boolean(hasBillingOrWork || hasCrm || (productionDashboard?.collectedData?.growthOpportunities && productionDashboard.collectedData.growthOpportunities.length > 0));
+    case 'content_performance':
+      return Boolean(hasContent);
+    case 'customer_lead':
+      return Boolean(hasCrm);
+    case 'agency_client':
+      return Boolean(hasBillingOrWork || projects.length > 0);
+    default:
+      return false;
+  }
+}
+

@@ -42,12 +42,13 @@ export const TopBusinessSelector: React.FC = () => {
     setOnboardingModalOpen,
   } = useApp();
 
-  const displayName = businessTruth?.name ?? activeBusiness?.name ?? 'Business Workspace';
-  const displayCategory = businessTruth?.category ?? activeBusiness?.category ?? null;
+  const hasBusiness = businesses.length > 0 && !!activeBusiness && activeBusiness.id !== 'workspace_pending';
+  const displayName = hasBusiness ? (businessTruth?.name ?? activeBusiness?.name ?? 'No business yet') : 'No business yet';
+  const displayCategory = hasBusiness ? (businessTruth?.category ?? activeBusiness?.category ?? null) : null;
   const primaryLoc = businessTruth?.locations?.find((l) => l.isPrimary) || businessTruth?.locations?.[0];
-  const displayCity = primaryLoc?.city ?? activeBusiness?.city ?? null;
-  const displayState = primaryLoc?.state ?? activeBusiness?.state ?? null;
-  const displayLocationName = primaryLoc?.name ?? activeBusiness?.locationName ?? 'Main Location';
+  const displayCity = hasBusiness ? (primaryLoc?.city ?? activeBusiness?.city ?? null) : null;
+  const displayState = hasBusiness ? (primaryLoc?.state ?? activeBusiness?.state ?? null) : null;
+  const displayLocationName = hasBusiness ? (primaryLoc?.name ?? activeBusiness?.locationName ?? 'Main Location') : 'No location yet';
 
   const [isOpen, setIsOpen] = useState(false);
   const [showAddBusinessModal, setShowAddBusinessModal] = useState(false);
@@ -272,12 +273,14 @@ export const TopBusinessSelector: React.FC = () => {
                     Active Business
                   </span>
                   <span className="text-[9px] font-bold bg-slate-200 text-slate-700 px-1.5 py-0.2 rounded">
-                    1 Included ({user.planTier.toUpperCase()})
+                    {hasBusiness ? `1 Included (${user.planTier.toUpperCase()})` : 'None Configured'}
                   </span>
                 </div>
-                <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-                  Health: {activeBusiness.healthScore}/100
-                </span>
+                {hasBusiness && (
+                  <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                    Health: {typeof activeBusiness.healthScore === 'number' && activeBusiness.healthScore > 0 ? `${activeBusiness.healthScore}/100` : '—'}
+                  </span>
+                )}
               </div>
               <div className="flex items-center justify-between pt-1.5 gap-2">
                 <div className="min-w-0">
@@ -285,9 +288,9 @@ export const TopBusinessSelector: React.FC = () => {
                     {displayName}
                   </p>
                   <p className="text-xs text-slate-500 truncate">
-                    {displayCategory || 'Local Business'} {displayCity ? `• ${displayCity}${displayState ? `, ${displayState}` : ''}` : ''}
+                    {displayCategory || (hasBusiness ? 'Local Business' : 'No active workspace')} {displayCity ? `• ${displayCity}${displayState ? `, ${displayState}` : ''}` : ''}
                   </p>
-                  {businessTruth && (
+                  {businessTruth && hasBusiness && (
                     <div className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100/70 text-emerald-800 text-[10px] font-medium">
                       <Sparkles className="w-2.5 h-2.5 text-emerald-600" />
                       <span>Brain Verified</span>
@@ -349,43 +352,49 @@ export const TopBusinessSelector: React.FC = () => {
             <div className="p-2 border-b border-slate-100">
               <div className="flex items-center justify-between px-2 pb-1.5">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-heading">
-                  Locations / Branches ({activeBusiness.locations?.length || 1})
+                  Locations / Branches ({hasBusiness ? (activeBusiness.locations?.length || 1) : 0})
                 </span>
                 <span className="text-[10px] text-slate-400">
-                  {activeBusiness.locations?.length ? 'Multi-Branch' : 'Single Location'}
+                  {hasBusiness ? (activeBusiness.locations?.length ? 'Multi-Branch' : 'Single Location') : '0 Locations'}
                 </span>
               </div>
 
               <div className="space-y-1">
-                {(activeBusiness.locations || [
-                  {
-                    id: 'main',
-                    name: activeBusiness.locationName || 'Main Location',
-                    address: activeBusiness.address,
-                    city: activeBusiness.city,
-                    state: activeBusiness.state,
-                    phone: activeBusiness.phone,
-                    isMain: true,
-                  },
-                ]).map((loc, idx) => (
-                  <div
-                    key={loc.id || idx}
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-emerald-50/50 border border-emerald-100 text-xs text-slate-700"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <MapPin className="w-3.5 h-3.5 text-[#059669] shrink-0" />
-                      <div className="min-w-0">
-                        <p className="font-bold text-slate-900 truncate text-[11px]">{loc.name}</p>
-                        <p className="text-[10px] text-slate-500 truncate">
-                          {loc.address || `${activeBusiness.city}, ${activeBusiness.state}`}
-                        </p>
+                {hasBusiness ? (
+                  (activeBusiness.locations || [
+                    {
+                      id: 'main',
+                      name: activeBusiness.locationName || 'Main Location',
+                      address: activeBusiness.address,
+                      city: activeBusiness.city,
+                      state: activeBusiness.state,
+                      phone: activeBusiness.phone,
+                      isMain: true,
+                    },
+                  ]).map((loc, idx) => (
+                    <div
+                      key={loc.id || idx}
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-emerald-50/50 border border-emerald-100 text-xs text-slate-700"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <MapPin className="w-3.5 h-3.5 text-[#059669] shrink-0" />
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-900 truncate text-[11px]">{loc.name}</p>
+                          <p className="text-[10px] text-slate-500 truncate">
+                            {loc.address || `${activeBusiness.city}, ${activeBusiness.state}`}
+                          </p>
+                        </div>
                       </div>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold font-mono shrink-0">
+                        Primary
+                      </span>
                     </div>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold font-mono shrink-0">
-                      Primary
-                    </span>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-[11px] text-slate-400 px-2.5 py-1.5 italic">
+                    No locations configured yet.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -420,27 +429,33 @@ export const TopBusinessSelector: React.FC = () => {
               </div>
 
               <div className="space-y-1 max-h-48 overflow-y-auto">
-                {businesses.map((biz) => (
-                  <button
-                    key={biz.id}
-                    onClick={() => handleSelectBusiness(biz.id)}
-                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-left transition-colors cursor-pointer ${
-                      biz.id === activeBusinessId
-                        ? 'bg-emerald-50 text-[#059669] font-bold'
-                        : 'hover:bg-slate-50 text-slate-700 font-medium'
-                    }`}
-                  >
-                    <div className="min-w-0 pr-2">
-                      <p className="text-xs truncate">{biz.name}</p>
-                      <p className="text-[10px] text-slate-400 truncate">
-                        {biz.category} • {biz.city}
-                      </p>
-                    </div>
-                    {biz.id === activeBusinessId && (
-                      <Check className="w-4 h-4 text-[#059669] shrink-0" />
-                    )}
-                  </button>
-                ))}
+                {businesses.length > 0 ? (
+                  businesses.map((biz) => (
+                    <button
+                      key={biz.id}
+                      onClick={() => handleSelectBusiness(biz.id)}
+                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-left transition-colors cursor-pointer ${
+                        biz.id === activeBusinessId
+                          ? 'bg-emerald-50 text-[#059669] font-bold'
+                          : 'hover:bg-slate-50 text-slate-700 font-medium'
+                      }`}
+                    >
+                      <div className="min-w-0 pr-2">
+                        <p className="text-xs truncate">{biz.name}</p>
+                        <p className="text-[10px] text-slate-400 truncate">
+                          {biz.category} • {biz.city}
+                        </p>
+                      </div>
+                      {biz.id === activeBusinessId && (
+                        <Check className="w-4 h-4 text-[#059669] shrink-0" />
+                      )}
+                    </button>
+                  ))
+                ) : (
+                  <div className="py-2.5 px-2 text-center text-xs text-slate-400">
+                    No businesses yet.
+                  </div>
+                )}
               </div>
 
               {/* Add Client / Business Action */}

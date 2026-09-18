@@ -1,4 +1,6 @@
 import { isAppSubdomain } from './domain';
+import type { PublishedEntitiesSnapshot, SeoPageContext } from '../lib/seo/types.ts';
+import { generateCompletePageSeo } from '../lib/seo/seoService.ts';
 
 export interface PageMetadata {
   title: string;
@@ -13,6 +15,8 @@ export interface ResolvedMetadata {
   canonicalUrl: string | null;
   noIndex: boolean;
   isDashboard: boolean;
+  keywords?: string;
+  jsonLd?: string | object;
 }
 
 /**
@@ -20,10 +24,24 @@ export interface ResolvedMetadata {
  */
 export const MARKETING_METADATA: Record<string, PageMetadata> = {
   home: {
-    title: 'Locora AI — Your AI Business Manager for Local Growth',
+    title: 'Locora AI — AI Business OS, Local SEO Copilot & Verified Business Directory',
     description:
-      'Tell Locora what to improve — it finds the opportunities, explains what matters, and does the work. AI business copilot for local service businesses and agencies.',
+      'The autonomous AI business operating system and verified local business directory. Discover top-rated service providers, automate Google Maps SEO, and manage local growth.',
     canonicalPath: '/',
+    noIndex: false,
+  },
+  directory: {
+    title: 'Verified Local Business Directory — Top-Rated Service Providers | Locora AI',
+    description:
+      'Search the authoritative directory of verified local businesses, contractors, dental clinics, and home services. Browse verified reviews, hours, and request direct quotes.',
+    canonicalPath: '/directory',
+    noIndex: false,
+  },
+  directory_hub: {
+    title: 'Verified Local Business Directory — Top-Rated Service Providers | Locora AI',
+    description:
+      'Search the authoritative directory of verified local businesses, contractors, dental clinics, and home services. Browse verified reviews, hours, and request direct quotes.',
+    canonicalPath: '/directory',
     noIndex: false,
   },
   products: {
@@ -304,7 +322,11 @@ export const APP_WORKSPACE_TITLES: Record<string, string> = {
  * Core resolver that determines the exact SEO metadata for any route and host.
  * Used on both client and server to guarantee absolute consistency.
  */
-export function resolveRouteMetadata(rawPath: string, host: string = ''): ResolvedMetadata {
+export function resolveRouteMetadata(
+  rawPath: string,
+  host: string = '',
+  entitySnapshot?: PublishedEntitiesSnapshot
+): ResolvedMetadata {
   const normalizedHost = host.toLowerCase();
   const isAppHost = normalizedHost.startsWith('app.locoraai.com') || normalizedHost.startsWith('app.');
 
@@ -333,6 +355,53 @@ export function resolveRouteMetadata(rawPath: string, host: string = ''): Resolv
     const slug = cleanPath.replace(/^directory\/business\//, '').replace(/^business\//, '').replace(/^biz\//, '').trim();
     const formatted = slug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     const canonical = isDirectoryHost ? `https://directory.locoraai.com/business/${slug}` : `https://locoraai.com/biz/${slug}`;
+
+    if (entitySnapshot) {
+      const biz = entitySnapshot.businesses.find((b) => b.slug.toLowerCase() === slug);
+      if (!biz) {
+        // Business does not exist or is not published in directory -> 404 / noindex to prevent crawl trap
+        return {
+          title: `${formatted} — Business Profile Not Found | Locora Directory`,
+          description: `The business profile for ${formatted} was not found or is no longer listed on Locora Directory.`,
+          canonicalUrl: canonical,
+          noIndex: true,
+          isDashboard: false,
+        };
+      }
+
+      const context: SeoPageContext = {
+        pageType: 'business_detail',
+        businessName: biz.name,
+        businessSlug: biz.slug,
+        category: biz.category,
+        city: biz.city,
+        suburb: biz.suburb,
+        services: biz.services,
+        phone: biz.phone,
+        website: biz.website,
+        address: biz.address,
+        rating: biz.rating,
+        reviewCount: biz.reviewCount,
+        openingHours: biz.openingHours,
+        availableBusinessesCount: 1,
+        availableBusinesses: [biz],
+        availableCategories: entitySnapshot.categories.map((c) => c.name),
+        availableCities: entitySnapshot.cities.map((c) => c.name),
+        path: cleanPath,
+      };
+
+      const completeSeo = generateCompletePageSeo(context, entitySnapshot);
+      return {
+        title: completeSeo.metadata.title,
+        description: completeSeo.metadata.description,
+        canonicalUrl: completeSeo.metadata.canonicalUrl,
+        noIndex: completeSeo.thinContent,
+        isDashboard: false,
+        keywords: [completeSeo.keywords.primaryKeyword, ...completeSeo.keywords.secondaryKeywords].join(', '),
+        jsonLd: completeSeo.structuredData,
+      };
+    }
+
     return {
       title: `${formatted} — Verified Reviews, Phone & Hours | Locora Directory`,
       description: `View verified business profile, ratings, contact details, operating hours, and customer reviews for ${formatted} on Locora Directory.`,
@@ -348,6 +417,51 @@ export function resolveRouteMetadata(rawPath: string, host: string = ''): Resolv
     const formattedCity = citySlug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     const formattedCat = catSlug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     const canonical = isDirectoryHost ? `https://directory.locoraai.com/${citySlug}/${catSlug}` : `https://locoraai.com/${citySlug}/${catSlug}`;
+
+    if (entitySnapshot) {
+      const pair = entitySnapshot.cityCategoryPairs.find(
+        (p) => p.citySlug.toLowerCase() === citySlug && p.categorySlug.toLowerCase() === catSlug
+      );
+      if (!pair || pair.count === 0) {
+        // Thin page protection: Noindex 0-result city+category combinations
+        return {
+          title: `Verified ${formattedCat} in ${formattedCity} | Locora Directory`,
+          description: `Find verified ${formattedCat.toLowerCase()} in ${formattedCity}. Browse local pros, quotes, and customer reviews.`,
+          canonicalUrl: canonical,
+          noIndex: true,
+          isDashboard: false,
+        };
+      }
+
+      const matchingBusinesses = entitySnapshot.businesses.filter(
+        (b) => b.city.toLowerCase() === pair.city.toLowerCase() && b.category.toLowerCase() === pair.category.toLowerCase()
+      );
+      const services = Array.from(new Set(matchingBusinesses.flatMap((b) => b.services || []))).filter(Boolean);
+
+      const context: SeoPageContext = {
+        pageType: 'category_city',
+        category: pair.category,
+        city: pair.city,
+        services,
+        availableBusinessesCount: pair.count,
+        availableBusinesses: matchingBusinesses,
+        availableCategories: entitySnapshot.categories.map((c) => c.name),
+        availableCities: entitySnapshot.cities.map((c) => c.name),
+        path: cleanPath,
+      };
+
+      const completeSeo = generateCompletePageSeo(context, entitySnapshot);
+      return {
+        title: completeSeo.metadata.title,
+        description: completeSeo.metadata.description,
+        canonicalUrl: completeSeo.metadata.canonicalUrl,
+        noIndex: completeSeo.thinContent,
+        isDashboard: false,
+        keywords: [completeSeo.keywords.primaryKeyword, ...completeSeo.keywords.secondaryKeywords].join(', '),
+        jsonLd: completeSeo.structuredData,
+      };
+    }
+
     return {
       title: `Top Verified ${formattedCat} in ${formattedCity} | Locora Directory`,
       description: `Find top verified ${formattedCat.toLowerCase()} in ${formattedCity}. Authentic Google Business reviews, operating hours, phone numbers, and direct quotes.`,
@@ -361,6 +475,47 @@ export function resolveRouteMetadata(rawPath: string, host: string = ''): Resolv
     const citySlug = cleanPath.replace(/^directory\/city\//, '').replace(/^city\//, '').trim();
     const formattedCity = citySlug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     const canonical = isDirectoryHost ? `https://directory.locoraai.com/city/${citySlug}` : `https://locoraai.com/city/${citySlug}`;
+
+    if (entitySnapshot) {
+      const city = entitySnapshot.cities.find((c) => c.slug.toLowerCase() === citySlug);
+      if (!city || city.count === 0) {
+        return {
+          title: `Local Businesses in ${formattedCity} | Locora Directory`,
+          description: `Directory of local businesses and verified service providers in ${formattedCity}.`,
+          canonicalUrl: canonical,
+          noIndex: true,
+          isDashboard: false,
+        };
+      }
+
+      const matchingBusinesses = entitySnapshot.businesses.filter(
+        (b) => b.city.toLowerCase() === city.name.toLowerCase()
+      );
+      const services = Array.from(new Set(matchingBusinesses.flatMap((b) => b.services || []))).filter(Boolean);
+
+      const context: SeoPageContext = {
+        pageType: 'city_hub',
+        city: city.name,
+        services,
+        availableBusinessesCount: city.count,
+        availableBusinesses: matchingBusinesses,
+        availableCategories: entitySnapshot.categories.map((c) => c.name),
+        availableCities: entitySnapshot.cities.map((c) => c.name),
+        path: cleanPath,
+      };
+
+      const completeSeo = generateCompletePageSeo(context, entitySnapshot);
+      return {
+        title: completeSeo.metadata.title,
+        description: completeSeo.metadata.description,
+        canonicalUrl: completeSeo.metadata.canonicalUrl,
+        noIndex: completeSeo.thinContent,
+        isDashboard: false,
+        keywords: [completeSeo.keywords.primaryKeyword, ...completeSeo.keywords.secondaryKeywords].join(', '),
+        jsonLd: completeSeo.structuredData,
+      };
+    }
+
     return {
       title: `Top Rated Local Businesses in ${formattedCity} | Locora Directory`,
       description: `Find top-rated, certified local service providers, contractors, and specialists in ${formattedCity}.`,
@@ -374,6 +529,47 @@ export function resolveRouteMetadata(rawPath: string, host: string = ''): Resolv
     const catSlug = cleanPath.replace(/^directory\/category\//, '').replace(/^category\//, '').trim();
     const formattedCat = catSlug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     const canonical = isDirectoryHost ? `https://directory.locoraai.com/category/${catSlug}` : `https://locoraai.com/category/${catSlug}`;
+
+    if (entitySnapshot) {
+      const cat = entitySnapshot.categories.find((c) => c.slug.toLowerCase() === catSlug);
+      if (!cat || cat.count === 0) {
+        return {
+          title: `Verified ${formattedCat} Services | Locora Directory`,
+          description: `Directory of verified ${formattedCat.toLowerCase()} service providers.`,
+          canonicalUrl: canonical,
+          noIndex: true,
+          isDashboard: false,
+        };
+      }
+
+      const matchingBusinesses = entitySnapshot.businesses.filter(
+        (b) => b.category.toLowerCase() === cat.name.toLowerCase()
+      );
+      const services = Array.from(new Set(matchingBusinesses.flatMap((b) => b.services || []))).filter(Boolean);
+
+      const context: SeoPageContext = {
+        pageType: 'category_hub',
+        category: cat.name,
+        services,
+        availableBusinessesCount: cat.count,
+        availableBusinesses: matchingBusinesses,
+        availableCategories: entitySnapshot.categories.map((c) => c.name),
+        availableCities: entitySnapshot.cities.map((c) => c.name),
+        path: cleanPath,
+      };
+
+      const completeSeo = generateCompletePageSeo(context, entitySnapshot);
+      return {
+        title: completeSeo.metadata.title,
+        description: completeSeo.metadata.description,
+        canonicalUrl: completeSeo.metadata.canonicalUrl,
+        noIndex: completeSeo.thinContent,
+        isDashboard: false,
+        keywords: [completeSeo.keywords.primaryKeyword, ...completeSeo.keywords.secondaryKeywords].join(', '),
+        jsonLd: completeSeo.structuredData,
+      };
+    }
+
     return {
       title: `Best ${formattedCat} Services & Top Providers | Locora Directory`,
       description: `Browse certified and reviewed ${formattedCat.toLowerCase()} companies and local pros in your area.`,
@@ -384,9 +580,30 @@ export function resolveRouteMetadata(rawPath: string, host: string = ''): Resolv
   }
 
   if (isDirRoot) {
+    if (entitySnapshot) {
+      const context: SeoPageContext = {
+        pageType: 'directory_hub',
+        availableBusinessesCount: entitySnapshot.businesses.length,
+        availableBusinesses: entitySnapshot.businesses,
+        availableCategories: entitySnapshot.categories.map((c) => c.name),
+        availableCities: entitySnapshot.cities.map((c) => c.name),
+        path: cleanPath,
+      };
+      const completeSeo = generateCompletePageSeo(context, entitySnapshot);
+      return {
+        title: completeSeo.metadata.title,
+        description: completeSeo.metadata.description,
+        canonicalUrl: isDirectoryHost ? 'https://directory.locoraai.com/' : 'https://locoraai.com/directory',
+        noIndex: completeSeo.thinContent,
+        isDashboard: false,
+        keywords: [completeSeo.keywords.primaryKeyword, ...completeSeo.keywords.secondaryKeywords].join(', '),
+        jsonLd: completeSeo.structuredData,
+      };
+    }
+
     return {
-      title: 'Locora Local Business Directory — Top Verified Local Service Pros',
-      description: 'Explore verified local businesses with authentic reviews, real-time hours, and certified services powered by Locora AI.',
+      title: 'Verified Local Business Directory — Top-Rated Service Providers | Locora AI',
+      description: 'Search the authoritative directory of verified local businesses, contractors, dental clinics, and home services. Browse verified reviews, hours, and request direct quotes.',
       canonicalUrl: isDirectoryHost ? 'https://directory.locoraai.com/' : 'https://locoraai.com/directory',
       noIndex: false,
       isDashboard: false,
@@ -657,6 +874,24 @@ export function injectMetadataIntoHtml(rawHtml: string, metadata: ResolvedMetada
       /<meta\s+name="twitter:description"\s+content=".*?"\s*\/?>/i,
       `<meta name="twitter:description" content="${escapeHtml(metadata.description)}" />`
     );
+  }
+
+  // 7. Dynamic SEO Keywords Tag
+  if (metadata.keywords) {
+    if (/<meta\s+name="keywords"/i.test(html)) {
+      html = html.replace(
+        /<meta\s+name="keywords"\s+content=".*?"\s*\/?>/i,
+        `<meta name="keywords" content="${escapeHtml(metadata.keywords)}" />`
+      );
+    } else {
+      html = html.replace('</head>', `    <meta name="keywords" content="${escapeHtml(metadata.keywords)}" />\n  </head>`);
+    }
+  }
+
+  // 8. Schema.org JSON-LD Structured Data
+  if (metadata.jsonLd && !metadata.noIndex) {
+    const jsonLdStr = typeof metadata.jsonLd === 'string' ? metadata.jsonLd : JSON.stringify(metadata.jsonLd, null, 2);
+    html = html.replace('</head>', `    <script type="application/ld+json">\n${jsonLdStr}\n    </script>\n  </head>`);
   }
 
   return html;

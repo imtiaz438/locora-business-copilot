@@ -59,11 +59,11 @@ export const GrowthView: React.FC = () => {
     refreshProductionDashboard,
   } = useApp();
 
-  // Dynamic Pillar Metrics pulled from active business and production dashboard
-  const liveVisScore = productionDashboard?.calculatedMetrics?.aiVisibilityScore ?? (typeof activeBusiness.rankingAvg === 'number' && activeBusiness.rankingAvg > 0 ? Math.round(Math.max(10, 100 - (activeBusiness.rankingAvg - 1) * 12)) : 74);
-  const websiteAuditScore = productionDashboard?.collectedData?.latestCrawlRun?.perfScore || (productionDashboard?.calculatedMetrics?.criticalIssuesCount !== undefined ? Math.max(40, 100 - productionDashboard.calculatedMetrics.criticalIssuesCount * 12) : (activeBusiness.website ? 78 : null));
+  // Dynamic Pillar Metrics pulled from authentic active business and production dashboard
+  const liveVisScore = productionDashboard?.calculatedMetrics?.aiVisibilityScore ?? (typeof activeBusiness.rankingAvg === 'number' && activeBusiness.rankingAvg > 0 ? Math.round(Math.max(10, 100 - (activeBusiness.rankingAvg - 1) * 12)) : null);
+  const websiteAuditScore = productionDashboard?.collectedData?.latestCrawlRun?.perfScore ?? (productionDashboard?.calculatedMetrics?.criticalIssuesCount !== undefined ? Math.max(40, 100 - productionDashboard.calculatedMetrics.criticalIssuesCount * 12) : null);
   const googleReviewCount = productionDashboard?.collectedData?.reviews?.length || activeBusiness.reviewCount || 0;
-  const trustScore = activeBusiness.googleRating > 0 ? Math.round((activeBusiness.googleRating / 5) * 100) : (googleReviewCount > 0 ? 82 : null);
+  const trustScore = activeBusiness.googleRating > 0 ? Math.round((activeBusiness.googleRating / 5) * 100) : null;
 
   const metrics = [
     {
@@ -71,28 +71,28 @@ export const GrowthView: React.FC = () => {
       score: liveVisScore,
       target: 85,
       color: 'emerald',
-      status: liveVisScore !== null ? 'Live Observed' : 'Pending observation',
+      status: liveVisScore !== null ? 'Live Observed' : 'No rank data yet',
     },
     {
       label: 'Trust',
       score: trustScore,
       target: 90,
       color: 'blue',
-      status: trustScore !== null ? `${activeBusiness.googleRating}★ Rating` : 'No review data',
+      status: trustScore !== null ? `${activeBusiness.googleRating}★ Rating` : 'No rating yet',
     },
     {
       label: 'Conversion',
       score: websiteAuditScore,
       target: 85,
       color: 'amber',
-      status: websiteAuditScore !== null ? (activeBusiness.website ? 'Audit active' : 'Website active') : 'No website',
+      status: websiteAuditScore !== null ? 'Audit active' : (activeBusiness.website ? 'No audit run yet' : 'No website connected'),
     },
     {
       label: 'Reputation',
       score: trustScore,
       target: 90,
       color: 'purple',
-      status: googleReviewCount > 0 ? `${googleReviewCount} Reviews` : 'No review data',
+      status: googleReviewCount > 0 ? `${googleReviewCount} Reviews` : 'No reviews yet',
     },
   ];
 
@@ -102,7 +102,7 @@ export const GrowthView: React.FC = () => {
     if (validScores.length > 0) {
       return Math.round(validScores.reduce((a, b) => a + b, 0) / validScores.length);
     }
-    return activeBusiness.healthScore || 78;
+    return (typeof activeBusiness.healthScore === 'number' && activeBusiness.healthScore > 0) ? activeBusiness.healthScore : null;
   }, [liveVisScore, trustScore, websiteAuditScore, activeBusiness.healthScore]);
 
   // Dynamic Evidence-Bound Growth Opportunities
@@ -146,8 +146,8 @@ export const GrowthView: React.FC = () => {
       weekNumber: 1,
       title: 'Week 1',
       items: [
-        { id: 'w1_1', text: 'Audit GBP services and primary categories', completed: true, actionKey: 'gbp_services' },
-        { id: 'w1_2', text: 'Clear outstanding customer review backlog', completed: true, actionKey: 'reviews' },
+        { id: 'w1_1', text: 'Audit GBP services and primary categories', completed: false, actionKey: 'gbp_services' },
+        { id: 'w1_2', text: 'Clear outstanding customer review backlog', completed: false, actionKey: 'reviews' },
       ],
     },
     {
@@ -454,12 +454,20 @@ export const GrowthView: React.FC = () => {
               </span>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl font-black font-heading text-emerald-950">
-                  {growthScore}
+                  {growthScore !== null ? growthScore : '—'}
                 </span>
-                <span className="text-xs font-bold text-[#059669]">/ 100</span>
-                <span className="text-[11px] font-bold text-[#059669] bg-emerald-100/90 px-1.5 py-0.2 rounded ml-1">
-                  Verified Data
-                </span>
+                {growthScore !== null ? (
+                  <>
+                    <span className="text-xs font-bold text-[#059669]">/ 100</span>
+                    <span className="text-[11px] font-bold text-[#059669] bg-emerald-100/90 px-1.5 py-0.2 rounded ml-1">
+                      Verified Data
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-xs text-slate-500 font-medium ml-1">
+                    No data yet
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -584,7 +592,7 @@ export const GrowthView: React.FC = () => {
               <ShieldCheck className="w-6 h-6 text-[#059669]" />
             </div>
             <h3 className="text-base font-bold text-slate-900 font-heading">
-              All Systems Healthy — Zero Open Issues Detected
+              No opportunities yet.
             </h3>
             <p className="text-xs text-slate-600 max-w-lg mx-auto leading-relaxed">
               Google Business Profile sync is active, review response rate is 100%, LocalBusiness JSON-LD Schema markup is verified, and local search rankings are within benchmark thresholds.

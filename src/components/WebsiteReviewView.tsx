@@ -73,7 +73,7 @@ export const WebsiteReviewView: React.FC = () => {
   const [mode, setMode] = useState<'single' | 'competitor'>('single');
   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'keywords' | 'traffic' | 'recommendations' | 'real_seo'>('overview');
   const [competitorSubView, setCompetitorSubView] = useState<'matrix' | 'target' | 'competitor'>('matrix');
-  const [url, setUrl] = useState(activeBusiness?.website || businessProfile.website || 'smilesolutions.com.au');
+  const [url, setUrl] = useState(activeBusiness?.website || businessProfile.website || '');
 
   React.useEffect(() => {
     const currentBizWeb = activeBusiness?.website || businessProfile?.website;
@@ -83,7 +83,7 @@ export const WebsiteReviewView: React.FC = () => {
   }, [activeBusiness?.id, activeBusiness?.website]);
 
   // Normalized current domain
-  const currentDomain = (url || activeBusiness?.website || businessProfile.website || 'smilesolutions.com.au')
+  const currentDomain = (url || activeBusiness?.website || businessProfile.website || '')
     .replace(/^https?:\/\//i, '')
     .replace(/\/.*$/, '')
     .toLowerCase()

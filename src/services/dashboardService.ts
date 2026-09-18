@@ -29,12 +29,20 @@ class DashboardService {
       return cached.data;
     }
 
+    const headers: Record<string, string> = {
+      'Accept': 'application/json',
+    };
+    if (typeof window !== 'undefined') {
+      const storedAuthEmail = localStorage.getItem('locora_auth_email');
+      if (storedAuthEmail) {
+        headers['x-user-email'] = storedAuthEmail;
+      }
+    }
+
     const url = `/api/production/dashboard/${encodeURIComponent(targetBizId)}`;
     const res = await fetch(url, {
       credentials: 'include',
-      headers: {
-        'Accept': 'application/json',
-      },
+      headers,
     });
 
     if (!res.ok) {

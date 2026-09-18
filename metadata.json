@@ -1,6 +1,6 @@
 {
   "name": "Locora AI — Business Copilot",
-  "description": "Tell Locora what to improve — it finds the opportunities, explains what matters, and does the work. AI business copilot for local service businesses and agencies.",
+  "description": "The autonomous AI business operating system and verified local business directory. Discover top-rated service providers, automate Google Maps SEO, and manage local growth.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

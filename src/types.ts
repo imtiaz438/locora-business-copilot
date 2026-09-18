@@ -308,6 +308,7 @@ export interface ClientBusiness {
   externalDatasets?: ExternalDataset[];
   placeId?: string;
   directorySlug?: string;
+  slug?: string;
   isPublishedInDirectory?: boolean;
   isClaimed?: boolean;
   reviews?: any[];

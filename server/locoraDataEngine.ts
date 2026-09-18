@@ -45,7 +45,7 @@ function ensureDataDir() {
 const businessesDatabase = new Map<string, LocoraBusinessRecord>();
 const leadsCacheDatabase = new Map<string, B2BLeadRecord>();
 const directoryEventsDatabase: DirectoryEventRecord[] = [];
-const directoryLeadsDatabase = new Map<string, DirectoryLeadItem>();
+export const directoryLeadsDatabase = new Map<string, DirectoryLeadItem>();
 
 // --------------------------------------------------------------------------
 // DISK PERSISTENCE: LOCORA DATABASE AS THE SINGLE SOURCE OF TRUTH
@@ -1070,6 +1070,39 @@ export function saveBusinessRecordToLocoraDb(record: LocoraBusinessRecord): Loco
 
 export function getBusinessRecordById(id: string): LocoraBusinessRecord | undefined {
   return businessesDatabase.get(id);
+}
+
+export function deleteBusinessRecord(id: string): boolean {
+  const existed = businessesDatabase.delete(id);
+  
+  // Also clean up any directory leads and events associated with this business ID
+  let leadsRemoved = false;
+  for (const [leadId, lead] of directoryLeadsDatabase.entries()) {
+    if (lead.businessId === id) {
+      directoryLeadsDatabase.delete(leadId);
+      leadsRemoved = true;
+    }
+  }
+  if (leadsRemoved) {
+    saveDirectoryLeadsToDisk();
+  }
+
+  let eventsRemoved = false;
+  for (let i = directoryEventsDatabase.length - 1; i >= 0; i--) {
+    if (directoryEventsDatabase[i].businessId === id) {
+      directoryEventsDatabase.splice(i, 1);
+      eventsRemoved = true;
+    }
+  }
+  if (eventsRemoved) {
+    saveDirectoryEventsToDisk();
+  }
+
+  if (existed || leadsRemoved || eventsRemoved) {
+    saveLocoraDatabaseToDisk();
+    invalidateDirectoryListingsCache();
+  }
+  return existed;
 }
 
 // Cached Published Directory Listings for ultra-fast, N+1 free serving

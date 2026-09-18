@@ -204,9 +204,11 @@ export const AgencyClientsView: React.FC = () => {
       return DEMO_AGENCY_CLIENTS;
     }
     return businesses.map((b) => {
-      const score = b.healthScore || 70;
+      const score = typeof b.healthScore === 'number' && b.healthScore > 0 ? b.healthScore : null;
       const status: 'healthy' | 'improving' | 'need_attention' =
-        score >= 75 ? 'healthy' : score >= 65 ? 'improving' : 'need_attention';
+        score !== null
+          ? (score >= 75 ? 'healthy' : score >= 65 ? 'improving' : 'need_attention')
+          : 'improving';
       return {
         id: b.id,
         name: b.name,
@@ -378,7 +380,9 @@ export const AgencyClientsView: React.FC = () => {
                       <span className={`font-bold ${c.status === 'need_attention' ? 'text-rose-300' : 'text-amber-300'}`}>
                         {c.status === 'need_attention' ? '🔴' : '🟡'} {c.name}
                       </span>
-                      <span className="text-[10px] font-mono text-slate-400">{c.score}/100</span>
+                      <span className="text-[10px] font-mono text-slate-400">
+                        {c.score !== null ? `${c.score}/100` : 'No data'}
+                      </span>
                     </div>
                     <p className="text-[11px] text-slate-300 font-medium">{c.category}</p>
                     <p className="text-[10px] text-slate-400 line-clamp-2">{c.recommendedAction}</p>
@@ -471,7 +475,16 @@ export const AgencyClientsView: React.FC = () => {
 
         {/* Client Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {filteredClients.map((client) => {
+          {filteredClients.length === 0 ? (
+            <div className="col-span-full py-16 text-center bg-white border border-slate-200 rounded-2xl p-8 space-y-2">
+              <Building2 className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+              <h4 className="text-base font-bold text-slate-800 font-heading">No businesses yet.</h4>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                Onboard your first client business to start managing their multi-tenant digital footprint.
+              </p>
+            </div>
+          ) : (
+            filteredClients.map((client) => {
             const isAttention = client.status === 'need_attention';
             const isImproving = client.status === 'improving';
             const isHealthy = client.status === 'healthy';
@@ -501,8 +514,8 @@ export const AgencyClientsView: React.FC = () => {
                           : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                       }`}
                     >
-                      <span>{client.score}</span>
-                      <span>{isAttention ? '🔴' : isImproving ? '🟡' : '🟢'}</span>
+                      <span>{client.score !== null ? client.score : '—'}</span>
+                      <span>{client.score !== null ? (isAttention ? '🔴' : isImproving ? '🟡' : '🟢') : '⚪'}</span>
                     </span>
                   </div>
 
@@ -554,7 +567,8 @@ export const AgencyClientsView: React.FC = () => {
                 </div>
               </div>
             );
-          })}
+          })
+        )}
         </div>
       </div>
     </div>

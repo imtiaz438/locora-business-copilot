@@ -9,6 +9,7 @@ import {
   generateFullReportSnapshot,
   buildDataSourcesList,
   checkReportStaleness,
+  hasRelevantDataForReport,
 } from '../services/reportEngine';
 import {
   getSavedReportSnapshots,
@@ -96,17 +97,17 @@ export const MonthlyReportView: React.FC = () => {
     productionDashboard?.collectedData?.googleProfile?.isVerified
   );
 
-  const hasConnectedData = Boolean(
-    hasWebsite ||
-    isGbpConnected ||
-    Boolean(activeBusiness.name) ||
-    Boolean(businessTruth) ||
-    Boolean(productionDashboard?.businessBrain) ||
-    (activeBusiness.rankingAvg && activeBusiness.rankingAvg > 0) ||
-    customers.some((c) => c.businessId === activeBusiness.id) ||
-    contentRecords.some((r) => r.business_id === activeBusiness.id || (r as any).businessId === activeBusiness.id) ||
-    workTasks.some((t) => t.businessId === activeBusiness.id)
-  );
+  const hasRelevantData = hasRelevantDataForReport(selectedReportType, {
+    activeBusiness,
+    productionDashboard,
+    businessTruth,
+    customers,
+    invoices,
+    contentRecords,
+    workTasks,
+    projects,
+    latestWebsiteAudit,
+  });
 
   // Direct source connector dispatcher
   const handleConnectSource = useCallback((sourceId: string) => {
@@ -195,7 +196,19 @@ export const MonthlyReportView: React.FC = () => {
       const matching = snaps.find(
         (s) => s.reportType === selectedReportType && s.period === selectedPeriod
       );
-      if (matching) {
+      const hasData = hasRelevantDataForReport(selectedReportType, {
+        activeBusiness,
+        productionDashboard,
+        businessTruth,
+        customers,
+        invoices,
+        contentRecords,
+        workTasks,
+        projects,
+        latestWebsiteAudit,
+      });
+
+      if (matching && hasData) {
         // Check if stale
         const currentSources = buildDataSourcesList({
           businessId,
@@ -217,9 +230,12 @@ export const MonthlyReportView: React.FC = () => {
           isStale: staleness.isStale,
           staleReason: staleness.reason,
         });
-      } else {
-        // Auto-generate initial snapshot if none exists
+      } else if (hasData) {
+        // Auto-generate initial snapshot ONLY if real data exists
         handleGenerateSnapshot(false);
+      } else {
+        // No relevant data yet — do not generate or show empty/fake snapshots
+        setActiveSnapshot(null);
       }
     });
 
@@ -374,34 +390,83 @@ export const MonthlyReportView: React.FC = () => {
         )}
       </div>
 
-      {!hasConnectedData ? (
+      {!hasRelevantData ? (
         <div className="bg-white border border-slate-200 rounded-3xl p-12 text-center shadow-xs space-y-4">
-          <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-2xl border border-amber-200 flex items-center justify-center mx-auto">
-            <AlertTriangle className="w-8 h-8" />
+          <div className="w-16 h-16 bg-slate-100 text-slate-500 rounded-2xl border border-slate-200 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-8 h-8 text-slate-400" />
           </div>
           <div className="max-w-md mx-auto space-y-1">
             <h3 className="text-xl font-bold font-heading text-slate-900">
-              Not enough connected data to generate this report yet.
+              No data available yet
             </h3>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Connect your Google Business Profile, website URL, or record customer business information to generate your executive report.
+              Connect data to calculate and generate this {currentTypeDefinition?.title || 'report'}. Once real operational data is available, full intelligence and verified metrics will appear here.
             </p>
           </div>
           <div className="flex items-center justify-center gap-3 pt-2 flex-wrap">
-            <button
-              onClick={() => setIsGbpSyncModalOpen(true)}
-              className="px-4 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
-            >
-              <Link2 className="w-3.5 h-3.5" />
-              Connect Google Business Profile
-            </button>
-            <button
-              onClick={() => setActiveTab('website_review')}
-              className="px-4 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
-            >
-              <Link2 className="w-3.5 h-3.5" />
-              Connect & Audit Website
-            </button>
+            {(selectedReportType === 'reputation' || selectedReportType === 'local_seo') && (
+              <button
+                onClick={() => setIsGbpSyncModalOpen(true)}
+                className="px-4 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                Connect Google Business Profile
+              </button>
+            )}
+            {(selectedReportType === 'seo_performance' || selectedReportType === 'local_seo') && (
+              <button
+                onClick={() => setActiveTab('website_review')}
+                className="px-4 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                Connect & Audit Website
+              </button>
+            )}
+            {selectedReportType === 'local_seo' && (
+              <button
+                onClick={() => setActiveTab('local_visibility')}
+                className="px-4 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Target className="w-3.5 h-3.5" />
+                Configure Target Keywords
+              </button>
+            )}
+            {selectedReportType === 'customer_lead' && (
+              <button
+                onClick={() => setActiveTab('crm')}
+                className="px-4 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                Open CRM & Add Contacts
+              </button>
+            )}
+            {selectedReportType === 'content_performance' && (
+              <button
+                onClick={() => setActiveTab('content')}
+                className="px-4 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Create Content Record
+              </button>
+            )}
+            {selectedReportType === 'growth' && (
+              <button
+                onClick={() => setActiveTab('work')}
+                className="px-4 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <TrendingUp className="w-3.5 h-3.5" />
+                Open Work Hub & Add Records
+              </button>
+            )}
+            {selectedReportType === 'business_health' && (
+              <button
+                onClick={() => setActiveTab('business_truth')}
+                className="px-4 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Setup Business Brain Profile
+              </button>
+            )}
           </div>
         </div>
       ) : isGenerating && !activeSnapshot ? (

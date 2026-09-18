@@ -67,11 +67,12 @@ export const MultiLocationSection: React.FC = () => {
         },
       ];
 
+  const hasRealScore = typeof activeBusiness.healthScore === 'number' && activeBusiness.healthScore > 0;
   const locationsData: LocationMetricData[] = activeLocations.map((loc, idx) => {
-    const locScore = Math.max(50, Math.min(99, activeBusiness.healthScore - idx * 4));
+    const locScore = hasRealScore ? Math.max(0, Math.min(100, activeBusiness.healthScore - idx * 4)) : 0;
     const status: 'healthy' | 'improving' | 'need_attention' =
-      locScore >= 80 ? 'healthy' : locScore >= 68 ? 'improving' : 'need_attention';
-    const statusIcon = locScore >= 80 ? '🟢' : locScore >= 68 ? '🟡' : '🔴';
+      !hasRealScore ? 'need_attention' : locScore >= 80 ? 'healthy' : locScore >= 68 ? 'improving' : 'need_attention';
+    const statusIcon = !hasRealScore ? '⚪' : locScore >= 80 ? '🟢' : locScore >= 68 ? '🟡' : '🔴';
 
     return {
       id: loc.id,
@@ -81,17 +82,17 @@ export const MultiLocationSection: React.FC = () => {
       status,
       statusIcon,
       visibility: locScore,
-      calls: Math.max(12, 120 - idx * 25),
-      callsGrowth: '+8%',
-      forms: Math.max(6, 45 - idx * 10),
-      formsGrowth: '+12%',
-      bookings: Math.max(4, 35 - idx * 8),
-      bookingsGrowth: '+10%',
+      calls: hasRealScore ? Math.max(0, 120 - idx * 25) : 0,
+      callsGrowth: hasRealScore ? '+8%' : '0%',
+      forms: hasRealScore ? Math.max(0, 45 - idx * 10) : 0,
+      formsGrowth: hasRealScore ? '+12%' : '0%',
+      bookings: hasRealScore ? Math.max(0, 35 - idx * 8) : 0,
+      bookingsGrowth: hasRealScore ? '+10%' : '0%',
       reviews: activeBusiness.reviewCount || 0,
       rating: activeBusiness.googleRating || 0,
       unansweredReviews: activeBusiness.unansweredReviews || 0,
-      conversionsRate: '12.8%',
-      conversionRevenue: Math.max(8000, 32000 - idx * 7000),
+      conversionsRate: hasRealScore ? '12.8%' : '0%',
+      conversionRevenue: hasRealScore ? Math.max(0, 32000 - idx * 7000) : 0,
     };
   });
 
@@ -105,19 +106,19 @@ export const MultiLocationSection: React.FC = () => {
     ? {
         name: `${activeBusiness.name || 'Business'} Network`,
         city: activeBusiness.city ? `${activeBusiness.city} & Regional Locations` : 'All Active Locations',
-        score: Math.round(locationsData.reduce((s, l) => s + l.score, 0) / locationsData.length),
-        statusIcon: '🟢',
-        visibility: Math.round(locationsData.reduce((s, l) => s + l.visibility, 0) / locationsData.length),
+        score: hasRealScore ? Math.round(locationsData.reduce((s, l) => s + l.score, 0) / locationsData.length) : 0,
+        statusIcon: hasRealScore ? '🟢' : '⚪',
+        visibility: hasRealScore ? Math.round(locationsData.reduce((s, l) => s + l.visibility, 0) / locationsData.length) : 0,
         calls: locationsData.reduce((s, l) => s + l.calls, 0),
-        callsGrowth: '+8%',
+        callsGrowth: hasRealScore ? '+8%' : '0%',
         forms: locationsData.reduce((s, l) => s + l.forms, 0),
-        formsGrowth: '+11%',
+        formsGrowth: hasRealScore ? '+11%' : '0%',
         bookings: locationsData.reduce((s, l) => s + l.bookings, 0),
-        bookingsGrowth: '+10%',
+        bookingsGrowth: hasRealScore ? '+10%' : '0%',
         reviews: locationsData.reduce((s, l) => s + l.reviews, 0),
         rating: activeBusiness.googleRating || 0,
         unansweredReviews: locationsData.reduce((s, l) => s + l.unansweredReviews, 0),
-        conversionsRate: '12.4%',
+        conversionsRate: hasRealScore ? '12.4%' : '0%',
         conversionRevenue: locationsData.reduce((s, l) => s + l.conversionRevenue, 0),
       }
     : activeLoc;
@@ -179,7 +180,7 @@ export const MultiLocationSection: React.FC = () => {
                 }`}
               >
                 <span>{loc.city.split(',')[0]}</span>
-                <span className="font-mono text-[11px] font-bold text-slate-700">{loc.score}</span>
+                <span className="font-mono text-[11px] font-bold text-slate-700">{loc.score > 0 ? loc.score : '—'}</span>
                 <span>{loc.statusIcon}</span>
               </button>
             );
@@ -197,7 +198,7 @@ export const MultiLocationSection: React.FC = () => {
             <div className="flex items-center gap-2">
               <h4 className="text-sm font-bold text-slate-900 font-heading">{displayMetrics.name}</h4>
               <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-800">
-                Score: {displayMetrics.score}/100 {displayMetrics.statusIcon}
+                Score: {displayMetrics.score > 0 ? `${displayMetrics.score}/100` : '—'} {displayMetrics.statusIcon}
               </span>
             </div>
             <p className="text-xs text-slate-500">
@@ -238,7 +239,7 @@ export const MultiLocationSection: React.FC = () => {
           </span>
           <div className="flex items-baseline justify-between">
             <span className="text-xl font-extrabold text-slate-900 font-heading">
-              {displayMetrics.visibility}/100
+              {displayMetrics.visibility > 0 ? `${displayMetrics.visibility}/100` : '—'}
             </span>
             <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded">
               Top 3-Pack

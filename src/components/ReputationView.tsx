@@ -627,7 +627,7 @@ export const ReputationView: React.FC = () => {
               <div className="p-8 sm:p-12 text-center rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
                 <Sparkles className="w-8 h-8 text-slate-300 mx-auto" />
                 <h3 className="text-base font-bold font-heading text-slate-800">
-                  No Reviews Recorded Yet
+                  No review data yet.
                 </h3>
                 <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
                   Your review source is connected. Enter your first customer review or generate a review invite campaign to collect feedback.
@@ -830,7 +830,7 @@ export const ReputationView: React.FC = () => {
                   </div>
                   <h4 className="text-sm font-bold font-heading text-slate-800">
                     {reviews.length === 0
-                      ? 'No Customer Reviews in System'
+                      ? 'No review data yet.'
                       : `No reviews found matching the "${activeFilter}" filter`}
                   </h4>
                   <p className="text-xs text-slate-500 max-w-sm mx-auto">

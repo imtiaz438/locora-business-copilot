@@ -62,7 +62,16 @@ export const LocalVisibilityView: React.FC = () => {
   const [serpResults, setSerpResults] = useState<any[]>([]);
   const [websiteIssues, setWebsiteIssues] = useState<WebsiteIssue[]>([]);
 
-  const [activeSubTab, setActiveSubTab] = useState<'visibility' | 'ai_visibility' | 'audit' | 'directory_leads'>('visibility');
+  const [activeSubTab, setActiveSubTab] = useState<'visibility' | 'ai_visibility' | 'audit' | 'directory_leads'>(() => {
+    if (typeof window !== 'undefined') {
+      const requested = sessionStorage.getItem('locora_visibility_subtab');
+      if (requested === 'directory_leads' || requested === 'ai_visibility' || requested === 'audit' || requested === 'visibility') {
+        sessionStorage.removeItem('locora_visibility_subtab');
+        return requested as any;
+      }
+    }
+    return 'visibility';
+  });
   const [selectedAuditCategory, setSelectedAuditCategory] = useState<'content' | 'technical' | 'local' | 'schema'>('content');
   const [selectedFixItAction, setSelectedFixItAction] = useState<PriorityAction | null>(null);
 
@@ -474,7 +483,7 @@ export const LocalVisibilityView: React.FC = () => {
 
               <div className="max-w-lg mx-auto space-y-2">
                 <h2 className="text-2xl font-black font-heading text-slate-900">
-                  Local visibility tracking is not configured.
+                  No ranking data yet.
                 </h2>
                 <p className="text-sm text-slate-600 leading-relaxed">
                   No ranking provider or verified search observations exist for {activeBusiness.name}.

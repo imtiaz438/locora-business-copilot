@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { db, schema } from './index.ts';
-import { eq, desc, asc, or, and, isNull, inArray } from 'drizzle-orm';
+import { eq, desc, asc, or, and, isNull, inArray, ilike } from 'drizzle-orm';
 
 // --- Business Profile ---
 export async function getBusinessProfile() {
@@ -1501,14 +1501,49 @@ export async function getUsers() {
 export async function deleteUser(email: string, uid?: string) {
   try {
     const cleanEmail = email.toLowerCase().trim();
-    if (uid) {
-      await db.delete(schema.users).where(eq(schema.users.uid, uid));
+    if (!cleanEmail) return { success: false, deletedBusinessIds: [] };
+
+    // 1. Find all businesses owned by this user
+    const ownedBusinesses = await db
+      .select({ id: schema.businessesTable.id, slug: schema.businessesTable.slug })
+      .from(schema.businessesTable)
+      .where(eq(schema.businessesTable.ownerEmail, cleanEmail))
+      .catch(() => []);
+
+    const deletedBusinessIds: string[] = [];
+    for (const biz of ownedBusinesses) {
+      if (biz.id) {
+        await deleteBusiness(biz.id);
+        deletedBusinessIds.push(biz.id);
+      }
     }
-    await db.delete(schema.users).where(eq(schema.users.email, cleanEmail));
-    return true;
+
+    // 2. Delete user-level records in tables with userEmail / email references
+    await db.delete(schema.customersTable).where(eq(schema.customersTable.userEmail, cleanEmail)).catch(() => {});
+    await db.delete(schema.projectsTable).where(eq(schema.projectsTable.userEmail, cleanEmail)).catch(() => {});
+    await db.delete(schema.invoicesTable).where(eq(schema.invoicesTable.userEmail, cleanEmail)).catch(() => {});
+    await db.delete(schema.proposalsTable).where(eq(schema.proposalsTable.userEmail, cleanEmail)).catch(() => {});
+    await db.delete(schema.documentsTable).where(eq(schema.documentsTable.userEmail, cleanEmail)).catch(() => {});
+    await db.delete(schema.aiConversationsTable).where(eq(schema.aiConversationsTable.userEmail, cleanEmail)).catch(() => {});
+    await db.delete(schema.activityLogsTable).where(eq(schema.activityLogsTable.userEmail, cleanEmail)).catch(() => {});
+    await db.delete(schema.businessProfileTable).where(eq(schema.businessProfileTable.id, cleanEmail)).catch(() => {});
+    await db.delete(schema.settingsTable).where(eq(schema.settingsTable.id, cleanEmail)).catch(() => {});
+    if (uid) {
+      await db.delete(schema.settingsTable).where(eq(schema.settingsTable.id, uid)).catch(() => {});
+    }
+    await db.delete(schema.transactionsTable).where(eq(schema.transactionsTable.userEmail, cleanEmail)).catch(() => {});
+    await db.delete(schema.newsletterSubscribersTable).where(eq(schema.newsletterSubscribersTable.email, cleanEmail)).catch(() => {});
+
+    // 3. Delete user credentials/account row
+    if (uid) {
+      await db.delete(schema.users).where(eq(schema.users.uid, uid)).catch(() => {});
+    }
+    await db.delete(schema.users).where(eq(schema.users.email, cleanEmail)).catch(() => {});
+
+    return { success: true, deletedBusinessIds };
   } catch (err) {
-    console.error('Error deleting user from Cloud SQL:', err);
-    return false;
+    console.error('Error in complete deleteUser cascade:', err);
+    throw err;
   }
 }
 
@@ -1970,10 +2005,12 @@ export async function ensureBusinessForUser(
   }
 ) {
   try {
+    const cleanEmail = (ownerEmail || '').toLowerCase().trim();
     const existing = await db
       .select()
       .from(schema.businessesTable)
-      .where(eq(schema.businessesTable.ownerEmail, ownerEmail))
+      .where(ilike(schema.businessesTable.ownerEmail, cleanEmail))
+      .orderBy(desc(schema.businessesTable.createdAt))
       .limit(1);
 
     if (existing.length > 0) {
@@ -2144,6 +2181,72 @@ export async function ensureBusinessForUser(
   }
 }
 
+export async function createBusiness(
+  ownerEmail: string,
+  initialData?: {
+    id?: string;
+    name?: string;
+    website?: string;
+    city?: string;
+    state?: string;
+    phone?: string;
+    category?: string;
+    industry?: string;
+  }
+) {
+  const businessId = initialData?.id || `biz_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const bizName = initialData?.name || 'My Local Business';
+  const city = initialData?.city || '';
+  const category = initialData?.category || 'Local Services';
+  const website = initialData?.website || '';
+
+  const [insertedBiz] = await db
+    .insert(schema.businessesTable)
+    .values({
+      id: businessId,
+      ownerEmail,
+      name: bizName,
+      slug: bizName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      industry: initialData?.industry || 'Local Services',
+      category,
+      website,
+      phone: initialData?.phone || '',
+      email: ownerEmail,
+      planTier: 'free',
+      status: 'active',
+    })
+    .onConflictDoUpdate({
+      target: schema.businessesTable.id,
+      set: {
+        name: bizName,
+        category,
+        website,
+        phone: initialData?.phone || '',
+        updatedAt: new Date(),
+      },
+    })
+    .returning();
+
+  const locationId = `loc_${businessId}`;
+  await db.insert(schema.locationsTable).values({
+    id: locationId,
+    businessId,
+    name: `${bizName} (Main)`,
+    isPrimary: true,
+    address: '',
+    city,
+    state: initialData?.state || '',
+    zip: '',
+    country: 'United States',
+    phone: initialData?.phone || '',
+    lat: null,
+    lng: null,
+    hours: [],
+  }).onConflictDoNothing();
+
+  return insertedBiz;
+}
+
 // ---------------- STRICT BUSINESS-SCOPED QUERIES ----------------
 
 export async function getBusinessById(businessId: string) {
@@ -2162,11 +2265,89 @@ export async function getBusinesses() {
     .orderBy(desc(schema.businessesTable.createdAt));
 }
 
+export async function deleteBusiness(businessId: string) {
+  try {
+    if (!businessId) return null;
+
+    // 1. Delete invoice items for all invoices belonging to this business
+    try {
+      const bizInvoices = await db
+        .select({ id: schema.invoicesTable.id })
+        .from(schema.invoicesTable)
+        .where(or(
+          eq(schema.invoicesTable.businessId, businessId),
+          eq(schema.invoicesTable.clientBusinessId, businessId)
+        ));
+      for (const inv of bizInvoices) {
+        await db.delete(schema.invoiceItemsTable).where(eq(schema.invoiceItemsTable.invoiceId, inv.id)).catch(() => {});
+      }
+    } catch {}
+
+    // 3. Delete all dependent child/entity records across all domains
+    await db.delete(schema.directoryLeadsTable).where(eq(schema.directoryLeadsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.locationsTable).where(eq(schema.locationsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.leadsTable).where(eq(schema.leadsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.customerNotesTable).where(eq(schema.customerNotesTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.customerActivitiesTable).where(eq(schema.customerActivitiesTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.customerTagsTable).where(eq(schema.customerTagsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.customerSourcesTable).where(eq(schema.customerSourcesTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.customerTasksTable).where(eq(schema.customerTasksTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.customersTable).where(eq(schema.customersTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.workTasksTable).where(or(eq(schema.workTasksTable.businessId, businessId), eq(schema.workTasksTable.clientBusinessId, businessId))).catch(() => {});
+    await db.delete(schema.projectsTable).where(or(eq(schema.projectsTable.businessId, businessId), eq(schema.projectsTable.clientBusinessId, businessId))).catch(() => {});
+    await db.delete(schema.invoicesTable).where(or(eq(schema.invoicesTable.businessId, businessId), eq(schema.invoicesTable.clientBusinessId, businessId))).catch(() => {});
+    await db.delete(schema.proposalsTable).where(or(eq(schema.proposalsTable.businessId, businessId), eq(schema.proposalsTable.clientBusinessId, businessId))).catch(() => {});
+    await db.delete(schema.documentsTable).where(or(eq(schema.documentsTable.businessId, businessId), eq(schema.documentsTable.clientBusinessId, businessId))).catch(() => {});
+    await db.delete(schema.workTemplatesTable).where(or(eq(schema.workTemplatesTable.businessId, businessId), eq(schema.workTemplatesTable.clientBusinessId, businessId))).catch(() => {});
+    await db.delete(schema.reportsTable).where(eq(schema.reportsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.googleReviewsTable).where(eq(schema.googleReviewsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.googleBusinessLocationsTable).where(eq(schema.googleBusinessLocationsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.googleConnectionsTable).where(eq(schema.googleConnectionsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.googleProfileMetricsTable).where(eq(schema.googleProfileMetricsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.searchConsoleConnectionsTable).where(eq(schema.searchConsoleConnectionsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.searchConsoleQueriesTable).where(eq(schema.searchConsoleQueriesTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.searchConsolePagesTable).where(eq(schema.searchConsolePagesTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.analyticsConnectionsTable).where(eq(schema.analyticsConnectionsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.analyticsMetricsTable).where(eq(schema.analyticsMetricsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.competitorsTable).where(eq(schema.competitorsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.competitorSnapshotsTable).where(eq(schema.competitorSnapshotsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.websiteProjectsTable).where(eq(schema.websiteProjectsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.crawlRunsTable).where(eq(schema.crawlRunsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.websitePagesTable).where(eq(schema.websitePagesTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.websiteIssuesTable).where(eq(schema.websiteIssuesTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.schemaDataTable).where(eq(schema.schemaDataTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.trackedKeywordsTable).where(eq(schema.trackedKeywordsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.rankSnapshotsTable).where(eq(schema.rankSnapshotsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.serpResultsTable).where(eq(schema.serpResultsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.visibilitySnapshotsTable).where(eq(schema.visibilitySnapshotsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.aiVisibilityChecksTable).where(eq(schema.aiVisibilityChecksTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.growthOpportunitiesTable).where(eq(schema.growthOpportunitiesTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.growthPlansTable).where(eq(schema.growthPlansTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.growthTasksTable).where(eq(schema.growthTasksTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.aiActionsTable).where(eq(schema.aiActionsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.businessBrainTable).where(eq(schema.businessBrainTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.dataConnectionsTable).where(eq(schema.dataConnectionsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.notificationsTable).where(eq(schema.notificationsTable.businessId, businessId)).catch(() => {});
+    await db.delete(schema.businessProfileTable).where(eq(schema.businessProfileTable.id, businessId)).catch(() => {});
+
+    // 4. Finally delete the business record itself
+    const [deleted] = await db
+      .delete(schema.businessesTable)
+      .where(eq(schema.businessesTable.id, businessId))
+      .returning();
+    return deleted || { id: businessId };
+  } catch (err) {
+    console.error('Error in deleteBusiness:', err);
+    throw err;
+  }
+}
+
 export async function getBusinessesByOwner(ownerEmail: string) {
+  const cleanEmail = (ownerEmail || '').toLowerCase().trim();
   return db
     .select()
     .from(schema.businessesTable)
-    .where(eq(schema.businessesTable.ownerEmail, ownerEmail))
+    .where(ilike(schema.businessesTable.ownerEmail, cleanEmail))
     .orderBy(desc(schema.businessesTable.createdAt));
 }
 
@@ -2467,17 +2648,10 @@ export async function getAnalyticsMetrics(businessId: string) {
 }
 
 export async function getCompetitors(businessId: string) {
-  let comps = await db
+  const comps = await db
     .select()
     .from(schema.competitorsTable)
     .where(eq(schema.competitorsTable.businessId, businessId));
-  if (comps.length === 0) {
-    await ensureBusinessSeoFoundation(businessId);
-    comps = await db
-      .select()
-      .from(schema.competitorsTable)
-      .where(eq(schema.competitorsTable.businessId, businessId));
-  }
   return comps;
 }
 
@@ -2518,17 +2692,10 @@ export async function getSchemaData(businessId: string) {
 }
 
 export async function getTrackedKeywords(businessId: string) {
-  let kws = await db
+  const kws = await db
     .select()
     .from(schema.trackedKeywordsTable)
     .where(eq(schema.trackedKeywordsTable.businessId, businessId));
-  if (kws.length === 0) {
-    await ensureBusinessSeoFoundation(businessId);
-    kws = await db
-      .select()
-      .from(schema.trackedKeywordsTable)
-      .where(eq(schema.trackedKeywordsTable.businessId, businessId));
-  }
   return kws;
 }
 
@@ -2648,180 +2815,31 @@ export async function configureRankingProvider(businessId: string, providerName 
 }
 
 export async function ensureBusinessSeoFoundation(businessId: string) {
+  // Respect user intent: never inject fake keywords, competitors, or simulated visibility scores for a business.
+  // Genuine tracking data is only established when the user connects a ranking provider, adds keywords, or runs an authentic audit.
   try {
     const biz = await getBusinessById(businessId);
     if (!biz) return;
-    const locations = await getLocationsByBusiness(businessId);
-    const primaryLoc = locations.find((l) => l.isPrimary) || locations[0];
-    const city = primaryLoc?.city || 'Melbourne';
-    const state = primaryLoc?.state || 'VIC';
-    const locationTag = `${city}${state ? `, ${state}` : ''}`;
-    const category = biz.category || biz.industry || 'Local Services';
-    const services = Array.isArray(biz.services) && biz.services.length > 0
-      ? biz.services
-      : ['General Care', 'Specialist Consultation', 'Emergency Care'];
-
-    // 1. Ensure Rank Tracker Connection exists
+    // Ensure provider connection record exists without fabricating synthetic rank or competitor data
     await configureRankingProvider(businessId, 'Locora SERP Tracker');
-
-    // 2. Check existing keywords
-    const existingKeywords = await db
-      .select()
-      .from(schema.trackedKeywordsTable)
-      .where(eq(schema.trackedKeywordsTable.businessId, businessId));
-
-    if (existingKeywords.length === 0) {
-      const cleanCat = category.split('/')[0].trim();
-      const keywordTemplates = [
-        { kw: `${cleanCat} ${city}`, vol: 4400, diff: 42, intent: 'commercial' },
-        { kw: `${services[0] || cleanCat} ${city}`, vol: 2400, diff: 38, intent: 'commercial' },
-        { kw: `${services[1] || 'Specialist'} ${city}`, vol: 1600, diff: 45, intent: 'commercial' },
-        { kw: `Emergency ${cleanCat} ${city}`, vol: 1900, diff: 51, intent: 'transactional' },
-        { kw: `${biz.name} ${city}`, vol: 720, diff: 14, intent: 'navigational' },
-      ];
-
-      const todayStr = new Date().toISOString().split('T')[0];
-
-      for (let i = 0; i < keywordTemplates.length; i++) {
-        const item = keywordTemplates[i];
-        const kwId = `kw_${businessId}_${i + 1}`;
-        await db
-          .insert(schema.trackedKeywordsTable)
-          .values({
-            id: kwId,
-            businessId,
-            keyword: item.kw,
-            targetLocation: locationTag,
-            searchVolume: item.vol,
-            difficulty: item.diff,
-            intent: item.intent,
-            isActive: true,
-            createdAt: new Date(),
-          })
-          .onConflictDoNothing();
-
-        const rankPos = item.intent === 'navigational' ? 1 : (3 + (i % 3));
-        await db
-          .insert(schema.rankSnapshotsTable)
-          .values({
-            id: `rs_${businessId}_${i + 1}`,
-            businessId,
-            keywordId: kwId,
-            rankPosition: rankPos,
-            previousPosition: rankPos + 1,
-            searchEngine: 'Google Local 3-Pack',
-            device: 'desktop',
-            snapshotDate: todayStr,
-          })
-          .onConflictDoNothing();
-
-        await db
-          .insert(schema.serpResultsTable)
-          .values({
-            id: `serp_${businessId}_${i + 1}`,
-            businessId,
-            keywordId: kwId,
-            snapshotDate: todayStr,
-            rank: rankPos,
-            title: `${biz.name} - ${item.kw}`,
-            url: biz.website || `https://${biz.slug}.com.au`,
-            snippet: `Premier ${category} in ${city}. Comprehensive ${services.join(', ')}. Located at ${primaryLoc?.address || 'central location'}.`,
-            isClient: true,
-            isCompetitor: false,
-          })
-          .onConflictDoNothing();
-      }
-
-      const visId = `vis_${businessId}_${Date.now()}`;
-      await db
-        .insert(schema.visibilitySnapshotsTable)
-        .values({
-          id: visId,
-          businessId,
-          snapshotDate: todayStr,
-          localPackRank: 3,
-          threePackPresent: true,
-          aiVisibilityScore: 78,
-          shareOfVoice: 64,
-          score: 78,
-        })
-        .onConflictDoNothing();
-    }
-
-    // 3. Ensure Competitors exist
-    const existingComps = await db
-      .select()
-      .from(schema.competitorsTable)
-      .where(eq(schema.competitorsTable.businessId, businessId));
-
-    if (existingComps.length === 0) {
-      const isDental = category.toLowerCase().includes('dent') || biz.name.toLowerCase().includes('smile');
-      const compData = isDental
-        ? [
-            { name: `${city} City Dental`, rating: 4.8, reviews: 294, website: `https://${city.toLowerCase()}citydental.com.au` },
-            { name: `Collins Street Dental Care`, rating: 4.9, reviews: 312, website: 'https://collinsdentalcare.com.au' },
-            { name: `CBD Dental Clinic ${city}`, rating: 4.7, reviews: 185, website: `https://cbddental${city.toLowerCase()}.com.au` },
-          ]
-        : [
-            { name: `${city} Premier ${category.split('/')[0].trim()}`, rating: 4.8, reviews: 195, website: `https://premier${category.split('/')[0].trim().toLowerCase().replace(/[^a-z0-9]/g, '')}.com` },
-            { name: `Apex ${category.split('/')[0].trim()} Group`, rating: 4.7, reviews: 240, website: `https://apex${category.split('/')[0].trim().toLowerCase().replace(/[^a-z0-9]/g, '')}.com` },
-          ];
-
-      const todayStr = new Date().toISOString().split('T')[0];
-
-      for (let cIdx = 0; cIdx < compData.length; cIdx++) {
-        const c = compData[cIdx];
-        const compId = `comp_${businessId}_${cIdx + 1}`;
-        await db
-          .insert(schema.competitorsTable)
-          .values({
-            id: compId,
-            businessId,
-            name: c.name,
-            website: c.website,
-            rating: c.rating,
-            reviewCount: c.reviews,
-            notes: `Primary local competitor in ${city}`,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .onConflictDoNothing();
-
-        await db
-          .insert(schema.competitorSnapshotsTable)
-          .values({
-            id: `cs_${businessId}_${cIdx + 1}`,
-            businessId,
-            competitorId: compId,
-            snapshotDate: todayStr,
-            rating: c.rating,
-            reviewCount: c.reviews,
-            estTraffic: 3200 + cIdx * 450,
-            rankingKeywordsCount: 140 + cIdx * 25,
-            strengths: ['High review volume', 'Aggressive local keyword coverage'],
-            weaknesses: ['Slow mobile loading speed', 'Lacks structured FAQ schema'],
-          })
-          .onConflictDoNothing();
-      }
-
-      await db
-        .update(schema.businessesTable)
-        .set({
-          updatedAt: new Date(),
-        })
-        .where(eq(schema.businessesTable.id, businessId));
-    }
   } catch (err) {
-    console.warn('[SEO Foundation] Notice seeding SEO foundation:', err);
+    console.warn('[SEO Foundation] Notice checking SEO foundation:', err);
   }
 }
 
 export async function scanVisibilityNow(businessId: string) {
-  await ensureBusinessSeoFoundation(businessId);
   const keywords = await db
     .select()
     .from(schema.trackedKeywordsTable)
     .where(eq(schema.trackedKeywordsTable.businessId, businessId));
+
+  if (keywords.length === 0) {
+    return {
+      updatedCount: 0,
+      snapshots: [],
+      message: 'No tracked keywords configured yet. Add keywords to scan visibility.',
+    };
+  }
 
   const todayStr = new Date().toISOString().split('T')[0];
   const updatedRanks: any[] = [];
@@ -2994,30 +3012,6 @@ export async function getRankingTrackingStatus(businessId: string) {
       .orderBy(desc(schema.visibilitySnapshotsTable.snapshotDate)),
   ]);
 
-  if (keywords.length === 0) {
-    await ensureBusinessSeoFoundation(businessId);
-    [connections, keywords, snapshots, visibility] = await Promise.all([
-      db
-        .select()
-        .from(schema.dataConnectionsTable)
-        .where(eq(schema.dataConnectionsTable.businessId, businessId)),
-      db
-        .select()
-        .from(schema.trackedKeywordsTable)
-        .where(eq(schema.trackedKeywordsTable.businessId, businessId)),
-      db
-        .select()
-        .from(schema.rankSnapshotsTable)
-        .where(eq(schema.rankSnapshotsTable.businessId, businessId))
-        .orderBy(desc(schema.rankSnapshotsTable.snapshotDate)),
-      db
-        .select()
-        .from(schema.visibilitySnapshotsTable)
-        .where(eq(schema.visibilitySnapshotsTable.businessId, businessId))
-        .orderBy(desc(schema.visibilitySnapshotsTable.snapshotDate)),
-    ]);
-  }
-
   const rankingProvider = connections.find(
     (c) => (c.provider === 'rank_tracker' || c.provider === 'local_rankings') && c.status === 'connected'
   );
@@ -3155,9 +3149,6 @@ export async function getNotifications(businessId: string) {
 
 // ---------------- UNIFIED NORMALIZED DASHBOARD QUERY ----------------
 export async function getFullProductionDashboard(businessId: string) {
-  // Ensure business foundation data exists (SEO keywords, tracking connection, initial competitors)
-  await ensureBusinessSeoFoundation(businessId);
-
   // STRICT DATA ISOLATION: All parallel queries explicitly scoped to businessId
   const [
     business,
@@ -3217,22 +3208,44 @@ export async function getFullProductionDashboard(businessId: string) {
   const primaryGbp = googleLocations[0] || null;
   const latestVisibility = visibilitySnapshots[0] || null;
 
-  const computedHealthScore = businessBrain?.score || Math.min(95, Math.max(50, Math.round(
-    ((latestVisibility?.aiVisibilityScore || 78) * 0.4) +
-    (((primaryGbp?.rating || 4.8) / 5) * 100 * 0.4) +
-    (websiteProjects[0] ? 20 : 12)
-  )));
+  const hasRealReviews = Boolean((primaryGbp?.reviewCount && primaryGbp.reviewCount > 0) || googleReviews.length > 0);
+  const hasRealVisibility = Boolean(latestVisibility && typeof latestVisibility.aiVisibilityScore === 'number' && latestVisibility.aiVisibilityScore > 0);
+  const hasRealCrawl = Boolean(crawlRuns.length > 0 && typeof crawlRuns[0]?.perfScore === 'number' && crawlRuns[0].perfScore > 0);
+  const hasBrainScore = Boolean(typeof businessBrain?.score === 'number' && businessBrain.score > 0);
+
+  let computedHealthScore: number | null = null;
+  if (hasBrainScore) {
+    computedHealthScore = businessBrain!.score;
+  } else if (hasRealVisibility || hasRealReviews || hasRealCrawl) {
+    let weightedSum = 0;
+    let totalWeight = 0;
+    if (hasRealVisibility && latestVisibility) {
+      weightedSum += latestVisibility.aiVisibilityScore * 0.4;
+      totalWeight += 0.4;
+    }
+    if (hasRealReviews && primaryGbp?.rating) {
+      weightedSum += ((primaryGbp.rating / 5) * 100) * 0.4;
+      totalWeight += 0.4;
+    }
+    if (hasRealCrawl && crawlRuns[0]?.perfScore) {
+      weightedSum += crawlRuns[0].perfScore * 0.2;
+      totalWeight += 0.2;
+    }
+    computedHealthScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : null;
+  }
+
+  const computedAiReadiness = businessBrain?.readinessScore ?? (hasRealVisibility && latestVisibility ? Math.round(latestVisibility.aiVisibilityScore * 0.95) : null);
 
   // Calculated Metrics
   const calculatedMetrics = {
     healthScore: computedHealthScore,
-    aiReadinessScore: businessBrain?.readinessScore || (latestVisibility?.aiVisibilityScore ? Math.round(latestVisibility.aiVisibilityScore * 0.95) : 74),
+    aiReadinessScore: computedAiReadiness,
     averageRating: primaryGbp?.rating || 0,
     reviewCount: primaryGbp?.reviewCount || googleReviews.length || 0,
     unansweredReviewsCount: googleReviews.filter((r) => !r.isAnswered).length,
-    averageMapRank: latestVisibility?.localPackRank ?? 3.2,
-    threePackPresent: latestVisibility?.threePackPresent ?? true,
-    aiVisibilityScore: latestVisibility?.aiVisibilityScore ?? 78,
+    averageMapRank: latestVisibility?.localPackRank ?? 0,
+    threePackPresent: latestVisibility?.threePackPresent ?? false,
+    aiVisibilityScore: latestVisibility?.aiVisibilityScore ?? 0,
     monthlyOrganicTraffic: analyticsMetrics?.sessions || 0,
     googleProfileViews: (googleMetrics[0]?.viewsSearch || 0) + (googleMetrics[0]?.viewsMaps || 0),
     rankingKeywordsCount: trackedKeywords.length,
@@ -3268,6 +3281,451 @@ export async function getFullProductionDashboard(businessId: string) {
     reports,
     notifications,
   };
+}
+
+// --- Canonical Directory Service Engine (Postgres Single Source of Truth) ---
+
+export function maskDirectoryEmail(email?: string): string {
+  if (!email || !email.includes('@')) return '***@***.com';
+  const parts = email.split('@');
+  const user = parts[0];
+  const domain = parts[1];
+  const maskedUser = user.length <= 2 ? `${user[0]}*` : `${user[0]}***${user[user.length - 1]}`;
+  return `${maskedUser}@${domain}`;
+}
+
+export function maskDirectoryPhone(phone?: string): string {
+  if (!phone) return '***-***-****';
+  const clean = phone.replace(/\D/g, '');
+  if (clean.length < 4) return '***-***-****';
+  return `***-***-${clean.slice(-4)}`;
+}
+
+export async function getDirectoryListingBySlugOrId(slugOrId: string) {
+  try {
+    const clean = slugOrId.toLowerCase().trim();
+    // Match by slug or id
+    const bizList = await db
+      .select()
+      .from(schema.businessesTable)
+      .where(or(
+        eq(schema.businessesTable.slug, clean),
+        eq(schema.businessesTable.id, clean)
+      ))
+      .limit(1);
+
+    if (bizList.length === 0) return null;
+    const biz = bizList[0];
+
+    // Get location
+    const locs = await db
+      .select()
+      .from(schema.locationsTable)
+      .where(eq(schema.locationsTable.businessId, biz.id))
+      .limit(1);
+    const loc = locs[0] || null;
+
+    // Get reviews if any
+    const reviews = await db
+      .select()
+      .from(schema.googleReviewsTable)
+      .where(eq(schema.googleReviewsTable.businessId, biz.id))
+      .limit(10);
+
+    const isClaimed = biz.status !== 'unclaimed' && !biz.ownerEmail.startsWith('unclaimed');
+    const category = biz.category || biz.industry || 'Local Services';
+    const city = loc?.city || biz.cityName || '';
+    const state = loc?.state || biz.stateCode || '';
+
+    const publicReviews = reviews.map((r, idx) => ({
+      id: r.id || `rev_${idx}`,
+      authorName: r.authorName || 'Verified Customer',
+      rating: r.rating || 5,
+      comment: r.text || 'Verified review',
+      relativePublishTimeDescription: r.publishedAt ? new Date(r.publishedAt).toLocaleDateString() : 'Verified Review',
+    }));
+
+    const avgRating = publicReviews.length > 0
+      ? Number((publicReviews.reduce((acc, r) => acc + r.rating, 0) / publicReviews.length).toFixed(1))
+      : 5.0;
+
+    return {
+      id: biz.id,
+      businessName: biz.name,
+      slug: biz.slug || biz.id,
+      websiteUrl: biz.website ? (biz.website.startsWith('http') ? biz.website : `https://${biz.website}`) : '',
+      phone: loc?.phone || biz.phone || null,
+      email: biz.email || null,
+      categorySlug: biz.categorySlug || category.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      categoryName: category,
+      citySlug: biz.citySlug || (city ? city.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'all'),
+      cityName: city,
+      stateCode: state,
+      planTier: isClaimed ? (biz.planTier || 'free') : 'free',
+      isPublishedInDirectory: biz.isPublishedInDirectory,
+      directoryStatus: isClaimed ? 'CLAIMED' : 'UNCLAIMED',
+      isClaimed,
+      targetKeywords: biz.targetKeywords || [category, `${category} in ${city}`],
+      sourceAttributions: {
+        gbp: 'GOOGLE_BUSINESS_PROFILE',
+        website: 'WEBSITE',
+        verification: isClaimed ? 'USER_PROVIDED' : 'DIRECTORY_ACTIVITY',
+        calculated: 'CALCULATED',
+      },
+      diagnosticSnapshot: {
+        seoScore: 85,
+        performanceScore: 88,
+        hasSchema: true,
+        issuesCount: 0,
+        unansweredReviewsCount: 0,
+      },
+      directoryMetrics: {
+        profileViews: 0,
+        phoneClicks: 0,
+        websiteClicks: 0,
+        quoteRequests: 0,
+        lastViewedAt: null,
+      },
+      gbpData: {
+        phone: loc?.phone || biz.phone || null,
+        address: loc?.address ? `${loc.address}, ${loc.city || ''} ${loc.state || ''}`.trim() : (city ? `${city}, ${state}` : null),
+        hours: null,
+        averageRating: avgRating,
+        reviewCount: publicReviews.length,
+        reviews: publicReviews,
+        coverImageUrl: null,
+        logoUrl: null,
+        mediaPhotos: biz.mediaPhotos || [],
+      },
+      scrapedContent: {
+        metaTitle: `${biz.name} | ${category} in ${city || 'Local Area'}`,
+        description: biz.description || biz.tagline || '',
+        serviceTags: biz.services && biz.services.length > 0 ? biz.services : [category],
+        aboutSummary: biz.description || biz.tagline || '',
+      },
+      createdAt: biz.createdAt,
+      updatedAt: biz.updatedAt,
+    };
+  } catch (err) {
+    console.error('Error fetching directory listing from database:', err);
+    return null;
+  }
+}
+
+export async function getPublishedDirectoryListings() {
+  try {
+    const bizList = await db
+      .select()
+      .from(schema.businessesTable)
+      .where(eq(schema.businessesTable.isPublishedInDirectory, true))
+      .orderBy(desc(schema.businessesTable.createdAt));
+
+    const results: any[] = [];
+    for (const biz of bizList) {
+      const listing = await getDirectoryListingBySlugOrId(biz.id);
+      if (listing) results.push(listing);
+    }
+    return results;
+  } catch (err) {
+    console.error('Error fetching published directory listings from database:', err);
+    return [];
+  }
+}
+
+export async function createDirectoryLeadRecord(leadData: {
+  businessId?: string;
+  directoryProfileId?: string;
+  leadName: string;
+  leadEmail?: string;
+  leadPhone: string;
+  serviceRequested?: string;
+  message?: string;
+  city?: string;
+  category?: string;
+  sessionId?: string;
+  userId?: string;
+}) {
+  // CRITICAL: Derive business strictly from canonical database record by slug or businessId!
+  const targetIdOrSlug = leadData.directoryProfileId || leadData.businessId || '';
+  let canonicalBiz: any = null;
+
+  if (targetIdOrSlug) {
+    const list = await db
+      .select()
+      .from(schema.businessesTable)
+      .where(or(
+        eq(schema.businessesTable.slug, targetIdOrSlug.toLowerCase().trim()),
+        eq(schema.businessesTable.id, targetIdOrSlug.trim())
+      ))
+      .limit(1);
+    canonicalBiz = list[0] || null;
+  }
+
+  // Fallback: If not found by slug, try businessId directly
+  if (!canonicalBiz && leadData.businessId) {
+    const list = await db
+      .select()
+      .from(schema.businessesTable)
+      .where(eq(schema.businessesTable.id, leadData.businessId.trim()))
+      .limit(1);
+    canonicalBiz = list[0] || null;
+  }
+
+  if (!canonicalBiz) {
+    throw new Error(`Cannot create lead: No canonical business found for '${targetIdOrSlug}'`);
+  }
+
+  const leadId = `lead_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const isPremium = canonicalBiz.planTier === 'pro' || canonicalBiz.planTier === 'agency';
+
+  // 1. Insert into directory_leads table
+  await db.insert(schema.directoryLeadsTable).values({
+    id: leadId,
+    businessId: canonicalBiz.id,
+    businessName: canonicalBiz.name,
+    fullName: leadData.leadName,
+    email: leadData.leadEmail || '',
+    phone: leadData.leadPhone,
+    serviceNeed: leadData.serviceRequested || canonicalBiz.category || 'General Inquiry',
+    customerNotes: leadData.message || '',
+    leadStatus: 'new',
+    isUnlocked: isPremium,
+    utmSource: 'directory',
+    referrer: `/biz/${canonicalBiz.slug || canonicalBiz.id}`,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  // 2. Insert into Locora CRM / Growth leads table
+  const crmLeadId = `lead_crm_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  await db.insert(schema.leadsTable).values({
+    id: crmLeadId,
+    businessId: canonicalBiz.id,
+    name: leadData.leadName,
+    email: leadData.leadEmail || '',
+    phone: leadData.leadPhone,
+    source: 'directory',
+    status: 'new',
+    inquiryType: leadData.serviceRequested || canonicalBiz.category || 'General Inquiry',
+    message: leadData.message || '',
+    metadata: {
+      directoryLeadId: leadId,
+      slug: canonicalBiz.slug,
+      city: leadData.city,
+      category: leadData.category,
+      sessionId: leadData.sessionId,
+    },
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }).catch((err) => console.error('Error inserting into leadsTable:', err));
+
+  return {
+    leadId,
+    canonicalBiz,
+    isPremium,
+  };
+}
+
+export async function getDirectoryLeadsForBusiness(businessId: string) {
+  try {
+    const leads = await db
+      .select()
+      .from(schema.directoryLeadsTable)
+      .where(eq(schema.directoryLeadsTable.businessId, businessId))
+      .orderBy(desc(schema.directoryLeadsTable.createdAt));
+
+    return leads.map((dl) => {
+      const isUnlocked = Boolean(dl.isUnlocked);
+      return {
+        id: dl.id,
+        businessId: dl.businessId,
+        directoryProfileId: dl.businessName || dl.businessId,
+        source: 'directory',
+        leadName: dl.fullName,
+        leadEmail: isUnlocked ? dl.email : '',
+        leadPhone: isUnlocked ? dl.phone : '',
+        maskedEmail: maskDirectoryEmail(dl.email),
+        maskedPhone: maskDirectoryPhone(dl.phone),
+        isUnlocked,
+        serviceRequested: dl.serviceNeed || 'General Service',
+        message: dl.customerNotes || '',
+        city: '',
+        category: '',
+        status: dl.leadStatus || 'new',
+        deliveredViaEmail: true,
+        deliveredViaSms: false,
+        deliveredAt: dl.createdAt.toISOString(),
+        respondedAt: dl.leadStatus === 'contacted' ? dl.updatedAt.toISOString() : null,
+        convertedAt: dl.leadStatus === 'converted' ? dl.updatedAt.toISOString() : null,
+        convertedCustomerId: null,
+        submittedAt: dl.createdAt.toISOString(),
+      };
+    });
+  } catch (err) {
+    console.error('Error fetching directory leads from database:', err);
+    return [];
+  }
+}
+
+export async function updateDirectoryLeadStatus(leadId: string, businessId: string, status: string) {
+  try {
+    const updated = await db
+      .update(schema.directoryLeadsTable)
+      .set({
+        leadStatus: status,
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(schema.directoryLeadsTable.id, leadId),
+        eq(schema.directoryLeadsTable.businessId, businessId)
+      ))
+      .returning();
+
+    return updated[0] || null;
+  } catch (err) {
+    console.error('Error updating directory lead status:', err);
+    return null;
+  }
+}
+
+export async function convertDirectoryLeadToCustomer(
+  leadId: string,
+  businessId: string,
+  customerData?: { value?: number; name?: string; email?: string; phone?: string }
+) {
+  try {
+    // 1. Get lead from directoryLeadsTable or leadsTable
+    let leadName = customerData?.name || 'Directory Customer';
+    let leadEmail = customerData?.email || '';
+    let leadPhone = customerData?.phone || '';
+    let serviceNeed = 'Local Services';
+
+    const leads = await db
+      .select()
+      .from(schema.directoryLeadsTable)
+      .where(eq(schema.directoryLeadsTable.id, leadId))
+      .limit(1);
+
+    if (leads.length > 0) {
+      leadName = leads[0].fullName || leadName;
+      leadEmail = leads[0].email || leadEmail;
+      leadPhone = leads[0].phone || leadPhone;
+      serviceNeed = leads[0].serviceNeed || serviceNeed;
+
+      // Mark lead as converted in directoryLeadsTable
+      await db
+        .update(schema.directoryLeadsTable)
+        .set({
+          leadStatus: 'converted',
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.directoryLeadsTable.id, leadId));
+    }
+
+    const customerId = `cust_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+    // Also link in leadsTable if present
+    await db
+      .update(schema.leadsTable)
+      .set({
+        status: 'won',
+        customerId,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.leadsTable.id, leadId))
+      .catch(() => {});
+
+    // 2. Create customer in CRM
+    const newCust = await createCustomer(
+      {
+        id: customerId,
+        businessId,
+        name: customerData?.name || leadName,
+        email: customerData?.email || leadEmail,
+        phone: customerData?.phone || leadPhone,
+        source: 'directory',
+        status: 'customer',
+        value: customerData?.value || 0,
+        tags: ['Directory Lead', 'Converted'],
+        notes: `Converted from Locora Directory lead for ${serviceNeed}.`,
+        service: serviceNeed,
+      },
+      undefined,
+      businessId
+    );
+
+    return {
+      success: true,
+      customerId: newCust?.id || customerId,
+      leadId,
+    };
+  } catch (err: any) {
+    console.error('Error converting directory lead to customer:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function claimDirectoryListing(businessIdOrSlug: string, userEmail: string, fullName?: string) {
+  try {
+    const list = await db
+      .select()
+      .from(schema.businessesTable)
+      .where(or(
+        eq(schema.businessesTable.id, businessIdOrSlug),
+        eq(schema.businessesTable.slug, businessIdOrSlug.toLowerCase().trim())
+      ))
+      .limit(1);
+
+    if (list.length === 0) {
+      return { success: false, error: 'Business not found' };
+    }
+    const biz = list[0];
+
+    // If already active and owned by someone else
+    if (biz.status === 'active' && biz.ownerEmail && !biz.ownerEmail.startsWith('unclaimed') && biz.ownerEmail !== userEmail) {
+      return { success: false, error: 'This business has already been claimed by a verified owner.', alreadyClaimed: true };
+    }
+
+    // Update business to active, claimed by userEmail, and published
+    await db
+      .update(schema.businessesTable)
+      .set({
+        ownerEmail: userEmail,
+        status: 'active',
+        isPublishedInDirectory: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.businessesTable.id, biz.id));
+
+    return {
+      success: true,
+      businessId: biz.id,
+      businessName: biz.name,
+      slug: biz.slug,
+      message: 'Business profile successfully claimed and linked to your Locora account.',
+    };
+  } catch (err: any) {
+    console.error('Error claiming directory listing:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function setBusinessDirectoryPublish(businessId: string, isPublished: boolean) {
+  try {
+    const result = await db
+      .update(schema.businessesTable)
+      .set({
+        isPublishedInDirectory: isPublished,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.businessesTable.id, businessId))
+      .returning();
+
+    return result[0] || null;
+  } catch (err) {
+    console.error('Error setting directory publish status:', err);
+    return null;
+  }
 }
 
 

@@ -129,6 +129,7 @@ interface AppContextType {
   isGbpSyncModalOpen: boolean;
   setIsGbpSyncModalOpen: (open: boolean) => void;
   addBusiness: (data: Partial<ClientBusiness>) => void;
+  deleteBusiness: (businessId: string) => Promise<void>;
   addLocation: (businessId: string, location: { name: string; address: string; city?: string; state?: string; country?: string; zip?: string; phone?: string }) => void;
   priorityActions: PriorityAction[];
   setPriorityActions: React.Dispatch<React.SetStateAction<PriorityAction[]>>;
@@ -292,10 +293,10 @@ const DEFAULT_AI_ACTIONS: AIAction[] = [];
 
 export const UNCONFIGURED_BUSINESS: ClientBusiness = {
   id: 'workspace_pending',
-  name: 'My Business',
-  category: 'Local Business',
-  tagline: 'Connect your Google Business Profile to track real-time metrics',
-  locationName: 'Primary Location',
+  name: 'No business yet',
+  category: '',
+  tagline: 'No business configured yet. Connect or register your business to begin.',
+  locationName: '',
   address: '',
   city: '',
   state: '',
@@ -395,8 +396,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })
       .catch(() => {});
 
-    // Active session hydration via /api/auth/me
-    fetch('/api/auth/me', { credentials: 'include' })
+    // Active session & database businesses hydration
+    const storedAuthEmail = typeof window !== 'undefined' ? localStorage.getItem('locora_auth_email') : null;
+    const authHeaders: Record<string, string> = {};
+    if (storedAuthEmail) {
+      authHeaders['x-user-email'] = storedAuthEmail;
+    }
+    const authMeUrl = storedAuthEmail ? `/api/auth/me?email=${encodeURIComponent(storedAuthEmail)}` : '/api/auth/me';
+
+    fetch(authMeUrl, { credentials: 'include', headers: authHeaders })
       .then((res) => {
         if (!res.ok) throw new Error('No active session');
         return res.json();
@@ -404,9 +412,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .then((data) => {
         if (data && data.user && data.user.email) {
           const normalizedEmailToFetch = data.user.email.toLowerCase().trim();
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('locora_auth_email', normalizedEmailToFetch);
+            sessionStorage.setItem('locora_active_session', 'true');
+            sessionStorage.setItem('locora_last_active', String(Date.now()));
+          }
           const isSuperAdminEmail = normalizedEmailToFetch === 'imtiazbaloch3322@gmail.com' || normalizedEmailToFetch === 'support@locoraai.com';
-          sessionStorage.setItem('locora_active_session', 'true');
-          sessionStorage.setItem('locora_last_active', String(Date.now()));
           setUser({
             ...data.user,
             role: isSuperAdminEmail ? 'admin' : (data.user.role || 'customer'),
@@ -414,15 +425,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             monthlyAiCredits: isSuperAdminEmail ? 9999 : (data.user.monthlyAiCredits || 250),
             isAuthenticated: true,
           });
-        }
-      })
-      .catch(() => {
-        // Unauthenticated visitor: keep default user without destroying application state
-      });
 
-    // Hydrate businesses directly from production database
-    fetch('/api/production/businesses', { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() : null))
+          // Pure Database-Driven Hydration: Query PostgreSQL via production businesses API
+          return fetch(`/api/production/businesses?email=${encodeURIComponent(normalizedEmailToFetch)}`, {
+            credentials: 'include',
+            headers: { 'x-user-email': normalizedEmailToFetch },
+          });
+        }
+        return null;
+      })
+      .then((res) => (res && res.ok ? res.json() : null))
       .then((list) => {
         if (Array.isArray(list) && list.length > 0) {
           setBusinesses((prev) => {
@@ -430,7 +442,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               const existing = prev.find((p) => p.id === b.id);
               return {
                 id: b.id,
-                name: b.name || 'Local Business',
+                name: b.name || '',
                 category: b.category || b.industry || 'Local Services',
                 tagline: b.tagline || existing?.tagline || '',
                 locationName: 'Primary Location',
@@ -443,7 +455,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 website: b.website || existing?.website || '',
                 email: b.email || existing?.email || '',
                 description: b.description || existing?.description || '',
-                healthScore: typeof b.healthScore === 'number' && b.healthScore > 0 ? b.healthScore : (existing?.healthScore || 75),
+                healthScore: typeof b.healthScore === 'number' && b.healthScore > 0 ? b.healthScore : (existing?.healthScore || 0),
                 healthDelta: 0,
                 highImpactCount: 0,
                 opportunityCount: 0,
@@ -462,7 +474,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             });
 
             if (typeof window !== 'undefined') {
-              localStorage.setItem('locora_businesses_list', JSON.stringify(mapped));
               localStorage.setItem('locora_onboarding_completed', 'true');
               localStorage.removeItem('locora_pending_public_audit');
             }
@@ -503,7 +514,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       })
       .catch((err) => {
-        console.warn('[AppContext] Could not fetch workspace businesses:', err);
+        console.warn('[AppContext] Session / businesses hydration:', err);
       });
   }, []);
 
@@ -736,6 +747,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })
       .catch(() => {});
 
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('locora_auth_email', userEmail);
+    }
+
     // Hydrate existing user business records or initialize clean workspace if brand new
     if (!isDemo) {
       const alreadyCompletedOnboarding =
@@ -743,15 +758,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         (localStorage.getItem('locora_onboarding_completed') === 'true' ||
           localStorage.getItem('locora_onboarding_done') === 'true');
 
-      // Hydrate user's authentic businesses from PostgreSQL & Locora DB
-      fetch(`/api/production/businesses?email=${encodeURIComponent(userEmail)}`, { credentials: 'include' })
+      // Hydrate user's authentic businesses from PostgreSQL database
+      fetch(`/api/production/businesses?email=${encodeURIComponent(userEmail)}`, {
+        credentials: 'include',
+        headers: { 'x-user-email': userEmail },
+      })
         .then((res) => (res.ok ? res.json() : null))
         .then((list) => {
           if (Array.isArray(list) && list.length > 0) {
             // User already has permanent businesses in database!
             const mapped: ClientBusiness[] = list.map((b: any) => ({
               id: b.id,
-              name: b.name || 'Local Business',
+              name: b.name || '',
               category: b.category || b.industry || 'Local Services',
               tagline: b.tagline || b.description || '',
               locationName: 'Primary Location',
@@ -764,7 +782,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               website: b.website || '',
               email: b.email || userEmail,
               description: b.description || '',
-              healthScore: typeof b.healthScore === 'number' && b.healthScore > 0 ? b.healthScore : 78,
+              healthScore: typeof b.healthScore === 'number' && b.healthScore > 0 ? b.healthScore : 0,
               healthDelta: 0,
               highImpactCount: 0,
               opportunityCount: 0,
@@ -805,7 +823,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             }));
 
             if (typeof window !== 'undefined') {
-              localStorage.setItem('locora_businesses_list', JSON.stringify(mapped));
               localStorage.setItem('locora_active_business_id', activeId);
               localStorage.setItem('locora_onboarding_completed', 'true');
               localStorage.removeItem('locora_pending_public_audit');
@@ -862,44 +879,80 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               }).catch(() => {});
             }
 
-            const newBizId = pendingDirectoryClaimData?.businessId || `biz_${newUser.id}`;
-            const newBiz: ClientBusiness = {
-              id: newBizId,
-              name: pendingDirectoryClaimData?.businessName || pendingAuditData?.businessName || companyName || 'My Business',
-              category: pendingDirectoryClaimData?.categoryName || pendingAuditData?.detectedBusinessData?.schemaTypes?.[0] || 'Local Business',
-              tagline: pendingDirectoryClaimData?.tagline || pendingAuditData?.detectedBusinessData?.metaDescription || '',
-              locationName: 'Main Location',
-              address: pendingDirectoryClaimData?.address || pendingAuditData?.detectedBusinessData?.address || '',
-              city: pendingDirectoryClaimData?.cityName || '',
-              state: pendingDirectoryClaimData?.stateCode || '',
-              country: 'United States',
-              zip: '',
-              phone: pendingDirectoryClaimData?.phone || pendingAuditData?.detectedBusinessData?.phone || '',
-              website: pendingDirectoryClaimData?.websiteUrl || pendingAuditData?.domain || pendingAuditData?.url || '',
-              healthScore: pendingAuditData?.overallScore || 85,
-              healthDelta: 0,
-              highImpactCount: 2,
-              opportunityCount: 3,
-              healthyAreaCount: 5,
-              isMainLocation: true,
-              services: [],
-              competitors: [],
-              googleRating: pendingDirectoryClaimData?.averageRating || 0,
-              reviewCount: pendingDirectoryClaimData?.reviewCount || 0,
-              unansweredReviews: 0,
-              gbpCompleteness: 100,
-            };
+            const hasInitialBusiness = !!(
+              pendingDirectoryClaimData?.businessName ||
+              pendingAuditData?.businessName ||
+              (companyName && companyName.trim() && companyName.toLowerCase() !== 'my business' && companyName.toLowerCase() !== 'no business yet')
+            );
 
-            setBusinesses([newBiz]);
-            setActiveBusinessId(newBizId);
+            if (hasInitialBusiness) {
+              const newBizId = pendingDirectoryClaimData?.businessId || `biz_${newUser.id}`;
+              const newBizName = pendingDirectoryClaimData?.businessName || pendingAuditData?.businessName || companyName || '';
+              const newBizCategory = pendingDirectoryClaimData?.categoryName || pendingAuditData?.detectedBusinessData?.schemaTypes?.[0] || 'Local Services';
+              const newBiz: ClientBusiness = {
+                id: newBizId,
+                name: newBizName,
+                category: newBizCategory,
+                tagline: pendingDirectoryClaimData?.tagline || pendingAuditData?.detectedBusinessData?.metaDescription || '',
+                locationName: 'Main Location',
+                address: pendingDirectoryClaimData?.address || pendingAuditData?.detectedBusinessData?.address || '',
+                city: pendingDirectoryClaimData?.cityName || '',
+                state: pendingDirectoryClaimData?.stateCode || '',
+                country: 'United States',
+                zip: '',
+                phone: pendingDirectoryClaimData?.phone || pendingAuditData?.detectedBusinessData?.phone || '',
+                website: pendingDirectoryClaimData?.websiteUrl || pendingAuditData?.domain || pendingAuditData?.url || '',
+                healthScore: pendingAuditData?.overallScore || 0,
+                healthDelta: 0,
+                highImpactCount: 0,
+                opportunityCount: 0,
+                healthyAreaCount: 0,
+                isMainLocation: true,
+                services: [],
+                competitors: [],
+                googleRating: pendingDirectoryClaimData?.averageRating || 0,
+                reviewCount: pendingDirectoryClaimData?.reviewCount || 0,
+                unansweredReviews: 0,
+                gbpCompleteness: 0,
+              };
 
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('locora_businesses_list', JSON.stringify([newBiz]));
-              localStorage.setItem('locora_active_business_id', newBizId);
-              localStorage.removeItem('locora_pending_directory_claim');
+              setBusinesses([newBiz]);
+              setActiveBusinessId(newBizId);
+
+              // Persist this initial business permanently into PostgreSQL database
+              fetch('/api/production/businesses', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-user-email': userEmail,
+                },
+                body: JSON.stringify({
+                  id: newBizId,
+                  name: newBizName,
+                  category: newBizCategory,
+                  address: newBiz.address,
+                  city: newBiz.city,
+                  state: newBiz.state,
+                  phone: newBiz.phone,
+                  website: newBiz.website,
+                  email: userEmail,
+                }),
+              }).catch((err) => console.warn('Could not persist initial business to DB:', err));
+
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('locora_active_business_id', newBizId);
+                localStorage.removeItem('locora_pending_directory_claim');
+              }
+            } else {
+              setBusinesses([]);
+              setActiveBusinessId('');
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('locora_active_business_id');
+                localStorage.removeItem('locora_pending_directory_claim');
+              }
             }
 
-            if (!alreadyCompletedOnboarding && (pendingAuditData || newUser.planTier === 'free')) {
+            if (!alreadyCompletedOnboarding) {
               setTimeout(() => {
                 setOnboardingModalOpen(true);
               }, 400);
@@ -986,9 +1039,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('locora_active_session');
       sessionStorage.removeItem('locora_last_active');
+      localStorage.removeItem('locora_auth_email');
+      localStorage.removeItem('locora_active_business_id');
     }
     fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
     setUser(DEFAULT_USER);
+    setBusinesses([]);
+    setActiveBusinessId('');
+    setProductionDashboard(null);
+    setBusinessTruth(null);
     setAuthModalOpen(false);
     setActiveTab('home');
   };
@@ -1138,22 +1197,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [latestWebsiteAudit, setLatestWebsiteAudit] = useState<WebsiteAuditResult | null>(null);
   const [latestMarketingPlan, setLatestMarketingPlan] = useState<MarketingPlannerOutput | null>(null);
 
-  // Multi-Client & Business Selector State
-  const [businesses, setBusinesses] = useState<ClientBusiness[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem('locora_businesses_list');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && !parsed.some((b: any) => b.id === 'austin-dental' || b.id === 'smith-plumbing' || b.id === 'demo-growth-workspace' || String(b.name).toLowerCase().includes('austin') || String(b.city).toLowerCase().includes('austin'))) {
-            return parsed;
-          }
-          localStorage.removeItem('locora_businesses_list');
-        }
-      } catch {}
-    }
-    return INITIAL_BUSINESSES;
-  });
+  // Multi-Client & Business Selector State - Pure Database-Driven Single Source of Truth
+  const [businesses, setBusinesses] = useState<ClientBusiness[]>([]);
 
   const [activeBusinessId, setActiveBusinessId] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -1239,10 +1284,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (activeBusinessId) {
       refreshBusinessTruth(activeBusinessId);
       refreshBusinessCustomers(activeBusinessId);
+      refreshProductionDashboard(activeBusinessId);
     } else {
       setBusinessTruth(null);
     }
-  }, [activeBusinessId, refreshBusinessTruth, refreshBusinessCustomers]);
+  }, [activeBusinessId, refreshBusinessTruth, refreshBusinessCustomers, refreshProductionDashboard]);
 
   const [rightAiPanelOpen, setRightAiPanelOpen] = useState<boolean>(false);
   const toggleRightAiPanel = useCallback(() => setRightAiPanelOpen((prev) => !prev), []);
@@ -1320,12 +1366,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } else {
         nextList = [updatedBusiness, ...prev];
       }
-
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('locora_businesses_list', JSON.stringify(nextList));
-      }
       return nextList;
     });
+
+    if (activeBusinessId && user.email) {
+      fetch(`/api/production/business/${encodeURIComponent(activeBusinessId)}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': user.email,
+        },
+        body: JSON.stringify({
+          name: data.name,
+          category: data.category,
+          phone: data.phone,
+          website: data.website,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          zip: data.zip,
+          country: data.country,
+        }),
+      }).catch((err) => console.warn('Failed to sync GBP profile to backend:', err));
+    }
 
     setBusinessProfile((prev) => ({
       ...prev,
@@ -1396,13 +1459,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setBusinesses((prev) => {
       const filtered = prev.filter((b) => b.id !== newId);
       const next = [newBiz, ...filtered];
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('locora_businesses_list', JSON.stringify(next));
-      }
       return next;
     });
+
+    if (user.email) {
+      fetch('/api/production/businesses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': user.email,
+        },
+        body: JSON.stringify({
+          id: newId,
+          name: data.name || 'New Client Business',
+          category: data.category || 'General Local Business',
+          address: data.address || '',
+          city: data.city || '',
+          state: data.state || '',
+          zip: data.zip || '',
+          country: data.country || 'United States',
+          phone: data.phone || '',
+          website: data.website || '',
+          email: data.email || user.email,
+        }),
+      }).catch((err) => console.warn('Failed to save new business to DB:', err));
+    }
+
     switchBusiness(newId);
-  }, [switchBusiness]);
+  }, [switchBusiness, user.email]);
 
   const addLocation = useCallback((businessId: string, loc: { name: string; address: string; city?: string; state?: string; country?: string; zip?: string; phone?: string }) => {
     setBusinesses((prev) => {
@@ -1424,12 +1508,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           locations: [...(b.locations || []), newLoc],
         };
       });
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('locora_businesses_list', JSON.stringify(next));
-      }
       return next;
     });
-  }, []);
+
+    if (businessId && user.email) {
+      fetch(`/api/production/business/${encodeURIComponent(businessId)}/locations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': user.email,
+        },
+        body: JSON.stringify({
+          name: loc.name,
+          address: loc.address,
+          city: loc.city,
+          state: loc.state,
+          country: loc.country,
+          zip: loc.zip,
+          phone: loc.phone,
+          isPrimary: false,
+        }),
+      }).catch((err) => console.warn('Failed to save location to DB:', err));
+    }
+  }, [user.email]);
+
+  const deleteBusiness = useCallback(async (businessId: string) => {
+    try {
+      await fetch(`/api/workspace/businesses/${encodeURIComponent(businessId)}?email=${encodeURIComponent(user.email || '')}`, {
+        method: 'DELETE',
+        headers: {
+          'x-user-email': user.email || '',
+        },
+      });
+    } catch (err) {
+      console.warn('Failed to delete business from server:', err);
+    }
+    setBusinesses((prev) => {
+      const next = prev.filter((b) => b.id !== businessId);
+      return next;
+    });
+    if (activeBusinessId === businessId) {
+      const remaining = businesses.filter((b) => b.id !== businessId);
+      const nextId = remaining[0]?.id || '';
+      switchBusiness(nextId);
+    }
+  }, [user.email, activeBusinessId, businesses, switchBusiness]);
 
   const updateActiveBusiness = useCallback((data: Partial<ClientBusiness>) => {
     setBusinesses((prev) => {
@@ -1448,11 +1571,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           website: data.website !== undefined ? data.website : b.website,
         };
       });
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('locora_businesses_list', JSON.stringify(next));
-      }
       return next;
     });
+
+    if (activeBusinessId && user.email) {
+      fetch(`/api/production/business/${encodeURIComponent(activeBusinessId)}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': user.email,
+        },
+        body: JSON.stringify(data),
+      }).catch((err) => console.warn('Failed to patch business in DB:', err));
+    }
 
     setBusinessProfile((prev) => {
       const updated = {
@@ -1796,8 +1927,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             rankingAvg: calculated.averageMapRank,
           };
 
-          setBusinesses([mappedBiz]);
-          setActiveBusinessId(mappedBiz.id);
+          let allMappedBizs: ClientBusiness[] = [mappedBiz];
+          try {
+            const bizListRes = await fetch('/api/production/businesses', { credentials: 'include' });
+            if (bizListRes.ok) {
+              const bizListJson = await bizListRes.json();
+              if (Array.isArray(bizListJson) && bizListJson.length > 0) {
+                allMappedBizs = bizListJson.map((b: any) => ({
+                  id: b.id,
+                  name: b.name,
+                  category: b.category || b.industry || 'Local Services',
+                  tagline: b.tagline || '',
+                  locationName: b.cityName ? `${b.cityName} Location` : 'Main Location',
+                  address: b.address || '',
+                  city: b.city || b.cityName || '',
+                  state: b.state || b.stateCode || '',
+                  country: b.country || 'United States',
+                  zip: b.zip || '',
+                  phone: b.phone || '',
+                  website: b.website || '',
+                  healthScore: typeof b.healthScore === 'number' ? b.healthScore : 0,
+                  healthDelta: 0,
+                  highImpactCount: 0,
+                  opportunityCount: 0,
+                  healthyAreaCount: 0,
+                  isMainLocation: true,
+                  directorySlug: b.slug,
+                  isPublishedInDirectory: b.isPublishedInDirectory ?? true,
+                  services: b.services || [],
+                  competitors: [],
+                  googleRating: typeof b.googleRating === 'number' ? b.googleRating : 0,
+                  reviewCount: typeof b.reviewCount === 'number' ? b.reviewCount : 0,
+                  unansweredReviews: 0,
+                  gbpCompleteness: b.gbpConnected ? 100 : 0,
+                  rankingAvg: typeof b.rankingAvg === 'number' ? b.rankingAvg : 0,
+                }));
+              }
+            }
+          } catch (listErr) {
+            console.warn('Could not load businesses list:', listErr);
+          }
+
+          setBusinesses(allMappedBizs);
+          const cachedActiveId = typeof window !== 'undefined' ? localStorage.getItem('locora_active_business_id') : null;
+          const chosenId = (cachedActiveId && allMappedBizs.some((b) => b.id === cachedActiveId))
+            ? cachedActiveId
+            : (allMappedBizs[0]?.id || mappedBiz.id);
+          setActiveBusinessId(chosenId);
 
           setBusinessProfile((prev) => ({
             ...prev,
@@ -2653,6 +2829,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isGbpSyncModalOpen,
         setIsGbpSyncModalOpen,
         addBusiness,
+        deleteBusiness,
         addLocation,
         priorityActions,
         setPriorityActions,
