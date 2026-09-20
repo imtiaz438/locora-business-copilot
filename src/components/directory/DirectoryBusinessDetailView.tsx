@@ -39,7 +39,6 @@ import {
   getDirectoryCategoryUrl,
 } from '../../utils/domain';
 import { useDynamicSeo } from '../../hooks/useDynamicSeo';
-import { DynamicInternalLinks } from '../seo/DynamicInternalLinks';
 
 interface DirectoryBusinessDetailViewProps {
   slug: string;
@@ -1143,21 +1142,6 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               </div>
             </div>
           )
-        )}
-
-        {/* Dynamic SEO Internal Linking Architecture */}
-        {seoResult && (
-          <div className="mt-14">
-            <DynamicInternalLinks
-              seoResult={seoResult}
-              mode="detailed_grid"
-              onNavigate={(path) => {
-                if (path.startsWith('/')) {
-                  window.location.href = path;
-                }
-              }}
-            />
-          </div>
         )}
       </div>
 
