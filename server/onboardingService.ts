@@ -3,6 +3,7 @@ import { db, schema } from '../src/db/index.ts';
 import { eq, desc } from 'drizzle-orm';
 import { syncDetectedGrowthOpportunities } from './growthDetectorService.ts';
 import { saveBusinessRecordToLocoraDb } from './locoraDataEngine.ts';
+import { ensureAccountForUser, getBusinessLimit, updateAccountOnboardingStatus } from './accountService.ts';
 import type { DiscoveredBusinessInfo, OnboardingMissingInfoForm } from '../src/types.ts';
 
 // Helper to get GoogleGenAI client
@@ -43,14 +44,14 @@ export function extractDomain(url: string): string {
 
 // STEP 2: Discover business from legitimate configured providers
 export async function discoverBusiness(params: {
-  websiteUrl: string;
+  websiteUrl?: string;
   businessName?: string;
-  country: string;
-  primaryLocation: string;
+  country?: string;
+  primaryLocation?: string;
   userEmail?: string;
 }): Promise<DiscoveredBusinessInfo> {
-  const normalizedUrl = normalizeWebsiteUrl(params.websiteUrl);
-  const domain = extractDomain(normalizedUrl);
+  const normalizedUrl = params.websiteUrl ? normalizeWebsiteUrl(params.websiteUrl) : '';
+  const domain = normalizedUrl ? extractDomain(normalizedUrl) : '';
   const cleanProvidedName = (params.businessName || '').trim();
   const cleanLocation = (params.primaryLocation || '').trim();
   const cleanCountry = (params.country || 'United States').trim();
@@ -60,7 +61,7 @@ export async function discoverBusiness(params: {
     businessName: cleanProvidedName ? 'user_input' : 'not_found',
     address: cleanLocation ? 'user_input' : 'not_found',
     phone: 'not_found',
-    website: 'user_input',
+    website: normalizedUrl ? 'user_input' : 'not_found',
     category: 'not_found',
     hours: 'not_found',
   };
@@ -90,23 +91,24 @@ export async function discoverBusiness(params: {
   let gbpSource: 'google_places' | 'website_crawl' | 'user_input' | 'not_found' = 'not_found';
 
   // 1. PROVIDER 1: Real Website Crawl (HTML, Schema.org JSON-LD, Metadata, Tel links)
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6500);
+  if (normalizedUrl) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6500);
 
-    const crawlRes = await fetch(normalizedUrl, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 (Locora Business Discovery)',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      },
-    }).catch(() => null);
+      const crawlRes = await fetch(normalizedUrl, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 (Locora Business Discovery)',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        },
+      }).catch(() => null);
 
-    clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
 
-    if (crawlRes && crawlRes.ok) {
-      sourcesList.push('Website Crawl & Schema Markup');
-      const html = await crawlRes.text();
+      if (crawlRes && crawlRes.ok) {
+        sourcesList.push('Website Crawl & Schema Markup');
+        const html = await crawlRes.text();
 
       // Parse <title>
       const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
@@ -306,6 +308,7 @@ export async function discoverBusiness(params: {
   } catch (crawlErr) {
     console.warn('[Business Discovery] Website crawl notice:', crawlErr);
   }
+}
 
   // 2. PROVIDER 2: Google Business Profile / Google Places API (if key or query configured)
   const mapsApiKey = process.env.GOOGLE_MAPS_API_KEY || process.env.GOOGLE_PLACES_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -506,6 +509,9 @@ export async function confirmAndSaveBusiness(
     ? formData.goals.map((g) => g.trim()).filter(Boolean)
     : [];
 
+  // Resolve user account as primary ownership boundary
+  const account = await ensureAccountForUser(normalizedEmail);
+
   // Check if business already exists
   const existingBiz = await db
     .select()
@@ -518,6 +524,7 @@ export async function confirmAndSaveBusiness(
     const [updated] = await db
       .update(schema.businessesTable)
       .set({
+        accountId: existingBiz[0].accountId || account.id,
         name: cleanName,
         legalName: formData.legalName?.trim() || cleanName,
         category: cleanCategory,
@@ -539,10 +546,21 @@ export async function confirmAndSaveBusiness(
       .returning();
     savedBusiness = updated;
   } else {
+    // Check plan limits before creating any new business
+    const limitCheck = await getBusinessLimit(account.id);
+    if (!limitCheck.canAddMore) {
+      const err: any = new Error("You've reached your business limit. Upgrade your plan to manage additional businesses.");
+      err.status = 403;
+      err.statusCode = 403;
+      err.code = 'BUSINESS_LIMIT_REACHED';
+      throw err;
+    }
+
     const [inserted] = await db
       .insert(schema.businessesTable)
       .values({
         id: bizId,
+        accountId: account.id,
         ownerEmail: normalizedEmail,
         name: cleanName,
         legalName: formData.legalName?.trim() || cleanName,
@@ -559,7 +577,7 @@ export async function confirmAndSaveBusiness(
         services: cleanServices,
         serviceAreas: cleanServiceAreas,
         goals: cleanGoals,
-        planTier: 'pro',
+        planTier: account.planTier || 'free',
         status: 'active',
       })
       .returning();
@@ -732,6 +750,13 @@ export async function confirmAndSaveBusiness(
     } as any);
   } catch (syncErr) {
     console.warn('[Onboarding] Locora DB sync notice:', syncErr);
+  }
+
+  // Mark account onboarding completed once first business is created/confirmed
+  try {
+    await updateAccountOnboardingStatus(account.id, 'completed');
+  } catch (onboardingStatusErr) {
+    console.warn('[Onboarding] Status update non-fatal error:', onboardingStatusErr);
   }
 
   return savedBusiness;

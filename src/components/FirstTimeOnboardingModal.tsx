@@ -445,6 +445,13 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
         localStorage.setItem('locora_active_business_id', bizId);
       }
     }
+    if (user?.email) {
+      fetch('/api/account/onboarding-complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail: user.email }),
+      }).catch(() => {});
+    }
     setActiveTab('dashboard');
     onClose();
   };
@@ -453,6 +460,14 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
     if (typeof window !== 'undefined') {
       localStorage.removeItem('locora_pending_public_audit');
       localStorage.setItem('locora_onboarding_completed', 'true');
+      localStorage.setItem('locora_onboarding_done', 'true');
+    }
+    if (user?.email) {
+      fetch('/api/account/onboarding-complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail: user.email }),
+      }).catch(() => {});
     }
     onClose();
   };
@@ -1083,7 +1098,7 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
               </div>
 
               {/* Form Action */}
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={() => setCurrentStep(3)}
@@ -1091,14 +1106,23 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
                 >
                   ← Back to Confirmation
                 </button>
-                <button
-                  id="onboarding-step5-submit-btn"
-                  type="submit"
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>Create Business Brain & Launch</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleLaunchDashboard}
+                    className="px-3.5 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
+                  >
+                    Skip for now
+                  </button>
+                  <button
+                    id="onboarding-step5-submit-btn"
+                    type="submit"
+                    className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>Create Business Brain & Launch</span>
+                  </button>
+                </div>
               </div>
             </form>
           )}

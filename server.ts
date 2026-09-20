@@ -21,7 +21,13 @@ import * as businessTruthService from './server/businessTruthService.ts';
 import * as aiManagerService from './server/aiManagerService.ts';
 import * as growthDetectorService from './server/growthDetectorService.ts';
 import { db, schema } from './src/db/index.ts';
-import { and, desc, eq, ilike } from 'drizzle-orm';
+import { and, desc, eq, ilike, or } from 'drizzle-orm';
+import {
+  ensureAccountForUser,
+  getBusinessLimit,
+  updateAccountOnboardingStatus,
+  getAccountOnboardingStatus,
+} from './server/accountService.ts';
 import type { PaymentTransaction, ProviderStatus } from './src/types.ts';
 import {
   executeSeoIntelligence,
@@ -4153,25 +4159,31 @@ async function resolveAuthenticatedBusiness(req: any, targetBizId?: string) {
     }
 
     // MANDATORY SECURITY & MULTI-TENANCY:
-    // Resolve authorization from the authenticated user/business relationship.
-    // Never trust business_id supplied directly by the client without verifying ownership.
-    const ownerEmail = (found.ownerEmail || '').toLowerCase().trim();
+    // Hierarchy: User -> Account/Workspace (accountId) -> Businesses -> Business Data
+    // Use account_id as the primary ownership boundary.
+    // Do NOT rely on ownerEmail for authorization.
+    const callerAccount = await ensureAccountForUser(effectiveEmail, usersDb.get(effectiveEmail)?.planTier);
+
     if (!isSuperAdmin) {
-      if (callerEmail) {
-        if (ownerEmail && ownerEmail !== callerEmail) {
-          throw new AuthorizationError(`Forbidden: User '${callerEmail}' is not authorized to access business '${targetBizId}'.`);
+      if (found.accountId) {
+        if (found.accountId !== callerAccount.id) {
+          throw new AuthorizationError(`Forbidden: Account '${callerAccount.id}' is not authorized to access business '${targetBizId}'.`);
         }
       } else {
-        if (ownerEmail) {
-          throw new AuthorizationError(`Forbidden: Authentication required to access business '${targetBizId}'.`);
+        // Legacy row without accountId: check if ownerEmail matches, and backfill accountId
+        const ownerEmail = (found.ownerEmail || '').toLowerCase().trim();
+        if (ownerEmail && ownerEmail !== effectiveEmail) {
+          throw new AuthorizationError(`Forbidden: Account '${callerAccount.id}' is not authorized to access business '${targetBizId}'.`);
         }
+        await db.update(schema.businessesTable).set({ accountId: callerAccount.id }).where(eq(schema.businessesTable.id, found.id));
+        found.accountId = callerAccount.id;
       }
     }
 
-    return { business: found, ownerEmail: found.ownerEmail || effectiveEmail };
+    return { business: found, accountId: callerAccount.id, account: callerAccount, ownerEmail: found.ownerEmail || effectiveEmail };
   }
 
-  // 2. Resolve by authenticated email
+  // 2. Resolve by authenticated account
   if (!effectiveEmail) {
     const err: any = new Error('Authentication required. Please sign in to access business data.');
     err.status = 401;
@@ -4179,21 +4191,32 @@ async function resolveAuthenticatedBusiness(req: any, targetBizId?: string) {
     throw err;
   }
 
+  const callerAccount = await ensureAccountForUser(effectiveEmail, usersDb.get(effectiveEmail)?.planTier);
+
   const userBusinesses = await db
     .select()
     .from(schema.businessesTable)
-    .where(ilike(schema.businessesTable.ownerEmail, effectiveEmail))
+    .where(
+      or(
+        eq(schema.businessesTable.accountId, callerAccount.id),
+        ilike(schema.businessesTable.ownerEmail, effectiveEmail)
+      )
+    )
     .orderBy(desc(schema.businessesTable.createdAt));
 
   if (userBusinesses.length > 0) {
     const business = userBusinesses[0];
-    return { business, ownerEmail: business.ownerEmail || effectiveEmail };
+    if (!business.accountId) {
+      await db.update(schema.businessesTable).set({ accountId: callerAccount.id }).where(eq(schema.businessesTable.id, business.id));
+      business.accountId = callerAccount.id;
+    }
+    return { business, accountId: callerAccount.id, account: callerAccount, ownerEmail: business.ownerEmail || effectiveEmail };
   } else {
     // Check if user is known and ensure a business is permanently created in PostgreSQL
     const userRec = usersDb.get(effectiveEmail);
     const companyName = userRec?.companyName || 'My Local Business';
     const ensured = await dbService.ensureBusinessForUser(effectiveEmail, { name: companyName });
-    return { business: ensured, ownerEmail: ensured.ownerEmail || effectiveEmail };
+    return { business: ensured, accountId: callerAccount.id, account: callerAccount, ownerEmail: ensured.ownerEmail || effectiveEmail };
   }
 }
 
@@ -4212,7 +4235,7 @@ app.get('/api/production/dashboard/:businessId?', async (req, res) => {
   }
 });
 
-// 2. Businesses List (Strictly Multi-Tenant: Scoped by Authenticated User)
+// 2. Businesses List (Strictly Multi-Tenant: Scoped by Authenticated Account)
 app.get('/api/production/businesses', async (req, res) => {
   try {
     const email = (
@@ -4227,21 +4250,25 @@ app.get('/api/production/businesses', async (req, res) => {
     }
 
     const effectiveEmail = email;
+    const userRec = usersDb.get(effectiveEmail);
+    const account = await ensureAccountForUser(effectiveEmail, userRec?.planTier);
 
     let list = await db
       .select()
       .from(schema.businessesTable)
-      .where(ilike(schema.businessesTable.ownerEmail, effectiveEmail))
+      .where(
+        or(
+          eq(schema.businessesTable.accountId, account.id),
+          ilike(schema.businessesTable.ownerEmail, effectiveEmail)
+        )
+      )
       .orderBy(desc(schema.businessesTable.createdAt));
 
     // If user has an account, ensure their canonical business exists in PostgreSQL
     if (list.length === 0 && effectiveEmail) {
-      const userRec = usersDb.get(effectiveEmail);
-      if (userRec) {
-        const companyName = userRec.companyName || 'My Local Business';
-        const created = await dbService.ensureBusinessForUser(effectiveEmail, { name: companyName });
-        list = [created];
-      }
+      const companyName = userRec?.companyName || 'My Local Business';
+      const created = await dbService.ensureBusinessForUser(effectiveEmail, { name: companyName });
+      list = [created];
     }
 
     const enriched = await Promise.all(
@@ -4420,19 +4447,128 @@ app.put('/api/production/business/:businessId', async (req, res) => {
   }
 });
 
+app.get(['/api/workspace/business-limit', '/api/account/business-limit'], async (req, res) => {
+  try {
+    const email = (
+      (req.headers['x-user-email'] as string) ||
+      (req.query.email as string) ||
+      req.cookies?.auth_email ||
+      ''
+    ).toLowerCase().trim();
+
+    if (!email) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const userRec = usersDb.get(email);
+    const account = await ensureAccountForUser(email, userRec?.planTier);
+    const limitInfo = await getBusinessLimit(account.id);
+
+    res.json({
+      success: true,
+      ...limitInfo,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to check business limit' });
+  }
+});
+
+// GET /api/account/onboarding-status
+// Returns the single account-level onboarding status. Once completed, onboarding must never appear again.
+app.get('/api/account/onboarding-status', async (req, res) => {
+  try {
+    const email = (
+      (req.headers['x-user-email'] as string) ||
+      (req.query.email as string) ||
+      req.cookies?.auth_email ||
+      ''
+    ).toLowerCase().trim();
+
+    if (!email) {
+      return res.json({
+        success: true,
+        onboardingStatus: 'completed', // fallback to completed if anonymous/unknown to never trap visitors
+        businessCount: 0,
+      });
+    }
+
+    const userRec = usersDb.get(email);
+    const account = await ensureAccountForUser(email, userRec?.planTier);
+    const limitInfo = await getBusinessLimit(account.id);
+    const onboardingStatus = (account.onboardingStatus as 'pending' | 'completed') || (limitInfo.currentCount > 0 ? 'completed' : 'pending');
+
+    res.json({
+      success: true,
+      accountId: account.id,
+      onboardingStatus,
+      businessCount: limitInfo.currentCount,
+      limitInfo,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to check onboarding status' });
+  }
+});
+
+// POST /api/account/onboarding-complete
+// Explicitly marks the account onboarding as completed
+app.post('/api/account/onboarding-complete', async (req, res) => {
+  try {
+    const email = (
+      req.body?.userEmail ||
+      req.body?.email ||
+      (req.headers['x-user-email'] as string) ||
+      req.cookies?.auth_email ||
+      ''
+    ).toLowerCase().trim();
+
+    if (!email) {
+      return res.status(400).json({ error: 'User email is required to complete onboarding' });
+    }
+
+    const account = await ensureAccountForUser(email);
+    await updateAccountOnboardingStatus(account.id, 'completed');
+
+    res.json({
+      success: true,
+      accountId: account.id,
+      onboardingStatus: 'completed',
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to complete onboarding' });
+  }
+});
+
 app.post(['/api/workspace/businesses', '/api/production/businesses'], async (req, res) => {
   try {
     const email = (req.headers['x-user-email'] as string || req.body.ownerEmail || req.body.email || req.body.userEmail || req.query.email || '').toLowerCase().trim();
     if (!email) {
       return res.status(401).json({ error: 'User email required to register business' });
     }
+
+    const userRec = usersDb.get(email);
+    const account = await ensureAccountForUser(email, userRec?.planTier);
+
+    // CRITICAL: Backend checks the plan BEFORE creating anything
+    const limitInfo = await getBusinessLimit(account.id);
+    if (!limitInfo.canAddMore) {
+      return res.status(403).json({
+        error: "You've reached your business limit. Upgrade your plan to manage additional businesses.",
+        code: 'BUSINESS_LIMIT_REACHED',
+        limit: limitInfo.limit,
+        currentCount: limitInfo.currentCount,
+        display: limitInfo.display,
+      });
+    }
+
     const b = req.body.business || req.body || {};
     const name = b.name || b.businessName;
     if (!name) {
       return res.status(400).json({ error: 'Business name is required' });
     }
+
     const newBiz = await dbService.createBusiness(email, {
       id: b.id,
+      accountId: account.id,
       name,
       category: b.category || b.industry,
       industry: b.industry || b.category,
@@ -4445,7 +4581,8 @@ app.post(['/api/workspace/businesses', '/api/production/businesses'], async (req
     // Also mirror to LocoraDataEngine
     const record: any = {
       id: newBiz.id,
-      planTier: 'free',
+      accountId: account.id,
+      planTier: account.planTier || 'free',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       identity: {
@@ -4469,7 +4606,10 @@ app.post(['/api/workspace/businesses', '/api/production/businesses'], async (req
     };
     saveBusinessRecordToLocoraDb(record);
 
-    res.status(201).json(newBiz);
+    res.status(201).json({
+      ...newBiz,
+      limitInfo: await getBusinessLimit(account.id),
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Failed to create business' });
   }
@@ -5335,18 +5475,15 @@ app.post('/api/onboarding/discover', async (req, res) => {
   try {
     const { websiteUrl, businessName, country, primaryLocation, userEmail } = req.body;
 
-    if (!websiteUrl || typeof websiteUrl !== 'string' || !websiteUrl.trim()) {
-      return res.status(400).json({ error: 'Website URL is required for business discovery.' });
-    }
-    if (!primaryLocation || typeof primaryLocation !== 'string' || !primaryLocation.trim()) {
-      return res.status(400).json({ error: 'Primary location is required for business discovery.' });
+    if ((!websiteUrl || !websiteUrl.trim()) && (!businessName || !businessName.trim())) {
+      return res.status(400).json({ error: 'Business name or website URL is required for business discovery.' });
     }
 
     const discovered = await onboardingService.discoverBusiness({
-      websiteUrl: websiteUrl.trim(),
+      websiteUrl: websiteUrl ? websiteUrl.trim() : undefined,
       businessName: businessName?.trim() || undefined,
       country: country?.trim() || 'United States',
-      primaryLocation: primaryLocation.trim(),
+      primaryLocation: primaryLocation?.trim() || '',
       userEmail: userEmail?.trim() || (req as any).user?.email || undefined,
     });
 
@@ -16705,17 +16842,37 @@ app.post('/api/directory/claim', async (req, res) => {
       return res.status(400).json({ success: false, error: 'businessId and userEmail are required' });
     }
 
-    // 1. Claim in Postgres database
-    const dbClaim = await dbService.claimDirectoryListing(businessId, userEmail, fullName);
+    // 0. Ensure user has an account and verify business limit
+    const cleanEmail = userEmail.toLowerCase().trim();
+    const account = await ensureAccountForUser(cleanEmail);
+    const limitInfo = await getBusinessLimit(account.id);
+
+    if (!limitInfo.canCreate) {
+      return res.status(403).json({
+        success: false,
+        code: 'BUSINESS_LIMIT_REACHED',
+        error: `Plan limit reached. Your ${limitInfo.planTier.toUpperCase()} plan allows up to ${limitInfo.limit} business${limitInfo.limit === 1 ? '' : 'es'}. Please upgrade your plan to claim this business.`,
+        limitInfo,
+      });
+    }
+
+    // 1. Claim in Postgres database (attaches existing business_id to user's account, never duplicates)
+    const dbClaim = await dbService.claimDirectoryListing(businessId, cleanEmail, fullName, account.id);
     if (!dbClaim.success) {
       return res.status(dbClaim.alreadyClaimed ? 409 : 400).json(dbClaim);
     }
 
     // 2. Also claim in memory
-    claimDirectoryListingByBusinessId(businessId, userEmail, fullName);
+    claimDirectoryListingByBusinessId(businessId, cleanEmail, fullName);
     invalidateDirectoryListingsCache();
 
-    res.json(dbClaim);
+    // 3. Fetch updated limits
+    const updatedLimitInfo = await getBusinessLimit(account.id);
+
+    res.json({
+      ...dbClaim,
+      limitInfo: updatedLimitInfo,
+    });
   } catch (err: any) {
     console.error('[Directory Claim] Error:', err);
     res.status(500).json({ success: false, error: err.message });

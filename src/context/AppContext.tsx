@@ -131,6 +131,7 @@ interface AppContextType {
   addBusiness: (data: Partial<ClientBusiness>) => void;
   deleteBusiness: (businessId: string) => Promise<void>;
   addLocation: (businessId: string, location: { name: string; address: string; city?: string; state?: string; country?: string; zip?: string; phone?: string }) => void;
+  removeLocation: (businessId: string, locationId: string) => void;
   priorityActions: PriorityAction[];
   setPriorityActions: React.Dispatch<React.SetStateAction<PriorityAction[]>>;
   fixItAction: (actionId: string, draftData?: Partial<FixItDraft>) => void;
@@ -153,6 +154,8 @@ interface AppContextType {
   setAgencyMode: (agency: boolean) => void;
   onboardingModalOpen: boolean;
   setOnboardingModalOpen: (open: boolean) => void;
+  isAddBusinessModalOpen: boolean;
+  setIsAddBusinessModalOpen: (open: boolean) => void;
   growthStoreModalOpen: boolean;
   setGrowthStoreModalOpen: (open: boolean) => void;
 
@@ -508,6 +511,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           });
 
           setActiveBusinessId((currentId) => {
+            const cachedActiveId = typeof window !== 'undefined' ? localStorage.getItem('locora_active_business_id') : null;
+            if (cachedActiveId && list.some((b: any) => b.id === cachedActiveId)) {
+              return cachedActiveId;
+            }
             const hasCurrent = list.some((b: any) => b.id === currentId);
             if (hasCurrent && currentId && currentId !== 'workspace_pending') {
               return currentId;
@@ -814,31 +821,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             }));
 
             setBusinesses(mapped);
-            const activeId = mapped[0].id;
+            const cachedActiveId = typeof window !== 'undefined' ? localStorage.getItem('locora_active_business_id') : null;
+            const targetBiz = (cachedActiveId && mapped.find((b) => b.id === cachedActiveId)) || mapped[0];
+            const activeId = targetBiz.id;
             setActiveBusinessId(activeId);
 
             // Update business profile
             setBusinessProfile((prev) => ({
               ...prev,
               id: `bp_${activeId}`,
-              name: mapped[0].name || prev.name,
-              category: mapped[0].category || prev.category,
-              industry: mapped[0].category || prev.industry,
-              phone: mapped[0].phone || prev.phone,
-              website: mapped[0].website || prev.website,
-              address: mapped[0].address || prev.address,
-              city: mapped[0].city || prev.city,
-              state: mapped[0].state || prev.state,
-              country: mapped[0].country || prev.country,
-              zip: mapped[0].zip || prev.zip,
+              name: targetBiz.name || prev.name,
+              category: targetBiz.category || prev.category,
+              industry: targetBiz.category || prev.industry,
+              phone: targetBiz.phone || prev.phone,
+              website: targetBiz.website || prev.website,
+              address: targetBiz.address || prev.address,
+              city: targetBiz.city || prev.city,
+              state: targetBiz.state || prev.state,
+              country: targetBiz.country || prev.country,
+              zip: targetBiz.zip || prev.zip,
               email: userEmail,
-              tagline: mapped[0].tagline || prev.tagline,
+              tagline: targetBiz.tagline || prev.tagline,
               updatedAt: new Date().toISOString(),
             }));
 
             if (typeof window !== 'undefined') {
               localStorage.setItem('locora_active_business_id', activeId);
               localStorage.setItem('locora_onboarding_completed', 'true');
+              localStorage.setItem('locora_onboarding_done', 'true');
               localStorage.removeItem('locora_pending_public_audit');
             }
           } else {
@@ -969,11 +979,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               }
             }
 
-            if (!alreadyCompletedOnboarding) {
-              setTimeout(() => {
-                setOnboardingModalOpen(true);
-              }, 400);
-            }
+            // Verify account onboarding status with server database
+            fetch(`/api/account/onboarding-status?email=${encodeURIComponent(userEmail)}`, {
+              credentials: 'include',
+              headers: { 'x-user-email': userEmail },
+            })
+              .then((sRes) => (sRes.ok ? sRes.json() : null))
+              .then((statusJson) => {
+                const isAccountCompleted =
+                  statusJson?.onboardingStatus === 'completed' ||
+                  alreadyCompletedOnboarding ||
+                  (Array.isArray(list) && list.length > 0);
+
+                if (isAccountCompleted) {
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('locora_onboarding_completed', 'true');
+                    localStorage.setItem('locora_onboarding_done', 'true');
+                  }
+                  setOnboardingModalOpen(false);
+                } else if (!alreadyCompletedOnboarding && (!list || list.length === 0)) {
+                  // Only brand-new first-time signup with pending onboarding triggers 1-time wizard
+                  setTimeout(() => {
+                    setOnboardingModalOpen(true);
+                  }, 400);
+                }
+              })
+              .catch(() => {
+                if (alreadyCompletedOnboarding || (Array.isArray(list) && list.length > 0)) {
+                  setOnboardingModalOpen(false);
+                }
+              });
           }
         })
         .catch((err) => {
@@ -1549,6 +1584,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [user.email]);
 
+  const removeLocation = useCallback((businessId: string, locationId: string) => {
+    setBusinesses((prev) => {
+      const next = prev.map((b) => {
+        if (b.id !== businessId) return b;
+        return {
+          ...b,
+          locations: (b.locations || []).filter((loc) => loc.id !== locationId),
+        };
+      });
+      return next;
+    });
+
+    if (businessId && user.email) {
+      fetch(`/api/production/business/${encodeURIComponent(businessId)}/locations/${encodeURIComponent(locationId)}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': user.email,
+        },
+      }).catch((err) => console.warn('Failed to delete location on server:', err));
+    }
+  }, [user.email]);
+
   const deleteBusiness = useCallback(async (businessId: string) => {
     try {
       await fetch(`/api/workspace/businesses/${encodeURIComponent(businessId)}?email=${encodeURIComponent(user.email || '')}`, {
@@ -1800,6 +1858,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // SECTION 35: Onboarding Wizard
   const [onboardingModalOpen, setOnboardingModalOpen] = useState<boolean>(false);
+  const [isAddBusinessModalOpen, setIsAddBusinessModalOpen] = useState<boolean>(false);
 
   // SECTION 40: Growth Store
   const [growthStoreModalOpen, setGrowthStoreModalOpen] = useState<boolean>(false);
@@ -2853,6 +2912,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addBusiness,
         deleteBusiness,
         addLocation,
+        removeLocation,
         priorityActions,
         setPriorityActions,
         fixItAction,
@@ -2879,6 +2939,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setAgencyMode,
         onboardingModalOpen,
         setOnboardingModalOpen,
+        isAddBusinessModalOpen,
+        setIsAddBusinessModalOpen,
         growthStoreModalOpen,
         setGrowthStoreModalOpen,
 

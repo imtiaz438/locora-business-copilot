@@ -428,11 +428,25 @@ export const aiVisibilityChecksTable = pgTable('ai_visibility_checks', {
 });
 
 // ================= PRODUCTION DATA ARCHITECTURE ENTITIES =================
-// Every record belongs to the authenticated business_id.
+// Hierarchy: User -> Account / Workspace (accountId) -> Businesses (businessId) -> Business data
+
+// 0. Accounts / Workspaces
+export const accountsTable = pgTable('accounts', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  ownerUserId: text('owner_user_id'),
+  ownerEmail: text('owner_email').notNull(),
+  planTier: text('plan_tier').default('free').notNull(), // 'free' | 'pro' | 'agency'
+  status: text('status').default('active').notNull(),
+  onboardingStatus: text('onboarding_status').default('pending').notNull(), // 'pending' | 'completed'
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
 
 // 1. Businesses
 export const businessesTable = pgTable('businesses', {
   id: text('id').primaryKey(),
+  accountId: text('account_id'),
   ownerEmail: text('owner_email').notNull(),
   name: text('name').notNull(),
   slug: text('slug'),
@@ -949,4 +963,3 @@ export const directorySettingsTable = pgTable('directory_settings', {
   requireAdminApproval: boolean('require_admin_approval').default(false).notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
-

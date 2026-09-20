@@ -163,7 +163,7 @@ export const PROVIDER_FEATURE_REGISTRY: Record<ProviderFeatureId, ProviderFeatur
     providerKey: 'expanded_monitoring',
     description: 'Multi-location synchronization, scheduled health audits, and recurring issue monitoring.',
     requiresApiKey: false,
-    upgradeBenefit: 'Manage multi-location branch networks and automated recurring audits.',
+    upgradeBenefit: 'Manage multi-location networks and automated recurring audits.',
   },
   low_cost_serp: {
     id: 'low_cost_serp',

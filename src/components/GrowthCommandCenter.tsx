@@ -33,11 +33,14 @@ import {
   Phone,
   Mail,
   Clock,
+  Building2,
 } from 'lucide-react';
 
 export const GrowthCommandCenter: React.FC = () => {
   const {
     activeBusiness,
+    businesses,
+    setIsAddBusinessModalOpen,
     businessTruth,
     priorityActions,
     setActiveTab,
@@ -223,10 +226,12 @@ export const GrowthCommandCenter: React.FC = () => {
       )
     : null;
 
+  const hasActiveBusiness = Boolean(activeBusiness && activeBusiness.id && activeBusiness.id !== 'workspace_pending' && businesses.length > 0);
+
   // 4. Client Operations Component
-  const bizCustomers = customers?.filter((c) => c.businessId === activeBusiness.id) || [];
-  const bizInvoices = invoices?.filter((i) => i.businessId === activeBusiness.id) || [];
-  const bizTasks = workTasks?.filter((t) => t.businessId === activeBusiness.id) || [];
+  const bizCustomers = hasActiveBusiness ? (customers?.filter((c) => c.businessId === activeBusiness?.id) || []) : [];
+  const bizInvoices = hasActiveBusiness ? (invoices?.filter((i) => i.businessId === activeBusiness?.id) || []) : [];
+  const bizTasks = hasActiveBusiness ? (workTasks?.filter((t) => t.businessId === activeBusiness?.id) || []) : [];
   const hasClientOpsData = bizCustomers.length > 0 || bizInvoices.length > 0 || bizTasks.length > 0;
   const clientOpsScore: number | null = hasClientOpsData
     ? Math.min(100, Math.round(50 + (bizCustomers.length * 10) + (bizInvoices.length * 10) + (bizTasks.length * 5)))
@@ -251,6 +256,34 @@ export const GrowthCommandCenter: React.FC = () => {
   const verifiedServices: string[] = Array.isArray(businessServices) && businessServices.length > 0
     ? businessServices
     : (Array.isArray(activeBusiness?.services) && activeBusiness.services.length > 0 ? activeBusiness.services : []);
+
+  if (!hasActiveBusiness) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto font-sans text-slate-900 pb-16">
+        <div className="bg-white border border-slate-200/90 rounded-3xl p-8 sm:p-12 text-center shadow-xs">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-[#059669] flex items-center justify-center mx-auto mb-5 border border-emerald-100">
+            <Building2 className="w-8 h-8" />
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading mb-3">
+            Create your first Business
+          </h2>
+          <p className="text-sm sm:text-base text-slate-600 max-w-lg mx-auto leading-relaxed mb-8">
+            Your Locora account is active. To begin auditing visibility, managing reviews, and utilizing your autonomous Business Brain, set up your business workspace.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsAddBusinessModalOpen(true)}
+              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Building2 className="w-4 h-4" />
+              <span>+ Create Business</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto font-sans text-slate-900 pb-16">

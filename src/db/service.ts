@@ -2006,6 +2006,22 @@ export async function ensureBusinessForUser(
 ) {
   try {
     const cleanEmail = (ownerEmail || '').toLowerCase().trim();
+    const accountId = `acc_${cleanEmail.replace(/[^a-z0-9]/g, '_')}`;
+
+    // Ensure account exists
+    try {
+      await db
+        .insert(schema.accountsTable)
+        .values({
+          id: accountId,
+          name: `${cleanEmail.split('@')[0]} Workspace`,
+          ownerEmail: cleanEmail,
+          planTier: 'free',
+          status: 'active',
+        })
+        .onConflictDoNothing();
+    } catch {}
+
     const existing = await db
       .select()
       .from(schema.businessesTable)
@@ -2014,6 +2030,13 @@ export async function ensureBusinessForUser(
       .limit(1);
 
     if (existing.length > 0) {
+      if (!existing[0].accountId) {
+        await db
+          .update(schema.businessesTable)
+          .set({ accountId })
+          .where(eq(schema.businessesTable.id, existing[0].id));
+        existing[0].accountId = accountId;
+      }
       return existing[0];
     }
 
@@ -2028,6 +2051,7 @@ export async function ensureBusinessForUser(
       .insert(schema.businessesTable)
       .values({
         id: businessId,
+        accountId,
         ownerEmail,
         name: bizName,
         slug: bizName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
@@ -2185,6 +2209,7 @@ export async function createBusiness(
   ownerEmail: string,
   initialData?: {
     id?: string;
+    accountId?: string;
     name?: string;
     website?: string;
     city?: string;
@@ -2194,6 +2219,23 @@ export async function createBusiness(
     industry?: string;
   }
 ) {
+  const cleanEmail = (ownerEmail || '').toLowerCase().trim();
+  const accountId = initialData?.accountId || `acc_${cleanEmail.replace(/[^a-z0-9]/g, '_')}`;
+
+  // Ensure account exists
+  try {
+    await db
+      .insert(schema.accountsTable)
+      .values({
+        id: accountId,
+        name: `${cleanEmail.split('@')[0]} Workspace`,
+        ownerEmail: cleanEmail,
+        planTier: 'free',
+        status: 'active',
+      })
+      .onConflictDoNothing();
+  } catch {}
+
   const businessId = initialData?.id || `biz_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const bizName = initialData?.name || 'My Local Business';
   const city = initialData?.city || '';
@@ -2204,6 +2246,7 @@ export async function createBusiness(
     .insert(schema.businessesTable)
     .values({
       id: businessId,
+      accountId,
       ownerEmail,
       name: bizName,
       slug: bizName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
@@ -2218,6 +2261,7 @@ export async function createBusiness(
     .onConflictDoUpdate({
       target: schema.businessesTable.id,
       set: {
+        accountId,
         name: bizName,
         category,
         website,
@@ -2284,6 +2328,7 @@ export async function deleteBusiness(businessId: string) {
     } catch {}
 
     // 3. Delete all dependent child/entity records across all domains
+    await db.delete(schema.directoryProfilesTable).where(eq(schema.directoryProfilesTable.businessId, businessId)).catch(() => {});
     await db.delete(schema.directoryLeadsTable).where(eq(schema.directoryLeadsTable.businessId, businessId)).catch(() => {});
     await db.delete(schema.locationsTable).where(eq(schema.locationsTable.businessId, businessId)).catch(() => {});
     await db.delete(schema.leadsTable).where(eq(schema.leadsTable.businessId, businessId)).catch(() => {});
@@ -2348,6 +2393,15 @@ export async function getBusinessesByOwner(ownerEmail: string) {
     .select()
     .from(schema.businessesTable)
     .where(ilike(schema.businessesTable.ownerEmail, cleanEmail))
+    .orderBy(desc(schema.businessesTable.createdAt));
+}
+
+export async function getBusinessesByAccount(accountId: string) {
+  const cleanAccountId = (accountId || '').trim();
+  return db
+    .select()
+    .from(schema.businessesTable)
+    .where(eq(schema.businessesTable.accountId, cleanAccountId))
     .orderBy(desc(schema.businessesTable.createdAt));
 }
 
@@ -3752,7 +3806,7 @@ export async function convertDirectoryLeadToCustomer(
   }
 }
 
-export async function claimDirectoryListing(businessIdOrSlug: string, userEmail: string, fullName?: string) {
+export async function claimDirectoryListing(businessIdOrSlug: string, userEmail: string, fullName?: string, accountId?: string) {
   try {
     const list = await db
       .select()
@@ -3773,22 +3827,60 @@ export async function claimDirectoryListing(businessIdOrSlug: string, userEmail:
       return { success: false, error: 'This business has already been claimed by a verified owner.', alreadyClaimed: true };
     }
 
-    // Update business to active, claimed by userEmail, and published
-    await db
+    // Update business to active, claimed by userEmail & accountId, and published
+    const [updatedBiz] = await db
       .update(schema.businessesTable)
       .set({
         ownerEmail: userEmail,
+        ...(accountId ? { accountId } : {}),
         status: 'active',
         isPublishedInDirectory: true,
         updatedAt: new Date(),
       })
-      .where(eq(schema.businessesTable.id, biz.id));
+      .where(eq(schema.businessesTable.id, biz.id))
+      .returning();
+
+    // Also update or ensure directory_profiles row is marked as CLAIMED
+    try {
+      const existingDirProfile = await db
+        .select()
+        .from(schema.directoryProfilesTable)
+        .where(eq(schema.directoryProfilesTable.businessId, biz.id))
+        .limit(1);
+
+      if (existingDirProfile.length > 0) {
+        await db
+          .update(schema.directoryProfilesTable)
+          .set({
+            status: 'CLAIMED',
+            isClaimed: true,
+            isVerified: true,
+            lastSyncedAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.directoryProfilesTable.businessId, biz.id));
+      } else {
+        await db.insert(schema.directoryProfilesTable).values({
+          id: `dir_prof_${biz.id}`,
+          businessId: biz.id,
+          status: 'CLAIMED',
+          slug: biz.slug,
+          isClaimed: true,
+          isVerified: true,
+          source: 'discovered',
+          lastSyncedAt: new Date(),
+        }).catch(() => {});
+      }
+    } catch (dirErr) {
+      console.warn('[claimDirectoryListing] Non-fatal error updating directory profile:', dirErr);
+    }
 
     return {
       success: true,
       businessId: biz.id,
       businessName: biz.name,
       slug: biz.slug,
+      business: updatedBiz || biz,
       message: 'Business profile successfully claimed and linked to your Locora account.',
     };
   } catch (err: any) {
@@ -3827,5 +3919,4 @@ export {
   detectDuplicateDirectoryProfile,
   generateUniqueDirectorySlug,
 } from './directoryService.ts';
-
 

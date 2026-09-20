@@ -32,6 +32,7 @@ import { ReputationView } from './components/ReputationView';
 import { CompetitorIntelligenceView } from './components/CompetitorIntelligenceView';
 import { ContentStudioView } from './components/ContentStudioView';
 import { BusinessBrainView } from './components/BusinessBrainView';
+import { BusinessHubView } from './components/BusinessHubView';
 import { SettingsView } from './components/SettingsView';
 import { PricingView } from './components/PricingView';
 import { SubscriptionView } from './components/SubscriptionView';
@@ -435,6 +436,10 @@ const MainContent: React.FC = () => {
 
     // Authenticated OS Modules - Unified AI Manager Architecture
     if (activeTab === 'dashboard') return <DashboardView />;
+    if (activeTab === 'business' || activeTab === 'business_profile') return <BusinessHubView initialTab="profile" />;
+    if (activeTab === 'business_locations') return <BusinessHubView initialTab="locations" />;
+    if (activeTab === 'business_directory') return <BusinessHubView initialTab="directory" />;
+    if (activeTab === 'settings_businesses') return <SettingsView initialTab="businesses" />;
     if (activeTab === 'ai_manager' || activeTab === 'chat') return <AiManagerView />;
     if (activeTab === 'growth' || activeTab === 'marketing' || activeTab === 'marketing_planner') return <GrowthView />;
     if (activeTab === 'visibility' || activeTab === 'local_seo' || activeTab === 'seo_schema') return <LocalVisibilityView />;

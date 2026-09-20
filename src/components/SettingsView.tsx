@@ -10,10 +10,12 @@ import { GoogleAddressAutocomplete, LocationData } from './GoogleAddressAutocomp
 import { CountryAutocomplete } from './CountryAutocomplete';
 import { getDirectorySiteUrl, getDirectoryBusinessUrl } from '../utils/domain';
 import { DirectoryPublishingCard } from './DirectoryPublishingCard';
+import { BusinessesManagementSection } from './BusinessesManagementSection';
 import {
   Settings,
   Cpu,
   Building,
+  Building2,
   Brain,
   Key,
   Save,
@@ -277,7 +279,11 @@ const AccountSecuritySection: React.FC = () => {
   );
 };
 
-export const SettingsView: React.FC = () => {
+interface SettingsViewProps {
+  initialTab?: 'businesses' | 'profile' | 'integrations' | 'account' | 'team' | 'billing';
+}
+
+export const SettingsView: React.FC<SettingsViewProps> = ({ initialTab = 'businesses' }) => {
   const { settings, updateSettings, businessProfile, updateBusinessProfile, activeBusiness, updateActiveBusiness, user, updateUser, setCheckoutModalPlan, subscriptionInvoices } = useApp();
 
   const isAdmin = Boolean(
@@ -294,7 +300,7 @@ export const SettingsView: React.FC = () => {
     ['pro', 'agency', 'elite'].includes((user.planTier || '').toLowerCase())
   );
 
-  const [activeTab, setSettingsTab] = useState<'profile' | 'integrations' | 'account' | 'team' | 'billing'>('profile');
+  const [activeTab, setSettingsTab] = useState<'businesses' | 'profile' | 'integrations' | 'account' | 'team' | 'billing'>(initialTab);
   const [profileSubTab, setProfileSubTab] = useState<'details' | 'directory' | 'logo'>('details');
   const [profileForm, setProfileForm] = useState(() => ({
     ...businessProfile,
@@ -600,6 +606,16 @@ export const SettingsView: React.FC = () => {
       {/* Tabs */}
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
         <button
+          onClick={() => setSettingsTab('businesses')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'businesses' ? 'bg-[#059669] text-white shadow-2xs font-heading' : 'text-slate-600 hover:text-slate-900 font-sans'
+          }`}
+        >
+          <Building2 className="w-3.5 h-3.5" />
+          <span>Businesses</span>
+        </button>
+
+        <button
           onClick={() => setSettingsTab('profile')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === 'profile' ? 'bg-[#059669] text-white shadow-2xs font-heading' : 'text-slate-600 hover:text-slate-900 font-sans'
@@ -651,6 +667,21 @@ export const SettingsView: React.FC = () => {
           </button>
         )}
       </div>
+
+      {/* TAB 1: BUSINESSES MANAGEMENT (Primary Place for managing businesses) */}
+      {activeTab === 'businesses' && (
+        <BusinessesManagementSection
+          onNavigateToBusinessTab={(subTab) => {
+            if (subTab === 'profile') {
+              setSettingsTab('profile');
+              setProfileSubTab('details');
+            } else if (subTab === 'directory') {
+              setSettingsTab('profile');
+              setProfileSubTab('directory');
+            }
+          }}
+        />
+      )}
 
       {/* TAB 2: BUSINESS PROFILE CONTEXT */}
       {activeTab === 'profile' && (

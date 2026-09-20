@@ -126,8 +126,8 @@ export const MultiLocationSection: React.FC = () => {
   return (
     <ProviderAccessGate
       featureId="expanded_monitoring"
-      title="Multi-Location & Regional Branch Engine"
-      description="Expanded multi-location branch monitoring, cross-market tracking, and regional health audits are exclusive to Pro and Agency Elite plans."
+      title="Multi-Location Engine"
+      description="Expanded multi-location monitoring, cross-market tracking, and regional health audits are exclusive to Pro and Agency Elite plans."
     >
       <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-7 shadow-2xs space-y-6 font-sans">
       {/* Header & Location Pills (Section 26) */}

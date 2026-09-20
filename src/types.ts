@@ -165,7 +165,7 @@ export interface DiscoveredBusinessInfo {
     businessName: 'google_places' | 'website_crawl' | 'user_input' | 'not_found';
     address: 'google_places' | 'website_crawl' | 'user_input' | 'not_found';
     phone: 'google_places' | 'website_crawl' | 'user_input' | 'not_found';
-    website: 'user_input' | 'google_places' | 'website_crawl';
+    website: 'user_input' | 'google_places' | 'website_crawl' | 'not_found';
     category: 'google_places' | 'website_crawl' | 'user_input' | 'not_found';
     hours: 'google_places' | 'website_crawl' | 'user_input' | 'not_found';
   };
@@ -1522,6 +1522,8 @@ export interface UserProfile {
   freeAuditedDomain?: string;
   freeAuditedDomains?: string[];
   isAuthenticated: boolean;
+  onboardingStatus?: 'pending' | 'completed';
+  onboardingCompleted?: boolean;
 }
 
 export type {
@@ -1734,5 +1736,3 @@ export interface GrowthStoreItem {
   features: string[];
   badge?: string;
 }
-
-
