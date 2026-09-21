@@ -1,5 +1,10 @@
 User-agent: *
 Allow: /
+Allow: /directory
+Allow: /biz/
+Allow: /business/
+Allow: /city/
+Allow: /category/
 Disallow: /api/
 Disallow: /admin
 Disallow: /auth/

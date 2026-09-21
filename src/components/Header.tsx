@@ -10,11 +10,6 @@ import {
   ChevronDown,
   ShieldCheck,
   Bell,
-  Bot,
-  PanelRight,
-  ShoppingBag,
-  Building2,
-  Briefcase,
 } from 'lucide-react';
 import { AiCreditMeter } from './AiCreditMeter';
 import { TopBusinessSelector } from './TopBusinessSelector';
@@ -37,12 +32,8 @@ export const Header: React.FC<HeaderProps> = ({
     updateUser,
     setCheckoutModalPlan,
     logout,
-    rightAiPanelOpen,
-    toggleRightAiPanel,
     priorityActions,
     notifications,
-    agencyMode,
-    setAgencyMode,
     setGrowthStoreModalOpen,
   } = useApp();
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -50,17 +41,8 @@ export const Header: React.FC<HeaderProps> = ({
 
   const unreadNotifsCount = notifications.filter((n) => !n.isRead).length;
 
-  const handleToggleAgency = (isAgency: boolean) => {
-    setAgencyMode(isAgency);
-    if (isAgency) {
-      setActiveTab('clients');
-    } else {
-      setActiveTab('dashboard');
-    }
-  };
-
   return (
-    <header className="h-20 sm:h-22 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs font-sans">
+    <header className="h-16 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs font-sans">
       {/* Left: Mobile Menu Toggle & Top Business Selector */}
       <div className="flex items-center gap-3">
         <button
@@ -73,54 +55,10 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Top Business / Client Location Selector */}
         <TopBusinessSelector />
-
-        {/* SECTION 38: TOP-LEVEL SWITCH [ My Business ] [ Agency ] */}
-        <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
-          <button
-            onClick={() => handleToggleAgency(false)}
-            className={`px-3 py-1 rounded-lg transition-all cursor-pointer font-heading flex items-center gap-1.5 ${
-              !agencyMode && activeTab !== 'clients'
-                ? 'bg-white text-slate-900 shadow-2xs'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <Briefcase className="w-3.5 h-3.5 text-[#059669]" />
-            <span>My Business</span>
-          </button>
-          <button
-            onClick={() => handleToggleAgency(true)}
-            className={`px-3 py-1 rounded-lg transition-all cursor-pointer font-heading flex items-center gap-1.5 ${
-              agencyMode || activeTab === 'clients'
-                ? 'bg-white text-indigo-900 shadow-2xs'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <Building2 className="w-3.5 h-3.5 text-indigo-600" />
-            <span>Agency</span>
-            <span className="text-[9px] px-1 py-0.2 rounded bg-indigo-100 text-indigo-800 uppercase font-mono">
-              12
-            </span>
-          </button>
-        </div>
       </div>
 
       {/* Right Actions & User Controls - Fitted cleanly to prevent off-screen overflow */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-        {/* Toggle Right AI Panel */}
-        <button
-          onClick={toggleRightAiPanel}
-          className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs shrink-0 ${
-            rightAiPanelOpen
-              ? 'bg-[#059669] text-white shadow-emerald-500/20'
-              : 'bg-emerald-50 text-[#059669] hover:bg-emerald-100 border border-emerald-200/80'
-          }`}
-          title="Toggle AI Manager Assistant"
-        >
-          <Bot className="w-4 h-4" />
-          <span className="hidden sm:inline">AI Manager</span>
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse hidden sm:inline-block" />
-        </button>
-
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {/* SECTION 28: Notifications with High-Signal Dropdown */}
         <div className="relative">
           <button

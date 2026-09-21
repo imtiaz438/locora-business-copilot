@@ -3,6 +3,7 @@ import path from 'path';
 import { resolveRouteMetadata, injectMetadataIntoHtml } from '../src/utils/seoMetadata';
 
 const MARKETING_ROUTES_TO_PRERENDER: string[] = [
+  '/directory',
   '/products',
   '/pricing',
   '/features',

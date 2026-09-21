@@ -594,7 +594,7 @@ export function resolveRouteMetadata(
         title: completeSeo.metadata.title,
         description: completeSeo.metadata.description,
         canonicalUrl: isDirectoryHost ? 'https://directory.locoraai.com/' : 'https://locoraai.com/directory',
-        noIndex: completeSeo.thinContent,
+        noIndex: false,
         isDashboard: false,
         keywords: [completeSeo.keywords.primaryKeyword, ...completeSeo.keywords.secondaryKeywords].join(', '),
         jsonLd: completeSeo.structuredData,
