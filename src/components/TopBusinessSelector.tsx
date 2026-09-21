@@ -68,11 +68,16 @@ export const TopBusinessSelector: React.FC = () => {
 
   // Central Plan-Based Business Quota State
   const tier = (user.planTier || 'free').toLowerCase();
-  const defaultLimit = tier === 'agency' || tier === 'agency_elite' ? 10 : tier === 'pro' || tier === 'growth' ? 3 : 1;
+  const defaultLimit =
+    tier === 'agency' || tier === 'agency_elite' || tier === 'elite'
+      ? 10
+      : tier === 'pro' || tier === 'growth'
+      ? 3
+      : 1;
   const [businessLimitInfo, setBusinessLimitInfo] = useState({
     limit: defaultLimit,
     currentCount: businesses.length,
-    canAddMore: businesses.length < defaultLimit,
+    canAddMore: businesses.length === 0 || businesses.length < defaultLimit,
     display: `Businesses: ${businesses.length} / ${defaultLimit}`,
   });
   const [isCheckingLimit, setIsCheckingLimit] = useState(false);
@@ -102,11 +107,22 @@ export const TopBusinessSelector: React.FC = () => {
 
   const fetchLimit = () => {
     if (user.email) {
-      fetch(`/api/workspace/business-limit?email=${encodeURIComponent(user.email)}`)
+      fetch(`/api/workspace/business-limit?email=${encodeURIComponent(user.email)}&plan=${encodeURIComponent(user.planTier || '')}`, {
+        headers: {
+          'x-user-email': user.email,
+          'x-user-plan': user.planTier || '',
+        },
+      })
         .then((res) => res.json())
         .then((data) => {
           if (data && typeof data.limit === 'number') {
-            setBusinessLimitInfo(data);
+            const count = typeof data.currentCount === 'number' ? data.currentCount : businesses.length;
+            const canAdd = count === 0 || count < data.limit;
+            setBusinessLimitInfo({
+              ...data,
+              canAddMore: canAdd,
+              display: `Businesses: ${count} / ${data.limit}`,
+            });
           }
         })
         .catch(() => {});
@@ -226,26 +242,44 @@ export const TopBusinessSelector: React.FC = () => {
     setIsOpen(false);
   };
 
-  const isAgency = user.planTier === 'agency';
+  const isAgency = ['agency', 'agency_elite', 'elite'].includes((user.planTier || '').toLowerCase());
 
   const handleAddBusinessClick = async () => {
     try {
       setIsCheckingLimit(true);
-      const res = await fetch(`/api/workspace/business-limit?email=${encodeURIComponent(user.email || '')}`);
+      const res = await fetch(
+        `/api/workspace/business-limit?email=${encodeURIComponent(user.email || '')}&plan=${encodeURIComponent(user.planTier || '')}`,
+        {
+          headers: {
+            'x-user-email': user.email || '',
+            'x-user-plan': user.planTier || '',
+          },
+        }
+      );
       const data = await res.json();
       setIsCheckingLimit(false);
+
+      const effectiveLimit = data && typeof data.limit === 'number' ? data.limit : defaultLimit;
+      const count = data && typeof data.currentCount === 'number' ? data.currentCount : businesses.length;
+      const canAdd = count === 0 || count < effectiveLimit;
+
       if (data && typeof data.limit === 'number') {
-        setBusinessLimitInfo(data);
-        if (!data.canAddMore) {
-          setShowLimitReachedModal(true);
-          setIsOpen(false);
-          return;
-        }
-      } else if (businesses.length >= defaultLimit) {
+        setBusinessLimitInfo({
+          ...data,
+          canAddMore: canAdd,
+          display: `Businesses: ${count} / ${effectiveLimit}`,
+        });
+      }
+
+      // CRITICAL: If the user has 0 businesses, NEVER lock them out on ANY plan.
+      // Only show limit reached if count > 0 AND count >= effectiveLimit
+      if (count > 0 && !canAdd) {
         setShowLimitReachedModal(true);
+        setIsAddBusinessModalOpen(false);
         setIsOpen(false);
         return;
       }
+
       setNewBizName('');
       setNewBizCategory('');
       setNewBizCountry('United States');
@@ -262,8 +296,10 @@ export const TopBusinessSelector: React.FC = () => {
       setIsOpen(false);
     } catch {
       setIsCheckingLimit(false);
-      if (businesses.length >= defaultLimit) {
+      // Fallback: Never lock if businesses.length === 0
+      if (businesses.length > 0 && businesses.length >= defaultLimit) {
         setShowLimitReachedModal(true);
+        setIsAddBusinessModalOpen(false);
         setIsOpen(false);
         return;
       }

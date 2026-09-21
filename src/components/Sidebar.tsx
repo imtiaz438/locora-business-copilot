@@ -79,9 +79,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
   };
 
   const isNavActive = (id: string) => {
+    if (id === 'dashboard') return activeTab === 'dashboard';
     if (activeTab === id) return true;
-    if (id === 'dashboard' && (activeTab === 'home' || activeTab === 'dashboard')) return false; // public home vs dashboard handled
-    if (id === 'business' && (activeTab === 'business' || activeTab === 'business_profile' || activeTab === 'business_locations' || activeTab === 'business_directory')) return true;
+    if (id === 'business' && (activeTab === 'business' || activeTab === 'business_profile' || activeTab === 'business_locations' || activeTab === 'business_directory' || activeTab === 'business_brain')) return true;
     if (id === 'ai_manager' && activeTab === 'chat') return true;
     if (id === 'growth' && (activeTab === 'marketing' || activeTab === 'marketing_planner')) return true;
     if (id === 'visibility' && (activeTab === 'local_seo' || activeTab === 'seo_schema' || activeTab === 'competitors')) return true;

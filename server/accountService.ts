@@ -6,6 +6,7 @@ export const PLAN_BUSINESS_LIMITS: Record<string, number> = {
   pro: 3,
   agency: 10,
   agency_elite: 10,
+  elite: 10,
   growth: 3,
   starter: 1,
 };
@@ -198,13 +199,30 @@ export async function getBusinessLimit(accountId: string): Promise<BusinessLimit
   const limit = PLAN_BUSINESS_LIMITS[planTier] ?? 1;
 
   // Count businesses strictly owned by this accountId
-  const ownedBizs = await db
+  let ownedBizs = await db
     .select()
     .from(schema.businessesTable)
     .where(eq(schema.businessesTable.accountId, cleanAccountId));
 
+  if (ownedBizs.length === 0 && account?.ownerEmail) {
+    const emailBizs = await db
+      .select()
+      .from(schema.businessesTable)
+      .where(ilike(schema.businessesTable.ownerEmail, account.ownerEmail));
+    if (emailBizs.length > 0) {
+      try {
+        await db
+          .update(schema.businessesTable)
+          .set({ accountId: cleanAccountId })
+          .where(ilike(schema.businessesTable.ownerEmail, account.ownerEmail));
+      } catch {}
+      ownedBizs = emailBizs;
+    }
+  }
+
   const currentCount = ownedBizs.length;
-  const canAddMore = currentCount < limit;
+  // A user with 0 businesses can ALWAYS add their first business on any plan (limit >= 1)
+  const canAddMore = currentCount === 0 || currentCount < limit;
 
   return {
     accountId: cleanAccountId,

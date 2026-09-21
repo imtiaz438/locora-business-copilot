@@ -65,6 +65,12 @@ export const TAB_TO_PATH: Record<string, string> = {
   masterclass_kit: '/agency-vault',
   settings: '/settings',
   admin: '/admin',
+  business: '/business',
+  business_profile: '/business',
+  business_locations: '/business/locations',
+  business_directory: '/business/directory',
+  business_brain: '/business/brain',
+  settings_businesses: '/settings/businesses',
   directory: '/directory',
   directory_business: '/directory',
   directory_city: '/directory',
@@ -182,6 +188,23 @@ export const PATH_TO_TAB: Record<string, string> = {
   'vault': 'masterclass_kit',
   'settings': 'settings',
   'admin': 'admin',
+  'business': 'business',
+  'business/': 'business',
+  'business/profile': 'business_profile',
+  'business-profile': 'business_profile',
+  'business_profile': 'business_profile',
+  'business/locations': 'business_locations',
+  'business-locations': 'business_locations',
+  'business_locations': 'business_locations',
+  'business/directory': 'business_directory',
+  'business-directory': 'business_directory',
+  'business_directory': 'business_directory',
+  'business/brain': 'business_brain',
+  'business-brain': 'business_brain',
+  'business_brain': 'business_brain',
+  'settings/businesses': 'settings_businesses',
+  'settings-businesses': 'settings_businesses',
+  'settings_businesses': 'settings_businesses',
 };
 
 /**
@@ -284,6 +307,20 @@ export function resolveRouteFromPath(rawPath: string, isApp: boolean = false, is
     return { targetTab: 'directory', canonicalPath: '/directory', isCanonical: true };
   }
 
+  // Workspace Business Hub Routes:
+  if (cleanPath === 'business' || cleanPath === 'business/profile' || cleanPath === 'business-profile' || cleanPath === 'business_profile') {
+    return { targetTab: 'business', canonicalPath: '/business', isCanonical: cleanPath === 'business' };
+  }
+  if (cleanPath === 'business/locations' || cleanPath === 'business-locations' || cleanPath === 'business_locations') {
+    return { targetTab: 'business_locations', canonicalPath: '/business/locations', isCanonical: cleanPath === 'business/locations' };
+  }
+  if (cleanPath === 'business/directory' || cleanPath === 'business-directory' || cleanPath === 'business_directory') {
+    return { targetTab: 'business_directory', canonicalPath: '/business/directory', isCanonical: cleanPath === 'business/directory' };
+  }
+  if (cleanPath === 'business/brain' || cleanPath === 'business-brain' || cleanPath === 'business_brain') {
+    return { targetTab: 'business_brain', canonicalPath: '/business/brain', isCanonical: cleanPath === 'business/brain' };
+  }
+
   // Dynamic Business Directory Routes:
   // 1. Business Profile: /biz/:slug, /business/:slug, /directory/business/:slug, /directory/biz/:slug
   if (cleanPath.startsWith('biz/')) {
@@ -298,7 +335,8 @@ export function resolveRouteFromPath(rawPath: string, isApp: boolean = false, is
   }
   if (cleanPath.startsWith('business/')) {
     const slug = cleanPath.replace(/^business\//, '').trim();
-    if (slug) {
+    const reservedWorkspaceRoutes = ['locations', 'directory', 'profile', 'brain', 'settings'];
+    if (slug && !reservedWorkspaceRoutes.includes(slug.toLowerCase())) {
       return {
         targetTab: `directory_biz_${slug}`,
         canonicalPath: `/biz/${slug}`,

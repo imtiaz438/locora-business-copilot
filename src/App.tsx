@@ -202,7 +202,7 @@ const MainContent: React.FC = () => {
           rawPath === '/' ||
           rawPath === '' ||
           rawPath.startsWith('/directory') ||
-          rawPath.startsWith('/business/') ||
+          (rawPath.startsWith('/business/') && !['locations', 'directory', 'profile', 'brain', 'settings'].includes(rawPath.replace(/^\/business\//, '').split('/')[0].toLowerCase())) ||
           rawPath.startsWith('/biz/') ||
           rawPath.startsWith('/city/') ||
           rawPath.startsWith('/category/') ||
@@ -222,17 +222,20 @@ const MainContent: React.FC = () => {
         }
         if (rawPath.startsWith('/directory/business/')) {
           const slug = rawPath.replace(/^\/directory\/business\//, '');
-          navigateToDirectory(`/business/${slug}`);
+          navigateToDirectory(`/biz/${slug}`);
           return;
         }
         if (rawPath.startsWith('/business/')) {
-          const slug = rawPath.replace(/^\/business\//, '');
-          navigateToDirectory(`/business/${slug}`);
-          return;
+          const sub = rawPath.replace(/^\/business\//, '').split('/')[0];
+          const reservedBusinessSubroutes = ['locations', 'directory', 'profile', 'brain', 'settings'];
+          if (sub && !reservedBusinessSubroutes.includes(sub.toLowerCase())) {
+            navigateToDirectory(`/biz/${sub}`);
+            return;
+          }
         }
         if (rawPath.startsWith('/biz/')) {
           const slug = rawPath.replace(/^\/biz\//, '');
-          navigateToDirectory(`/business/${slug}`);
+          navigateToDirectory(`/biz/${slug}`);
           return;
         }
         if (rawPath.startsWith('/directory/city/')) {

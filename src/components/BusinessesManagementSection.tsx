@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import {
   Building2,
@@ -27,8 +27,11 @@ interface BusinessesManagementSectionProps {
 
 const PLAN_LIMITS: Record<string, number> = {
   free: 1,
+  starter: 1,
   pro: 3,
+  growth: 3,
   agency: 10,
+  agency_elite: 10,
   elite: 10,
 };
 
@@ -47,11 +50,33 @@ export const BusinessesManagementSection: React.FC<BusinessesManagementSectionPr
     refreshBusinessTruth,
   } = useApp();
 
-  // Quota calculation
+  // Dynamic Quota & Limit State
   const planTier = (user.planTier || 'free').toLowerCase();
-  const maxAllowed = PLAN_LIMITS[planTier] || 1;
-  const currentCount = Math.max(businesses.length, 1);
-  const isLimitReached = currentCount >= maxAllowed;
+  const defaultMax = PLAN_LIMITS[planTier] || 1;
+  const [remoteLimit, setRemoteLimit] = useState<{ limit: number; currentCount: number; canAddMore: boolean } | null>(null);
+
+  useEffect(() => {
+    if (user.email) {
+      fetch(`/api/workspace/business-limit?email=${encodeURIComponent(user.email)}&plan=${encodeURIComponent(user.planTier || '')}`, {
+        headers: {
+          'x-user-email': user.email,
+          'x-user-plan': user.planTier || '',
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && typeof data.limit === 'number') {
+            setRemoteLimit(data);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [user.email, user.planTier, businesses.length]);
+
+  const maxAllowed = remoteLimit?.limit ?? defaultMax;
+  const currentCount = businesses.length;
+  // Limit is ONLY reached if user has at least 1 business AND count >= limit
+  const isLimitReached = currentCount > 0 && (remoteLimit ? !remoteLimit.canAddMore : currentCount >= maxAllowed);
 
   // Manage modal state
   const [selectedBizForManage, setSelectedBizForManage] = useState<any | null>(null);
@@ -94,7 +119,8 @@ export const BusinessesManagementSection: React.FC<BusinessesManagementSectionPr
   const [newServiceTag, setNewServiceTag] = useState('');
 
   const handleOpenAddBusiness = () => {
-    if (isLimitReached) {
+    // If the user has 0 businesses, NEVER lock them out on any plan
+    if (currentCount > 0 && isLimitReached) {
       setShowUpgradeLimitModal(true);
       return;
     }
@@ -351,7 +377,20 @@ export const BusinessesManagementSection: React.FC<BusinessesManagementSectionPr
 
       {/* BUSINESSES LIST (Matching exact specification from prompt) */}
       <div className="space-y-3">
-        {businesses.map((biz) => {
+        {businesses.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-10 text-center shadow-2xs space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#059669] border border-emerald-100 flex items-center justify-center mx-auto">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold font-heading text-slate-900">
+              No Businesses Added Yet
+            </h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+              Use the <strong className="text-emerald-700 font-semibold">+ Add Business</strong> button above to register your business workspace, connect physical locations, and activate your Business Brain.
+            </p>
+          </div>
+        ) : (
+          businesses.map((biz) => {
           const isActive = biz.id === activeBusinessId;
           const isPublished = Boolean(biz.isPublishedInDirectory);
           const isGoogleConnected = Boolean(
@@ -468,18 +507,8 @@ export const BusinessesManagementSection: React.FC<BusinessesManagementSectionPr
               </div>
             </div>
           );
-        })}
-      </div>
-
-      {/* Bottom Primary Add Business Button */}
-      <div className="pt-2">
-        <button
-          onClick={handleOpenAddBusiness}
-          className="w-full py-3.5 rounded-2xl border-2 border-dashed border-slate-300 hover:border-[#059669] bg-slate-50/60 hover:bg-emerald-50/40 text-slate-600 hover:text-[#059669] text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer group"
-        >
-          <Plus className="w-4 h-4 text-slate-400 group-hover:text-[#059669] transition-colors" />
-          <span>+ Add Business</span>
-        </button>
+        })
+      )}
       </div>
 
       {/* MODAL 1: Manage Business Dialog */}

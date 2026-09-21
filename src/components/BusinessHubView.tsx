@@ -8,9 +8,8 @@ import {
   MapPinned,
   Globe,
   Sliders,
-  ArrowLeft,
   ChevronRight,
-  ExternalLink,
+  Plus,
 } from 'lucide-react';
 
 interface BusinessHubViewProps {
@@ -22,9 +21,10 @@ export const BusinessHubView: React.FC<BusinessHubViewProps> = ({
 }) => {
   const {
     activeBusiness,
+    businesses,
+    setIsAddBusinessModalOpen,
     activeTab,
     setActiveTab,
-    user,
   } = useApp();
 
   // Determine initial subtab based on prop or global activeTab
@@ -42,8 +42,46 @@ export const BusinessHubView: React.FC<BusinessHubViewProps> = ({
   useEffect(() => {
     if (activeTab === 'business_locations') setCurrentTab('locations');
     else if (activeTab === 'business_directory') setCurrentTab('directory');
-    else if (activeTab === 'business_profile') setCurrentTab('profile');
+    else if (activeTab === 'business' || activeTab === 'business_profile') setCurrentTab('profile');
   }, [activeTab]);
+
+  const hasBusiness = Boolean(
+    activeBusiness &&
+    activeBusiness.id &&
+    activeBusiness.id !== 'workspace_pending' &&
+    businesses.length > 0
+  );
+
+  if (!hasBusiness) {
+    return (
+      <div className="min-h-screen bg-slate-50/50 pb-20 font-sans">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-12 text-center shadow-xs">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-[#059669] flex items-center justify-center mx-auto mb-5 border border-emerald-100">
+              <Building2 className="w-8 h-8" />
+            </div>
+            <h1 className="text-2xl font-extrabold font-heading text-slate-900 tracking-tight">
+              No Business Profile Configured
+            </h1>
+            <p className="text-sm text-slate-600 max-w-md mx-auto mt-2 leading-relaxed">
+              Add your first business to manage profiles, configure physical locations, and publish to the verified directory.
+            </p>
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <button
+                onClick={() => setIsAddBusinessModalOpen(true)}
+                className="px-5 py-2.5 rounded-xl text-sm font-bold bg-[#059669] hover:bg-[#047857] text-white shadow-xs hover:shadow-md transition-all cursor-pointer flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Your Business</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const locationCount = (activeBusiness?.locations?.length || 0) + 1;
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20 font-sans">
@@ -54,7 +92,7 @@ export const BusinessHubView: React.FC<BusinessHubViewProps> = ({
             <div>
               <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
                 <button
-                  onClick={() => setActiveTab('settings')}
+                  onClick={() => setActiveTab('settings_businesses')}
                   className="hover:text-slate-900 transition-colors cursor-pointer flex items-center gap-1"
                 >
                   <Building2 className="w-3.5 h-3.5" />
@@ -62,7 +100,7 @@ export const BusinessHubView: React.FC<BusinessHubViewProps> = ({
                 </button>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 <span className="font-bold text-slate-900 font-heading">
-                  {activeBusiness.name}
+                  {activeBusiness?.name || 'Active Business'}
                 </span>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-[#059669] border border-emerald-200">
                   Active Workspace
@@ -78,7 +116,7 @@ export const BusinessHubView: React.FC<BusinessHubViewProps> = ({
             {/* Quick Action: Settings -> Businesses */}
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setActiveTab('settings')}
+                onClick={() => setActiveTab('settings_businesses')}
                 className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all cursor-pointer flex items-center gap-1.5"
                 title="View All Businesses & Plan Quotas"
               >
@@ -91,7 +129,10 @@ export const BusinessHubView: React.FC<BusinessHubViewProps> = ({
           {/* Unified Sub-Navigation Tabs: Profile, Locations, Directory */}
           <div className="flex items-center gap-2 mt-4 border-b border-slate-100 pb-0.5">
             <button
-              onClick={() => setCurrentTab('profile')}
+              onClick={() => {
+                setCurrentTab('profile');
+                setActiveTab('business');
+              }}
               className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer ${
                 currentTab === 'profile'
                   ? 'border-[#059669] text-[#059669]'
@@ -103,7 +144,10 @@ export const BusinessHubView: React.FC<BusinessHubViewProps> = ({
             </button>
 
             <button
-              onClick={() => setCurrentTab('locations')}
+              onClick={() => {
+                setCurrentTab('locations');
+                setActiveTab('business_locations');
+              }}
               className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer ${
                 currentTab === 'locations'
                   ? 'border-[#059669] text-[#059669]'
@@ -112,15 +156,16 @@ export const BusinessHubView: React.FC<BusinessHubViewProps> = ({
             >
               <MapPinned className="w-4 h-4" />
               <span>Locations</span>
-              {activeBusiness.locations && activeBusiness.locations.length > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
-                  {activeBusiness.locations.length + 1}
-                </span>
-              )}
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                {locationCount}
+              </span>
             </button>
 
             <button
-              onClick={() => setCurrentTab('directory')}
+              onClick={() => {
+                setCurrentTab('directory');
+                setActiveTab('business_directory');
+              }}
               className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 cursor-pointer ${
                 currentTab === 'directory'
                   ? 'border-[#059669] text-[#059669]'
@@ -131,7 +176,7 @@ export const BusinessHubView: React.FC<BusinessHubViewProps> = ({
               <span>Directory</span>
               <span
                 className={`w-2 h-2 rounded-full ${
-                  activeBusiness.isPublishedInDirectory
+                  activeBusiness?.isPublishedInDirectory
                     ? 'bg-emerald-500'
                     : 'bg-slate-300'
                 }`}

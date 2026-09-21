@@ -4461,7 +4461,13 @@ app.get(['/api/workspace/business-limit', '/api/account/business-limit'], async 
     }
 
     const userRec = usersDb.get(email);
-    const account = await ensureAccountForUser(email, userRec?.planTier);
+    const planFromReq = (
+      (req.query.plan as string) ||
+      (req.headers['x-user-plan'] as string) ||
+      userRec?.planTier ||
+      'free'
+    ).toLowerCase().trim();
+    const account = await ensureAccountForUser(email, planFromReq);
     const limitInfo = await getBusinessLimit(account.id);
 
     res.json({
@@ -4546,7 +4552,14 @@ app.post(['/api/workspace/businesses', '/api/production/businesses'], async (req
     }
 
     const userRec = usersDb.get(email);
-    const account = await ensureAccountForUser(email, userRec?.planTier);
+    const planFromReq = (
+      req.body?.planTier ||
+      (req.headers['x-user-plan'] as string) ||
+      (req.query.plan as string) ||
+      userRec?.planTier ||
+      'free'
+    ).toLowerCase().trim();
+    const account = await ensureAccountForUser(email, planFromReq);
 
     // CRITICAL: Backend checks the plan BEFORE creating anything
     const limitInfo = await getBusinessLimit(account.id);
