@@ -851,7 +851,7 @@ export function getAllBusinessRecordsFromLocoraDb(): LocoraBusinessRecord[] {
 
 export function deriveDirectoryStatus(
   b: LocoraBusinessRecord
-): 'DISCOVERED' | 'ELIGIBLE' | 'PUBLISHED' | 'CLAIM_PENDING' | 'CLAIMED' | 'VERIFIED' {
+): 'DISCOVERED' | 'ELIGIBLE' | 'PUBLISHED' | 'CLAIM_PENDING' | 'CLAIMED' | 'VERIFIED' | 'SUSPENDED' | 'UNPUBLISHED' {
   if (b.directoryStatus) {
     return b.directoryStatus;
   }
@@ -1098,7 +1098,11 @@ export function getPublishedDirectoryListings(): any[] {
     (b) =>
       b.id !== 'biz_demo_workspace' &&
       b.id !== 'austin-dental' &&
-      b.isPublishedInDirectory === true
+      b.isPublishedInDirectory === true &&
+      b.directoryStatus !== 'SUSPENDED' &&
+      b.directoryStatus !== 'UNPUBLISHED' &&
+      b.status !== 'suspended' &&
+      b.status !== 'deleted'
   );
 
   const results = all.map((b) => {
@@ -1940,6 +1944,44 @@ export function updateDirectoryProfileRecord(
   invalidateDirectoryListingsCache();
 
   return { success: true, business: biz };
+}
+
+export function setBusinessDirectoryModerationStatus(
+  businessIdOrSlug: string,
+  status: 'PUBLISHED' | 'SUSPENDED' | 'UNPUBLISHED' | 'VERIFIED',
+  isPublished: boolean,
+  isVerified?: boolean
+): boolean {
+  const listing = getDirectoryListingBySlug(businessIdOrSlug);
+  let biz = listing ? businessesDatabase.get(listing.id) : (businessesDatabase.get(businessIdOrSlug) || businessesDatabase.get((businessIdOrSlug || '').toLowerCase().trim()));
+  if (!biz) {
+    const clean = (businessIdOrSlug || '').toLowerCase().trim();
+    biz = Array.from(businessesDatabase.values()).find(
+      (b) =>
+        b.id === businessIdOrSlug ||
+        b.id.toLowerCase() === clean ||
+        (b.identity?.name && b.identity.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') === clean) ||
+        (b.identity?.name && b.identity.name.toLowerCase().trim() === clean)
+    );
+  }
+  if (biz) {
+    biz.isPublishedInDirectory = isPublished;
+    biz.directoryStatus = status;
+    if (status === 'SUSPENDED') {
+      biz.status = 'suspended';
+    } else if (biz.status === 'suspended') {
+      biz.status = 'active';
+    }
+    if (typeof isVerified === 'boolean') {
+      biz.isVerified = isVerified;
+    }
+    biz.updatedAt = new Date().toISOString();
+    businessesDatabase.set(biz.id, biz);
+    saveLocoraDatabaseToDisk();
+    invalidateDirectoryListingsCache();
+    return true;
+  }
+  return false;
 }
 
 // Ensure database is initialized on server boot

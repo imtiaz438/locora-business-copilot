@@ -3451,6 +3451,20 @@ export async function getDirectoryListingBySlugOrId(slugOrId: string) {
       .where(eq(schema.googleReviewsTable.businessId, biz.id))
       .limit(10);
 
+    // Get canonical directory profile if any
+    const dirProfiles = await db
+      .select()
+      .from(schema.directoryProfilesTable)
+      .where(eq(schema.directoryProfilesTable.businessId, biz.id))
+      .limit(1);
+    const dirProfile = dirProfiles[0] || null;
+
+    const isSuspended = dirProfile?.status === 'SUSPENDED' || biz.status === 'suspended';
+    const isActuallyPublished = biz.isPublishedInDirectory && !isSuspended && dirProfile?.status !== 'UNPUBLISHED';
+    const finalDirStatus = isSuspended
+      ? 'SUSPENDED'
+      : (dirProfile?.status || (isActuallyPublished ? (biz.status !== 'unclaimed' ? 'CLAIMED' : 'PUBLISHED') : 'UNPUBLISHED'));
+
     const isClaimed = biz.status !== 'unclaimed' && !biz.ownerEmail.startsWith('unclaimed');
     const category = biz.category || biz.industry || 'Local Services';
     const city = loc?.city || biz.cityName || '';
@@ -3481,9 +3495,10 @@ export async function getDirectoryListingBySlugOrId(slugOrId: string) {
       cityName: city,
       stateCode: state,
       planTier: isClaimed ? (biz.planTier || 'free') : 'free',
-      isPublishedInDirectory: biz.isPublishedInDirectory,
-      directoryStatus: isClaimed ? 'CLAIMED' : 'UNCLAIMED',
+      isPublishedInDirectory: isActuallyPublished,
+      directoryStatus: finalDirStatus,
       isClaimed,
+      isVerified: Boolean(dirProfile?.isVerified || finalDirStatus === 'VERIFIED'),
       targetKeywords: biz.targetKeywords || [category, `${category} in ${city}`],
       sourceAttributions: {
         gbp: 'GOOGLE_BUSINESS_PROFILE',
@@ -3919,4 +3934,5 @@ export {
   detectDuplicateDirectoryProfile,
   generateUniqueDirectorySlug,
 } from './directoryService.ts';
+
 

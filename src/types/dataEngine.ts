@@ -266,7 +266,9 @@ export interface LocoraBusinessRecord {
   createdAt: string;
   updatedAt: string;
   isPublishedInDirectory?: boolean;
-  directoryStatus?: 'DISCOVERED' | 'ELIGIBLE' | 'PUBLISHED' | 'CLAIM_PENDING' | 'CLAIMED' | 'VERIFIED';
+  directoryStatus?: 'DISCOVERED' | 'ELIGIBLE' | 'PUBLISHED' | 'CLAIM_PENDING' | 'CLAIMED' | 'VERIFIED' | 'SUSPENDED' | 'UNPUBLISHED';
+  status?: string;
+  isVerified?: boolean;
   isClaimed?: boolean;
   claimedByEmail?: string | null;
   googlePlaceId?: string;

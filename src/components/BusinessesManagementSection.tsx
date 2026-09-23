@@ -48,6 +48,7 @@ export const BusinessesManagementSection: React.FC<BusinessesManagementSectionPr
     setActiveTab,
     setCheckoutModalPlan,
     refreshBusinessTruth,
+    setOnboardingModalOpen,
   } = useApp();
 
   // Dynamic Quota & Limit State
@@ -75,6 +76,7 @@ export const BusinessesManagementSection: React.FC<BusinessesManagementSectionPr
 
   const maxAllowed = remoteLimit?.limit ?? defaultMax;
   const currentCount = businesses.length;
+  const hasActiveWorkspace = businesses.length > 0 && Boolean(activeBusinessId);
   // Limit is ONLY reached if user has at least 1 business AND count >= limit
   const isLimitReached = currentCount > 0 && (remoteLimit ? !remoteLimit.canAddMore : currentCount >= maxAllowed);
 
@@ -119,7 +121,13 @@ export const BusinessesManagementSection: React.FC<BusinessesManagementSectionPr
   const [newServiceTag, setNewServiceTag] = useState('');
 
   const handleOpenAddBusiness = () => {
-    // If the user has 0 businesses, NEVER lock them out on any plan
+    // GATING: Active workspace / onboarding must be completed before adding additional businesses
+    if (!hasActiveWorkspace) {
+      setOnboardingModalOpen(true);
+      return;
+    }
+
+    // If the user has reached quota
     if (currentCount > 0 && isLimitReached) {
       setShowUpgradeLimitModal(true);
       return;
@@ -344,7 +352,7 @@ export const BusinessesManagementSection: React.FC<BusinessesManagementSectionPr
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>+ Add Business</span>
+            <span>{hasActiveWorkspace ? '+ Add Business' : '+ Complete Setup First'}</span>
           </button>
         </div>
       </div>
@@ -375,19 +383,26 @@ export const BusinessesManagementSection: React.FC<BusinessesManagementSectionPr
         </div>
       )}
 
-      {/* BUSINESSES LIST (Matching exact specification from prompt) */}
+      {/* BUSINESSES LIST */}
       <div className="space-y-3">
         {businesses.length === 0 ? (
-          <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-10 text-center shadow-2xs space-y-3">
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-10 text-center shadow-2xs space-y-4">
             <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#059669] border border-emerald-100 flex items-center justify-center mx-auto">
               <Building2 className="w-6 h-6" />
             </div>
             <h3 className="text-base font-bold font-heading text-slate-900">
-              No Businesses Added Yet
+              No Active Business Workspace
             </h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-              Use the <strong className="text-emerald-700 font-semibold">+ Add Business</strong> button above to register your business workspace, connect physical locations, and activate your Business Brain.
+              Complete your initial business setup onboarding to activate your primary workspace. Once onboarded, you can add and manage business locations and directory profiles.
             </p>
+            <button
+              onClick={() => setOnboardingModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold transition-all shadow-sm cursor-pointer inline-flex items-center gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Start Onboarding Setup</span>
+            </button>
           </div>
         ) : (
           businesses.map((biz) => {

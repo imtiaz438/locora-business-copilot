@@ -17,7 +17,9 @@ export type DirectoryBusinessStatus =
   | 'PUBLISHED'
   | 'CLAIM_PENDING'
   | 'CLAIMED'
-  | 'VERIFIED';
+  | 'VERIFIED'
+  | 'SUSPENDED'
+  | 'UNPUBLISHED';
 
 export interface DirectoryBusinessListing {
   id: string;

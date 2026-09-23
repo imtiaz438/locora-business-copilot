@@ -84,6 +84,7 @@ import {
   saveDirectoryLeadsToDisk,
   invalidateDirectoryListingsCache,
   deleteBusinessRecord,
+  setBusinessDirectoryModerationStatus,
 } from './server/locoraDataEngine.ts';
 import { executePublicCheckup, publicAuditsStore } from './server/publicCheckupEngine.ts';
 import { checkPublicRateLimit } from './server/publicSecurity.ts';
@@ -16020,7 +16021,13 @@ async function getUnifiedPublishedListings(): Promise<any[]> {
   const allPublished: any[] = [];
 
   for (const item of dbPublished) {
-    if (item.isPublishedInDirectory !== true || item.directoryStatus === 'UNPUBLISHED') {
+    if (
+      item.isPublishedInDirectory !== true ||
+      item.directoryStatus === 'UNPUBLISHED' ||
+      item.directoryStatus === 'SUSPENDED' ||
+      item.status === 'suspended' ||
+      item.status === 'deleted'
+    ) {
       continue;
     }
     const key = (item.id || item.slug || '').toLowerCase();
@@ -16032,7 +16039,13 @@ async function getUnifiedPublishedListings(): Promise<any[]> {
 
   const allowDiscovered = settings ? settings.allowDiscoveredUnclaimed : false;
   for (const item of memPublished) {
-    if (item.isPublishedInDirectory !== true || item.directoryStatus === 'UNPUBLISHED') {
+    if (
+      item.isPublishedInDirectory !== true ||
+      item.directoryStatus === 'UNPUBLISHED' ||
+      item.directoryStatus === 'SUSPENDED' ||
+      item.status === 'suspended' ||
+      item.status === 'deleted'
+    ) {
       continue;
     }
     if (!allowDiscovered && !item.isClaimed && item.directoryStatus !== 'CLAIMED') {
@@ -16412,6 +16425,19 @@ app.get(['/api/directory/business/:slugOrId', '/api/directory/biz/:slugOrId'], a
 
     const canonicalSlug = listing.slug || (listing.businessName ? listing.businessName.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') : 'locora');
     const canonicalUrl = `https://directory.locoraai.com/biz/${canonicalSlug}`;
+
+    // STRICT SUSPENSION CHECK: Suspended businesses cannot be viewed publicly
+    if (
+      listing.directoryStatus === 'SUSPENDED' ||
+      (listing as any).status === 'suspended' ||
+      (listing as any).status === 'SUSPENDED'
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: 'LISTING_SUSPENDED',
+        message: 'This business listing has been suspended by administration and is currently inaccessible in the directory.',
+      });
+    }
 
     // STRICT DIRECTORY ACCESS CONTROL:
     // Only published listings are visible to the public. If unpublished, only the business owner can preview.
@@ -17029,27 +17055,133 @@ app.get('/api/admin/directory/profiles', async (req, res) => {
     if (!(await verifyAdminAccessAsync(req))) {
       return res.status(403).json({ error: 'Access Denied. Admin privileges required.' });
     }
-    const profiles = await db
+
+    // 1. Fetch all businesses from database with their linked directory profile and linked user
+    const rows = await db
       .select({
-        id: schema.directoryProfilesTable.id,
-        businessId: schema.directoryProfilesTable.businessId,
+        businessId: schema.businessesTable.id,
         businessName: schema.businessesTable.name,
         ownerEmail: schema.businessesTable.ownerEmail,
-        status: schema.directoryProfilesTable.status,
-        slug: schema.directoryProfilesTable.slug,
+        slug: schema.businessesTable.slug,
+        cityName: schema.businessesTable.cityName,
+        category: schema.businessesTable.category,
+        industry: schema.businessesTable.industry,
+        isPublishedInDirectory: schema.businessesTable.isPublishedInDirectory,
+        businessStatus: schema.businessesTable.status,
+        planTier: schema.businessesTable.planTier,
+        createdAt: schema.businessesTable.createdAt,
+        updatedAt: schema.businessesTable.updatedAt,
+        // Directory Profile fields
+        dirProfileId: schema.directoryProfilesTable.id,
+        dirStatus: schema.directoryProfilesTable.status,
+        dirSlug: schema.directoryProfilesTable.slug,
         publishedAt: schema.directoryProfilesTable.publishedAt,
         lastSyncedAt: schema.directoryProfilesTable.lastSyncedAt,
         qualityScore: schema.directoryProfilesTable.qualityScore,
         qualityStatus: schema.directoryProfilesTable.qualityStatus,
         isClaimed: schema.directoryProfilesTable.isClaimed,
         isVerified: schema.directoryProfilesTable.isVerified,
-        cityName: schema.businessesTable.cityName,
-        category: schema.businessesTable.category,
-        isPublishedInDirectory: schema.businessesTable.isPublishedInDirectory,
+        // Linked User fields
+        userName: schema.users.name,
+        userRole: schema.users.role,
+        userCompanyName: schema.users.companyName,
+        userPlanTier: schema.users.planTier,
+        userCreatedAt: schema.users.createdAt,
       })
-      .from(schema.directoryProfilesTable)
-      .leftJoin(schema.businessesTable, eq(schema.directoryProfilesTable.businessId, schema.businessesTable.id))
-      .orderBy(desc(schema.directoryProfilesTable.updatedAt));
+      .from(schema.businessesTable)
+      .leftJoin(schema.directoryProfilesTable, eq(schema.businessesTable.id, schema.directoryProfilesTable.businessId))
+      .leftJoin(schema.users, eq(schema.businessesTable.ownerEmail, schema.users.email))
+      .orderBy(desc(schema.businessesTable.createdAt));
+
+    const seenIds = new Set<string>();
+    const profiles: any[] = [];
+
+    for (const r of rows) {
+      seenIds.add(r.businessId.toLowerCase());
+      if (r.slug) seenIds.add(r.slug.toLowerCase());
+
+      const isSuspended = r.dirStatus === 'SUSPENDED' || r.businessStatus === 'suspended';
+      let effectiveStatus = isSuspended
+        ? 'SUSPENDED'
+        : r.dirStatus || (r.isPublishedInDirectory ? 'PUBLISHED' : 'UNPUBLISHED');
+      if (r.isVerified && effectiveStatus === 'PUBLISHED') {
+        effectiveStatus = 'VERIFIED';
+      }
+      const isPublished = Boolean(r.isPublishedInDirectory && !isSuspended && effectiveStatus !== 'UNPUBLISHED');
+
+      profiles.push({
+        id: r.dirProfileId || `dp_${r.businessId}`,
+        businessId: r.businessId,
+        businessName: r.businessName || 'Unnamed Business',
+        ownerEmail: r.ownerEmail || 'Unassigned',
+        linkedUser: {
+          name: r.userName || (r.ownerEmail ? r.ownerEmail.split('@')[0] : 'Unknown User'),
+          email: r.ownerEmail || 'No Email',
+          role: r.userRole || 'customer',
+          companyName: r.userCompanyName || null,
+          planTier: r.userPlanTier || r.planTier || 'pro',
+          createdAt: r.userCreatedAt ? new Date(r.userCreatedAt).toISOString() : null,
+        },
+        status: effectiveStatus,
+        slug: r.dirSlug || r.slug || r.businessId,
+        publishedAt: r.publishedAt ? new Date(r.publishedAt).toISOString() : (isPublished ? new Date(r.createdAt).toISOString() : null),
+        lastSyncedAt: r.lastSyncedAt ? new Date(r.lastSyncedAt).toISOString() : new Date(r.updatedAt).toISOString(),
+        qualityScore: r.qualityScore ?? 85,
+        qualityStatus: r.qualityStatus || (r.isVerified ? 'verified' : 'good'),
+        isClaimed: r.isClaimed ?? (r.businessStatus !== 'unclaimed'),
+        isVerified: Boolean(r.isVerified || effectiveStatus === 'VERIFIED'),
+        cityName: r.cityName || 'Austin',
+        category: r.category || r.industry || 'Local Business',
+        isPublishedInDirectory: isPublished,
+        createdAt: new Date(r.createdAt).toISOString(),
+        updatedAt: new Date(r.updatedAt).toISOString(),
+      });
+    }
+
+    // 2. Also check in-memory businessesDatabase to ensure any demo or in-memory businesses are included
+    try {
+      const memList = getPublishedDirectoryListings();
+      for (const m of memList) {
+        const mId = (m.id || '').toLowerCase();
+        const mSlug = (m.slug || '').toLowerCase();
+        if ((mId && seenIds.has(mId)) || (mSlug && seenIds.has(mSlug))) {
+          continue;
+        }
+        if (mId) seenIds.add(mId);
+        if (mSlug) seenIds.add(mSlug);
+
+        const isSuspended = m.directoryStatus === 'SUSPENDED' || m.status === 'suspended';
+        profiles.push({
+          id: `mem_${m.id}`,
+          businessId: m.id,
+          businessName: m.businessName || 'Local Business',
+          ownerEmail: m.ownerEmail || 'admin@locora.ai',
+          linkedUser: {
+            name: m.ownerName || 'System Admin',
+            email: m.ownerEmail || 'admin@locora.ai',
+            role: 'admin',
+            companyName: m.businessName,
+            planTier: m.planTier || 'pro',
+            createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : null,
+          },
+          status: isSuspended ? 'SUSPENDED' : (m.isPublishedInDirectory ? 'PUBLISHED' : 'UNPUBLISHED'),
+          slug: m.slug || m.id,
+          publishedAt: m.publishedAt ? new Date(m.publishedAt).toISOString() : null,
+          lastSyncedAt: new Date().toISOString(),
+          qualityScore: m.qualityScore || 85,
+          qualityStatus: m.qualityStatus || 'good',
+          isClaimed: Boolean(m.isClaimed),
+          isVerified: Boolean(m.isVerified),
+          cityName: m.cityName || 'Austin',
+          category: m.categoryName || 'Local Services',
+          isPublishedInDirectory: Boolean(m.isPublishedInDirectory && !isSuspended),
+          createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : new Date().toISOString(),
+          updatedAt: m.updatedAt ? new Date(m.updatedAt).toISOString() : new Date().toISOString(),
+        });
+      }
+    } catch (memErr) {
+      console.warn('[Admin Directory] In-memory check warning:', memErr);
+    }
 
     res.json({ success: true, profiles });
   } catch (err: any) {
@@ -17063,43 +17195,99 @@ app.post('/api/admin/directory/profiles/:businessId/moderate', async (req, res) 
       return res.status(403).json({ error: 'Access Denied. Admin privileges required.' });
     }
     const { businessId } = req.params;
-    const { action } = req.body; // 'suspend' | 'restore' | 'verify' | 'unverify'
+    const { action } = req.body; // 'suspend' | 'restore' | 'publish' | 'unpublish' | 'hide' | 'verify' | 'unverify' | 'remove' | 'delete'
 
     let newStatus = 'PUBLISHED';
     let isPublished = true;
+    let isVerified = false;
 
     if (action === 'suspend') {
       newStatus = 'SUSPENDED';
       isPublished = false;
-    } else if (action === 'restore') {
+    } else if (action === 'restore' || action === 'publish') {
       newStatus = 'PUBLISHED';
       isPublished = true;
+    } else if (action === 'unpublish' || action === 'hide' || action === 'remove' || action === 'delete') {
+      newStatus = 'UNPUBLISHED';
+      isPublished = false;
+    } else if (action === 'verify') {
+      newStatus = 'VERIFIED';
+      isPublished = true;
+      isVerified = true;
+    } else if (action === 'unverify') {
+      newStatus = 'PUBLISHED';
+      isPublished = true;
+      isVerified = false;
     }
 
-    const updatedProfile = await db
-      .update(schema.directoryProfilesTable)
+    // 1. Update businessesTable (support matching by id or slug)
+    await db
+      .update(schema.businessesTable)
       .set({
-        ...(action === 'suspend' || action === 'restore' ? { status: newStatus } : {}),
-        ...(action === 'verify' ? { isVerified: true, status: 'VERIFIED' } : {}),
-        ...(action === 'unverify' ? { isVerified: false, status: 'PUBLISHED' } : {}),
+        isPublishedInDirectory: isPublished,
+        ...(action === 'suspend' ? { status: 'suspended' } : {}),
+        ...(action === 'restore' || action === 'publish' ? { status: 'active' } : {}),
         updatedAt: new Date(),
       })
-      .where(eq(schema.directoryProfilesTable.businessId, businessId))
-      .returning();
+      .where(or(eq(schema.businessesTable.id, businessId), eq(schema.businessesTable.slug, businessId)));
 
-    if (action === 'suspend' || action === 'restore') {
-      await db
-        .update(schema.businessesTable)
+    // 2. Upsert directoryProfilesTable
+    const existingProfile = await db
+      .select()
+      .from(schema.directoryProfilesTable)
+      .where(eq(schema.directoryProfilesTable.businessId, businessId))
+      .limit(1);
+
+    let savedProfile: any = null;
+    if (existingProfile.length > 0) {
+      const updated = await db
+        .update(schema.directoryProfilesTable)
         .set({
-          isPublishedInDirectory: isPublished,
+          status: newStatus,
+          ...(action === 'verify' ? { isVerified: true } : {}),
+          ...(action === 'unverify' ? { isVerified: false } : {}),
+          ...(isPublished ? { publishedAt: new Date() } : {}),
+          lastSyncedAt: new Date(),
           updatedAt: new Date(),
         })
-        .where(eq(schema.businessesTable.id, businessId));
+        .where(eq(schema.directoryProfilesTable.businessId, businessId))
+        .returning();
+      savedProfile = updated[0];
+    } else {
+      const inserted = await db
+        .insert(schema.directoryProfilesTable)
+        .values({
+          id: `dp_${businessId}_${Date.now()}`,
+          businessId,
+          status: newStatus,
+          isVerified: action === 'verify',
+          isClaimed: true,
+          publishedAt: isPublished ? new Date() : null,
+          lastSyncedAt: new Date(),
+          qualityScore: 85,
+          qualityStatus: 'basic',
+          source: 'owner_published',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+      savedProfile = inserted[0];
     }
 
+    // 3. Update memory/disk in locoraDataEngine
+    setBusinessDirectoryModerationStatus(
+      businessId,
+      newStatus as any,
+      isPublished,
+      action === 'verify' ? true : action === 'unverify' ? false : undefined
+    );
+
+    // 4. Invalidate all directory cache tiers
     invalidateDirectoryListingsCache();
-    res.json({ success: true, profile: updatedProfile[0] });
+
+    res.json({ success: true, profile: savedProfile, status: newStatus, isPublished });
   } catch (err: any) {
+    console.error('[Admin Directory Moderate Error]:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

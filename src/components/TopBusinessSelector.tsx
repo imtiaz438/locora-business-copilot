@@ -245,6 +245,14 @@ export const TopBusinessSelector: React.FC = () => {
   const isAgency = ['agency', 'agency_elite', 'elite'].includes((user.planTier || '').toLowerCase());
 
   const handleAddBusinessClick = async () => {
+    // GATING: Active workspace / onboarding must be established first before adding additional businesses
+    if (!hasBusiness || businesses.length === 0) {
+      setOnboardingModalOpen(true);
+      setIsOpen(false);
+      setIsAddBusinessModalOpen(false);
+      return;
+    }
+
     try {
       setIsCheckingLimit(true);
       const res = await fetch(
@@ -743,7 +751,7 @@ export const TopBusinessSelector: React.FC = () => {
                   ) : (
                     <Plus className="w-3.5 h-3.5" />
                   )}
-                  <span>+ Add Business</span>
+                  <span>{hasBusiness ? '+ Add Business' : '+ Complete Setup (Add Workspace)'}</span>
                 </button>
               </div>
             </div>
