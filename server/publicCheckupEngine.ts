@@ -419,7 +419,17 @@ export async function executePublicCheckup(params: {
     const titleMatch = cleanHtml.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
     const ogTitleMatch = cleanHtml.match(/<meta[^>]+(?:property|name)=["'](?:og:title|twitter:title)["'][^>]+content=["']([^"']*)["']/i);
     const rawTitle = titleMatch ? titleMatch[1] : (ogTitleMatch ? ogTitleMatch[1] : '');
-    const metaTitle = decodeHtmlEntities(rawTitle.replace(/<[^>]+>/g, '')).slice(0, 150);
+    let metaTitle = decodeHtmlEntities(rawTitle.replace(/<[^>]+>/g, '')).slice(0, 150);
+    const lowerMetaTitle = metaTitle.toLowerCase();
+    if (
+      lowerMetaTitle.includes('301 moved') ||
+      lowerMetaTitle.includes('302 found') ||
+      lowerMetaTitle.includes('object moved') ||
+      lowerMetaTitle.includes('moved permanently') ||
+      lowerMetaTitle.includes('redirecting')
+    ) {
+      metaTitle = hostname;
+    }
 
     // Meta Description
     const descMatch = cleanHtml.match(/<meta[^>]+(?:name|property)=["'](?:description|og:description|twitter:description)["'][^>]+content=["']([^"']*)["']/i)

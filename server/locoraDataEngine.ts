@@ -175,63 +175,26 @@ export async function executeOwnCrawler(rawUrl: string): Promise<Partial<Website
   const targetUrl = `https://${clean}`;
   const startTime = Date.now();
 
-  return new Promise((resolve) => {
-    let responded = false;
-    const timeout = setTimeout(() => {
-      if (!responded) {
-        responded = true;
-        resolve(fallbackCrawlResult(clean, Date.now() - startTime));
-      }
-    }, 4500);
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
 
-    try {
-      const parsed = new URL(targetUrl);
-      const req = https.get(
-        parsed,
-        {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (compatible; LocoraBot/2.0; +https://locora.ai)',
-            Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          },
-          rejectUnauthorized: false,
-        },
-        (res) => {
-          let html = '';
-          const isSsl = true;
-          const httpStatus = res.statusCode || 200;
+    const resp = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 (compatible; LocoraBot/2.0; +https://locora.ai)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      redirect: 'follow',
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
 
-          res.setEncoding('utf8');
-          res.on('data', (chunk) => {
-            html += chunk;
-            if (html.length > 500000) res.destroy(); // Cap at 500KB for speed
-          });
-
-          res.on('end', () => {
-            if (responded) return;
-            responded = true;
-            clearTimeout(timeout);
-            const latencyMs = Date.now() - startTime;
-            const normalized = normalizeCrawlHtml(clean, html, isSsl, httpStatus, latencyMs);
-            resolve(normalized);
-          });
-        }
-      );
-
-      req.on('error', () => {
-        if (!responded) {
-          responded = true;
-          clearTimeout(timeout);
-          resolve(fallbackCrawlResult(clean, Date.now() - startTime));
-        }
-      });
-    } catch {
-      if (!responded) {
-        responded = true;
-        clearTimeout(timeout);
-        resolve(fallbackCrawlResult(clean, Date.now() - startTime));
-      }
-    }
-  });
+    const html = await resp.text();
+    const latencyMs = Date.now() - startTime;
+    return normalizeCrawlHtml(clean, html, targetUrl.startsWith('https:'), resp.status, latencyMs);
+  } catch {
+    return fallbackCrawlResult(clean, Date.now() - startTime);
+  }
 }
 
 function normalizeCrawlHtml(
@@ -242,7 +205,17 @@ function normalizeCrawlHtml(
   latencyMs: number
 ): Partial<WebsiteAuditData> {
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-  const metaTitle = titleMatch ? titleMatch[1].trim() : `${cleanDomain}`;
+  let metaTitle = titleMatch ? titleMatch[1].trim() : `${cleanDomain}`;
+  const lowerTitle = metaTitle.toLowerCase();
+  if (
+    lowerTitle.includes('301 moved') ||
+    lowerTitle.includes('302 found') ||
+    lowerTitle.includes('object moved') ||
+    lowerTitle.includes('moved permanently') ||
+    lowerTitle.includes('redirecting')
+  ) {
+    metaTitle = cleanDomain;
+  }
 
   const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) ||
                     html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);

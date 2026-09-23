@@ -234,7 +234,16 @@ export async function discoverBusiness(params: {
         const parts = pageTitle.split(/[-|•–:]/).map((s) => s.trim());
         const candidate = parts[0];
         const lower = candidate.toLowerCase();
-        const isFluff = lower === 'home' || lower === 'welcome' || lower === 'index' || lower === 'official site';
+        const isFluff =
+          lower === 'home' ||
+          lower === 'welcome' ||
+          lower === 'index' ||
+          lower === 'official site' ||
+          lower.includes('301 moved') ||
+          lower.includes('302 found') ||
+          lower.includes('object moved') ||
+          lower.includes('moved permanently') ||
+          lower.includes('redirecting');
         if (!isFluff && candidate.length > 2 && candidate.length < 50) {
           discoveredName = candidate;
           sources.businessName = 'website_crawl';
