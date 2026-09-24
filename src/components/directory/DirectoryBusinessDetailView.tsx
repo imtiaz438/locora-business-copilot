@@ -973,12 +973,11 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               {hasValidMapLocation ? (
                 <div className="space-y-4">
                   {/* Real Google Maps Embed */}
-                  <div className="relative w-full h-72 sm:h-80 rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+                  <div className="relative w-full h-80 sm:h-96 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shadow-xs">
                     <iframe
                       title={`Google Map for ${business.businessName}`}
-                      width="100%"
-                      height="100%"
-                      style={{ border: 0 }}
+                      className="map-embed-iframe absolute inset-0 w-full h-full block border-0"
+                      style={{ border: 0, width: '100%', height: '100%', minHeight: '100%' }}
                       loading="lazy"
                       allowFullScreen
                       referrerPolicy="no-referrer-when-downgrade"

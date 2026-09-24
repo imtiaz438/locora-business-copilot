@@ -188,10 +188,22 @@
   }
 
   /* Cumulative Layout Shift (CLS) Prevention on Media */
-  img, video, iframe {
+  img, video {
     max-width: 100%;
     height: auto;
     content-visibility: auto;
+  }
+
+  iframe {
+    max-width: 100%;
+    border: none;
+  }
+
+  iframe.map-embed-iframe {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    display: block;
   }
 
   /* Mobile Touch / Tap Target Optimization (>= 44px - 48px) */
