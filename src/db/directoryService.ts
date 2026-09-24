@@ -1235,6 +1235,16 @@ export async function syncBusinessToDirectoryProjection(
       conflicts,
     };
 
+    // Phase 1 Directory Listing Update Email Automation (idempotent, once per meaningful initial sync)
+    const isMeaningfulUpdate = !existing || audit.action === 'created' || fieldsAdded.length > 0 || fieldsChanged.length > 0 || triggerSource === 'google_gbp_sync' || triggerSource === 'owner_published';
+    if (isMeaningfulUpdate && triggerSource !== 'startup_reconcile' && triggerSource !== 'safe_production_backfill') {
+      import('../../server/directoryEmailAutomation.ts').then(({ DirectoryUpdateEmailService }) => {
+        DirectoryUpdateEmailService.handleDirectoryListingUpdatedEvent(businessId, { triggerSource }).catch((e) =>
+          console.warn('[DirectoryUpdateEmailService] Background trigger error:', e.message)
+        );
+      }).catch(() => {});
+    }
+
     if (options?.returnAudit) {
       return { profile: upserted, audit };
     }

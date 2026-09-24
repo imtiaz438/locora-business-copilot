@@ -985,3 +985,21 @@ export const directorySettingsTable = pgTable('directory_settings', {
   requireAdminApproval: boolean('require_admin_approval').default(false).notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+// 34. Email Events & Idempotency Store (Phase 1 Automated Email Responder)
+export const emailEventsTable = pgTable('email_events', {
+  id: text('id').primaryKey(),
+  userId: text('user_id'),
+  businessId: text('business_id').notNull().references(() => businessesTable.id, { onDelete: 'cascade' }),
+  email: text('email').notNull(),
+  eventType: text('event_type').notNull(), // 'directory_listing_updated'
+  template: text('template').notNull(),
+  sentAt: timestamp('sent_at').defaultNow().notNull(),
+  status: text('status').notNull(), // 'sent' | 'simulated' | 'failed' | 'skipped'
+  error: text('error'),
+  syncVersion: text('sync_version').notNull(), // 'v1'
+  eventKey: text('event_key').notNull().unique(), // e.g. 'dir_sync_${businessId}_v1'
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});

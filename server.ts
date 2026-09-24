@@ -96,6 +96,14 @@ import {
   getPublicCheckupSettings,
   updatePublicCheckupSettings,
 } from './server/publicAuditsDb.ts';
+import {
+  registerEmailDispatcher,
+  handleDirectoryListingUpdatedEmail,
+  getEmailEvents,
+  buildRealBusinessEmailContext,
+  DirectoryUpdateEmailService,
+} from './server/directoryEmailAutomation.ts';
+
 
 const SYSTEM_ENV_BACKUPS: Record<string, string> = {
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
@@ -579,6 +587,9 @@ BODY PREVIEW: ${text ? text.slice(0, 140) : html.replace(/<[^>]+>/g, '').slice(0
     error: 'Brevo credentials not set in environment. Set BREVO_SMTP_USER & BREVO_SMTP_PASS in .env to activate live dispatch.',
   };
 }
+
+// Wire Brevo email dispatcher into directory email automation service
+registerEmailDispatcher(sendEmail);
 
 // In-Memory User & Credit Database with persistence capabilities
 interface UserRecord {
@@ -17612,12 +17623,64 @@ app.post('/api/directory/profile/update', async (req, res) => {
         website: updates.website,
       }).catch(() => {});
     }
+    // Trigger Phase 1 Directory Listing Updated automated email (idempotent)
+    handleDirectoryListingUpdatedEmail(business.id, { triggerSource: 'profile_update' }).catch((e) =>
+      console.warn('[Directory Profile Update] Email automation trigger notice:', e.message)
+    );
+
     res.json(result);
   } catch (err: any) {
     console.error('[Directory Profile Update] Error:', err);
     res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
+
+// Phase 1 Directory Listing Update Email Automation Endpoints
+app.post('/api/directory/email-automation/trigger', async (req, res) => {
+  try {
+    const { businessId, force, customRecipientEmail, syncVersion } = req.body;
+    if (!businessId) {
+      return res.status(400).json({ success: false, error: 'businessId is required' });
+    }
+    const { business } = await resolveAuthenticatedBusiness(req, businessId);
+    const result = await handleDirectoryListingUpdatedEmail(business.id, {
+      force: Boolean(force),
+      syncVersion: syncVersion || 'v1',
+      triggerSource: 'api_manual_trigger',
+      customRecipientEmail,
+    });
+    res.json(result);
+  } catch (err: any) {
+    console.error('[Directory Email Automation Trigger] Error:', err);
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/directory/email-automation/events', async (req, res) => {
+  try {
+    const businessId = req.query.businessId as string | undefined;
+    const limit = req.query.limit ? Number(req.query.limit) : 50;
+    const events = getEmailEvents({ businessId, limit });
+    res.json({ success: true, count: events.length, events });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/directory/email-automation/context/:businessId', async (req, res) => {
+  try {
+    const { businessId } = req.params;
+    const { business } = await resolveAuthenticatedBusiness(req, businessId);
+    const context = await buildRealBusinessEmailContext(business.id);
+    if (!context) {
+      return res.status(404).json({ success: false, error: 'Context not found' });
+    }
+    res.json({ success: true, context });
+  } catch (err: any) {
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+});
+
 
 // Dedicated Directory XML Sitemap (for directory.locoraai.com and /directory/sitemap.xml)
 app.get(['/directory/sitemap.xml', '/api/directory/sitemap.xml'], async (req, res) => {

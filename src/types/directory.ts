@@ -121,6 +121,7 @@ export type DirectoryEventType =
   | 'directory_lead_delivered'
   | 'directory_lead_response'
   | 'directory_lead_converted'
+  | 'directory_listing_updated'
   | 'phone_click'
   | 'website_click';
 
