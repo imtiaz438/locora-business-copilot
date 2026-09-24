@@ -66,7 +66,13 @@ interface BusinessOption {
   cityName?: string;
 }
 
-export const AdminEmailActivityPanel: React.FC = () => {
+export interface AdminEmailActivityPanelProps {
+  adminEmail?: string;
+}
+
+export const AdminEmailActivityPanel: React.FC<AdminEmailActivityPanelProps> = ({
+  adminEmail = 'imtiazbaloch3322@gmail.com',
+}) => {
   const [events, setEvents] = useState<EmailEventAuditRow[]>([]);
   const [status, setStatus] = useState<AutomationStatus | null>(null);
   const [businesses, setBusinesses] = useState<BusinessOption[]>([]);
@@ -88,14 +94,30 @@ export const AdminEmailActivityPanel: React.FC = () => {
     details?: any;
   } | null>(null);
 
+  const effectiveEmail = adminEmail || 'imtiazbaloch3322@gmail.com';
+  const getAuthHeaders = (): Record<string, string> => ({
+    'Content-Type': 'application/json',
+    'x-user-email': effectiveEmail,
+  });
+
   // Fetch audit events and configuration status
   const fetchAuditData = async () => {
     setLoading(true);
     try {
+      const authHeaders = getAuthHeaders();
       const [eventsRes, statusRes, bizRes] = await Promise.all([
-        fetch('/api/admin/directory-email/events'),
-        fetch('/api/admin/directory-email/status'),
-        fetch('/api/admin/directory/profiles'),
+        fetch(`/api/admin/directory-email/events?userEmail=${encodeURIComponent(effectiveEmail)}`, {
+          headers: authHeaders,
+          credentials: 'include',
+        }),
+        fetch(`/api/admin/directory-email/status?userEmail=${encodeURIComponent(effectiveEmail)}`, {
+          headers: authHeaders,
+          credentials: 'include',
+        }),
+        fetch(`/api/admin/directory/profiles?userEmail=${encodeURIComponent(effectiveEmail)}`, {
+          headers: authHeaders,
+          credentials: 'include',
+        }),
       ]);
 
       if (eventsRes.ok) {
@@ -134,7 +156,7 @@ export const AdminEmailActivityPanel: React.FC = () => {
 
   useEffect(() => {
     fetchAuditData();
-  }, []);
+  }, [adminEmail]);
 
   // Handler to select the first existing user/business quickly
   const handleSelectFirstUserBusiness = () => {
@@ -157,47 +179,74 @@ export const AdminEmailActivityPanel: React.FC = () => {
 
   // Perform protected admin send
   const handleDispatchEmail = async () => {
-    if (!sendBusinessId) return;
+    if (!sendBusinessId) {
+      setSendFeedback({
+        success: false,
+        message: 'Please select a valid target business profile.',
+      });
+      return;
+    }
     setSendingEmail(true);
     setSendFeedback(null);
     try {
+      const authHeaders = getAuthHeaders();
       const res = await fetch('/api/admin/directory-email/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
+        credentials: 'include',
         body: JSON.stringify({
           businessId: sendBusinessId,
           recipientEmail: sendRecipient.trim() || undefined,
           variant: sendVariant,
           force: true,
+          userEmail: effectiveEmail,
         }),
       });
 
-      const data = await res.json();
-      if (data.success && data.result?.success) {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success && data.result?.success) {
+        const isSimulated =
+          data.result.status === 'simulated' ||
+          data.result.event?.status === 'simulated' ||
+          data.result.event?.metadata?.provider === 'simulated_local';
+
         setSendFeedback({
           success: true,
-          message: `Directory Update email successfully dispatched for business ${sendBusinessId}!`,
+          message: isSimulated
+            ? `Directory Update email simulated successfully for ${sendBusinessId}. (Brevo simulation mode)`
+            : `Directory Update email successfully dispatched to ${sendRecipient || data.result.event?.recipientEmail}!`,
           details: {
             status: data.result.status,
             providerMessageId: data.result.event?.providerMessageId || data.result.event?.metadata?.messageId,
             recipient: data.result.event?.recipientEmail || sendRecipient,
             aiPersonalizationUsed: data.result.aiPersonalizationUsed,
+            provider: data.result.event?.metadata?.provider || 'brevo',
+            simulationNotice: isSimulated
+              ? 'Notice: Live Brevo SMTP credentials (BREVO_SMTP_USER & BREVO_SMTP_PASS) are not configured in your environment. The system processed and verified this email in local simulated relay mode and recorded the audit trail.'
+              : undefined,
           },
         });
         setSendConfirmOpen(false);
         // Refresh audit table
         fetchAuditData();
       } else {
+        const errorDetail =
+          data.result?.error ||
+          data.error ||
+          data.result?.reason ||
+          data.message ||
+          `Failed to dispatch email (Server HTTP status: ${res.status}).`;
+
         setSendFeedback({
           success: false,
-          message: data.result?.error || data.error || 'Failed to dispatch email.',
+          message: errorDetail,
         });
         setSendConfirmOpen(false);
       }
     } catch (err: any) {
       setSendFeedback({
         success: false,
-        message: err.message || 'Network error during dispatch.',
+        message: err.message || 'Network exception occurred during email dispatch.',
       });
       setSendConfirmOpen(false);
     } finally {
@@ -608,6 +657,11 @@ export const AdminEmailActivityPanel: React.FC = () => {
                       <div>Message ID: <strong>{sendFeedback.details.providerMessageId || 'Generated'}</strong></div>
                       <div>Recipient: <strong>{sendFeedback.details.recipient}</strong></div>
                       <div>AI Personalization: <strong>{sendFeedback.details.aiPersonalizationUsed ? 'Gemini AI Copy' : 'Deterministic Safety Fallback'}</strong></div>
+                      {sendFeedback.details.simulationNotice && (
+                        <div className="mt-2 font-sans font-medium text-[11px] p-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-900">
+                          {sendFeedback.details.simulationNotice}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

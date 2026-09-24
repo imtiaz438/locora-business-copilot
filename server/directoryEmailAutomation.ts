@@ -1893,6 +1893,7 @@ export async function handleDirectoryListingUpdatedEmail(
       success: false,
       status: 'skipped',
       reason: 'business_deleted_or_suspended',
+      error: `Business '${context.businessName}' (${businessId}) is deleted or suspended. Email dispatch skipped.`,
       context,
     };
   }

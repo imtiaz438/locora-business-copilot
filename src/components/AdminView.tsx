@@ -4083,7 +4083,7 @@ export const AdminView: React.FC = () => {
 
       {/* TAB: DIRECTORY UPDATE EMAIL ACTIVITY & AUDIT TRAIL */}
       {activeTab === 'email_activity' && (
-        <AdminEmailActivityPanel />
+        <AdminEmailActivityPanel adminEmail={user.email || 'imtiazbaloch3322@gmail.com'} />
       )}
 
       {/* TAB: PLAN & PROVIDER ACCESS MATRIX */}

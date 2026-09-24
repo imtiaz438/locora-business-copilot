@@ -17735,11 +17735,11 @@ app.get('/api/admin/directory-email/events', async (req, res) => {
 app.post('/api/admin/directory-email/send', async (req, res) => {
   try {
     if (!(await verifyAdminAccessAsync(req))) {
-      return res.status(403).json({ error: 'Access Denied. Admin privileges required.' });
+      return res.status(403).json({ success: false, error: 'Access Denied. Admin privileges required. Please authenticate as administrator.' });
     }
     const { businessId, recipientEmail, variant, force } = req.body;
     if (!businessId) {
-      return res.status(400).json({ success: false, error: 'businessId is required' });
+      return res.status(400).json({ success: false, error: 'businessId is required. Please select a valid business profile.' });
     }
 
     const result = await handleDirectoryListingUpdatedEmail(businessId, {
@@ -17752,10 +17752,18 @@ app.post('/api/admin/directory-email/send', async (req, res) => {
       isSuperAdmin: true,
     });
 
+    if (!result.success) {
+      return res.status(200).json({
+        success: false,
+        error: result.error || result.reason || 'Failed to dispatch email.',
+        result,
+      });
+    }
+
     res.json({ success: true, result });
   } catch (err: any) {
     console.error('[Admin Send Directory Update Email] Error:', err);
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false, error: err.message || 'Internal server error processing directory email dispatch.' });
   }
 });
 
