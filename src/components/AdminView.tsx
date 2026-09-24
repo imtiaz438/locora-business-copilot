@@ -59,15 +59,54 @@ import { DataFreshnessPanel } from './DataFreshnessPanel';
 import { DirectoryAdminPanel } from './admin/DirectoryAdminPanel';
 
 export const AdminView: React.FC = () => {
-  const { user, customers: clients = [], invoices, updateInvoiceStatus, businessProfile, updateBusinessProfile, updateSettings } = useApp();
+  const {
+    user,
+    customers: clients = [],
+    invoices,
+    updateInvoiceStatus,
+    businessProfile,
+    updateBusinessProfile,
+    updateSettings,
+    businesses,
+    switchBusiness,
+    setActiveTab: setAppActiveTab,
+  } = useApp();
 
   const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'users' | 'payments' | 'logo' | 'ai_tokens' | 'sales' | 'subscribers' | 'invoices' | 'dispatch' | 'email_server' | 'provider_access' | 'datasets' | 'directory_rules'>('users');
+  const [activeTab, setActiveTab] = useState<
+    | 'workspaces'
+    | 'users'
+    | 'database_tables'
+    | 'payments'
+    | 'logo'
+    | 'ai_tokens'
+    | 'sales'
+    | 'subscribers'
+    | 'invoices'
+    | 'dispatch'
+    | 'email_server'
+    | 'provider_access'
+    | 'datasets'
+    | 'directory_rules'
+  >('workspaces');
   const [loading, setLoading] = useState<boolean>(false);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
   const [actionErrorMsg, setActionErrorMsg] = useState<string | null>(null);
   const [validatingKeys, setValidatingKeys] = useState<boolean>(false);
   const msgBannerRef = useRef<HTMLDivElement>(null);
+
+  // Database Tables State
+  const [businessesTable, setBusinessesTable] = useState<any[]>([]);
+  const [locationsTable, setLocationsTable] = useState<any[]>([]);
+  const [reviewsTable, setReviewsTable] = useState<any[]>([]);
+  const [directoryProfilesTable, setDirectoryProfilesTable] = useState<any[]>([]);
+  const [dataConnectionsTable, setDataConnectionsTable] = useState<any[]>([]);
+  const [googleConnectionsTable, setGoogleConnectionsTable] = useState<any[]>([]);
+  const [leadsTable, setLeadsTable] = useState<any[]>([]);
+  const [customersTable, setCustomersTable] = useState<any[]>([]);
+  const [activeDbTable, setActiveDbTable] = useState<'businesses' | 'locations' | 'directoryProfiles' | 'reviews' | 'dataConnections' | 'leads' | 'users'>('businesses');
+  const [dbSearchTerm, setDbSearchTerm] = useState('');
+  const [workspaceSearchTerm, setWorkspaceSearchTerm] = useState('');
 
   // Brevo Mail Server State
   const [emailStatus, setEmailStatus] = useState<any>(null);
@@ -513,10 +552,18 @@ export const AdminView: React.FC = () => {
       } else {
         setIsAuthenticatedAdmin(true);
         setDbStats(data.stats);
-        setUsersTable(data.tables.users || []);
-        setSubscribersTable(data.tables.newsletterSubscribers || []);
-        setPromptPacks(data.tables.promptPacks || []);
-        setNewsletterState(data.tables.newsletterState);
+        setUsersTable(data.tables?.users || []);
+        setBusinessesTable(data.tables?.businesses || []);
+        setLocationsTable(data.tables?.locations || []);
+        setReviewsTable(data.tables?.reviews || []);
+        setDirectoryProfilesTable(data.tables?.directoryProfiles || []);
+        setDataConnectionsTable(data.tables?.dataConnections || []);
+        setGoogleConnectionsTable(data.tables?.googleConnections || []);
+        setLeadsTable(data.tables?.leads || []);
+        setCustomersTable(data.tables?.customers || []);
+        setSubscribersTable(data.tables?.newsletterSubscribers || []);
+        setPromptPacks(data.tables?.promptPacks || []);
+        setNewsletterState(data.tables?.newsletterState);
         fetchAiTokenStats();
         fetchTransactionsData();
       }
@@ -1270,6 +1317,28 @@ export const AdminView: React.FC = () => {
       <div className="flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-1">
         <button
           type="button"
+          onClick={() => setActiveTab('workspaces')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'workspaces' ? 'bg-[#059669] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
+          }`}
+        >
+          <Building2 className="w-4 h-4 text-emerald-300" />
+          <span>Customer Workspaces ({businessesTable.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('database_tables')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'database_tables' ? 'bg-[#059669] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
+          }`}
+        >
+          <Database className="w-4 h-4 text-emerald-300" />
+          <span>Database Tables Inspector</span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab('users')}
           className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
             activeTab === 'users' ? 'bg-[#059669] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
@@ -1665,6 +1734,24 @@ export const AdminView: React.FC = () => {
                         <td className="p-3 text-right space-x-1">
                           <div className="inline-flex gap-1 flex-wrap justify-end">
                             <button
+                              onClick={() => {
+                                const userBiz =
+                                  businessesTable.find((b: any) => b.ownerEmail?.toLowerCase() === usr.email?.toLowerCase()) ||
+                                  businesses.find((b: any) => b.ownerEmail?.toLowerCase() === usr.email?.toLowerCase());
+                                if (userBiz) {
+                                  switchBusiness(userBiz.id);
+                                  setAppActiveTab('overview');
+                                } else {
+                                  alert(`No active business workspace registered for ${usr.email}`);
+                                }
+                              }}
+                              title={`Open workspace for ${usr.name || usr.email}`}
+                              className="px-2 py-1 text-[10px] font-bold bg-emerald-50 text-[#059669] hover:bg-emerald-100 rounded border border-emerald-300 cursor-pointer flex items-center gap-1"
+                            >
+                              <Briefcase className="w-3 h-3 text-[#059669]" />
+                              <span>Workspace</span>
+                            </button>
+                            <button
                               onClick={() => handleUpdateUserRole(usr.email, 'admin')}
                               title="Grant Admin Role"
                               className="px-2 py-1 text-[10px] font-bold bg-purple-50 text-purple-700 hover:bg-purple-100 rounded border border-purple-200 cursor-pointer"
@@ -1699,6 +1786,452 @@ export const AdminView: React.FC = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: CUSTOMER WORKSPACES & CLIENT BUSINESSES */}
+      {activeTab === 'workspaces' && (
+        <div className="space-y-6 font-sans">
+          {/* Workspaces Header Card */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white rounded-3xl p-6 shadow-xl border border-slate-700 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-full text-[10px] font-bold font-mono uppercase">
+                  <Building2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Admin Master Cockpit • Customer Workspaces</span>
+                </div>
+                <h3 className="text-2xl font-bold font-heading text-white mt-2">
+                  Customer Workspaces & Live Dashboards
+                </h3>
+                <p className="text-xs text-slate-300 max-w-2xl mt-1 leading-relaxed">
+                  As System Administrator, you have direct authorization to open, inspect, or manage any registered customer workspace in real-time. Switch between client dashboards instantly.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fetchAdminData()}
+                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                  <span>Refresh Workspaces</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadAdminDbExport}
+                  className="px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-md cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export DB</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Metrics */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-800 text-xs">
+              <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                <span className="text-slate-400 block text-[11px]">Total Workspaces</span>
+                <span className="text-xl font-bold font-heading text-white">{businessesTable.length}</span>
+              </div>
+              <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                <span className="text-slate-400 block text-[11px]">Locations Tracked</span>
+                <span className="text-xl font-bold font-heading text-emerald-400">{locationsTable.length}</span>
+              </div>
+              <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                <span className="text-slate-400 block text-[11px]">Directory Listings</span>
+                <span className="text-xl font-bold font-heading text-purple-300">{directoryProfilesTable.length}</span>
+              </div>
+              <div className="bg-slate-800/80 p-3 rounded-xl border border-slate-700">
+                <span className="text-slate-400 block text-[11px]">Google Reviews</span>
+                <span className="text-xl font-bold font-heading text-amber-300">{reviewsTable.length}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Search & Workspaces Table */}
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xs p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="relative w-full sm:w-80">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  placeholder="Search workspace by name, email, or city..."
+                  value={workspaceSearchTerm}
+                  onChange={(e) => setWorkspaceSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#059669]/20"
+                />
+              </div>
+
+              <div className="text-xs text-slate-500 font-mono">
+                Showing {
+                  businessesTable.filter((b: any) =>
+                    !workspaceSearchTerm ||
+                    b.name?.toLowerCase().includes(workspaceSearchTerm.toLowerCase()) ||
+                    b.ownerEmail?.toLowerCase().includes(workspaceSearchTerm.toLowerCase()) ||
+                    b.city?.toLowerCase().includes(workspaceSearchTerm.toLowerCase())
+                  ).length
+                } of {businessesTable.length} registered customer workspaces
+              </div>
+            </div>
+
+            <div className="overflow-x-auto border border-slate-200 rounded-xl">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold">
+                    <th className="p-3">Business Name</th>
+                    <th className="p-3">Owner Email</th>
+                    <th className="p-3">Location / Market</th>
+                    <th className="p-3">Connected Integrations</th>
+                    <th className="p-3">Directory Status</th>
+                    <th className="p-3">Plan</th>
+                    <th className="p-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {businessesTable
+                    .filter((b: any) =>
+                      !workspaceSearchTerm ||
+                      b.name?.toLowerCase().includes(workspaceSearchTerm.toLowerCase()) ||
+                      b.ownerEmail?.toLowerCase().includes(workspaceSearchTerm.toLowerCase()) ||
+                      b.city?.toLowerCase().includes(workspaceSearchTerm.toLowerCase())
+                    )
+                    .map((biz: any) => {
+                      const userLoc = locationsTable.find((l: any) => l.businessId === biz.id);
+                      const hasDirectory = directoryProfilesTable.some((p: any) => p.businessId === biz.id || p.businessId === biz.slug);
+                      const bizConnections = dataConnectionsTable.filter((c: any) => c.businessId === biz.id);
+                      const hasGbp = bizConnections.some((c: any) => c.provider === 'google_gbp' && c.status === 'connected') || Boolean(biz.gbpConnected);
+                      const hasGsc = bizConnections.some((c: any) => c.provider === 'google_search_console' && c.status === 'connected');
+                      const hasGa4 = bizConnections.some((c: any) => c.provider === 'google_analytics' && c.status === 'connected');
+
+                      return (
+                        <tr key={biz.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="p-3">
+                            <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                              <span>{biz.name}</span>
+                              {user.email?.toLowerCase() === biz.ownerEmail?.toLowerCase() && (
+                                <span className="px-1.5 py-0.2 text-[9px] bg-slate-100 text-slate-600 rounded font-mono">My Account</span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-mono block">ID: {biz.id}</span>
+                          </td>
+                          <td className="p-3 font-mono text-slate-700 text-[11px]">
+                            {biz.ownerEmail || '—'}
+                          </td>
+                          <td className="p-3 text-slate-600">
+                            {biz.city || userLoc?.city ? (
+                              <span>
+                                {biz.city || userLoc?.city}{biz.state || userLoc?.state ? `, ${biz.state || userLoc?.state}` : ''}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 italic">Not set</span>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            <div className="inline-flex items-center gap-1 flex-wrap">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                                  hasGbp
+                                    ? 'bg-emerald-50 text-[#059669] border-emerald-300'
+                                    : 'bg-slate-100 text-slate-400 border-slate-200'
+                                }`}
+                                title={hasGbp ? 'Google Business Profile Connected' : 'Google Business Profile Not Connected'}
+                              >
+                                GBP {hasGbp ? '✓' : '—'}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                                  hasGsc
+                                    ? 'bg-emerald-50 text-[#059669] border-emerald-300'
+                                    : 'bg-slate-100 text-slate-400 border-slate-200'
+                                }`}
+                                title={hasGsc ? 'Google Search Console Connected' : 'Search Console Not Connected'}
+                              >
+                                GSC {hasGsc ? '✓' : '—'}
+                              </span>
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                                  hasGa4
+                                    ? 'bg-emerald-50 text-[#059669] border-emerald-300'
+                                    : 'bg-slate-100 text-slate-400 border-slate-200'
+                                }`}
+                                title={hasGa4 ? 'Google Analytics 4 Connected' : 'GA4 Not Connected'}
+                              >
+                                GA4 {hasGa4 ? '✓' : '—'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            {hasDirectory || biz.isPublishedInDirectory ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                <Globe2 className="w-3 h-3 text-purple-600" />
+                                <span>Published</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500">
+                                <span>Unpublished</span>
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono bg-slate-100 text-slate-700">
+                              {biz.planTier || 'free'}
+                            </span>
+                          </td>
+                          <td className="p-3 text-right">
+                            <div className="inline-flex items-center gap-1.5 justify-end">
+                              <button
+                                onClick={() => {
+                                  switchBusiness(biz.id);
+                                  setAppActiveTab('overview');
+                                }}
+                                className="px-3 py-1.5 text-xs font-bold bg-[#059669] hover:bg-[#047857] text-white rounded-xl shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+                                title={`Open ${biz.name} Workspace Dashboard`}
+                              >
+                                <Briefcase className="w-3.5 h-3.5" />
+                                <span>Open Workspace</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  switchBusiness(biz.id);
+                                  setAppActiveTab('directory');
+                                }}
+                                className="px-2.5 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+                                title="View Directory Listing"
+                              >
+                                <ExternalLink className="w-3 h-3 text-slate-500" />
+                                <span>Directory</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: DATABASE TABLES INSPECTOR */}
+      {activeTab === 'database_tables' && (
+        <div className="space-y-6 font-sans">
+          {/* Header Card */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white rounded-3xl p-6 shadow-xl border border-slate-700 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-full text-[10px] font-bold font-mono uppercase">
+                  <Database className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Cloud SQL PostgreSQL • Live Database Inspector</span>
+                </div>
+                <h3 className="text-2xl font-bold font-heading text-white mt-2">
+                  Relational Database Tables & Live Records
+                </h3>
+                <p className="text-xs text-slate-300 max-w-2xl mt-1 leading-relaxed">
+                  Direct visibility into production database tables, schemas, and live records across accounts, businesses, locations, directory profiles, and reviews.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={fetchAdminData}
+                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                  <span>Refresh DB</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadAdminDbExport}
+                  className="px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-md cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export DB (JSON)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Table Selection Pills */}
+            <div className="flex items-center gap-2 pt-2 border-t border-slate-800 overflow-x-auto text-xs">
+              <button
+                type="button"
+                onClick={() => setActiveDbTable('businesses')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  activeDbTable === 'businesses'
+                    ? 'bg-[#059669] text-white shadow-xs'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>businessesTable ({businessesTable.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveDbTable('locations')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  activeDbTable === 'locations'
+                    ? 'bg-[#059669] text-white shadow-xs'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                <span>locationsTable ({locationsTable.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveDbTable('directoryProfiles')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  activeDbTable === 'directoryProfiles'
+                    ? 'bg-[#059669] text-white shadow-xs'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                }`}
+              >
+                <Globe2 className="w-3.5 h-3.5" />
+                <span>directoryProfilesTable ({directoryProfilesTable.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveDbTable('reviews')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  activeDbTable === 'reviews'
+                    ? 'bg-[#059669] text-white shadow-xs'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                }`}
+              >
+                <Star className="w-3.5 h-3.5" />
+                <span>googleReviewsTable ({reviewsTable.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveDbTable('dataConnections')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  activeDbTable === 'dataConnections'
+                    ? 'bg-[#059669] text-white shadow-xs'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                }`}
+              >
+                <CheckCircle className="w-3.5 h-3.5" />
+                <span>dataConnectionsTable ({dataConnectionsTable.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveDbTable('leads')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  activeDbTable === 'leads'
+                    ? 'bg-[#059669] text-white shadow-xs'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                }`}
+              >
+                <Briefcase className="w-3.5 h-3.5" />
+                <span>leadsTable ({leadsTable.length})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveDbTable('users')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  activeDbTable === 'users'
+                    ? 'bg-[#059669] text-white shadow-xs'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>usersTable ({usersTable.length})</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Active Table Viewer */}
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xs p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="relative w-full sm:w-80">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  placeholder={`Search in ${activeDbTable}...`}
+                  value={dbSearchTerm}
+                  onChange={(e) => setDbSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#059669]/20"
+                />
+              </div>
+
+              <div className="text-xs text-slate-500 font-mono">
+                PostgreSQL Engine: <span className="text-[#059669] font-bold">Cloud SQL</span> • Table: <span className="font-bold text-slate-800">{activeDbTable}</span>
+              </div>
+            </div>
+
+            {/* Table Content */}
+            <div className="overflow-x-auto border border-slate-200 rounded-xl max-h-[550px] overflow-y-auto">
+              {(() => {
+                let targetData: any[] = [];
+                if (activeDbTable === 'businesses') targetData = businessesTable;
+                else if (activeDbTable === 'locations') targetData = locationsTable;
+                else if (activeDbTable === 'directoryProfiles') targetData = directoryProfilesTable;
+                else if (activeDbTable === 'reviews') targetData = reviewsTable;
+                else if (activeDbTable === 'dataConnections') targetData = dataConnectionsTable;
+                else if (activeDbTable === 'leads') targetData = leadsTable;
+                else if (activeDbTable === 'users') targetData = usersTable;
+
+                const filtered = targetData.filter((row: any) => {
+                  if (!dbSearchTerm) return true;
+                  return JSON.stringify(row).toLowerCase().includes(dbSearchTerm.toLowerCase());
+                });
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="p-8 text-center text-slate-400 text-xs italic">
+                      No records found in {activeDbTable} matching "{dbSearchTerm}".
+                    </div>
+                  );
+                }
+
+                const columns = Object.keys(filtered[0] || {}).slice(0, 10);
+
+                return (
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold sticky top-0">
+                        {columns.map((col) => (
+                          <th key={col} className="p-3 font-mono text-[11px] whitespace-nowrap">
+                            {col}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
+                      {filtered.map((row: any, rIdx: number) => (
+                        <tr key={row.id || rIdx} className="hover:bg-slate-50/80 transition-colors">
+                          {columns.map((col) => {
+                            const val = row[col];
+                            const isObj = typeof val === 'object' && val !== null;
+                            return (
+                              <td key={col} className="p-3 max-w-xs truncate text-slate-700">
+                                {isObj ? (
+                                  <span className="text-slate-500 truncate block text-[10px]">
+                                    {JSON.stringify(val)}
+                                  </span>
+                                ) : (
+                                  String(val ?? '—')
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                );
+              })()}
             </div>
           </div>
         </div>

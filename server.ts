@@ -3715,8 +3715,8 @@ app.get('/api/data-engine/businesses', (req, res) => {
       req.cookies?.auth_email ||
       ''
     ).toLowerCase().trim();
-    let businesses: any[] = [];
-    if (userEmail) {
+    const isSuper = verifyAdminAccess(req) || SUPER_ADMIN_EMAILS.has(userEmail);
+    if (userEmail && !isSuper) {
       businesses = getBusinessesForUser(userEmail);
       if (businesses.length === 0) {
         const u = usersDb.get(userEmail);
@@ -3732,12 +3732,7 @@ app.get('/api/data-engine/businesses', (req, res) => {
         businesses = [newBiz];
       }
     } else {
-      const isSuper = verifyAdminAccess(req);
-      if (isSuper) {
-        businesses = getAllBusinessRecordsFromLocoraDb();
-      } else {
-        businesses = [];
-      }
+      businesses = getAllBusinessRecordsFromLocoraDb();
     }
     res.json({ success: true, businesses, count: businesses.length, source: 'locora_db' });
   } catch (err: any) {
@@ -4251,16 +4246,28 @@ app.get('/api/production/businesses', async (req, res) => {
     const userRec = usersDb.get(effectiveEmail);
     const account = await ensureAccountForUser(effectiveEmail, userRec?.planTier);
 
-    let list = await db
-      .select()
-      .from(schema.businessesTable)
-      .where(
-        or(
-          eq(schema.businessesTable.accountId, account.id),
-          ilike(schema.businessesTable.ownerEmail, effectiveEmail)
-        )
-      )
-      .orderBy(desc(schema.businessesTable.createdAt));
+    const isSuperAdmin =
+      userRec?.role === 'admin' ||
+      userRec?.role === 'owner' ||
+      effectiveEmail === 'imtiazbaloch3322@gmail.com' ||
+      effectiveEmail === 'support@locoraai.com' ||
+      SUPER_ADMIN_EMAILS.has(effectiveEmail);
+
+    let list = isSuperAdmin
+      ? await db
+          .select()
+          .from(schema.businessesTable)
+          .orderBy(desc(schema.businessesTable.createdAt))
+      : await db
+          .select()
+          .from(schema.businessesTable)
+          .where(
+            or(
+              eq(schema.businessesTable.accountId, account.id),
+              ilike(schema.businessesTable.ownerEmail, effectiveEmail)
+            )
+          )
+          .orderBy(desc(schema.businessesTable.createdAt));
 
     // If user has an account, ensure their canonical business exists in PostgreSQL
     if (list.length === 0 && effectiveEmail) {
@@ -15224,7 +15231,7 @@ function verifyAdminAccess(req: express.Request): boolean {
 }
 
 // Full System Database Export Endpoint (ADMIN ONLY)
-app.get('/api/database/export', (req, res) => {
+app.get('/api/database/export', async (req, res) => {
   try {
     if (!verifyAdminAccess(req)) {
       return res.status(403).json({
@@ -15235,29 +15242,87 @@ app.get('/api/database/export', (req, res) => {
     const subscribers = Array.from(newsletterSubscribersDb.values());
     const registeredUsers = Array.from(usersDb.values());
 
+    const [
+      sqlBusinesses,
+      sqlLocations,
+      sqlProfiles,
+      sqlReviews,
+      sqlDataConnections,
+      sqlGoogleConnections,
+      sqlGbpLocations,
+      sqlSearchConsoleConnections,
+      sqlAnalyticsConnections,
+      sqlLeads,
+      sqlCustomers,
+      sqlInvoices,
+      sqlTransactions,
+      sqlBusinessBrain,
+    ] = await Promise.all([
+      db.select().from(schema.businessesTable).catch(() => []),
+      db.select().from(schema.locationsTable).catch(() => []),
+      db.select().from(schema.directoryProfilesTable).catch(() => []),
+      db.select().from(schema.googleReviewsTable).catch(() => []),
+      db.select().from(schema.dataConnectionsTable).catch(() => []),
+      db.select().from(schema.googleConnectionsTable).catch(() => []),
+      db.select().from(schema.googleBusinessLocationsTable).catch(() => []),
+      db.select().from(schema.searchConsoleConnectionsTable).catch(() => []),
+      db.select().from(schema.analyticsConnectionsTable).catch(() => []),
+      db.select().from(schema.leadsTable).catch(() => []),
+      db.select().from(schema.customersTable).catch(() => []),
+      db.select().from(schema.invoicesTable).catch(() => []),
+      db.select().from(schema.transactionsTable).catch(() => []),
+      db.select().from(schema.businessBrainTable).catch(() => []),
+    ]);
+
     const exportData = {
       system: 'Locora AI - Business Copilot 3.0',
+      databaseEngine: 'PostgreSQL Cloud SQL',
       exportedAt: new Date().toISOString(),
-      firestoreDatabaseId: 'ai-studio-locoraaibusiness-98f42f97-dbe7-4877-b55c-2edca441dfd7',
       counts: {
         registeredUsers: registeredUsers.length,
+        businesses: sqlBusinesses.length,
+        locations: sqlLocations.length,
+        directoryProfiles: sqlProfiles.length,
+        googleReviews: sqlReviews.length,
+        dataConnections: sqlDataConnections.length,
+        googleConnections: sqlGoogleConnections.length,
+        searchConsoleConnections: sqlSearchConsoleConnections.length,
+        analyticsConnections: sqlAnalyticsConnections.length,
+        leads: sqlLeads.length,
+        customers: sqlCustomers.length,
+        invoices: sqlInvoices.length,
+        transactions: sqlTransactions.length,
         subscribersCount: subscribers.length,
       },
       tables: {
         users: registeredUsers,
+        businesses: sqlBusinesses,
+        locations: sqlLocations,
+        directoryProfiles: sqlProfiles,
+        googleReviews: sqlReviews,
+        dataConnections: sqlDataConnections,
+        googleConnections: sqlGoogleConnections,
+        googleBusinessLocations: sqlGbpLocations,
+        searchConsoleConnections: sqlSearchConsoleConnections,
+        analyticsConnections: sqlAnalyticsConnections,
+        leads: sqlLeads,
+        customers: sqlCustomers,
+        invoices: sqlInvoices,
+        transactions: sqlTransactions,
+        businessBrain: sqlBusinessBrain,
         newsletterSubscribers: subscribers,
         newsletterState: newsletterState,
         weeklyPromptPacks: WEEKLY_PROMPT_PACKS,
       },
       environment: {
-        nodeEnv: process.env.NODE_ENV || 'development',
+        nodeEnv: process.env.NODE_ENV || 'production',
         port: 3000,
         aiProvider: 'Google Gemini (Server-side API)',
       },
     };
 
     res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename="locora_admin_database_export_${Date.now()}.json"`);
+    res.setHeader('Content-Disposition', `attachment; filename="locora_full_production_database_export_${Date.now()}.json"`);
     res.send(JSON.stringify(exportData, null, 2));
   } catch (err: any) {
     console.error('Database export error:', err);
@@ -15362,11 +15427,26 @@ app.get('/api/admin/database-tables', async (req, res) => {
 
     const registeredUsers = Array.from(usersMap.values());
 
+    const sqlBusinesses = await db.select().from(schema.businessesTable).orderBy(desc(schema.businessesTable.createdAt)).catch(() => []);
+    const sqlLocations = await db.select().from(schema.locationsTable).catch(() => []);
+    const sqlProfiles = await db.select().from(schema.directoryProfilesTable).catch(() => []);
+    const sqlReviews = await db.select().from(schema.googleReviewsTable).catch(() => []);
+    const sqlDataConnections = await db.select().from(schema.dataConnectionsTable).catch(() => []);
+    const sqlGoogleConnections = await db.select().from(schema.googleConnectionsTable).catch(() => []);
+    const sqlLeads = await db.select().from(schema.leadsTable).catch(() => []);
+    const sqlCustomers = await db.select().from(schema.customersTable).catch(() => []);
+
     res.json({
       success: true,
       databaseEngine: 'PostgreSQL Cloud SQL',
       stats: {
         totalUsers: registeredUsers.length,
+        totalBusinesses: sqlBusinesses.length,
+        totalLocations: sqlLocations.length,
+        totalDirectoryProfiles: sqlProfiles.length,
+        totalReviews: sqlReviews.length,
+        totalDataConnections: sqlDataConnections.length,
+        totalLeads: sqlLeads.length,
         totalSubscribers: Math.max(subscribers.length, sqlSubscribers.length),
         lastNewsletterDispatch: newsletterState.lastDispatchedAt,
         totalEmailsSent: newsletterState.totalEmailsSent,
@@ -15374,6 +15454,14 @@ app.get('/api/admin/database-tables', async (req, res) => {
       },
       tables: {
         users: registeredUsers,
+        businesses: sqlBusinesses,
+        locations: sqlLocations,
+        directoryProfiles: sqlProfiles,
+        reviews: sqlReviews,
+        dataConnections: sqlDataConnections,
+        googleConnections: sqlGoogleConnections,
+        leads: sqlLeads,
+        customers: sqlCustomers,
         newsletterSubscribers: subscribers,
         newsletterState: newsletterState,
         promptPacks: WEEKLY_PROMPT_PACKS,
