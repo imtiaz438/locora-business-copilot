@@ -90,16 +90,23 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
   };
 
   const [relatedBusinesses, setRelatedBusinesses] = useState<DirectoryBusinessListing[]>([]);
+  const [visibleReviewsCount, setVisibleReviewsCount] = useState(5);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   useEffect(() => {
     const fetchBusiness = async () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/directory/business/${slug}`);
+        const authEmail = (typeof window !== 'undefined' ? localStorage.getItem('locora_auth_email') || localStorage.getItem('locora_user_email') : '') || '';
+        const emailQuery = authEmail ? `?userEmail=${encodeURIComponent(authEmail)}` : '';
+        const res = await fetch(`/api/directory/business/${slug}${emailQuery}`, {
+          headers: authEmail ? { 'x-user-email': authEmail } : {},
+        });
         const data = await res.json();
         if (data.success && data.business) {
           setBusiness(data.business);
+          setIsPreviewMode(Boolean(data.previewMode));
           // If current route slug was an internal email or ID (like biz_imtiazbaloch3322_gmail_com),
           // automatically rewrite the browser URL bar to the clean, valid public slug
           if (data.business.slug && data.business.slug !== slug && typeof window !== 'undefined') {
@@ -364,8 +371,6 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
   const isPremium = business.planTier === 'pro' || business.planTier === 'agency' || business.planTier === 'growth';
   const status = business.directoryStatus || (business.isClaimed ? 'CLAIMED' : 'PUBLISHED');
   const isUnclaimed = !business.isClaimed && status !== 'CLAIMED' && status !== 'VERIFIED';
-
-  const [visibleReviewsCount, setVisibleReviewsCount] = useState(5);
 
   const reviewSourceLabel = business.reviewSource === 'google_gbp' || business.reviewSource === 'google' || !business.reviewSource ? 'Google' : business.reviewSource;
 
