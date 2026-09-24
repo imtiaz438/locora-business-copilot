@@ -221,7 +221,7 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
         phone: detailedPhone || '',
         website: detailedWebsite || '',
         category: place.primaryType || 'Local Business',
-        rating: place.rating || 5.0,
+        rating: place.rating != null && !isNaN(Number(place.rating)) ? Number(place.rating) : 0,
         reviewCount: place.reviewCount || 0,
         unansweredReviews: detailedReviews.filter((r: any) => !r.replyText && !r.isAnswered).length,
         businessHours: detailedHours,
@@ -250,7 +250,7 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
         phone: detailedPhone || '',
         website: detailedWebsite || '',
         category: place.primaryType || 'Local Business',
-        googleRating: place.rating || 5.0,
+        googleRating: place.rating != null && !isNaN(Number(place.rating)) ? Number(place.rating) : 0,
         reviewCount: place.reviewCount || 0,
         gbpConnected: true,
         gbpCompleteness: 98,
@@ -305,7 +305,7 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
       phone: manualPhone.trim(),
       website: manualWebsite.trim(),
       category: manualCategory.trim() || 'Local Business',
-      rating: activeBusiness.googleRating || 5.0,
+      rating: activeBusiness.googleRating || 0,
       reviewCount: activeBusiness.reviewCount || 0,
       unansweredReviews: 0,
       services: parsedServices.length > 0 ? parsedServices : [manualCategory.trim()],
@@ -333,7 +333,7 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
         phone: manualPhone.trim(),
         website: manualWebsite.trim(),
         category: manualCategory.trim(),
-        googleRating: activeBusiness.googleRating || 5.0,
+        googleRating: activeBusiness.googleRating || 0,
         reviewCount: activeBusiness.reviewCount || 0,
         gbpConnected: true,
         gbpCompleteness: 98,
@@ -765,7 +765,7 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
                                     state: activeBusiness.state || '',
                                     country: activeBusiness.country || 'United States',
                                     formattedAddress: activeBusiness.address ? `${activeBusiness.address}, ${activeBusiness.city || ''}` : `${activeBusiness.name}, ${activeBusiness.city || ''}`,
-                                    rating: activeBusiness.googleRating || 5.0,
+                                    rating: activeBusiness.googleRating || 0,
                                     reviewCount: activeBusiness.reviewCount || 0,
                                     primaryType: activeBusiness.category || 'Local Business',
                                     phone: activeBusiness.phone || '',
@@ -801,6 +801,25 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
           ) : (
             /* Manual Profile Fields Tab */
             <form onSubmit={handleSaveManualProfile} className="space-y-4">
+              {/* Highlighted Reviews Notice for Manual Business Entry */}
+              <div className="p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200/90 shadow-2xs flex items-start gap-3">
+                <div className="p-2 rounded-xl bg-amber-100 text-amber-800 shrink-0 mt-0.5">
+                  <AlertCircle className="w-4 h-4" />
+                </div>
+                <div className="space-y-1 text-xs">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-amber-950">Important Notice Regarding Google Reviews</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200/80 text-amber-900">Required</span>
+                  </div>
+                  <p className="text-amber-800 text-[11px] leading-relaxed">
+                    Google reviews and verified star ratings <strong>can only be pulled automatically when you connect your official Google Business Profile</strong>. If you enter or configure this business manually, reviews cannot be fetched from Google until your Google Business Profile is connected.
+                  </p>
+                  <p className="text-amber-700/90 text-[10px] font-medium">
+                    (Tip: You can connect your Google account anytime in Settings → Integrations. Or upgrade your plan to connect review with out Google business profile or oauth required.)
+                  </p>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="space-y-1 sm:col-span-2">
                   <label className="text-xs font-bold text-slate-700">Business Name *</label>

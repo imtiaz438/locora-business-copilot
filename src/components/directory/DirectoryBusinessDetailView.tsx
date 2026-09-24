@@ -254,7 +254,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               categoryName: business.categoryName,
               cityName: business.cityName,
               stateCode: business.stateCode,
-              averageRating: business.gbpData?.averageRating || 5,
+              averageRating: business.gbpData?.averageRating || null,
               reviewCount: business.gbpData?.reviewCount || 0,
               timestamp: Date.now(),
             })
@@ -411,7 +411,13 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
 
   // Location & Google Maps Setup (real coordinates & address only)
   const hasCoordinates = typeof business.latitude === 'number' && typeof business.longitude === 'number' && !isNaN(business.latitude) && !isNaN(business.longitude);
-  const fullAddress = business.address || (business.cityName && business.stateCode ? `${business.cityName}, ${business.stateCode}` : null);
+  const addressParts = [
+    business.address && business.address !== business.cityName ? business.address : null,
+    business.cityName,
+    business.stateCode,
+    'United States',
+  ].filter(Boolean);
+  const fullAddress = addressParts.length > 0 ? addressParts.join(', ') : (business.address || (business.cityName && business.stateCode ? `${business.cityName}, ${business.stateCode}` : null));
   const hasValidMapLocation = hasCoordinates || Boolean(fullAddress);
 
   const mapEmbedQuery = hasCoordinates
@@ -1068,12 +1074,14 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                               <Star
                                 key={i}
                                 className={`w-3.5 h-3.5 ${
-                                  i < Math.floor(rev.rating || 5) ? 'fill-amber-400 text-amber-400' : 'text-slate-300'
+                                  i < Math.floor(rev.rating || 0) ? 'fill-amber-400 text-amber-400' : 'text-slate-300'
                                 }`}
                               />
                             ))}
                           </div>
-                          <span className="text-xs font-bold text-slate-800 ml-1">{rev.rating || 5}.0</span>
+                          {rev.rating != null && (
+                            <span className="text-xs font-bold text-slate-800 ml-1">{Number(rev.rating).toFixed(1)}</span>
+                          )}
                         </div>
                       </div>
 

@@ -399,9 +399,20 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
             {listings.map((biz) => {
-              const rating = biz.gbpData?.averageRating || 5;
-              const reviewsCount = biz.gbpData?.reviewCount || 10;
+              const hasReviews = typeof biz.gbpData?.averageRating === 'number' &&
+                                 biz.gbpData.averageRating > 0 &&
+                                 typeof biz.gbpData?.reviewCount === 'number' &&
+                                 biz.gbpData.reviewCount > 0;
+              const rating = hasReviews ? biz.gbpData!.averageRating! : null;
+              const reviewsCount = hasReviews ? biz.gbpData!.reviewCount! : 0;
               const isPremium = biz.planTier === 'pro' || biz.planTier === 'agency' || biz.planTier === 'growth';
+
+              // Real location resolution (full address / city / state)
+              const locationDisplay = [
+                biz.address && biz.address !== biz.cityName ? biz.address : null,
+                biz.cityName,
+                biz.stateCode
+              ].filter(Boolean).join(', ') || (biz.cityName ? `${biz.cityName}, ${biz.stateCode || ''}` : 'United States');
 
               return (
                 <div
@@ -434,26 +445,35 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                       <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                     </h3>
 
-                    {/* Rating & Reviews */}
+                    {/* Rating & Reviews - Strictly Real Data Only */}
                     <div className="flex items-center gap-2 mt-2">
-                      <div className="flex items-center text-amber-400">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-3.5 h-3.5 ${
-                              i < Math.floor(rating) ? 'fill-amber-400 text-amber-400' : 'text-slate-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="text-xs font-bold text-slate-800">{rating.toFixed(1)}</span>
-                      <span className="text-[11px] text-slate-400">({reviewsCount} Google reviews)</span>
+                      {hasReviews && rating !== null ? (
+                        <>
+                          <div className="flex items-center text-amber-400">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-3.5 h-3.5 ${
+                                  i < Math.floor(rating) ? 'fill-amber-400 text-amber-400' : 'text-slate-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-xs font-bold text-slate-800">{rating.toFixed(1)}</span>
+                          <span className="text-[11px] text-slate-400">({reviewsCount} Google {reviewsCount === 1 ? 'review' : 'reviews'})</span>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                          <span>No reviews connected yet</span>
+                        </div>
+                      )}
                     </div>
 
-                    {/* City & Address */}
+                    {/* City & Address - Real Location */}
                     <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-2.5">
                       <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                      <span className="truncate">{biz.cityName ? `${biz.cityName}, ${biz.stateCode}` : 'United States'}</span>
+                      <span className="truncate">{locationDisplay}</span>
                     </div>
 
                     {/* Scraped / About snippet */}

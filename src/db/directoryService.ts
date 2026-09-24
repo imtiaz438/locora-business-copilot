@@ -1,5 +1,6 @@
 import { db, schema } from './index.ts';
 import { eq, and, ne, or, ilike, desc } from 'drizzle-orm';
+import { geocodeAddress } from '../utils/geocoder.ts';
 
 export interface DirectoryEligibilityResult {
   eligible: boolean;
@@ -935,6 +936,40 @@ export async function syncBusinessToDirectoryProjection(
     } else if (existing?.latitude != null && existing?.longitude != null && isValidNumber(Number(existing.latitude)) && isValidNumber(Number(existing.longitude))) {
       resolvedLat = Number(existing.latitude);
       resolvedLng = Number(existing.longitude);
+    }
+
+    // Auto-resolve coordinates if missing and any location details exist
+    if (resolvedLat == null || resolvedLng == null) {
+      try {
+        const geocodeInput = {
+          address: resolvedAddress || primaryLoc?.address || '',
+          city: resolvedCity || primaryLoc?.city || biz.cityName || '',
+          state: resolvedRegion || primaryLoc?.state || biz.stateCode || '',
+          zip: primaryLoc?.zip || '',
+          country: resolvedCountry || primaryLoc?.country || 'United States',
+        };
+
+        const geocoded = await geocodeAddress(geocodeInput);
+        if (geocoded && isValidNumber(geocoded.lat) && isValidNumber(geocoded.lng)) {
+          resolvedLat = geocoded.lat;
+          resolvedLng = geocoded.lng;
+
+          // Also persist geocoded coordinates back into locationsTable if primaryLoc exists
+          if (primaryLoc && (primaryLoc.lat == null || primaryLoc.lng == null)) {
+            await db
+              .update(schema.locationsTable)
+              .set({
+                lat: Number(geocoded.lat),
+                lng: Number(geocoded.lng),
+                updatedAt: new Date(),
+              })
+              .where(eq(schema.locationsTable.id, primaryLoc.id))
+              .catch(() => {});
+          }
+        }
+      } catch (geoErr) {
+        console.warn(`[Directory Geocoding] Non-blocking notice for business ${businessId}:`, geoErr);
+      }
     }
 
     if (existing?.latitude == null && resolvedLat != null) {

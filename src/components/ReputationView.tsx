@@ -24,6 +24,7 @@ import {
   Globe,
   Link as LinkIcon,
   HelpCircle,
+  AlertCircle,
 } from 'lucide-react';
 import { reputationService, ReviewSourcesResponse } from '../services/reputationService';
 import { GoogleReview } from '../types/production';
@@ -539,8 +540,20 @@ export const ReputationView: React.FC = () => {
             <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 tracking-tight">
               No review data connected.
             </h2>
-            <p className="text-sm text-slate-600 leading-relaxed font-sans">
-              Reviews must come from a connected Google Business Profile, another explicitly connected supported provider (such as Yelp, Facebook, or Trustpilot), or user-entered customer reviews.
+            <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200/90 text-amber-900 text-xs text-left max-w-xl mx-auto space-y-1">
+              <span className="font-bold flex items-center gap-1.5 text-amber-950">
+                <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+                Google Reviews Synchronization Policy
+              </span>
+              <p className="text-amber-800 text-[11px] leading-relaxed">
+                When you enter a business manually, customer reviews <strong>only can be pulled when you connect your Google Business Profile</strong> — otherwise reviews cannot be fetched from Google. Connect your Google account below to automatically import your verified Google reviews, rating, and feedback.
+              </p>
+              <p className="text-amber-700/90 text-[10px] font-medium pt-0.5">
+                Or upgrade your plan to connect review with out Google business profile or oauth required.
+              </p>
+            </div>
+            <p className="text-xs text-slate-500 leading-relaxed font-sans">
+              You can also connect another supported provider (Yelp, Facebook, Trustpilot), or manually log customer reviews.
             </p>
           </div>
 

@@ -53,6 +53,8 @@ import {
   ExternalLink,
   Filter,
   Globe2,
+  MapPin,
+  Star,
 } from 'lucide-react';
 import { PlanProviderAccessSummary } from './PlanProviderAccessSummary';
 import { DataFreshnessPanel } from './DataFreshnessPanel';

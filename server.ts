@@ -21,6 +21,7 @@ import * as businessTruthService from './server/businessTruthService.ts';
 import * as aiManagerService from './server/aiManagerService.ts';
 import * as growthDetectorService from './server/growthDetectorService.ts';
 import * as directoryService from './src/db/directoryService.ts';
+import { geocodeAddress } from './src/utils/geocoder.ts';
 import { db, schema } from './src/db/index.ts';
 import { and, desc, eq, ilike, or } from 'drizzle-orm';
 import {
@@ -3716,6 +3717,7 @@ app.get('/api/data-engine/businesses', (req, res) => {
       ''
     ).toLowerCase().trim();
     const isSuper = verifyAdminAccess(req) || SUPER_ADMIN_EMAILS.has(userEmail);
+    let businesses: any[] = [];
     if (userEmail && !isSuper) {
       businesses = getBusinessesForUser(userEmail);
       if (businesses.length === 0) {
@@ -4664,6 +4666,28 @@ app.post('/api/production/business/:businessId/locations', async (req, res) => {
     const { business } = await resolveAuthenticatedBusiness(req, req.params.businessId);
     const body = req.body || {};
     const locId = body.id || `loc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+
+    let locLat: number | null = body.lat != null && !isNaN(Number(body.lat)) ? Number(body.lat) : null;
+    let locLng: number | null = body.lng != null && !isNaN(Number(body.lng)) ? Number(body.lng) : null;
+
+    if (locLat == null || locLng == null) {
+      try {
+        const geo = await geocodeAddress({
+          address: body.address || '',
+          city: body.city || '',
+          state: body.state || '',
+          zip: body.zip || '',
+          country: body.country || 'United States',
+        });
+        if (geo && typeof geo.lat === 'number' && typeof geo.lng === 'number') {
+          locLat = geo.lat;
+          locLng = geo.lng;
+        }
+      } catch (gErr) {
+        console.warn('[Geocoding] Non-blocking notice when creating location:', gErr);
+      }
+    }
+
     const [newLoc] = await db
       .insert(schema.locationsTable)
       .values({
@@ -4676,9 +4700,11 @@ app.post('/api/production/business/:businessId/locations', async (req, res) => {
         state: body.state || '',
         zip: body.zip || '',
         country: body.country || 'United States',
+        lat: locLat,
+        lng: locLng,
         phone: body.phone || business.phone || '',
         hours: body.hours || [],
-      })
+      } as any)
       .returning();
 
     // Auto-sync directory projection
@@ -6648,6 +6674,25 @@ app.post('/api/gbp/sync-live', async (req, res) => {
         },
       });
 
+      let locLat: number | null = payload.lat != null && !isNaN(Number(payload.lat)) ? Number(payload.lat) : null;
+      let locLng: number | null = payload.lng != null && !isNaN(Number(payload.lng)) ? Number(payload.lng) : null;
+
+      if (locLat == null || locLng == null) {
+        try {
+          const geo = await geocodeAddress({
+            address,
+            city,
+            state,
+            zip: payload.zip || '',
+            country,
+          });
+          if (geo && typeof geo.lat === 'number' && typeof geo.lng === 'number') {
+            locLat = geo.lat;
+            locLng = geo.lng;
+          }
+        } catch {}
+      }
+
       await db.insert(schema.locationsTable).values({
         id: `loc_${bizId}`,
         businessId: bizId,
@@ -6658,9 +6703,11 @@ app.post('/api/gbp/sync-live', async (req, res) => {
         state,
         zip: payload.zip || '',
         country,
+        lat: locLat,
+        lng: locLng,
         phone,
         hours: businessHours,
-      }).onConflictDoUpdate({
+      } as any).onConflictDoUpdate({
         target: schema.locationsTable.id,
         set: {
           address,
@@ -6668,6 +6715,8 @@ app.post('/api/gbp/sync-live', async (req, res) => {
           state,
           zip: payload.zip || '',
           country,
+          ...(locLat != null ? { lat: locLat } : {}),
+          ...(locLng != null ? { lng: locLng } : {}),
           phone,
           hours: businessHours,
           updatedAt: new Date(),

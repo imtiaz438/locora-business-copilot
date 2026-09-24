@@ -429,7 +429,7 @@ export function normalizeAndValidateRecord(
       connected: true,
       placeId: '',
       listingName: updates.identity?.name || safeExisting.identity?.name || 'My Business',
-      rating: 5.0,
+      rating: 0,
       reviewCount: 0,
       unansweredReviews: 0,
       category: 'Local Business',
@@ -1188,7 +1188,7 @@ export function getPublishedDirectoryListings(): any[] {
         phone: b.gbpData?.primaryPhone || b.identity?.phone || null,
         address: b.gbpData?.address || b.identity?.address || (city ? `${city}${state ? `, ${state}` : ''}` : null),
         hours: Object.keys(hoursMap).length > 0 ? hoursMap : null,
-        averageRating: typeof b.gbpData?.rating === 'number' && b.gbpData.rating > 0 
+        averageRating: (typeof b.gbpData?.reviewCount === 'number' && b.gbpData.reviewCount > 0 && typeof b.gbpData?.rating === 'number' && b.gbpData.rating > 0)
           ? b.gbpData.rating 
           : (reviews.length > 0 ? Number((reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)) : null),
         reviewCount: typeof b.gbpData?.reviewCount === 'number' ? b.gbpData.reviewCount : reviews.length,

@@ -1045,6 +1045,25 @@ export const TopBusinessSelector: React.FC = () => {
               {addBusinessStep === 1 ? (
                 /* Step 1: Input Business Details */
                 <form onSubmit={handleDiscoverBusiness} className="pt-4 space-y-3.5">
+                  {/* Highlighted Reviews Notice for Manual Business Entry */}
+                  <div className="p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200/90 shadow-2xs flex items-start gap-3">
+                    <div className="p-2 rounded-xl bg-amber-100 text-amber-800 shrink-0 mt-0.5">
+                      <AlertCircle className="w-4 h-4" />
+                    </div>
+                    <div className="space-y-1 text-xs">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-amber-950">Important Notice Regarding Google Reviews</span>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200/80 text-amber-900">Required</span>
+                      </div>
+                      <p className="text-amber-800 text-[11px] leading-relaxed">
+                        Google reviews and customer star ratings <strong>can only be pulled automatically when you connect your official Google Business Profile</strong>. If you enter or configure this business manually, reviews cannot be fetched from Google until your Google Business Profile is connected.
+                      </p>
+                      <p className="text-amber-700/90 text-[10px] font-medium">
+                        (You can connect your Google account anytime after creating the workspace. Or upgrade your plan to connect review with out Google business profile or oauth required.)
+                      </p>
+                    </div>
+                  </div>
+
                   {discoveryError && (
                     <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
                       {discoveryError}
