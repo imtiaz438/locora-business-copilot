@@ -101,6 +101,7 @@ import {
   handleDirectoryListingUpdatedEmail,
   getEmailEvents,
   buildRealBusinessEmailContext,
+  updateEmailEventStatus,
   DirectoryUpdateEmailService,
 } from './server/directoryEmailAutomation.ts';
 
@@ -17678,6 +17679,109 @@ app.get('/api/directory/email-automation/context/:businessId', async (req, res) 
     res.json({ success: true, context });
   } catch (err: any) {
     res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+});
+
+// Admin Email Activity & Manual Send Endpoints (ADMIN PROTECTED)
+app.get('/api/admin/directory-email/status', async (req, res) => {
+  try {
+    if (!(await verifyAdminAccessAsync(req))) {
+      return res.status(403).json({ error: 'Access Denied. Admin privileges required.' });
+    }
+    const emailsEnabled = (process.env.DIRECTORY_UPDATE_EMAILS_ENABLED || '').trim().toLowerCase() === 'true';
+    const brevoConfigured = Boolean(
+      (process.env.BREVO_SMTP_USER && process.env.BREVO_SMTP_PASS) ||
+      (process.env.BREVO_API_KEY && process.env.BREVO_API_KEY.length > 10)
+    );
+    const allEvents = getEmailEvents({ limit: 1000 });
+    const stats = {
+      total: allEvents.length,
+      sent: allEvents.filter((e) => e.status === 'sent').length,
+      delivered: allEvents.filter((e) => e.status === 'delivered').length,
+      bounced: allEvents.filter((e) => e.status === 'bounced').length,
+      failed: allEvents.filter((e) => e.status === 'failed').length,
+      pending: allEvents.filter((e) => e.status === 'pending').length,
+      skipped: allEvents.filter((e) => e.status === 'skipped').length,
+    };
+
+    res.json({
+      success: true,
+      automationEnabled: emailsEnabled,
+      sender: 'Locora AI <support@locoraai.com>',
+      host: process.env.BREVO_SMTP_HOST || 'smtp-relay.brevo.com',
+      port: process.env.BREVO_SMTP_PORT || '587',
+      brevoConfigured,
+      stats,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/admin/directory-email/events', async (req, res) => {
+  try {
+    if (!(await verifyAdminAccessAsync(req))) {
+      return res.status(403).json({ error: 'Access Denied. Admin privileges required.' });
+    }
+    const businessId = req.query.businessId as string | undefined;
+    const limit = req.query.limit ? Number(req.query.limit) : 200;
+    const events = getEmailEvents({ businessId, limit });
+    res.json({ success: true, count: events.length, events });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/directory-email/send', async (req, res) => {
+  try {
+    if (!(await verifyAdminAccessAsync(req))) {
+      return res.status(403).json({ error: 'Access Denied. Admin privileges required.' });
+    }
+    const { businessId, recipientEmail, variant, force } = req.body;
+    if (!businessId) {
+      return res.status(400).json({ success: false, error: 'businessId is required' });
+    }
+
+    const result = await handleDirectoryListingUpdatedEmail(businessId, {
+      force: force !== false, // Default to true for explicit admin test/manual action
+      syncVersion: 'v1',
+      triggerSource: 'admin_manual_send',
+      customRecipientEmail: recipientEmail,
+      variantOverride: variant || 'AUTO',
+      isAdminManual: true,
+      isSuperAdmin: true,
+    });
+
+    res.json({ success: true, result });
+  } catch (err: any) {
+    console.error('[Admin Send Directory Update Email] Error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Brevo Webhook Endpoint for Delivery & Bounce Events
+app.post('/api/brevo/webhook', async (req, res) => {
+  try {
+    const payload = req.body;
+    if (!payload) {
+      return res.status(400).json({ error: 'Empty payload' });
+    }
+
+    const eventName = (payload.event || payload.type || '').toLowerCase();
+    const msgId = payload['message-id'] || payload.messageId || payload.msg_id || payload.id;
+
+    if (msgId) {
+      if (eventName.includes('deliver')) {
+        await updateEmailEventStatus(msgId, { status: 'delivered' });
+      } else if (eventName.includes('bounce') || eventName.includes('blocked') || eventName.includes('spam')) {
+        await updateEmailEventStatus(msgId, { status: 'bounced', error: `Brevo event: ${eventName}` });
+      }
+    }
+
+    res.json({ success: true, received: true });
+  } catch (err: any) {
+    console.warn('[Brevo Webhook Notice] Error:', err.message);
+    res.status(200).json({ success: true, note: 'Received with notice' });
   }
 });
 

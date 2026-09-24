@@ -25,15 +25,17 @@ export interface DirectoryEmailEvent {
   id: string;
   userId: string;
   businessId: string;
+  recipientEmail?: string;
   recipient: string;
   email: string;
   eventType: 'directory_listing_updated';
   template: 'directory_listing_updated_gbp_not_connected' | 'directory_listing_updated_gbp_connected';
-  variant: 'variant_a' | 'variant_b';
+  variant: 'variant_a' | 'variant_b' | 'AUTO' | 'GBP_CONNECTED' | 'GBP_NOT_CONNECTED';
   timestamp: string;
   sentAt: string;
-  status: 'sent' | 'simulated' | 'failed' | 'skipped';
+  status: 'pending' | 'sent' | 'delivered' | 'bounced' | 'failed' | 'skipped' | 'simulated';
   error: string | null;
+  providerMessageId?: string;
   syncVersion: string; // e.g. 'v1'
   eventKey: string; // e.g. `dir_sync_${businessId}_v1`
   metadata?: Record<string, any>;
@@ -165,19 +167,26 @@ async function ensureDbTable(): Promise<void> {
           id TEXT PRIMARY KEY,
           user_id TEXT,
           business_id TEXT NOT NULL,
+          recipient_email TEXT,
           email TEXT NOT NULL,
           event_type TEXT NOT NULL,
           template TEXT NOT NULL,
+          variant TEXT,
           sent_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
           status TEXT NOT NULL,
           error TEXT,
+          provider_message_id TEXT,
           sync_version TEXT NOT NULL,
           event_key TEXT NOT NULL UNIQUE,
           metadata JSONB,
           created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
         );
+        ALTER TABLE email_events ADD COLUMN IF NOT EXISTS recipient_email TEXT;
+        ALTER TABLE email_events ADD COLUMN IF NOT EXISTS variant TEXT;
+        ALTER TABLE email_events ADD COLUMN IF NOT EXISTS provider_message_id TEXT;
         CREATE INDEX IF NOT EXISTS idx_email_events_biz_key ON email_events(business_id, event_key);
+        CREATE INDEX IF NOT EXISTS idx_email_events_msg_id ON email_events(provider_message_id);
       `);
       dbTableEnsured = true;
     }
@@ -192,7 +201,7 @@ async function ensureDbTable(): Promise<void> {
 export async function hasEmailEventBeenSent(eventKey: string): Promise<boolean> {
   // 1. Check in-memory map
   const cached = emailEventsMap.get(eventKey);
-  if (cached && (cached.status === 'sent' || cached.status === 'simulated')) {
+  if (cached && (cached.status === 'sent' || cached.status === 'simulated' || cached.status === 'delivered')) {
     return true;
   }
 
@@ -204,7 +213,7 @@ export async function hasEmailEventBeenSent(eventKey: string): Promise<boolean> 
       .where(eq(schema.emailEventsTable.eventKey, eventKey))
       .limit(1);
 
-    if (rows.length > 0 && (rows[0].status === 'sent' || rows[0].status === 'simulated')) {
+    if (rows.length > 0 && (rows[0].status === 'sent' || rows[0].status === 'simulated' || rows[0].status === 'delivered')) {
       return true;
     }
   } catch {}
@@ -218,20 +227,22 @@ export async function hasEmailEventBeenSent(eventKey: string): Promise<boolean> 
  */
 export async function recordEmailEvent(rawEvent: DirectoryEmailEvent): Promise<DirectoryEmailEvent> {
   const timestamp = rawEvent.timestamp || rawEvent.sentAt || new Date().toISOString();
-  const recipient = (rawEvent.recipient || rawEvent.email || '').trim().toLowerCase();
+  const recipient = (rawEvent.recipientEmail || rawEvent.recipient || rawEvent.email || '').trim().toLowerCase();
 
   const event: DirectoryEmailEvent = {
     ...rawEvent,
     timestamp,
     sentAt: timestamp,
     recipient,
+    recipientEmail: recipient,
     email: recipient,
+    providerMessageId: rawEvent.providerMessageId || rawEvent.metadata?.messageId || undefined,
     metadata: sanitizeLogMetadata(rawEvent.metadata || {}),
   };
 
   // Structured Logging (Section 7)
   console.log(
-    `[DirectoryUpdateEmailService] Event: directory_listing_updated | Variant: ${event.variant} | Template: ${event.template} | Business: ${event.businessId} | User: ${event.userId} | Recipient: ${event.recipient} | Timestamp: ${event.timestamp} | Status: ${event.status} | Version: ${event.syncVersion}${event.error ? ` | Error: ${event.error}` : ''}`
+    `[DirectoryUpdateEmailService] Event: directory_listing_updated | Variant: ${event.variant} | Template: ${event.template} | Business: ${event.businessId} | User: ${event.userId} | Recipient: ${event.recipient} | Timestamp: ${event.timestamp} | Status: ${event.status} | Version: ${event.syncVersion}${event.providerMessageId ? ` | MsgId: ${event.providerMessageId}` : ''}${event.error ? ` | Error: ${event.error}` : ''}`
   );
 
   // 1. In-memory
@@ -249,12 +260,15 @@ export async function recordEmailEvent(rawEvent: DirectoryEmailEvent): Promise<D
         id: event.id,
         userId: event.userId || null,
         businessId: event.businessId,
+        recipientEmail: event.recipient,
         email: event.recipient,
         eventType: event.eventType,
         template: event.template,
+        variant: event.variant,
         sentAt: new Date(event.sentAt),
         status: event.status,
         error: event.error || null,
+        providerMessageId: event.providerMessageId || null,
         syncVersion: event.syncVersion,
         eventKey: event.eventKey,
         metadata: event.metadata || {},
@@ -266,6 +280,8 @@ export async function recordEmailEvent(rawEvent: DirectoryEmailEvent): Promise<D
         set: {
           status: event.status,
           error: event.error || null,
+          providerMessageId: event.providerMessageId || null,
+          variant: event.variant,
           sentAt: new Date(event.sentAt),
           metadata: event.metadata || {},
           updatedAt: new Date(),
@@ -311,6 +327,62 @@ export async function recordEmailEvent(rawEvent: DirectoryEmailEvent): Promise<D
   } catch {}
 
   return event;
+}
+
+/**
+ * Update the delivery or bounce status of an email audit event by eventKey, providerMessageId, or eventId
+ */
+export async function updateEmailEventStatus(
+  identifier: string,
+  update: {
+    status: 'pending' | 'sent' | 'delivered' | 'bounced' | 'failed' | 'skipped' | 'simulated';
+    providerMessageId?: string;
+    error?: string | null;
+  }
+): Promise<boolean> {
+  if (!identifier) return false;
+
+  // 1. Update in-memory map
+  let found = false;
+  for (const [key, evt] of emailEventsMap.entries()) {
+    if (
+      key === identifier ||
+      evt.eventKey === identifier ||
+      evt.providerMessageId === identifier ||
+      evt.id === identifier
+    ) {
+      evt.status = update.status;
+      if (update.providerMessageId) evt.providerMessageId = update.providerMessageId;
+      if (update.error !== undefined) evt.error = update.error;
+      emailEventsMap.set(key, evt);
+      found = true;
+      break;
+    }
+  }
+
+  // 2. Persist to disk
+  saveEmailEventsToDisk();
+
+  // 3. Update PostgreSQL
+  try {
+    await ensureDbTable();
+    const pool = (global as any)._postgresPool;
+    if (pool) {
+      await pool.query(
+        `UPDATE email_events
+         SET status = $1,
+             provider_message_id = COALESCE($2, provider_message_id),
+             error = $3,
+             updated_at = NOW()
+         WHERE event_key = $4 OR provider_message_id = $4 OR id = $4`,
+        [update.status, update.providerMessageId || null, update.error ?? null, identifier]
+      );
+    }
+    return true;
+  } catch (err: any) {
+    console.warn('[Directory Email Automation] DB update status notice:', err.message);
+    return found;
+  }
 }
 
 /**
@@ -1636,9 +1708,19 @@ Locora AI Directory Engine • ${SENDER_EMAIL}
 // 5. MAIN TRIGGER & AUTOMATION ORCHESTRATOR
 // ============================================================================
 
+export interface DirectoryEmailTriggerOptions {
+  force?: boolean;
+  syncVersion?: string;
+  triggerSource?: string;
+  customRecipientEmail?: string;
+  variantOverride?: 'AUTO' | 'GBP_CONNECTED' | 'GBP_NOT_CONNECTED';
+  isAdminManual?: boolean;
+  isSuperAdmin?: boolean;
+}
+
 export interface DirectoryEmailTriggerResult {
   success: boolean;
-  status: 'sent' | 'simulated' | 'failed' | 'skipped';
+  status: 'pending' | 'sent' | 'delivered' | 'bounced' | 'failed' | 'skipped' | 'simulated';
   reason?: string;
   event?: DirectoryEmailEvent;
   context?: RealBusinessEmailContext | null;
@@ -1647,30 +1729,140 @@ export interface DirectoryEmailTriggerResult {
 }
 
 /**
+ * 1. Recipient Safety Resolver:
+ * Resolves the business -> authorized owner/account -> verified account email.
+ * Never uses an arbitrary email supplied by directory/public request.
+ * Verifies business_id ownership server-side.
+ * Aborts if recipient cannot be safely resolved.
+ */
+export async function resolveVerifiedBusinessRecipient(
+  businessId: string,
+  options?: DirectoryEmailTriggerOptions
+): Promise<{
+  safe: boolean;
+  recipientEmail: string;
+  userId: string;
+  businessName: string;
+  reason?: string;
+}> {
+  // 1. Fetch canonical business from DB
+  let biz: any = null;
+  try {
+    const rows = await db
+      .select()
+      .from(schema.businessesTable)
+      .where(eq(schema.businessesTable.id, businessId))
+      .limit(1);
+    if (rows.length > 0) biz = rows[0];
+  } catch {}
+
+  // In-memory fallback
+  const memBiz: any = getBusinessRecordById(businessId) || getBusinessRecordFromLocoraDb(businessId);
+  if (!biz && !memBiz) {
+    return {
+      safe: false,
+      recipientEmail: '',
+      userId: '',
+      businessName: '',
+      reason: `Business '${businessId}' not found in database or directory catalog`,
+    };
+  }
+
+  const businessName = biz?.name?.trim() || memBiz?.identity?.name?.trim() || 'Your Business';
+  const ownerEmail = (biz?.ownerEmail?.trim() || memBiz?.claimedByEmail?.trim() || memBiz?.userEmail?.trim() || '').toLowerCase();
+  const userId = biz?.accountId || memBiz?.claimedByEmail || ownerEmail || businessId;
+
+  // If this is an explicit admin test/manual action, allow test recipient
+  if (options?.isAdminManual) {
+    const testRecipient = (options?.customRecipientEmail || ownerEmail).trim().toLowerCase();
+    if (testRecipient && testRecipient.includes('@') && !testRecipient.startsWith('unclaimed_')) {
+      return {
+        safe: true,
+        recipientEmail: testRecipient,
+        userId,
+        businessName,
+      };
+    }
+  }
+
+  // Strict recipient safety for automated flow:
+  // Must be verified account owner email belonging to this business.
+  // Never accept arbitrary public email.
+  if (!ownerEmail || ownerEmail.startsWith('unclaimed_') || !ownerEmail.includes('@') || ownerEmail.includes('example.com')) {
+    return {
+      safe: false,
+      recipientEmail: ownerEmail || '',
+      userId,
+      businessName,
+      reason: `Business '${businessName}' (${businessId}) has no verified, active account owner email. Unclaimed or unverified listings are rejected.`,
+    };
+  }
+
+  // Cross-verify with account table if present
+  try {
+    const accRows = await db
+      .select()
+      .from(schema.accountsTable)
+      .where(eq(schema.accountsTable.ownerEmail, ownerEmail))
+      .limit(1);
+    if (accRows.length === 0 && biz?.accountId) {
+      const byId = await db
+        .select()
+        .from(schema.accountsTable)
+        .where(eq(schema.accountsTable.id, biz.accountId))
+        .limit(1);
+      if (byId.length > 0 && byId[0].ownerEmail) {
+        return {
+          safe: true,
+          recipientEmail: byId[0].ownerEmail.toLowerCase().trim(),
+          userId: byId[0].id,
+          businessName,
+        };
+      }
+    }
+  } catch {}
+
+  return {
+    safe: true,
+    recipientEmail: ownerEmail,
+    userId,
+    businessName,
+  };
+}
+
+/**
  * Orchestrate directory_listing_updated automated email.
  *
  * Enforces:
- * 1. Idempotency: sends only ONE email for the business + syncVersion (default 'v1').
- * 2. Only sends after a meaningful initial directory sync/update.
- * 3. Builds REAL context with zero fabricated values.
- * 4. Dispatches Variant A (GBP Not Connected) or Variant B (GBP Connected).
- * 5. Leverages AI Personalization with deterministic safety fallback.
- * 6. Uses existing Brevo/Nodemailer service with sender Locora AI <support@locoraai.com>.
- * 7. Enforces data isolation and skips deleted/suspended businesses.
+ * 1. Automation Switch: checks DIRECTORY_UPDATE_EMAILS_ENABLED (keeps OFF while testing).
+ * 2. Recipient Safety: resolves business -> authorized owner -> verified email.
+ * 3. Idempotency: sends only ONE email for the business + syncVersion (default 'v1').
+ * 4. Audit Logging: creates 'pending' -> 'sent' -> 'delivered/bounced/failed' lifecycle.
+ * 5. Builds REAL context with zero fabricated values.
+ * 6. Dispatches Variant A (GBP Not Connected) or Variant B (GBP Connected), or respects variantOverride.
+ * 7. Leverages AI Personalization with deterministic safety fallback.
+ * 8. Uses existing Brevo/Nodemailer service with sender Locora AI <support@locoraai.com>.
  */
 export async function handleDirectoryListingUpdatedEmail(
   businessId: string,
-  options?: {
-    force?: boolean;
-    syncVersion?: string;
-    triggerSource?: string;
-    customRecipientEmail?: string;
-  }
+  options?: DirectoryEmailTriggerOptions
 ): Promise<DirectoryEmailTriggerResult> {
   const syncVersion = options?.syncVersion || 'v1';
   const eventKey = `dir_sync_${businessId}_${syncVersion}`;
 
-  // 1. Idempotency Check
+  // 1. Config Switch: DIRECTORY_UPDATE_EMAILS_ENABLED
+  // Keep OFF while testing; allow explicit admin manual test actions to bypass.
+  const isAutomationEnabled = (process.env.DIRECTORY_UPDATE_EMAILS_ENABLED || '').trim().toLowerCase() === 'true';
+  if (!options?.isAdminManual && !isAutomationEnabled) {
+    console.log(`[Directory Email Automation] Automated directory update emails currently disabled (DIRECTORY_UPDATE_EMAILS_ENABLED=false). Skipping automated send for ${businessId}.`);
+    return {
+      success: true,
+      status: 'skipped',
+      reason: 'automation_disabled_by_config',
+    };
+  }
+
+  // 2. Idempotency Check
   if (!options?.force) {
     const alreadySent = await hasEmailEventBeenSent(eventKey);
     if (alreadySent) {
@@ -1683,7 +1875,7 @@ export async function handleDirectoryListingUpdatedEmail(
     }
   }
 
-  // 2. Build Real Context
+  // 3. Build Real Context
   const context = await buildRealBusinessEmailContext(businessId);
   if (!context) {
     return {
@@ -1705,61 +1897,103 @@ export async function handleDirectoryListingUpdatedEmail(
     };
   }
 
-  // 3. Resolve and validate recipient email
-  const recipientEmail = (options?.customRecipientEmail || context.ownerEmail || '').trim().toLowerCase();
-  if (
-    !recipientEmail ||
-    recipientEmail.startsWith('unclaimed_') ||
-    !recipientEmail.includes('@') ||
-    recipientEmail.includes('example.com')
-  ) {
-    console.log(`[Directory Email Automation] No valid recipient email for ${businessId} (${recipientEmail || 'empty'}). Skipping.`);
+  // 4. Strict Recipient Safety Check
+  const recipientRes = await resolveVerifiedBusinessRecipient(businessId, options);
+  if (!recipientRes.safe) {
+    console.warn(`[Directory Email Automation] Recipient safety aborted for ${businessId}: ${recipientRes.reason}`);
     const nowIso = new Date().toISOString();
-    const skippedEvent: DirectoryEmailEvent = {
+    const failedEvent: DirectoryEmailEvent = {
       id: `devt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-      userId: context.userId,
+      userId: recipientRes.userId || context.userId,
       businessId,
-      recipient: recipientEmail || 'none',
-      email: recipientEmail || 'none',
+      recipient: recipientRes.recipientEmail || 'unresolved',
+      recipientEmail: recipientRes.recipientEmail || 'unresolved',
+      email: recipientRes.recipientEmail || 'unresolved',
       eventType: 'directory_listing_updated',
       template: 'directory_listing_updated_gbp_not_connected',
-      variant: 'variant_a',
+      variant: (options?.variantOverride || 'AUTO') as any,
       timestamp: nowIso,
       sentAt: nowIso,
-      status: 'skipped',
-      error: 'No valid recipient email associated with business',
+      status: 'failed',
+      error: recipientRes.reason || 'Recipient safety check failed',
       syncVersion,
       eventKey,
-      metadata: { reason: 'no_valid_recipient_email', triggerSource: options?.triggerSource },
+      metadata: {
+        reason: 'recipient_safety_aborted',
+        triggerSource: options?.triggerSource || (options?.isAdminManual ? 'admin_manual_send' : 'directory_sync'),
+        safetyAborted: true,
+      },
     };
-    await recordEmailEvent(skippedEvent);
+    await recordEmailEvent(failedEvent);
     return {
-      success: true,
-      status: 'skipped',
-      reason: 'no_valid_recipient_email',
-      event: skippedEvent,
+      success: false,
+      status: 'failed',
+      reason: 'recipient_safety_aborted',
+      error: recipientRes.reason,
+      event: failedEvent,
       context,
     };
   }
 
-  // 4. Generate AI Personalization (with automatic deterministic fallback)
-  const isGbpConnected = context.gbpStatus === 'connected';
-  const variantType = isGbpConnected ? 'variant_b' : 'variant_a';
+  const recipientEmail = recipientRes.recipientEmail;
+
+  // 5. Determine Variant (AUTO / GBP_CONNECTED / GBP_NOT_CONNECTED)
+  let useGbpConnected = context.gbpStatus === 'connected';
+  if (options?.variantOverride === 'GBP_CONNECTED') {
+    useGbpConnected = true;
+  } else if (options?.variantOverride === 'GBP_NOT_CONNECTED') {
+    useGbpConnected = false;
+  }
+  const variantType = useGbpConnected ? 'variant_b' : 'variant_a';
+  const variantLabel = options?.variantOverride || (useGbpConnected ? 'GBP_CONNECTED' : 'GBP_NOT_CONNECTED');
+  const templateName: 'directory_listing_updated_gbp_not_connected' | 'directory_listing_updated_gbp_connected' = useGbpConnected
+    ? 'directory_listing_updated_gbp_connected'
+    : 'directory_listing_updated_gbp_not_connected';
+
+  // 6. Record Initial Audit Log as 'pending'
+  const eventId = `devt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  const nowIso = new Date().toISOString();
+  const pendingEvent: DirectoryEmailEvent = {
+    id: eventId,
+    userId: recipientRes.userId || context.userId,
+    businessId,
+    recipient: recipientEmail,
+    recipientEmail,
+    email: recipientEmail,
+    eventType: 'directory_listing_updated',
+    template: templateName,
+    variant: variantLabel as any,
+    timestamp: nowIso,
+    sentAt: nowIso,
+    status: 'pending',
+    error: null,
+    syncVersion,
+    eventKey,
+    metadata: {
+      provider: 'brevo_pending',
+      businessName: context.businessName,
+      city: context.city,
+      gbpStatus: context.gbpStatus,
+      triggerSource: options?.triggerSource || (options?.isAdminManual ? 'admin_manual_send' : 'directory_sync'),
+      updatedFields: context.updatedFieldsSummary,
+      opportunityCount: context.realOpportunityCount,
+      variantOverride: options?.variantOverride || 'AUTO',
+    },
+  };
+  await recordEmailEvent(pendingEvent);
+
+  // 7. Generate AI Personalization (with automatic deterministic fallback)
   const aiCopy = await generateAIPersonalizedCopy(context, variantType);
 
-  // 5. Determine Variant and render content
+  // 8. Render Email Template
   let emailContent: { subject: string; html: string; text: string };
-  let templateName: 'directory_listing_updated_gbp_not_connected' | 'directory_listing_updated_gbp_connected';
-
-  if (!isGbpConnected) {
-    templateName = 'directory_listing_updated_gbp_not_connected';
+  if (!useGbpConnected) {
     emailContent = renderEmailVariantA(context, aiCopy);
   } else {
-    templateName = 'directory_listing_updated_gbp_connected';
     emailContent = renderEmailVariantB(context, aiCopy);
   }
 
-  // 6. Dispatch Email via Brevo SMTP / API
+  // 9. Dispatch Email via Brevo SMTP / API
   try {
     const dispatchRes = await dispatchViaBrevoOrFallback({
       to: recipientEmail,
@@ -1773,41 +2007,30 @@ export async function handleDirectoryListingUpdatedEmail(
       ? (isSimulated ? 'simulated' : 'sent')
       : 'failed';
 
-    const nowIso = new Date().toISOString();
-    const eventRecord: DirectoryEmailEvent = {
-      id: `devt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-      userId: context.userId,
-      businessId,
-      recipient: recipientEmail,
-      email: recipientEmail,
-      eventType: 'directory_listing_updated',
-      template: templateName,
-      variant: variantType,
-      timestamp: nowIso,
-      sentAt: nowIso,
+    // Update audit status to 'sent' (or 'failed') with providerMessageId
+    await updateEmailEventStatus(eventKey, {
       status: finalStatus,
+      providerMessageId: dispatchRes.messageId,
       error: dispatchRes.error || null,
-      syncVersion,
-      eventKey,
+    });
+
+    const finalEvent: DirectoryEmailEvent = {
+      ...pendingEvent,
+      status: finalStatus,
+      providerMessageId: dispatchRes.messageId,
+      error: dispatchRes.error || null,
       metadata: {
+        ...pendingEvent.metadata,
         provider: dispatchRes.provider,
         messageId: dispatchRes.messageId,
-        businessName: context.businessName,
-        city: context.city,
-        gbpStatus: context.gbpStatus,
-        triggerSource: options?.triggerSource || 'directory_sync',
-        updatedFields: context.updatedFieldsSummary,
-        opportunityCount: context.realOpportunityCount,
         isAiGenerated: aiCopy.isAiGenerated,
       },
     };
 
-    await recordEmailEvent(eventRecord);
-
     return {
       success: dispatchRes.success,
       status: finalStatus,
-      event: eventRecord,
+      event: finalEvent,
       context,
       aiPersonalizationUsed: aiCopy.isAiGenerated,
       error: dispatchRes.error,
@@ -1815,29 +2038,16 @@ export async function handleDirectoryListingUpdatedEmail(
   } catch (err: any) {
     console.error(`[DirectoryUpdateEmailService] Failed to dispatch email for ${businessId}:`, err.message);
 
-    const nowIso = new Date().toISOString();
-    const failedEvent: DirectoryEmailEvent = {
-      id: `devt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-      userId: context.userId,
-      businessId,
-      recipient: recipientEmail,
-      email: recipientEmail,
-      eventType: 'directory_listing_updated',
-      template: templateName,
-      variant: variantType,
-      timestamp: nowIso,
-      sentAt: nowIso,
+    await updateEmailEventStatus(eventKey, {
       status: 'failed',
       error: err.message,
-      syncVersion,
-      eventKey,
-      metadata: {
-        businessName: context.businessName,
-        triggerSource: options?.triggerSource || 'directory_sync',
-      },
-    };
+    });
 
-    await recordEmailEvent(failedEvent);
+    const failedEvent: DirectoryEmailEvent = {
+      ...pendingEvent,
+      status: 'failed',
+      error: err.message,
+    };
 
     return {
       success: false,
@@ -1856,12 +2066,14 @@ export async function handleDirectoryListingUpdatedEmail(
  */
 export const DirectoryUpdateEmailService = {
   handleDirectoryListingUpdatedEvent: handleDirectoryListingUpdatedEmail,
+  resolveVerifiedBusinessRecipient,
   buildRealBusinessEmailContext,
   generateAIPersonalizedCopy,
   renderEmailVariantA,
   renderEmailVariantB,
   hasEmailEventBeenSent,
   recordEmailEvent,
+  updateEmailEventStatus,
   getEmailEvents,
   registerEmailDispatcher,
 };

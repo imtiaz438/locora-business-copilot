@@ -59,6 +59,7 @@ import {
 import { PlanProviderAccessSummary } from './PlanProviderAccessSummary';
 import { DataFreshnessPanel } from './DataFreshnessPanel';
 import { DirectoryAdminPanel } from './admin/DirectoryAdminPanel';
+import { AdminEmailActivityPanel } from './admin/AdminEmailActivityPanel';
 
 export const AdminView: React.FC = () => {
   const {
@@ -87,6 +88,7 @@ export const AdminView: React.FC = () => {
     | 'invoices'
     | 'dispatch'
     | 'email_server'
+    | 'email_activity'
     | 'provider_access'
     | 'datasets'
     | 'directory_rules'
@@ -1447,6 +1449,17 @@ export const AdminView: React.FC = () => {
         >
           <Server className="w-4 h-4 text-emerald-300" />
           <span>Brevo Mail Server</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('email_activity')}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'email_activity' ? 'bg-[#059669] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900 bg-white border border-slate-200'
+          }`}
+        >
+          <Mail className="w-4 h-4 text-emerald-300" />
+          <span>Email Activity</span>
         </button>
 
         <button
@@ -4066,6 +4079,11 @@ export const AdminView: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* TAB: DIRECTORY UPDATE EMAIL ACTIVITY & AUDIT TRAIL */}
+      {activeTab === 'email_activity' && (
+        <AdminEmailActivityPanel />
       )}
 
       {/* TAB: PLAN & PROVIDER ACCESS MATRIX */}

@@ -991,12 +991,15 @@ export const emailEventsTable = pgTable('email_events', {
   id: text('id').primaryKey(),
   userId: text('user_id'),
   businessId: text('business_id').notNull().references(() => businessesTable.id, { onDelete: 'cascade' }),
+  recipientEmail: text('recipient_email'),
   email: text('email').notNull(),
   eventType: text('event_type').notNull(), // 'directory_listing_updated'
   template: text('template').notNull(),
+  variant: text('variant'), // 'AUTO' | 'GBP_CONNECTED' | 'GBP_NOT_CONNECTED' | 'variant_a' | 'variant_b'
   sentAt: timestamp('sent_at').defaultNow().notNull(),
-  status: text('status').notNull(), // 'sent' | 'simulated' | 'failed' | 'skipped'
+  status: text('status').notNull(), // 'pending' | 'sent' | 'delivered' | 'bounced' | 'failed' | 'skipped'
   error: text('error'),
+  providerMessageId: text('provider_message_id'),
   syncVersion: text('sync_version').notNull(), // 'v1'
   eventKey: text('event_key').notNull().unique(), // e.g. 'dir_sync_${businessId}_v1'
   metadata: jsonb('metadata').$type<Record<string, any>>(),
