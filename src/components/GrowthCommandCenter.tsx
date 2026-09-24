@@ -82,7 +82,11 @@ export const GrowthCommandCenter: React.FC = () => {
           setLoadingDirAnalytics(false);
           return;
         }
-        const res = await fetch(`/api/directory/analytics?businessId=${encodeURIComponent(target)}`);
+        const authEmail = activeBusiness?.ownerEmail || (typeof window !== 'undefined' ? localStorage.getItem('locora_auth_email') : '') || '';
+        const emailParam = authEmail ? `&userEmail=${encodeURIComponent(authEmail)}` : '';
+        const res = await fetch(`/api/directory/analytics?businessId=${encodeURIComponent(target)}${emailParam}`, {
+          headers: authEmail ? { 'x-user-email': authEmail } : {},
+        });
         if (res.ok) {
           const json = await res.json();
           if (json.success && isMounted) {

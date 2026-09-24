@@ -81,7 +81,11 @@ export const DirectoryPublishingCard: React.FC<DirectoryPublishingCardProps> = (
     if (!activeBusiness?.id) return;
     setEligibility((prev) => ({ ...prev, loading: true }));
     try {
-      const res = await fetch(`/api/directory/eligibility?businessId=${encodeURIComponent(activeBusiness.id)}`);
+      const authEmail = user?.email || activeBusiness?.ownerEmail || (typeof window !== 'undefined' ? localStorage.getItem('locora_auth_email') : '') || '';
+      const emailQuery = authEmail ? `&userEmail=${encodeURIComponent(authEmail)}` : '';
+      const res = await fetch(`/api/directory/eligibility?businessId=${encodeURIComponent(activeBusiness.id)}${emailQuery}`, {
+        headers: authEmail ? { 'x-user-email': authEmail } : {},
+      });
       const data = await res.json();
       if (data.success) {
         setEligibility({
@@ -119,13 +123,17 @@ export const DirectoryPublishingCard: React.FC<DirectoryPublishingCardProps> = (
     setPublishing(true);
     setFeedback(null);
     try {
+      const authEmail = user?.email || activeBusiness?.ownerEmail || (typeof window !== 'undefined' ? localStorage.getItem('locora_auth_email') : '') || '';
       const endpoint = checked ? '/api/directory/publish' : '/api/directory/unpublish';
       const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authEmail ? { 'x-user-email': authEmail } : {}),
+        },
         body: JSON.stringify({
           businessId: activeBusiness.id,
-          userEmail: user?.email,
+          userEmail: authEmail,
         }),
       });
       const data = await res.json();

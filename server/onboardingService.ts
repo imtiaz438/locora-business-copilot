@@ -4,6 +4,8 @@ import { eq, desc } from 'drizzle-orm';
 import { syncDetectedGrowthOpportunities } from './growthDetectorService.ts';
 import { saveBusinessRecordToLocoraDb } from './locoraDataEngine.ts';
 import { ensureAccountForUser, getBusinessLimit, updateAccountOnboardingStatus } from './accountService.ts';
+import { syncBusinessToDirectoryProjection } from '../src/db/directoryService.ts';
+import { upsertGoogleReviews } from '../src/db/service.ts';
 import type { DiscoveredBusinessInfo, OnboardingMissingInfoForm } from '../src/types.ts';
 
 // Helper to get GoogleGenAI client
@@ -766,6 +768,61 @@ export async function confirmAndSaveBusiness(
     await updateAccountOnboardingStatus(account.id, 'completed');
   } catch (onboardingStatusErr) {
     console.warn('[Onboarding] Status update non-fatal error:', onboardingStatusErr);
+  }
+
+  // Upsert Google Business Location if placeId or gbp info provided
+  const gbpInfo = (formData as any).googleBusinessProfile || {};
+  const placeId = formData.placeId || gbpInfo.placeId;
+  if (placeId || gbpInfo.rating != null || formData.googleConnected) {
+    try {
+      const gblId = `gbl_${bizId}`;
+      await db
+        .insert(schema.googleBusinessLocationsTable)
+        .values({
+          id: gblId,
+          businessId: bizId,
+          locationId: placeId || `gplace_${bizId}`,
+          locationName: cleanName,
+          address: gbpInfo.formattedAddress || cleanAddress || null,
+          rating: typeof gbpInfo.rating === 'number' ? gbpInfo.rating : 0,
+          reviewCount: typeof gbpInfo.reviewCount === 'number' ? gbpInfo.reviewCount : 0,
+          completenessScore: 85,
+          isVerified: Boolean(formData.googleConnected || gbpInfo.connected),
+          hours: gbpInfo.hours || (cleanHours ? [cleanHours] : []),
+          syncedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: schema.googleBusinessLocationsTable.id,
+          set: {
+            locationName: cleanName,
+            address: gbpInfo.formattedAddress || cleanAddress || null,
+            rating: typeof gbpInfo.rating === 'number' ? gbpInfo.rating : undefined,
+            reviewCount: typeof gbpInfo.reviewCount === 'number' ? gbpInfo.reviewCount : undefined,
+            isVerified: Boolean(formData.googleConnected || gbpInfo.connected),
+            hours: gbpInfo.hours || (cleanHours ? [cleanHours] : []),
+            syncedAt: new Date(),
+          },
+        });
+    } catch (gblErr) {
+      console.warn('[Onboarding] Non-fatal GBP location save notice:', gblErr);
+    }
+  }
+
+  // Persist real Google reviews if available
+  const onboardingReviews = (formData as any).reviews || gbpInfo.reviews;
+  if (Array.isArray(onboardingReviews) && onboardingReviews.length > 0) {
+    try {
+      await upsertGoogleReviews(savedBusiness.id, onboardingReviews);
+    } catch (revErr) {
+      console.warn('[Onboarding] Non-fatal reviews save notice:', revErr);
+    }
+  }
+
+  // Synchronize normalized Directory projection immediately
+  try {
+    await syncBusinessToDirectoryProjection(savedBusiness.id, 'onboarding');
+  } catch (dirSyncErr) {
+    console.warn('[Onboarding] Directory projection sync notice:', dirSyncErr);
   }
 
   return savedBusiness;

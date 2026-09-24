@@ -4,7 +4,11 @@ export interface DirectoryReview {
   rating: number;
   comment: string;
   relativePublishTimeDescription: string;
+  publishedAt?: string;
   profilePhotoUrl?: string;
+  replyText?: string | null;
+  responseDate?: string | null;
+  source?: string;
 }
 
 export interface BusinessHoursMap {
@@ -30,11 +34,18 @@ export interface DirectoryBusinessListing {
   websiteUrl: string;
   phone?: string | null;
   email?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   categorySlug: string;
   categoryName: string;
   citySlug: string;
   cityName: string;
   stateCode: string;
+  socialLinks?: Record<string, string> | null;
+  googleLocationId?: string | null;
+  reviewSource?: string | null;
+  lastSyncedAt?: string | null;
   planTier: 'free' | 'pro' | 'agency' | 'starter' | 'growth';
   isPublishedInDirectory: boolean;
   isDraft?: boolean;

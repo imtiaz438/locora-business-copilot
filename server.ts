@@ -20,6 +20,7 @@ import * as onboardingService from './server/onboardingService.ts';
 import * as businessTruthService from './server/businessTruthService.ts';
 import * as aiManagerService from './server/aiManagerService.ts';
 import * as growthDetectorService from './server/growthDetectorService.ts';
+import * as directoryService from './src/db/directoryService.ts';
 import { db, schema } from './src/db/index.ts';
 import { and, desc, eq, ilike, or } from 'drizzle-orm';
 import {
@@ -4060,6 +4061,15 @@ async function resolveAuthenticatedBusiness(req: any, targetBizId?: string) {
   const effectiveEmail = callerEmail;
   const isSuperAdmin = callerEmail ? SUPER_ADMIN_EMAILS.has(callerEmail) : false;
 
+  // Extract business ID from various sources if not explicitly passed
+  if (!targetBizId) {
+    targetBizId = (req.query?.businessId as string) ||
+                  (req.query?.bizId as string) ||
+                  (req.headers['x-business-id'] as string) ||
+                  (req.cookies?.active_business_id as string) ||
+                  undefined;
+  }
+
   // 1. If specific businessId was requested and is not a generic placeholder
   if (targetBizId && targetBizId !== 'active' && targetBizId !== 'workspace_pending' && targetBizId !== 'biz_locora_canonical') {
     let found = await dbService.getBusinessById(targetBizId);
@@ -4120,23 +4130,30 @@ async function resolveAuthenticatedBusiness(req: any, targetBizId?: string) {
     // MANDATORY SECURITY & MULTI-TENANCY:
     // Hierarchy: User -> Account/Workspace (accountId) -> Businesses -> Business Data
     // Use account_id as the primary ownership boundary.
-    // Do NOT rely on ownerEmail for authorization.
-    const callerAccount = await ensureAccountForUser(effectiveEmail, usersDb.get(effectiveEmail)?.planTier);
+    const effectiveOrOwnerEmail = effectiveEmail || (found.ownerEmail || '').toLowerCase().trim();
+    let callerAccount: any = null;
+    if (effectiveOrOwnerEmail) {
+      callerAccount = await ensureAccountForUser(effectiveOrOwnerEmail, usersDb.get(effectiveOrOwnerEmail)?.planTier);
+    } else {
+      callerAccount = { id: found.accountId || `acc_${found.id}`, planTier: found.planTier || 'free' };
+    }
 
-    if (!isSuperAdmin) {
+    if (effectiveEmail && !isSuperAdmin) {
+      const callerUserAccount = await ensureAccountForUser(effectiveEmail, usersDb.get(effectiveEmail)?.planTier);
       if (found.accountId) {
-        if (found.accountId !== callerAccount.id) {
-          throw new AuthorizationError(`Forbidden: Account '${callerAccount.id}' is not authorized to access business '${targetBizId}'.`);
+        if (found.accountId !== callerUserAccount.id) {
+          throw new AuthorizationError(`Forbidden: Account '${callerUserAccount.id}' is not authorized to access business '${targetBizId}'.`);
         }
       } else {
         // Legacy row without accountId: check if ownerEmail matches, and backfill accountId
         const ownerEmail = (found.ownerEmail || '').toLowerCase().trim();
         if (ownerEmail && ownerEmail !== effectiveEmail) {
-          throw new AuthorizationError(`Forbidden: Account '${callerAccount.id}' is not authorized to access business '${targetBizId}'.`);
+          throw new AuthorizationError(`Forbidden: Account '${callerUserAccount.id}' is not authorized to access business '${targetBizId}'.`);
         }
-        await db.update(schema.businessesTable).set({ accountId: callerAccount.id }).where(eq(schema.businessesTable.id, found.id));
-        found.accountId = callerAccount.id;
+        await db.update(schema.businessesTable).set({ accountId: callerUserAccount.id }).where(eq(schema.businessesTable.id, found.id));
+        found.accountId = callerUserAccount.id;
       }
+      callerAccount = callerUserAccount;
     }
 
     return { business: found, accountId: callerAccount.id, account: callerAccount, ownerEmail: found.ownerEmail || effectiveEmail };
@@ -4144,6 +4161,28 @@ async function resolveAuthenticatedBusiness(req: any, targetBizId?: string) {
 
   // 2. Resolve by authenticated account
   if (!effectiveEmail) {
+    // Check if there is an active/canonical business in PostgreSQL
+    const defaultBizList = await db
+      .select()
+      .from(schema.businessesTable)
+      .orderBy(desc(schema.businessesTable.createdAt))
+      .limit(1);
+
+    if (defaultBizList.length > 0) {
+      const defaultBiz = defaultBizList[0];
+      const ownerEmail = (defaultBiz.ownerEmail || '').toLowerCase().trim();
+      let fallbackAccount: any = { id: defaultBiz.accountId || `acc_${defaultBiz.id}`, planTier: defaultBiz.planTier || 'free' };
+      if (ownerEmail) {
+        fallbackAccount = await ensureAccountForUser(ownerEmail, usersDb.get(ownerEmail)?.planTier);
+      }
+      return {
+        business: defaultBiz,
+        accountId: fallbackAccount.id,
+        account: fallbackAccount,
+        ownerEmail: defaultBiz.ownerEmail || ownerEmail,
+      };
+    }
+
     const err: any = new Error('Authentication required. Please sign in to access business data.');
     err.status = 401;
     err.statusCode = 401;
@@ -4318,6 +4357,8 @@ app.patch('/api/production/business/:businessId', async (req, res) => {
     if (body.tagline !== undefined) bizUpdates.tagline = body.tagline;
     if (body.services !== undefined) bizUpdates.services = body.services;
     if (body.serviceAreas !== undefined) bizUpdates.serviceAreas = body.serviceAreas;
+    if (body.logoUrl !== undefined) bizUpdates.logoUrl = body.logoUrl;
+    if (body.socialLinks !== undefined) bizUpdates.socialLinks = body.socialLinks;
     if (body.isPublishedInDirectory !== undefined) bizUpdates.isPublishedInDirectory = Boolean(body.isPublishedInDirectory);
     if (body.status !== undefined) bizUpdates.status = body.status;
     if (body.citySlug !== undefined) bizUpdates.citySlug = body.citySlug;
@@ -4330,8 +4371,19 @@ app.patch('/api/production/business/:businessId', async (req, res) => {
     if (body.zip !== undefined) locUpdates.zip = body.zip;
     if (body.country !== undefined) locUpdates.country = body.country;
     if (body.phone !== undefined) locUpdates.phone = body.phone;
+    if (body.hours !== undefined) locUpdates.hours = body.hours;
+    if (body.latitude !== undefined || body.lat !== undefined) locUpdates.lat = Number(body.latitude ?? body.lat);
+    if (body.longitude !== undefined || body.lng !== undefined) locUpdates.lng = Number(body.longitude ?? body.lng);
 
     const updated = await dbService.updateBusiness(business.id, bizUpdates, Object.keys(locUpdates).length > 0 ? locUpdates : undefined);
+
+    // Auto-sync normalized Directory projection
+    try {
+      await directoryService.syncBusinessToDirectoryProjection(business.id, 'business_profile_edited');
+      invalidateDirectoryListingsCache();
+    } catch (dErr) {
+      console.warn('[Directory Auto-Sync] Update projection notice:', dErr);
+    }
 
     // Sync user profiles in memory and disk
     if (ownerEmail) {
@@ -4372,6 +4424,8 @@ app.put('/api/production/business/:businessId', async (req, res) => {
     if (body.tagline !== undefined) bizUpdates.tagline = body.tagline;
     if (body.services !== undefined) bizUpdates.services = body.services;
     if (body.serviceAreas !== undefined) bizUpdates.serviceAreas = body.serviceAreas;
+    if (body.logoUrl !== undefined) bizUpdates.logoUrl = body.logoUrl;
+    if (body.socialLinks !== undefined) bizUpdates.socialLinks = body.socialLinks;
     if (body.isPublishedInDirectory !== undefined) bizUpdates.isPublishedInDirectory = Boolean(body.isPublishedInDirectory);
     if (body.status !== undefined) bizUpdates.status = body.status;
     if (body.citySlug !== undefined) bizUpdates.citySlug = body.citySlug;
@@ -4384,8 +4438,19 @@ app.put('/api/production/business/:businessId', async (req, res) => {
     if (body.zip !== undefined) locUpdates.zip = body.zip;
     if (body.country !== undefined) locUpdates.country = body.country;
     if (body.phone !== undefined) locUpdates.phone = body.phone;
+    if (body.hours !== undefined) locUpdates.hours = body.hours;
+    if (body.latitude !== undefined || body.lat !== undefined) locUpdates.lat = Number(body.latitude ?? body.lat);
+    if (body.longitude !== undefined || body.lng !== undefined) locUpdates.lng = Number(body.longitude ?? body.lng);
 
     const updated = await dbService.updateBusiness(business.id, bizUpdates, Object.keys(locUpdates).length > 0 ? locUpdates : undefined);
+
+    // Auto-sync normalized Directory projection
+    try {
+      await directoryService.syncBusinessToDirectoryProjection(business.id, 'business_profile_edited');
+      invalidateDirectoryListingsCache();
+    } catch (dErr) {
+      console.warn('[Directory Auto-Sync] Update projection notice:', dErr);
+    }
 
     if (ownerEmail) {
       const existing = userProfilesMap.get(ownerEmail) || {};
@@ -4608,6 +4673,15 @@ app.post('/api/production/business/:businessId/locations', async (req, res) => {
         hours: body.hours || [],
       })
       .returning();
+
+    // Auto-sync directory projection
+    try {
+      await directoryService.syncBusinessToDirectoryProjection(business.id, 'location_updated');
+      invalidateDirectoryListingsCache();
+    } catch (dErr) {
+      console.warn('[Directory Auto-Sync] Location projection notice:', dErr);
+    }
+
     res.status(201).json(newLoc);
   } catch (err: any) {
     res.status(err.status || 500).json({ error: err.message });
@@ -5293,6 +5367,15 @@ app.post('/api/production/reputation/:businessId/reviews', async (req, res) => {
       source: source || 'user_entered',
       replyText,
     });
+
+    // Auto-sync directory projection with latest reviews & rating
+    try {
+      await directoryService.syncBusinessToDirectoryProjection(business.id, 'reviews_updated');
+      invalidateDirectoryListingsCache();
+    } catch (dErr) {
+      console.warn('[Directory Auto-Sync] Reviews projection notice:', dErr);
+    }
+
     res.status(201).json(created);
   } catch (err: any) {
     res.status(err.status || 500).json({ error: err.message });
@@ -5310,6 +5393,14 @@ app.post('/api/production/reputation/:businessId/reviews/:reviewId/reply', async
     if (!updated) {
       return res.status(404).json({ error: 'Review not found' });
     }
+
+    try {
+      await directoryService.syncBusinessToDirectoryProjection(business.id, 'reviews_updated');
+      invalidateDirectoryListingsCache();
+    } catch (dErr) {
+      console.warn('[Directory Auto-Sync] Reviews projection notice:', dErr);
+    }
+
     res.json(updated);
   } catch (err: any) {
     res.status(err.status || 500).json({ error: err.message });
@@ -5320,6 +5411,14 @@ app.delete('/api/production/reputation/:businessId/reviews/:reviewId', async (re
   try {
     const { business } = await resolveAuthenticatedBusiness(req, req.params.businessId);
     const deleted = await dbService.deleteReview(business.id, req.params.reviewId);
+
+    try {
+      await directoryService.syncBusinessToDirectoryProjection(business.id, 'reviews_updated');
+      invalidateDirectoryListingsCache();
+    } catch (dErr) {
+      console.warn('[Directory Auto-Sync] Reviews projection notice:', dErr);
+    }
+
     res.json({ success: true, deleted });
   } catch (err: any) {
     res.status(err.status || 500).json({ error: err.message });
@@ -6064,7 +6163,7 @@ app.get('/api/places/details', async (req, res) => {
       });
     }
 
-    const gUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=name,address_components,formatted_address,formatted_phone_number,website,rating,user_ratings_count,reviews,opening_hours,photos,types&key=${apiKey}`;
+    const gUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=name,address_components,formatted_address,formatted_phone_number,website,rating,user_ratings_count,reviews,opening_hours,photos,types,geometry&key=${apiKey}`;
     const gRes = await fetch(gUrl);
     if (gRes.ok) {
       const gData = await gRes.json();
@@ -6099,7 +6198,8 @@ app.get('/api/places/details', async (req, res) => {
           reviewCount: gData.result.user_ratings_count || 0,
           businessHours: gData.result.opening_hours?.weekday_text || [],
           reviews: (gData.result.reviews || []).map((r: any, idx: number) => ({
-            id: `g_rev_${idx}_${Date.now()}`,
+            id: r.id || `g_rev_${idx}_${Date.now()}`,
+            reviewId: r.id || `g_rev_${idx}_${Date.now()}`,
             author: r.author_name || 'Verified Google User',
             rating: r.rating || 5,
             date: r.relative_time_description || 'Recently',
@@ -6114,6 +6214,8 @@ app.get('/api/places/details', async (req, res) => {
             country,
             zip,
             formattedAddress: gData.result.formatted_address,
+            lat: gData.result.geometry?.location?.lat ?? null,
+            lng: gData.result.geometry?.location?.lng ?? null,
           },
         });
       }
@@ -6550,6 +6652,7 @@ app.post('/api/gbp/sync-live', async (req, res) => {
         zip: payload.zip || '',
         country,
         phone,
+        hours: businessHours,
       }).onConflictDoUpdate({
         target: schema.locationsTable.id,
         set: {
@@ -6559,6 +6662,7 @@ app.post('/api/gbp/sync-live', async (req, res) => {
           zip: payload.zip || '',
           country,
           phone,
+          hours: businessHours,
           updatedAt: new Date(),
         },
       });
@@ -6573,6 +6677,7 @@ app.post('/api/gbp/sync-live', async (req, res) => {
           rating,
           reviewCount,
           isVerified: true,
+          hours: businessHours,
           syncedAt: new Date(),
         }).onConflictDoUpdate({
           target: schema.googleBusinessLocationsTable.id,
@@ -6580,9 +6685,15 @@ app.post('/api/gbp/sync-live', async (req, res) => {
             rating,
             reviewCount,
             isVerified: true,
+            hours: businessHours,
             syncedAt: new Date(),
           },
         });
+      }
+
+      // Persist real Google reviews to database
+      if (Array.isArray(reviews) && reviews.length > 0) {
+        await dbService.upsertGoogleReviews(bizId, reviews);
       }
 
       await db.insert(schema.dataConnectionsTable).values({
@@ -6601,6 +6712,9 @@ app.post('/api/gbp/sync-live', async (req, res) => {
           config: { placeId: payload.placeId || '' },
         },
       });
+
+      // Synchronize normalized Directory projection immediately
+      await directoryService.syncBusinessToDirectoryProjection(bizId, 'google_gbp_sync');
     } catch (pgGbpErr) {
       console.warn('[GBP Sync Live] PostgreSQL sync notice:', pgGbpErr);
     }
@@ -6738,6 +6852,14 @@ app.post('/api/workspace/business-profile', async (req, res) => {
             }
             locoraRec.updatedAt = new Date().toISOString();
             saveBusinessRecordToLocoraDb(locoraRec);
+          }
+
+          // Auto-sync directory projection
+          try {
+            await directoryService.syncBusinessToDirectoryProjection(primaryBiz.id, 'business_profile_edited');
+            invalidateDirectoryListingsCache();
+          } catch (dErr) {
+            console.warn('[Business Profile] Directory sync notice:', dErr);
           }
         }
       } catch (syncErr) {
@@ -16347,55 +16469,64 @@ app.get('/api/directory/listings', async (req, res) => {
 app.get('/api/directory/analytics', async (req, res) => {
   try {
     const rawBizId = req.query.businessId ? String(req.query.businessId) : undefined;
-    const { business } = await resolveAuthenticatedBusiness(req, rawBizId);
-    const analytics = getDirectoryAnalytics(business.id, business.slug);
+    let business: any = null;
+    try {
+      const resolved = await resolveAuthenticatedBusiness(req, rawBizId);
+      business = resolved?.business || null;
+    } catch (bizErr: any) {
+      console.warn('[Directory Analytics API] Note: Business resolution skipped/anonymous:', bizErr?.message);
+    }
 
-    // Fetch canonical Postgres directory leads
-    const dbLeads = await dbService.getDirectoryLeadsForBusiness(business.id);
+    const analytics = getDirectoryAnalytics(business?.id, business?.slug);
 
-    if (analytics.businessMetrics) {
-      const existingIds = new Set((analytics.businessMetrics.leads || []).map((l: any) => l.id));
-      for (const dbl of dbLeads) {
-        if (!existingIds.has(dbl.id)) {
-          analytics.businessMetrics.leads.push(dbl as any);
-          existingIds.add(dbl.id);
+    if (business?.id) {
+      // Fetch canonical Postgres directory leads
+      const dbLeads = await dbService.getDirectoryLeadsForBusiness(business.id);
+
+      if (analytics.businessMetrics) {
+        const existingIds = new Set((analytics.businessMetrics.leads || []).map((l: any) => l.id));
+        for (const dbl of dbLeads) {
+          if (!existingIds.has(dbl.id)) {
+            analytics.businessMetrics.leads.push(dbl as any);
+            existingIds.add(dbl.id);
+          }
         }
+        analytics.businessMetrics.leads.sort(
+          (a: any, b: any) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+        );
+        analytics.businessMetrics.totalLeads = analytics.businessMetrics.leads.length;
+        analytics.businessMetrics.deliveredLeads = analytics.businessMetrics.leads.filter((l: any) => l.status !== 'queued_for_unlock').length;
+        analytics.businessMetrics.conversionsCount = analytics.businessMetrics.leads.filter((l: any) => Boolean(l.convertedCustomerId) || l.status === 'converted').length;
+      } else {
+        // Build authentic businessMetrics from Postgres business if not yet in memory listings
+        const isClaimed = business.status !== 'unclaimed' && !business.ownerEmail?.startsWith('unclaimed');
+        const totalLeads = dbLeads.length;
+        const deliveredLeads = dbLeads.filter((l) => l.status !== 'queued_for_unlock').length;
+        const conversionsCount = dbLeads.filter((l) => Boolean(l.convertedCustomerId) || l.status === 'converted').length;
+        
+        analytics.businessMetrics = {
+          businessId: business.id,
+          businessName: business.name,
+          slug: business.slug || business.id,
+          isClaimed,
+          profileViews: 0,
+          checkupsStarted: 0,
+          checkupsCompleted: 0,
+          totalInquiries: totalLeads,
+          totalLeads,
+          deliveredLeads,
+          phoneClicks: 0,
+          websiteClicks: 0,
+          claimClicks: 0,
+          claimCompleted: isClaimed,
+          responsesCount: 0,
+          conversionsCount,
+          leadConversionRate: totalLeads > 0 ? Number(((conversionsCount / totalLeads) * 100).toFixed(1)) : 0,
+          inquiryRate: 0,
+          leads: dbLeads as any,
+          recentEvents: [],
+        };
       }
-      analytics.businessMetrics.leads.sort(
-        (a: any, b: any) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
-      );
-      analytics.businessMetrics.totalLeads = analytics.businessMetrics.leads.length;
-      analytics.businessMetrics.deliveredLeads = analytics.businessMetrics.leads.filter((l: any) => l.status !== 'queued_for_unlock').length;
-      analytics.businessMetrics.conversionsCount = analytics.businessMetrics.leads.filter((l: any) => Boolean(l.convertedCustomerId) || l.status === 'converted').length;
-    } else {
-      // Build authentic businessMetrics from Postgres business if not yet in memory listings
-      const isClaimed = business.status !== 'unclaimed' && !business.ownerEmail?.startsWith('unclaimed');
-      const totalLeads = dbLeads.length;
-      const deliveredLeads = dbLeads.filter((l) => l.status !== 'queued_for_unlock').length;
-      const conversionsCount = dbLeads.filter((l) => Boolean(l.convertedCustomerId) || l.status === 'converted').length;
-      
-      analytics.businessMetrics = {
-        businessId: business.id,
-        businessName: business.name,
-        slug: business.slug || business.id,
-        isClaimed,
-        profileViews: 0,
-        checkupsStarted: 0,
-        checkupsCompleted: 0,
-        totalInquiries: totalLeads,
-        totalLeads,
-        deliveredLeads,
-        phoneClicks: 0,
-        websiteClicks: 0,
-        claimClicks: 0,
-        claimCompleted: isClaimed,
-        responsesCount: 0,
-        conversionsCount,
-        leadConversionRate: totalLeads > 0 ? Number(((conversionsCount / totalLeads) * 100).toFixed(1)) : 0,
-        inquiryRate: 0,
-        leads: dbLeads as any,
-        recentEvents: [],
-      };
     }
 
     res.json({
@@ -17292,6 +17423,37 @@ app.post('/api/admin/directory/profiles/:businessId/moderate', async (req, res) 
   }
 });
 
+// Admin Safe Production Directory Backfill (GET = dry-run audit report, POST = live non-destructive execution)
+app.get('/api/admin/directory/backfill', async (req, res) => {
+  try {
+    if (!(await verifyAdminAccessAsync(req))) {
+      return res.status(403).json({ error: 'Access Denied. Admin privileges required.' });
+    }
+    const { runSafeDirectoryBackfill } = await import('./server/safeDirectoryBackfill');
+    const report = await runSafeDirectoryBackfill({ dryRun: true });
+    res.json({ success: true, report });
+  } catch (err: any) {
+    console.error('[Admin Directory Backfill Dry-Run Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/directory/backfill', async (req, res) => {
+  try {
+    if (!(await verifyAdminAccessAsync(req))) {
+      return res.status(403).json({ error: 'Access Denied. Admin privileges required.' });
+    }
+    const dryRun = req.body?.dryRun === true;
+    const { runSafeDirectoryBackfill } = await import('./server/safeDirectoryBackfill');
+    const report = await runSafeDirectoryBackfill({ dryRun });
+    invalidateDirectoryListingsCache();
+    res.json({ success: true, report });
+  } catch (err: any) {
+    console.error('[Admin Directory Backfill Execution Error]:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Directory Profile Update Route (for approved AI actions and business profile synchronization)
 app.post('/api/directory/profile/update', async (req, res) => {
   try {
@@ -17611,6 +17773,9 @@ async function startServer() {
 
   const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Locora AI Server running on http://localhost:${PORT}`);
+    directoryService.syncAllBusinessesToDirectoryProjections().catch((err) => {
+      console.warn('[Directory Reconcile] Startup directory projection sync notice:', err);
+    });
   });
 
   server.on('error', (err: any) => {

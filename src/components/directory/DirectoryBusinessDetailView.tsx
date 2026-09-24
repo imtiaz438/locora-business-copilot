@@ -116,14 +116,22 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
           // Fire profile view event (Phase 4.1: directory_profile_view)
           trackDirectoryEvent('directory_profile_view', { businessName: data.business.businessName });
 
-          // Fetch real related businesses in same city
-          if (data.business.cityName) {
-            fetch(`/api/directory/listings?city=${encodeURIComponent(data.business.cityName)}&limit=4`)
+          // Fetch real related businesses in same category
+          const categoryTarget = data.business.categorySlug || data.business.categoryName;
+          if (categoryTarget) {
+            fetch(`/api/directory/listings?category=${encodeURIComponent(categoryTarget)}&limit=6`)
               .then((r) => r.json())
               .then((relData) => {
                 if (relData.success && Array.isArray(relData.listings)) {
                   setRelatedBusinesses(
-                    relData.listings.filter((l: DirectoryBusinessListing) => l.slug !== slug && l.id !== data.business.id).slice(0, 3)
+                    relData.listings
+                      .filter(
+                        (l: DirectoryBusinessListing) =>
+                          l.slug !== slug &&
+                          l.id !== data.business.id &&
+                          l.isPublishedInDirectory === true
+                      )
+                      .slice(0, 3)
                   );
                 }
               })
@@ -352,10 +360,75 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
   const rating = business.gbpData?.averageRating;
   const reviewCount = business.gbpData?.reviewCount;
   const reviews = business.gbpData?.reviews || [];
-  const hours = business.gbpData?.hours || {};
+  const hours = business.gbpData?.hours;
   const isPremium = business.planTier === 'pro' || business.planTier === 'agency' || business.planTier === 'growth';
   const status = business.directoryStatus || (business.isClaimed ? 'CLAIMED' : 'PUBLISHED');
   const isUnclaimed = !business.isClaimed && status !== 'CLAIMED' && status !== 'VERIFIED';
+
+  const [visibleReviewsCount, setVisibleReviewsCount] = useState(5);
+
+  const reviewSourceLabel = business.reviewSource === 'google_gbp' || business.reviewSource === 'google' || !business.reviewSource ? 'Google' : business.reviewSource;
+
+  // Real Reviews sorting: Most recent available first
+  const sortedReviews = [...reviews].sort((a, b) => {
+    const timeA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+    const timeB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+    return timeB - timeA;
+  });
+  const displayedReviews = sortedReviews.slice(0, visibleReviewsCount);
+
+  // Safe Operating Hours formatting (handles Record<string, string>, Array<string>, or empty)
+  const formattedHoursList: { day: string; time: string }[] = [];
+  if (hours) {
+    if (Array.isArray(hours)) {
+      for (const item of hours) {
+        if (typeof item === 'string') {
+          const colonIdx = item.indexOf(':');
+          if (colonIdx > 0) {
+            formattedHoursList.push({
+              day: item.slice(0, colonIdx).trim(),
+              time: item.slice(colonIdx + 1).trim(),
+            });
+          } else {
+            formattedHoursList.push({ day: item, time: '' });
+          }
+        }
+      }
+    } else if (typeof hours === 'object') {
+      for (const [day, time] of Object.entries(hours)) {
+        if (time && typeof time === 'string') {
+          formattedHoursList.push({ day, time });
+        }
+      }
+    }
+  }
+  const hasValidHours = formattedHoursList.length > 0;
+
+  // Location & Google Maps Setup (real coordinates & address only)
+  const hasCoordinates = typeof business.latitude === 'number' && typeof business.longitude === 'number' && !isNaN(business.latitude) && !isNaN(business.longitude);
+  const fullAddress = business.address || (business.cityName && business.stateCode ? `${business.cityName}, ${business.stateCode}` : null);
+  const hasValidMapLocation = hasCoordinates || Boolean(fullAddress);
+
+  const mapEmbedQuery = hasCoordinates
+    ? `${business.latitude},${business.longitude}`
+    : encodeURIComponent(`${business.businessName}, ${fullAddress || ''}`);
+
+  const mapEmbedUrl = hasValidMapLocation
+    ? `https://maps.google.com/maps?q=${mapEmbedQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`
+    : '';
+
+  const googleMapsDirectionsUrl = hasCoordinates
+    ? `https://www.google.com/maps/dir/?api=1&destination=${business.latitude},${business.longitude}`
+    : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${business.businessName}, ${fullAddress || ''}`)}`;
+
+  const googleMapsSearchUrl = hasCoordinates
+    ? `https://www.google.com/maps/search/?api=1&query=${business.latitude},${business.longitude}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${business.businessName}, ${fullAddress || ''}`)}`;
+
+  // Social Links List
+  const socialEntries = business.socialLinks
+    ? Object.entries(business.socialLinks).filter(([_, url]) => Boolean(url && typeof url === 'string' && url.trim().length > 0))
+    : [];
 
   // Generate verified Schema.org LocalBusiness JSON-LD (strictly without invented fields)
   const schemaOrgJsonLd: any = {
@@ -373,9 +446,17 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
   if (business.cityName || business.stateCode) {
     schemaOrgJsonLd.address = {
       '@type': 'PostalAddress',
+      streetAddress: business.address || undefined,
       addressLocality: business.cityName || undefined,
       addressRegion: business.stateCode || undefined,
       addressCountry: 'US',
+    };
+  }
+  if (hasCoordinates) {
+    schemaOrgJsonLd.geo = {
+      '@type': 'GeoCoordinates',
+      latitude: business.latitude,
+      longitude: business.longitude,
     };
   }
   // Only include aggregateRating if authentic rating and reviewCount are present
@@ -389,10 +470,25 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
     };
   }
   // Only include opening hours if authentic hours are present
-  if (hours && Object.keys(hours).length > 0) {
-    schemaOrgJsonLd.openingHours = Object.entries(hours)
-      .filter(([_, time]) => time && time !== 'Closed')
-      .map(([day, time]) => `${day.substring(0, 2)} ${time}`);
+  if (hasValidHours) {
+    schemaOrgJsonLd.openingHours = formattedHoursList
+      .filter(({ time }) => time && !time.toLowerCase().includes('closed'))
+      .map(({ day, time }) => `${day.substring(0, 2)} ${time}`);
+  }
+  // Only include services in structured data if verified actual services exist
+  const actualServices = business.scrapedContent?.serviceTags || [];
+  if (actualServices.length > 0) {
+    schemaOrgJsonLd.hasOfferCatalog = {
+      '@type': 'OfferCatalog',
+      name: `${business.businessName} Services`,
+      itemListElement: actualServices.map((svc) => ({
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: svc,
+        },
+      })),
+    };
   }
 
   // Generate BreadcrumbList Schema.org JSON-LD
@@ -561,7 +657,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
 
               {/* Ratings and Reviews */}
               <div className="flex flex-wrap items-center gap-3">
-                {typeof rating === 'number' && rating > 0 ? (
+                {typeof rating === 'number' && rating > 0 && typeof reviewCount === 'number' && reviewCount > 0 ? (
                   <>
                     <div className="flex items-center text-amber-400">
                       {[...Array(5)].map((_, i) => (
@@ -575,13 +671,13 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                     </div>
                     <span className="text-sm font-bold text-slate-900">{rating.toFixed(1)}</span>
                     <span className="text-xs text-slate-500">
-                      Based on <strong>{reviewCount || reviews.length || 1}</strong> authentic customer reviews synced from Google Business Profile
+                      {reviewSourceLabel} Rating: <strong>{rating.toFixed(1)}</strong> based on <strong>{reviewCount}</strong> {reviewCount === 1 ? 'review' : 'reviews'}
                     </span>
                   </>
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    Verified Public Google Listing (Reviews Syncing)
+                  <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
+                    <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+                    No customer reviews yet
                   </span>
                 )}
               </div>
@@ -590,7 +686,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600 pt-1">
                 <div className="flex items-center gap-1.5">
                   <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                  <span>{business.cityName ? `${business.cityName}, ${business.stateCode}` : 'United States'}</span>
+                  <span>{fullAddress || 'United States'}</span>
                 </div>
                 {business.phone && (
                   <div className="flex items-center gap-1.5 font-bold text-slate-800">
@@ -619,6 +715,26 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                   </div>
                 )}
               </div>
+
+              {/* Social Links */}
+              {socialEntries.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <span className="text-slate-400 text-[11px] font-medium mr-1">Social Profiles:</span>
+                  {socialEntries.map(([platform, url]) => (
+                    <a
+                      key={platform}
+                      href={url.startsWith('http') ? url : `https://${url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-[11px] capitalize inline-flex items-center gap-1.5 transition-colors border border-slate-200/60"
+                    >
+                      <Share2 className="w-3 h-3 text-slate-400" />
+                      <span>{platform}</span>
+                      <ExternalLink className="w-2.5 h-2.5 text-slate-400" />
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Direct Call / Contact CTA Box */}
@@ -781,77 +897,241 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
               <h2 className="text-base font-bold text-slate-900 font-heading mb-4 flex items-center gap-2">
                 <Clock className="w-5 h-5 text-emerald-600" />
-                Operating Hours (Live Google Sync)
+                Operating Hours
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                {Object.keys(hours).length > 0 ? (
-                  Object.entries(hours).map(([day, time]) => (
+              {hasValidHours ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  {formattedHoursList.map(({ day, time }) => (
                     <div
                       key={day}
-                      className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100"
+                      className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-100"
                     >
                       <span className="font-bold text-slate-700">{day}</span>
-                      <span className={time === 'Closed' ? 'text-rose-600 font-semibold' : 'text-slate-600'}>
+                      <span className={time.toLowerCase().includes('closed') ? 'text-rose-600 font-semibold' : 'text-slate-600'}>
                         {time}
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-slate-400 text-xs col-span-2 italic">
-                    Hours not specified. Contact business directly for current schedule.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Customer Reviews Section */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 font-heading flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5 text-emerald-600" />
-                    Google Business Reviews {reviewCount ? `(${reviewCount})` : ''}
-                  </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Authentic feedback from verified customers</p>
-                </div>
-
-                {typeof rating === 'number' && rating > 0 && (
-                  <div className="flex items-center gap-1 px-3 py-1 bg-amber-50 rounded-full border border-amber-200 text-amber-700 font-bold text-xs">
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                    {rating.toFixed(1)} / 5.0
-                  </div>
-                )}
-              </div>
-
-              {reviews.length > 0 ? (
-                <div className="space-y-4">
-                  {reviews.map((rev) => (
-                    <div key={rev.id} className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold text-slate-900">{rev.authorName}</span>
-                        <div className="flex items-center text-amber-400">
-                          {[...Array(rev.rating || 5)].map((_, i) => (
-                            <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-xs text-slate-600 leading-relaxed italic">"{rev.comment}"</p>
-                      <span className="block text-[10px] text-slate-400 mt-2">
-                        {rev.relativePublishTimeDescription}
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-center text-xs text-slate-500">
+                  Hours not available
+                </div>
+              )}
+            </div>
+
+            {/* Google Maps Location Section */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 font-heading flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-emerald-600" />
+                    Google Maps & Location
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {hasCoordinates ? 'Verified coordinates from Google Business Profile' : fullAddress ? 'Verified physical address' : 'Location details'}
+                  </p>
+                </div>
+
+                {hasValidMapLocation && (
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={googleMapsDirectionsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span>Directions</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                    <a
+                      href={googleMapsSearchUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <span>Open in Maps</span>
+                      <ExternalLink className="w-3 h-3 text-slate-500" />
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {hasValidMapLocation ? (
+                <div className="space-y-4">
+                  {/* Real Google Maps Embed */}
+                  <div className="relative w-full h-72 sm:h-80 rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+                    <iframe
+                      title={`Google Map for ${business.businessName}`}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      allowFullScreen
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={mapEmbedUrl}
+                    />
+                  </div>
+
+                  {/* Location Details and Marker Card */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-100 gap-3 text-xs">
+                    <div className="flex items-start gap-2.5">
+                      <div className="p-2 rounded-lg bg-emerald-100 text-emerald-800 shrink-0 mt-0.5">
+                        <MapPin className="w-4 h-4 text-emerald-700" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-slate-900 block">{business.businessName}</span>
+                        <span className="text-slate-600 block mt-0.5">{fullAddress || `${business.cityName}, ${business.stateCode}`}</span>
+                        {hasCoordinates && (
+                          <span className="text-[10px] text-slate-400 block mt-0.5 font-mono">
+                            GPS: {business.latitude?.toFixed(5)}, {business.longitude?.toFixed(5)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <a
+                      href={googleMapsDirectionsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-700 hover:underline font-bold text-xs flex items-center gap-1 shrink-0"
+                    >
+                      <span>Get driving directions</span>
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-8 rounded-xl bg-slate-50 border border-slate-100 text-center">
+                  <MapPin className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs font-bold text-slate-700">Map unavailable for this business</p>
+                  <p className="text-[11px] text-slate-400 mt-1">No verified physical location coordinates available.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Customer Reviews Section */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 pb-4 border-b border-slate-100 gap-3">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 font-heading flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-emerald-600" />
+                    Customer Reviews
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">{reviewSourceLabel} Reviews</p>
+                </div>
+
+                {typeof rating === 'number' && rating > 0 && typeof reviewCount === 'number' && reviewCount > 0 && (
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center text-amber-400">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${
+                            i < Math.floor(rating) ? 'fill-amber-400 text-amber-400' : 'text-slate-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <div>
+                      <span className="text-sm font-bold text-slate-900">{rating.toFixed(1)}</span>
+                      <span className="text-xs text-slate-500 ml-1.5">
+                        ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Review Cards or Verified Status */}
+              {reviews.length > 0 ? (
+                <div className="space-y-4">
+                  {displayedReviews.map((rev) => (
+                    <div key={rev.id} className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div>
+                          <span className="text-xs font-bold text-slate-900 block">{rev.authorName}</span>
+                          <span className="text-[10px] text-slate-400">
+                            {rev.relativePublishTimeDescription || (rev.publishedAt ? new Date(rev.publishedAt).toLocaleDateString() : '')}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <div className="flex items-center text-amber-400">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-3.5 h-3.5 ${
+                                  i < Math.floor(rev.rating || 5) ? 'fill-amber-400 text-amber-400' : 'text-slate-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-xs font-bold text-slate-800 ml-1">{rev.rating || 5}.0</span>
+                        </div>
+                      </div>
+
+                      {rev.comment && (
+                        <p className="text-xs text-slate-700 leading-relaxed mt-2 whitespace-pre-line">
+                          "{rev.comment}"
+                        </p>
+                      )}
+
+                      {/* Owner Response if available */}
+                      {rev.replyText && (
+                        <div className="mt-3 p-3 bg-white rounded-lg border border-slate-200/80 text-xs">
+                          <div className="flex items-center gap-1.5 text-emerald-800 font-bold text-[11px] mb-1">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Response from {business.businessName}</span>
+                            {rev.responseDate && (
+                              <span className="text-slate-400 font-normal">· {new Date(rev.responseDate).toLocaleDateString()}</span>
+                            )}
+                          </div>
+                          <p className="text-slate-600 text-xs italic">
+                            {rev.replyText}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 mt-2.5 pt-2 border-t border-slate-100">
+                        <span className="inline-flex items-center gap-1">
+                          Source: <strong className="text-slate-600">{rev.source || reviewSourceLabel}</strong>
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Pagination / Load More if many reviews exist */}
+                  {sortedReviews.length > visibleReviewsCount && (
+                    <div className="pt-2 text-center">
+                      <button
+                        onClick={() => setVisibleReviewsCount((prev) => prev + 5)}
+                        className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all cursor-pointer inline-flex items-center gap-2"
+                      >
+                        <span>Load More Reviews ({sortedReviews.length - visibleReviewsCount} remaining)</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : typeof rating === 'number' && rating > 0 && typeof reviewCount === 'number' && reviewCount > 0 ? (
+                <div className="p-6 rounded-xl bg-slate-50 border border-slate-100 text-center text-xs">
+                  <MessageSquare className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                  <p className="font-bold text-slate-800 text-sm">
+                    {reviewSourceLabel} Rating: {rating.toFixed(1)}
+                  </p>
+                  <p className="text-slate-500 mt-1">
+                    Based on {reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-2">
+                    Individual review text is not currently available for this business.
+                  </p>
+                </div>
+              ) : (
                 <div className="p-6 rounded-xl bg-slate-50 border border-slate-100 text-center text-xs text-slate-500">
                   <MessageSquare className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                  <p className="font-semibold text-slate-700">No individual text reviews synced yet.</p>
-                  <p className="mt-1 text-slate-400">
-                    {typeof rating === 'number' && rating > 0 && reviewCount
-                      ? `Rating of ${rating.toFixed(1)}★ is aggregated from ${reviewCount} verified Google customer interactions.`
-                      : 'Google Business Profile reviews are synced continuously.'}
-                  </p>
+                  <p className="font-semibold text-slate-700">No customer reviews yet.</p>
                 </div>
               )}
             </div>
@@ -1084,64 +1364,85 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               )}
             </div>
           </div>
-        ) : (
-          relatedBusinesses.length > 0 && (
-            <div className="mt-12 pt-8 border-t border-slate-200">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 font-heading">
-                    More Verified Businesses in {business.cityName}
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Explore top-rated service providers and local contractors in your immediate area.
-                  </p>
-                </div>
-                <button
-                  onClick={navigateToCity}
-                  className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 cursor-pointer"
-                >
-                  View all in {business.cityName} <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+        ) : null}
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {relatedBusinesses.map((rel) => (
+        {/* Other Related Businesses in this Category */}
+        {relatedBusinesses.length > 0 && (
+          <div className="mt-14 pt-8 border-t border-slate-200" id="related-category-businesses">
+            <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-slate-900 font-heading flex items-center gap-2">
+                  <span>Other {business.categoryName || 'Related'} Businesses</span>
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    {relatedBusinesses.length}
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Explore other verified and eligible service providers in this category.
+                </p>
+              </div>
+              {business.categorySlug && (
+                <button
+                  onClick={navigateToCategory}
+                  className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  View all {business.categoryName || 'in category'} <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {relatedBusinesses.map((rel) => {
+                const relUrl = getDirectoryBusinessUrl(rel.slug);
+                return (
                   <div
                     key={rel.id || rel.slug}
-                    className="p-4 bg-white rounded-xl border border-slate-200 hover:border-emerald-300 hover:shadow-xs transition-all space-y-2 flex flex-col justify-between"
+                    className="p-5 bg-white rounded-2xl border border-slate-200 hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between group"
                   >
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block">
-                        {rel.categoryName}
-                      </span>
-                      <h4 className="text-xs font-bold text-slate-900 line-clamp-1">
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200 inline-block truncate">
+                          {rel.categoryName}
+                        </span>
+                        {rel.isClaimed && (
+                          <span className="text-[10px] font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200 flex items-center gap-1 shrink-0">
+                            <ShieldCheck className="w-3 h-3 text-sky-600" /> Verified
+                          </span>
+                        )}
+                      </div>
+
+                      <h4 className="text-sm font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-1">
                         {rel.businessName}
                       </h4>
-                      <p className="text-[11px] text-slate-500 line-clamp-1">
-                        {rel.cityName}, {rel.stateCode}
-                      </p>
+
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="truncate">{rel.cityName}{rel.stateCode ? `, ${rel.stateCode}` : ''}</span>
+                      </div>
+
                       {typeof rel.gbpData?.averageRating === 'number' && rel.gbpData.averageRating > 0 && (
-                        <div className="flex items-center gap-1 text-[11px] text-amber-600 font-semibold pt-0.5">
-                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                        <div className="flex items-center gap-1 text-xs text-amber-600 font-semibold">
+                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                           <span>{rel.gbpData.averageRating.toFixed(1)}</span>
-                          <span className="text-slate-400">({rel.gbpData.reviewCount || 0})</span>
+                          <span className="text-slate-400">({rel.gbpData.reviewCount || 0} reviews)</span>
                         </div>
                       )}
                     </div>
 
-                    <button
-                      onClick={() => {
-                        navigateToDirectory(`/business/${rel.slug}`);
-                      }}
-                      className="w-full mt-2 py-1.5 px-3 text-center text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg cursor-pointer transition-colors"
-                    >
-                      View Profile
-                    </button>
+                    <div className="pt-4 mt-4 border-t border-slate-100 flex items-center gap-2">
+                      <a
+                        href={relUrl}
+                        className="w-full py-2 px-3 text-center text-xs font-bold text-slate-700 bg-slate-100 hover:bg-emerald-600 hover:text-white rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <span>View Listing</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
-          )
+          </div>
         )}
       </div>
 

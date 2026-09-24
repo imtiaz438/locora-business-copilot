@@ -246,6 +246,9 @@ export async function getDirectoryEligibility(businessId: string): Promise<Direc
 
     const primaryLoc = locations.find((l) => l.isPrimary) || locations[0];
 
+    // Fetch existing directory profile to ensure already-present directory data is not marked missing
+    const existingProfile = await getDirectoryProfileByBusinessId(businessId);
+
     // 4. Fetch Google Business connection signals
     const gbpLocations = await db
       .select({ id: schema.googleBusinessLocationsTable.id })
@@ -266,7 +269,7 @@ export async function getDirectoryEligibility(businessId: string): Promise<Direc
     // ================= REAL DATA REQUIRED VALIDATIONS =================
 
     // 1. Business Name
-    const name = (business.name || '').trim();
+    const name = (business.name || existingProfile?.name || '').trim();
     if (settings.minRequiredData.name) {
       if (!name || name.length < 2) {
         missingFields.push('Business Name');
@@ -279,7 +282,7 @@ export async function getDirectoryEligibility(businessId: string): Promise<Direc
     }
 
     // 2. Category / Industry
-    const category = (business.category || business.industry || '').trim();
+    const category = (business.category || business.industry || existingProfile?.category || '').trim();
     const invalidCategories = ['unassigned', 'none', 'general', 'select category'];
     if (settings.minRequiredData.category) {
       if (!category || invalidCategories.includes(category.toLowerCase())) {
@@ -294,7 +297,7 @@ export async function getDirectoryEligibility(businessId: string): Promise<Direc
 
     // 3. Primary Location (City)
     // Must be a real user-specified city from primary location or business profile, not blank or unconfigured
-    const city = (primaryLoc?.city || '').trim();
+    const city = (primaryLoc?.city || business.cityName || existingProfile?.city || '').trim();
     if (settings.minRequiredData.city) {
       if (!city) {
         missingFields.push('City / Operating Location');
@@ -307,7 +310,7 @@ export async function getDirectoryEligibility(businessId: string): Promise<Direc
     }
 
     // 4. Country / Region
-    const country = (primaryLoc?.country || 'United States').trim();
+    const country = (primaryLoc?.country || existingProfile?.country || 'United States').trim();
     if (settings.minRequiredData.country) {
       if (!country) {
         missingFields.push('Country / Region');
@@ -326,9 +329,9 @@ export async function getDirectoryEligibility(businessId: string): Promise<Direc
     // 5. Sufficient Public Contact Information (Phone, Website, or Physical Address)
     // A public directory listing requires at least one public contact channel so prospective customers
     // can reach or visit the business. A private user account email alone does NOT qualify.
-    const phone = (primaryLoc?.phone || business.phone || '').trim();
-    const website = (business.website || '').trim();
-    const address = (primaryLoc?.address || '').trim();
+    const phone = (primaryLoc?.phone || business.phone || existingProfile?.phone || '').trim();
+    const website = (business.website || existingProfile?.website || '').trim();
+    const address = (primaryLoc?.address || existingProfile?.address || '').trim();
     const hasPublicContact = Boolean(phone || website || address);
 
     if (settings.minRequiredData.contactInfo) {
@@ -509,69 +512,8 @@ export async function publishBusinessToDirectory(
   ];
   const canonicalUrl = `https://directory.locoraai.com/biz/${slug}`;
 
-  // 6. Upsert directory_profiles table (1:1 with businesses)
-  const profileId = `dir_prof_${business.id}`;
+  // 6. Update canonical business record
   const now = new Date();
-
-  const existingProfile = await db
-    .select()
-    .from(schema.directoryProfilesTable)
-    .where(eq(schema.directoryProfilesTable.businessId, business.id))
-    .limit(1);
-
-  let directoryProfile: any;
-  if (existingProfile.length > 0) {
-    const updated = await db
-      .update(schema.directoryProfilesTable)
-      .set({
-        status: 'PUBLISHED',
-        slug,
-        publishedAt: existingProfile[0].publishedAt || now,
-        lastSyncedAt: now,
-        seoTitle,
-        seoDescription,
-        seoKeywords,
-        canonicalUrl,
-        qualityScore: eligibility.qualityScore,
-        qualityStatus: eligibility.qualityStatus,
-        missingFields: [],
-        eligibilityReasons: [],
-        isClaimed: true,
-        isVerified: eligibility.qualityStatus === 'verified',
-        updatedAt: now,
-      })
-      .where(eq(schema.directoryProfilesTable.businessId, business.id))
-      .returning();
-    directoryProfile = updated[0];
-  } else {
-    const inserted = await db
-      .insert(schema.directoryProfilesTable)
-      .values({
-        id: profileId,
-        businessId: business.id,
-        status: 'PUBLISHED',
-        slug,
-        publishedAt: now,
-        lastSyncedAt: now,
-        seoTitle,
-        seoDescription,
-        seoKeywords,
-        canonicalUrl,
-        qualityScore: eligibility.qualityScore,
-        qualityStatus: eligibility.qualityStatus,
-        missingFields: [],
-        eligibilityReasons: [],
-        isClaimed: true,
-        isVerified: eligibility.qualityStatus === 'verified',
-        source: 'owner_published',
-        createdAt: now,
-        updatedAt: now,
-      })
-      .returning();
-    directoryProfile = inserted[0];
-  }
-
-  // 7. Update canonical business record
   const updatedBiz = await db
     .update(schema.businessesTable)
     .set({
@@ -586,10 +528,13 @@ export async function publishBusinessToDirectory(
     .where(eq(schema.businessesTable.id, business.id))
     .returning();
 
+  // 7. Synchronize normalized directory projection
+  const directoryProfile = await syncBusinessToDirectoryProjection(business.id, 'owner_published');
+
   return {
     success: true,
     eligible: true,
-    status: 'PUBLISHED',
+    status: directoryProfile?.status || 'PUBLISHED',
     isPublishedInDirectory: true,
     slug,
     canonicalUrl,
@@ -604,16 +549,7 @@ export async function publishBusinessToDirectory(
 export async function unpublishBusinessFromDirectory(businessId: string) {
   const now = new Date();
 
-  // 1. Update directory_profiles status
-  await db
-    .update(schema.directoryProfilesTable)
-    .set({
-      status: 'UNPUBLISHED',
-      updatedAt: now,
-    })
-    .where(eq(schema.directoryProfilesTable.businessId, businessId));
-
-  // 2. Update canonical business flag
+  // 1. Update canonical business flag
   const updatedBiz = await db
     .update(schema.businessesTable)
     .set({
@@ -623,72 +559,683 @@ export async function unpublishBusinessFromDirectory(businessId: string) {
     .where(eq(schema.businessesTable.id, businessId))
     .returning();
 
+  // 2. Synchronize directory projection
+  const updatedProfile = await syncBusinessToDirectoryProjection(businessId, 'owner_unpublished');
+
   return {
     success: true,
     status: 'UNPUBLISHED',
     isPublishedInDirectory: false,
+    directoryProfile: updatedProfile,
     business: updatedBiz[0] || null,
   };
 }
 
-/**
- * Synchronize directory profile data whenever business information changes
- */
-export async function syncDirectoryProfileData(businessId: string) {
-  try {
-    const profile = await getDirectoryProfileByBusinessId(businessId);
-    if (!profile) return null;
+export interface FieldConflict {
+  businessId: string;
+  field: string;
+  existingValue: any;
+  newValue: any;
+  source: string;
+  resolution: string;
+}
 
-    const bizRows = await db
+export interface DirectorySyncAudit {
+  action: 'updated' | 'created' | 'unchanged';
+  fieldsAdded: string[];
+  fieldsChanged: string[];
+  conflicts: FieldConflict[];
+}
+
+function isValidString(val: any): boolean {
+  return typeof val === 'string' && val.trim().length > 0;
+}
+
+function isValidNumber(val: any): boolean {
+  return typeof val === 'number' && !isNaN(val);
+}
+
+function mergeStringArrays(...arrays: (string[] | null | undefined)[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const arr of arrays) {
+    if (Array.isArray(arr)) {
+      for (const item of arr) {
+        if (isValidString(item)) {
+          const clean = item.trim();
+          const lower = clean.toLowerCase();
+          if (!seen.has(lower)) {
+            seen.add(lower);
+            result.push(clean);
+          }
+        }
+      }
+    }
+  }
+  return result;
+}
+
+function mergeSocialLinks(
+  existingLinks?: Record<string, string> | null,
+  newLinks?: Record<string, string> | null
+): Record<string, string> {
+  const merged: Record<string, string> = {};
+  if (existingLinks && typeof existingLinks === 'object') {
+    for (const [k, v] of Object.entries(existingLinks)) {
+      if (isValidString(v)) merged[k] = v.trim();
+    }
+  }
+  if (newLinks && typeof newLinks === 'object') {
+    for (const [k, v] of Object.entries(newLinks)) {
+      if (isValidString(v)) merged[k] = v.trim();
+    }
+  }
+  return merged;
+}
+
+/**
+ * Synchronize Business canonical data and real source signals (Google GBP, User Inputs, Settings)
+ * into the normalized directory_profiles projection table.
+ *
+ * Deterministic Source Priority:
+ * 1. Verified Google data
+ * 2. User-provided Business data
+ * 3. Existing valid Directory data
+ *
+ * Safe Field-Level Merge Rules:
+ * - Never replace valid existing values with NULL, empty strings, or unavailable data.
+ * - Manually entered Directory-only fields are preserved and never discarded.
+ * - Idempotent upsert and non-destructive data updates.
+ */
+export async function syncBusinessToDirectoryProjection(
+  businessId: string,
+  triggerSource?: string,
+  options?: { returnAudit?: false }
+): Promise<typeof schema.directoryProfilesTable.$inferSelect | null>;
+export async function syncBusinessToDirectoryProjection(
+  businessId: string,
+  triggerSource: string | undefined,
+  options: { returnAudit: true }
+): Promise<{ profile: typeof schema.directoryProfilesTable.$inferSelect | null; audit: DirectorySyncAudit } | null>;
+export async function syncBusinessToDirectoryProjection(
+  businessId: string,
+  triggerSource?: string,
+  options?: { returnAudit?: boolean }
+): Promise<any> {
+  try {
+    // 1. Fetch canonical business record
+    const [biz] = await db
       .select()
       .from(schema.businessesTable)
       .where(eq(schema.businessesTable.id, businessId))
       .limit(1);
 
-    if (bizRows.length === 0) return null;
-    const business = bizRows[0];
+    if (!biz) {
+      console.warn(`[Directory Projection] Business not found for id: ${businessId}`);
+      return null;
+    }
 
-    const eligibility = await getDirectoryEligibility(businessId);
+    // 1.5. Fetch existing directory profile to preserve existing listings and values
+    const existing = await getDirectoryProfileByBusinessId(businessId);
+
+    // 2. Fetch primary location
     const locations = await db
       .select()
       .from(schema.locationsTable)
       .where(eq(schema.locationsTable.businessId, businessId));
+    const primaryLoc = locations.find((l) => l.isPrimary) || locations[0] || null;
 
-    const primaryLoc = locations.find((l) => l.isPrimary) || locations[0];
-    const city = primaryLoc?.city || business.cityName || 'Austin';
-    const state = primaryLoc?.state || business.stateCode || 'TX';
-    const category = business.category || business.industry || 'Local Services';
-    const slug = business.slug || profile.slug;
+    // 3. Fetch Google Business Location if any
+    const [gbpLoc] = await db
+      .select()
+      .from(schema.googleBusinessLocationsTable)
+      .where(eq(schema.googleBusinessLocationsTable.businessId, businessId))
+      .limit(1);
 
-    const seoTitle = `${business.name} — Verified ${category} in ${city}, ${state} | Locora Directory`;
-    const seoDescription = `View verified business profile, ratings, contact details, operating hours, and customer reviews for ${business.name} in ${city}, ${state} on Locora Directory.`;
-    const seoKeywords = [
-      category,
-      `${category} in ${city}`,
-      city,
-      state,
-      ...(business.services || []),
-    ];
+    // 4. Fetch Google Reviews from real reviews table
+    const reviews = await db
+      .select()
+      .from(schema.googleReviewsTable)
+      .where(eq(schema.googleReviewsTable.businessId, businessId))
+      .orderBy(desc(schema.googleReviewsTable.publishedAt));
 
-    const updated = await db
-      .update(schema.directoryProfilesTable)
-      .set({
+    // 5. Fetch GBP connection if any
+    const [gbpConn] = await db
+      .select()
+      .from(schema.googleConnectionsTable)
+      .where(eq(schema.googleConnectionsTable.businessId, businessId))
+      .limit(1);
+
+    const isGbpVerified = Boolean(gbpLoc?.isVerified || (gbpConn && gbpConn.status === 'connected'));
+
+    // 6. Compute real rating and review counts (never overwrite valid aggregate rating with 0/null)
+    let googleRating: number | null = null;
+    let googleReviewCount: number = 0;
+    let reviewSource: string | null = null;
+
+    if (reviews.length > 0) {
+      const sum = reviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
+      googleRating = Number((sum / reviews.length).toFixed(1));
+      googleReviewCount = reviews.length;
+      reviewSource = reviews[0]?.source || 'google_gbp';
+    } else if (gbpLoc && typeof gbpLoc.rating === 'number' && gbpLoc.rating > 0) {
+      googleRating = Number(gbpLoc.rating.toFixed(1));
+      googleReviewCount = gbpLoc.reviewCount || 0;
+      reviewSource = 'google_gbp';
+    } else if (existing?.googleRating != null && Number(existing.googleRating) > 0) {
+      // Preserve existing aggregate rating when individual reviews are not yet loaded
+      googleRating = Number(existing.googleRating);
+      googleReviewCount = existing.googleReviewCount || 0;
+      reviewSource = existing.reviewSource || 'google_gbp';
+    }
+
+    // Tracking audit for safe field-level merge
+    const conflicts: FieldConflict[] = [];
+    const fieldsAdded: string[] = [];
+    const fieldsChanged: string[] = [];
+
+    // Helper to detect HTTP redirect artifacts, bot-challenge, or invalid HTML titles
+    const isBadTitle = (t: string | null | undefined): boolean => {
+      if (!t) return true;
+      const lower = t.trim().toLowerCase();
+      return (
+        lower.includes('301 moved') ||
+        lower.includes('302 found') ||
+        lower.includes('object moved') ||
+        lower.includes('moved permanently') ||
+        lower.includes('redirecting') ||
+        lower.includes('just a moment') ||
+        lower.includes('attention required') ||
+        lower === '404 not found' ||
+        lower === '500 internal server error'
+      );
+    };
+
+    // Generic safe field-level resolver
+    const resolveField = <T>(
+      fieldName: string,
+      googleVal: T | null | undefined,
+      userVal: T | null | undefined,
+      existingVal: T | null | undefined,
+      fallbackVal: T,
+      validator: (val: any) => boolean = isValidString
+    ): { value: T; source: string } => {
+      const googleValid = isGbpVerified && validator(googleVal);
+      const userValid = validator(userVal);
+      const existingValid = validator(existingVal);
+
+      let resolved: T;
+      let source: string;
+
+      if (googleValid) {
+        resolved = googleVal as T;
+        source = 'google_gbp';
+        if (existingValid && String(existingVal).trim().toLowerCase() !== String(googleVal).trim().toLowerCase()) {
+          conflicts.push({
+            businessId,
+            field: fieldName,
+            existingValue: existingVal,
+            newValue: googleVal,
+            source: 'google_gbp',
+            resolution: 'Used verified Google Business Profile data over existing directory value',
+          });
+        }
+      } else if (userValid) {
+        resolved = userVal as T;
+        source = 'user_provided';
+        if (existingValid && String(existingVal).trim().toLowerCase() !== String(userVal).trim().toLowerCase()) {
+          conflicts.push({
+            businessId,
+            field: fieldName,
+            existingValue: existingVal,
+            newValue: userVal,
+            source: 'user_provided',
+            resolution: 'Used user-provided profile data over existing directory value',
+          });
+        }
+      } else if (existingValid) {
+        resolved = existingVal as T;
+        source = 'existing_directory';
+      } else {
+        resolved = fallbackVal;
+        source = 'default';
+      }
+
+      if (!existingValid && validator(resolved)) {
+        fieldsAdded.push(fieldName);
+      } else if (existingValid && validator(resolved) && String(existingVal).trim() !== String(resolved).trim()) {
+        fieldsChanged.push(fieldName);
+      }
+
+      return { value: resolved, source };
+    };
+
+    // A. Business Name
+    const googleName = isGbpVerified && gbpLoc?.locationName?.trim() && !isBadTitle(gbpLoc.locationName) ? gbpLoc.locationName.trim() : null;
+    let userName = biz.name?.trim() && !isBadTitle(biz.name) ? biz.name.trim() : null;
+    let fallbackLocationName: string | null = null;
+    if (primaryLoc?.name && !isBadTitle(primaryLoc.name) && primaryLoc.name !== 'My Local Business') {
+      fallbackLocationName = primaryLoc.name.replace(/\(Main\)$/i, '').trim();
+    }
+    const existingName = existing?.name?.trim() && !isBadTitle(existing.name) ? existing.name.trim() : null;
+    const resolvedNameRes = resolveField(
+      'name',
+      googleName,
+      userName || fallbackLocationName,
+      existingName,
+      'Local Business'
+    );
+    const resolvedName = resolvedNameRes.value;
+
+    // Heal canonical business record in businessesTable if it had an invalid redirect title
+    if (isBadTitle(biz.name) && resolvedName !== 'Local Business') {
+      try {
+        await db.update(schema.businessesTable).set({ name: resolvedName, updatedAt: new Date() }).where(eq(schema.businessesTable.id, businessId));
+      } catch {}
+    }
+
+    // B. Category
+    const invalidCategories = ['unassigned', 'none', 'general', 'select category', 'local business'];
+    const userCategoryRaw = biz.category?.trim() || biz.industry?.trim() || null;
+    const userCategory = userCategoryRaw && !invalidCategories.includes(userCategoryRaw.toLowerCase()) ? userCategoryRaw : null;
+    const existingCategory = existing?.category?.trim() || null;
+    const resolvedCategoryRes = resolveField(
+      'category',
+      null, // Google attributes can augment services, category from user or existing
+      userCategory,
+      existingCategory,
+      'Local Services'
+    );
+    const resolvedCategory = resolvedCategoryRes.value;
+
+    // C. Description (Never overwrite valid existing with null!)
+    const userDescription = biz.description?.trim() || biz.tagline?.trim() || null;
+    const existingDescription = existing?.description?.trim() || null;
+    const resolvedDescriptionRes = resolveField(
+      'description',
+      null,
+      userDescription,
+      existingDescription,
+      null as any,
+      isValidString
+    );
+    const resolvedDescription = resolvedDescriptionRes.value || null;
+
+    // D. Website (Never overwrite valid existing with null!)
+    const userWebsite = biz.website?.trim() || null;
+    const existingWebsite = existing?.website?.trim() || null;
+    const resolvedWebsiteRes = resolveField(
+      'website',
+      null,
+      userWebsite,
+      existingWebsite,
+      null as any,
+      isValidString
+    );
+    const resolvedWebsite = resolvedWebsiteRes.value || null;
+
+    // E. Phone (Never overwrite valid existing with null!)
+    const userPhone = primaryLoc?.phone?.trim() || biz.phone?.trim() || null;
+    const existingPhone = existing?.phone?.trim() || null;
+    const resolvedPhoneRes = resolveField(
+      'phone',
+      null,
+      userPhone,
+      existingPhone,
+      null as any,
+      isValidString
+    );
+    const resolvedPhone = resolvedPhoneRes.value || null;
+
+    // F. Address (Never overwrite valid existing with null!)
+    const googleAddress = isGbpVerified && gbpLoc?.address?.trim() ? gbpLoc.address.trim() : null;
+    const userAddress = primaryLoc?.address?.trim() || null;
+    const existingAddress = existing?.address?.trim() || null;
+    const resolvedAddressRes = resolveField(
+      'address',
+      googleAddress,
+      userAddress,
+      existingAddress,
+      null as any,
+      isValidString
+    );
+    const resolvedAddress = resolvedAddressRes.value || null;
+
+    // G. City, Region, Country
+    const userCity = primaryLoc?.city?.trim() || biz.cityName?.trim() || null;
+    const existingCity = existing?.city?.trim() || null;
+    let resolvedCity = userCity || existingCity || null;
+
+    const userRegion = primaryLoc?.state?.trim() || biz.stateCode?.trim() || null;
+    const existingRegion = existing?.region?.trim() || null;
+    let resolvedRegion = userRegion || existingRegion || null;
+
+    const userCountry = primaryLoc?.country?.trim() || 'United States';
+    const existingCountry = existing?.country?.trim() || null;
+    const resolvedCountry = userCountry || existingCountry || 'United States';
+
+    // Parse city/region from address if still missing
+    if ((!resolvedCity || !resolvedRegion) && resolvedAddress) {
+      const parts = resolvedAddress.split(',').map((s) => s.trim());
+      if (parts.length >= 2) {
+        if (!resolvedCity) resolvedCity = parts[parts.length - 2] || null;
+        if (!resolvedRegion && parts[parts.length - 1]) {
+          resolvedRegion = parts[parts.length - 1].split(' ')[0] || null;
+        }
+      }
+    }
+
+    // H. Latitude & Longitude (Never overwrite valid existing coordinates with null/0)
+    let resolvedLat: number | null = null;
+    let resolvedLng: number | null = null;
+
+    if (primaryLoc?.lat != null && primaryLoc?.lng != null && isValidNumber(Number(primaryLoc.lat)) && isValidNumber(Number(primaryLoc.lng))) {
+      resolvedLat = Number(primaryLoc.lat);
+      resolvedLng = Number(primaryLoc.lng);
+    } else if (existing?.latitude != null && existing?.longitude != null && isValidNumber(Number(existing.latitude)) && isValidNumber(Number(existing.longitude))) {
+      resolvedLat = Number(existing.latitude);
+      resolvedLng = Number(existing.longitude);
+    }
+
+    if (existing?.latitude == null && resolvedLat != null) {
+      fieldsAdded.push('latitude');
+      fieldsAdded.push('longitude');
+    }
+
+    // I. Hours (Never overwrite valid existing hours with empty/null)
+    const googleHours = (gbpLoc?.hours && (Array.isArray(gbpLoc.hours) ? gbpLoc.hours.length > 0 : Object.keys(gbpLoc.hours).length > 0)) ? gbpLoc.hours : null;
+    const userHours = (primaryLoc?.hours && (Array.isArray(primaryLoc.hours) ? primaryLoc.hours.length > 0 : Object.keys(primaryLoc.hours).length > 0)) ? primaryLoc.hours : null;
+    const existingHours = existing?.hours && (Array.isArray(existing.hours) ? existing.hours.length > 0 : Object.keys(existing.hours).length > 0) ? existing.hours : null;
+    const resolvedHours = googleHours || userHours || existingHours || null;
+
+    if (!existingHours && resolvedHours) {
+      fieldsAdded.push('hours');
+    }
+
+    // J. Services (Union merge, never discard existing services)
+    const resolvedServices = mergeStringArrays(
+      biz.services,
+      existing?.services
+    );
+    if ((!existing?.services || existing.services.length === 0) && resolvedServices.length > 0) {
+      fieldsAdded.push('services');
+    }
+
+    // K. Logo & Social Links (Deep merge, never discard existing)
+    const userLogo = biz.logoUrl?.trim() || (Array.isArray(biz.mediaPhotos) && biz.mediaPhotos[0]) || null;
+    const existingLogo = existing?.logo?.trim() || null;
+    const resolvedLogo = userLogo || existingLogo || null;
+    if (!existingLogo && resolvedLogo) fieldsAdded.push('logo');
+
+    const resolvedSocialLinks = mergeSocialLinks(
+      existing?.socialLinks,
+      biz.socialLinks
+    );
+
+    // L. Google Location ID
+    const resolvedGoogleLocationId = gbpLoc?.locationId || existing?.googleLocationId || null;
+
+    // 8. Unique SEO Slug (PRESERVE existing slug! Never change published slug)
+    let resolvedSlug = existing?.slug?.trim() || biz.slug?.trim() || null;
+    if (!resolvedSlug) {
+      resolvedSlug = await generateUniqueDirectorySlug(biz.id, resolvedName, resolvedCity || undefined);
+    }
+
+    // 9. SEO Metadata
+    const cityDisplay = resolvedCity || 'Local';
+    const stateDisplay = resolvedRegion || '';
+    const locationDisplay = stateDisplay ? `${cityDisplay}, ${stateDisplay}` : cityDisplay;
+    const seoTitle = `${resolvedName} — Verified ${resolvedCategory} in ${locationDisplay} | Locora Directory`;
+    const seoDescription = `View verified business profile, ratings, contact details, operating hours, and customer reviews for ${resolvedName} in ${locationDisplay} on Locora Directory.`;
+    const seoKeywords = mergeStringArrays(
+      [resolvedCategory, `${resolvedCategory} in ${cityDisplay}`, cityDisplay, stateDisplay].filter(Boolean),
+      resolvedServices,
+      existing?.seoKeywords
+    );
+    const canonicalUrl = `https://directory.locoraai.com/biz/${resolvedSlug}`;
+
+    // 10. Check eligibility
+    const eligibility = await getDirectoryEligibility(businessId);
+
+    // 11. Preserve current directory status unless explicit user action or suspended
+    let status: string = 'UNPUBLISHED';
+    if (existing?.status === 'SUSPENDED' || biz.status === 'suspended') {
+      status = 'SUSPENDED';
+    } else if (triggerSource === 'owner_published') {
+      status = isGbpVerified ? 'VERIFIED' : (existing?.isClaimed ? 'CLAIMED' : 'PUBLISHED');
+    } else if (triggerSource === 'owner_unpublished') {
+      status = 'UNPUBLISHED';
+    } else if (existing?.status) {
+      // PRESERVE EXISTING STATUS: Never reset an existing directory status during standard sync!
+      if (biz.isPublishedInDirectory && (existing.status === 'UNPUBLISHED' || existing.status === 'ELIGIBLE')) {
+        status = isGbpVerified ? 'VERIFIED' : 'PUBLISHED';
+      } else {
+        status = existing.status;
+      }
+    } else {
+      // New listing without prior profile
+      if (biz.isPublishedInDirectory) {
+        status = isGbpVerified ? 'VERIFIED' : 'PUBLISHED';
+      } else if (eligibility.eligible) {
+        status = 'ELIGIBLE';
+      } else {
+        status = 'UNPUBLISHED';
+      }
+    }
+
+    // Preserve claimed status
+    let isClaimed = true;
+    if (existing && typeof existing.isClaimed === 'boolean') {
+      isClaimed = existing.isClaimed;
+    } else if (biz.ownerEmail?.startsWith('unclaimed_')) {
+      isClaimed = false;
+    }
+
+    const isVerified = Boolean(isGbpVerified || existing?.isVerified || eligibility.qualityStatus === 'verified');
+    const source = triggerSource || (isGbpVerified ? 'google_gbp' : (existing?.source || 'user_provided'));
+    const now = new Date();
+    const profileId = existing?.id || `dir_prof_${businessId}`;
+
+    // Preserve publishedAt timestamp
+    let publishedAt = existing?.publishedAt || null;
+    if (!publishedAt && (status === 'PUBLISHED' || status === 'VERIFIED')) {
+      publishedAt = now;
+    }
+
+    // Preserve directory-only custom fields inside metadata
+    const existingMetadata = (existing?.metadata as Record<string, any>) || {};
+    const directoryCustomData = existingMetadata.directory_custom_data || {};
+    const customDataMerged = {
+      ...directoryCustomData,
+      ...(existingMetadata.customData || {}),
+    };
+
+    const metadata: Record<string, any> = {
+      ...existingMetadata,
+      directory_custom_data: customDataMerged,
+      lastTriggerSource: triggerSource || 'sync',
+      lastSyncTimestamp: now.toISOString(),
+      ...(conflicts.length > 0
+        ? { conflictLog: [...(existingMetadata.conflictLog || []), ...conflicts] }
+        : {}),
+    };
+
+    // 12. Upsert into directory_profiles table (normalized projection)
+    const [upserted] = await db
+      .insert(schema.directoryProfilesTable)
+      .values({
+        id: profileId,
+        businessId,
+        status,
+        slug: resolvedSlug,
+        name: resolvedName,
+        category: resolvedCategory,
+        description: resolvedDescription,
+        website: resolvedWebsite,
+        phone: resolvedPhone,
+        address: resolvedAddress,
+        city: resolvedCity,
+        region: resolvedRegion,
+        country: resolvedCountry,
+        latitude: resolvedLat,
+        longitude: resolvedLng,
+        hours: resolvedHours as any,
+        services: resolvedServices,
+        logo: resolvedLogo,
+        socialLinks: resolvedSocialLinks,
+        googleLocationId: resolvedGoogleLocationId,
+        googleRating,
+        googleReviewCount,
+        reviewSource,
+        publishedAt,
+        lastSyncedAt: now,
         seoTitle,
         seoDescription,
         seoKeywords,
+        canonicalUrl,
         qualityScore: eligibility.qualityScore,
-        qualityStatus: eligibility.qualityStatus,
+        qualityStatus: isGbpVerified ? 'verified' : eligibility.qualityStatus,
         missingFields: eligibility.missingFields,
         eligibilityReasons: eligibility.reasons,
-        lastSyncedAt: new Date(),
-        updatedAt: new Date(),
+        isClaimed,
+        isVerified,
+        source,
+        metadata,
+        createdAt: existing?.createdAt || now,
+        updatedAt: now,
       })
-      .where(eq(schema.directoryProfilesTable.businessId, businessId))
+      .onConflictDoUpdate({
+        target: schema.directoryProfilesTable.businessId,
+        set: {
+          status,
+          slug: resolvedSlug,
+          name: resolvedName,
+          category: resolvedCategory,
+          description: resolvedDescription,
+          website: resolvedWebsite,
+          phone: resolvedPhone,
+          address: resolvedAddress,
+          city: resolvedCity,
+          region: resolvedRegion,
+          country: resolvedCountry,
+          latitude: resolvedLat,
+          longitude: resolvedLng,
+          hours: resolvedHours as any,
+          services: resolvedServices,
+          logo: resolvedLogo,
+          socialLinks: resolvedSocialLinks,
+          googleLocationId: resolvedGoogleLocationId,
+          googleRating,
+          googleReviewCount,
+          reviewSource,
+          publishedAt,
+          lastSyncedAt: now,
+          seoTitle,
+          seoDescription,
+          seoKeywords,
+          canonicalUrl,
+          qualityScore: eligibility.qualityScore,
+          qualityStatus: isGbpVerified ? 'verified' : eligibility.qualityStatus,
+          missingFields: eligibility.missingFields,
+          eligibilityReasons: eligibility.reasons,
+          isClaimed,
+          isVerified,
+          source,
+          metadata,
+          updatedAt: now,
+        },
+      })
       .returning();
 
-    return updated[0];
-  } catch (err) {
-    console.error('[Directory Sync] Error syncing directory profile:', err);
+    // 13. Safe Bi-Directional Backfill: If directory had valid data that canonical business lacks,
+    // backfill so user settings/profile reflects it without re-entry
+    const bizUpdates: Record<string, any> = {};
+    if (!biz.website && resolvedWebsite) bizUpdates.website = resolvedWebsite;
+    if (!biz.phone && resolvedPhone) bizUpdates.phone = resolvedPhone;
+    if (!biz.description && resolvedDescription) bizUpdates.description = resolvedDescription;
+    if (!biz.cityName && resolvedCity) bizUpdates.cityName = resolvedCity;
+    if (!biz.stateCode && resolvedRegion) bizUpdates.stateCode = resolvedRegion;
+    if ((!biz.services || biz.services.length === 0) && resolvedServices.length > 0) bizUpdates.services = resolvedServices;
+    if ((!biz.socialLinks || Object.keys(biz.socialLinks).length === 0) && Object.keys(resolvedSocialLinks).length > 0) bizUpdates.socialLinks = resolvedSocialLinks;
+    if (!biz.logoUrl && resolvedLogo) bizUpdates.logoUrl = resolvedLogo;
+    if (biz.slug !== resolvedSlug) bizUpdates.slug = resolvedSlug;
+    if ((status === 'PUBLISHED' || status === 'VERIFIED') && !biz.isPublishedInDirectory) {
+      bizUpdates.isPublishedInDirectory = true;
+    }
+
+    if (Object.keys(bizUpdates).length > 0) {
+      bizUpdates.updatedAt = now;
+      await db
+        .update(schema.businessesTable)
+        .set(bizUpdates)
+        .where(eq(schema.businessesTable.id, businessId))
+        .catch((err) => console.warn('[Directory Sync] Non-critical business tag update notice:', err));
+    }
+
+    // Also safely backfill primary location if address/city/phone/hours/coords were missing
+    if (primaryLoc) {
+      const locUpdates: Record<string, any> = {};
+      if (!primaryLoc.address && resolvedAddress) locUpdates.address = resolvedAddress;
+      if (!primaryLoc.city && resolvedCity) locUpdates.city = resolvedCity;
+      if (!primaryLoc.state && resolvedRegion) locUpdates.state = resolvedRegion;
+      if (!primaryLoc.phone && resolvedPhone) locUpdates.phone = resolvedPhone;
+      if ((!primaryLoc.hours || (Array.isArray(primaryLoc.hours) && primaryLoc.hours.length === 0)) && resolvedHours) locUpdates.hours = resolvedHours as any;
+      if (primaryLoc.lat == null && resolvedLat != null) locUpdates.lat = resolvedLat;
+      if (primaryLoc.lng == null && resolvedLng != null) locUpdates.lng = resolvedLng;
+
+      if (Object.keys(locUpdates).length > 0) {
+        locUpdates.updatedAt = now;
+        await db
+          .update(schema.locationsTable)
+          .set(locUpdates)
+          .where(eq(schema.locationsTable.id, primaryLoc.id))
+          .catch((err) => console.warn('[Directory Sync] Non-critical location backfill notice:', err));
+      }
+    }
+
+    const audit: DirectorySyncAudit = {
+      action: existing ? (fieldsAdded.length > 0 || fieldsChanged.length > 0 ? 'updated' : 'unchanged') : 'created',
+      fieldsAdded,
+      fieldsChanged,
+      conflicts,
+    };
+
+    if (options?.returnAudit) {
+      return { profile: upserted, audit };
+    }
+
+    return upserted;
+  } catch (err: any) {
+    console.error(`[Directory Projection] Error syncing projection for ${businessId}:`, err);
     return null;
+  }
+}
+
+/**
+ * Backward compatibility alias for syncing directory profile
+ */
+export async function syncDirectoryProfileData(businessId: string, triggerSource?: string) {
+  return syncBusinessToDirectoryProjection(businessId, triggerSource || 'profile_update');
+}
+
+/**
+ * Batch reconcile all businesses into directory projections (for startup or maintenance)
+ */
+export async function syncAllBusinessesToDirectoryProjections(): Promise<number> {
+  try {
+    const businesses = await db
+      .select({ id: schema.businessesTable.id })
+      .from(schema.businessesTable);
+
+    let count = 0;
+    for (const b of businesses) {
+      const res = await syncBusinessToDirectoryProjection(b.id, 'startup_reconcile');
+      if (res) count++;
+    }
+    console.log(`[Directory Projection] Reconciled directory projections for ${count}/${businesses.length} businesses.`);
+    return count;
+  } catch (err) {
+    console.error('[Directory Projection] Error in batch sync:', err);
+    return 0;
   }
 }

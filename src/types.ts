@@ -281,6 +281,7 @@ export interface ClientBusiness {
   zip: string;
   phone: string;
   email?: string;
+  ownerEmail?: string;
   description?: string;
   website: string;
   healthScore: number;

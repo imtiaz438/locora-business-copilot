@@ -2237,10 +2237,35 @@ export async function createBusiness(
   } catch {}
 
   const businessId = initialData?.id || `biz_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-  const bizName = initialData?.name || 'My Local Business';
+  let bizName = (initialData?.name || '').trim();
+  const lowerName = bizName.toLowerCase();
+  const website = initialData?.website || '';
+
+  if (
+    !bizName ||
+    lowerName.includes('301 moved') ||
+    lowerName.includes('302 found') ||
+    lowerName.includes('object moved') ||
+    lowerName.includes('moved permanently') ||
+    lowerName.includes('redirecting') ||
+    lowerName.includes('just a moment') ||
+    lowerName.includes('attention required')
+  ) {
+    if (website) {
+      try {
+        const cleanHost = new URL(website.startsWith('http') ? website : `https://${website}`).hostname.replace(/^www\./, '');
+        const base = cleanHost.split('.')[0];
+        bizName = base && base.length > 2 ? (base.charAt(0).toUpperCase() + base.slice(1)) : 'My Local Business';
+      } catch {
+        bizName = 'My Local Business';
+      }
+    } else {
+      bizName = 'My Local Business';
+    }
+  }
+
   const city = initialData?.city || '';
   const category = initialData?.category || 'Local Services';
-  const website = initialData?.website || '';
 
   const [insertedBiz] = await db
     .insert(schema.businessesTable)
@@ -2287,6 +2312,14 @@ export async function createBusiness(
     lng: null,
     hours: [],
   }).onConflictDoNothing();
+
+  // Automatic Directory Projection Sync
+  try {
+    const { syncBusinessToDirectoryProjection } = await import('./directoryService.ts');
+    await syncBusinessToDirectoryProjection(businessId, 'business_created');
+  } catch (syncErr) {
+    console.warn('[Directory] Failed to auto-sync new business to directory projection:', syncErr);
+  }
 
   return insertedBiz;
 }
@@ -2437,6 +2470,9 @@ export async function updateBusiness(
           zip: locationData?.zip !== undefined ? locationData.zip : locs[0].zip,
           country: locationData?.country !== undefined ? locationData.country : locs[0].country,
           phone: locationData?.phone !== undefined ? locationData.phone : (data.phone || locs[0].phone),
+          hours: locationData?.hours !== undefined ? locationData.hours : locs[0].hours,
+          lat: locationData?.lat !== undefined ? locationData.lat : locs[0].lat,
+          lng: locationData?.lng !== undefined ? locationData.lng : locs[0].lng,
           updatedAt: new Date(),
         })
         .where(eq(schema.locationsTable.id, locs[0].id));
@@ -2584,6 +2620,103 @@ export async function createReview(
   }
 
   return created;
+}
+
+export async function upsertGoogleReviews(businessId: string, rawReviews: any[]) {
+  if (!Array.isArray(rawReviews) || rawReviews.length === 0) return [];
+  const results = [];
+
+  for (const r of rawReviews) {
+    if (!r) continue;
+    const authorName = (r.authorName || r.author_name || 'Verified Customer').trim();
+    const rating = Math.max(1, Math.min(5, Math.round(Number(r.rating) || 5)));
+    const text = (r.text || r.comment || '').trim();
+    const sentiment = r.sentiment || (rating >= 4 ? 'positive' : rating <= 2 ? 'negative' : 'neutral');
+
+    const source = r.source || 'google_gbp';
+    const sourceKey = source.toLowerCase().trim();
+    // Create deterministic ID for review deduplication using business_id + source + review_id
+    const rawReviewId = String(r.reviewId || r.id || r.name || '').trim();
+    const cleanId = rawReviewId.replace(/[^a-zA-Z0-9_-]/g, '_').slice(-60);
+    const stableId = rawReviewId
+      ? `rev_${businessId}_${sourceKey}_${cleanId}`
+      : `rev_${businessId}_${sourceKey}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+
+    let pubDate = new Date();
+    if (r.publishedAt) pubDate = new Date(r.publishedAt);
+    else if (r.publishTime) pubDate = new Date(r.publishTime);
+    else if (r.time) pubDate = new Date(Number(r.time) * 1000);
+
+    const replyText = r.replyText || r.reply?.comment || null;
+    const isAnswered = Boolean(r.isAnswered || replyText);
+    const authorPhotoUrl = r.authorPhotoUrl || r.profile_photo_url || r.author_photo_url || null;
+
+    try {
+      const [upserted] = await db
+        .insert(schema.googleReviewsTable)
+        .values({
+          id: stableId,
+          businessId,
+          locationId: r.locationId || null,
+          reviewId: rawReviewId || stableId,
+          authorName,
+          authorPhotoUrl,
+          rating,
+          text,
+          sentiment,
+          publishedAt: pubDate,
+          source,
+          isAnswered,
+          replyText,
+          repliedAt: replyText ? new Date() : null,
+          syncedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: schema.googleReviewsTable.id,
+          set: {
+            authorName,
+            authorPhotoUrl,
+            rating,
+            text,
+            sentiment,
+            publishedAt: pubDate,
+            replyText,
+            isAnswered,
+            syncedAt: new Date(),
+          },
+        })
+        .returning();
+
+      if (upserted) results.push(upserted);
+    } catch (insertErr) {
+      console.warn(`[Review Sync] Non-critical review insert notice for ${authorName}:`, insertErr);
+    }
+  }
+
+  // Update googleBusinessLocationsTable rating & count
+  try {
+    const allRevs = await getGoogleReviews(businessId);
+    if (allRevs.length > 0) {
+      const totalCount = allRevs.length;
+      const avgRating = Number((allRevs.reduce((acc, r) => acc + r.rating, 0) / totalCount).toFixed(1));
+      await db
+        .update(schema.googleBusinessLocationsTable)
+        .set({ reviewCount: totalCount, rating: avgRating })
+        .where(eq(schema.googleBusinessLocationsTable.businessId, businessId));
+    }
+  } catch (err) {
+    console.warn('Error updating location rating cache:', err);
+  }
+
+  // Idempotently refresh directory projection
+  try {
+    const { syncBusinessToDirectoryProjection } = await import('./directoryService.ts');
+    await syncBusinessToDirectoryProjection(businessId, 'review_sync');
+  } catch (dErr) {
+    console.warn('[Review Sync] Directory projection sync notice:', dErr);
+  }
+
+  return results;
 }
 
 export async function replyToReview(businessId: string, reviewId: string, replyText: string) {
@@ -3444,12 +3577,13 @@ export async function getDirectoryListingBySlugOrId(slugOrId: string) {
       .limit(1);
     const loc = locs[0] || null;
 
-    // Get reviews if any
+    // Get authentic reviews for this specific businessId only (never cross-contaminate businesses)
     const reviews = await db
       .select()
       .from(schema.googleReviewsTable)
       .where(eq(schema.googleReviewsTable.businessId, biz.id))
-      .limit(10);
+      .orderBy(desc(schema.googleReviewsTable.publishedAt))
+      .limit(50);
 
     // Get canonical directory profile if any
     const dirProfiles = await db
@@ -3466,29 +3600,57 @@ export async function getDirectoryListingBySlugOrId(slugOrId: string) {
       : (dirProfile?.status || (isActuallyPublished ? (biz.status !== 'unclaimed' ? 'CLAIMED' : 'PUBLISHED') : 'UNPUBLISHED'));
 
     const isClaimed = biz.status !== 'unclaimed' && !biz.ownerEmail.startsWith('unclaimed');
-    const category = biz.category || biz.industry || 'Local Services';
-    const city = loc?.city || biz.cityName || '';
-    const state = loc?.state || biz.stateCode || '';
+    const category = dirProfile?.category || biz.category || biz.industry || 'Local Services';
+    const city = dirProfile?.city || loc?.city || biz.cityName || '';
+    const state = dirProfile?.region || loc?.state || biz.stateCode || '';
+    const address = dirProfile?.address || (loc?.address ? `${loc.address}, ${loc.city || ''} ${loc.state || ''}`.trim() : (city ? `${city}, ${state}` : null));
+    const phone = dirProfile?.phone || loc?.phone || biz.phone || null;
+    const website = dirProfile?.website || biz.website || '';
+    const cleanWebsite = website ? (website.startsWith('http') ? website : `https://${website}`) : '';
 
     const publicReviews = reviews.map((r, idx) => ({
       id: r.id || `rev_${idx}`,
       authorName: r.authorName || 'Verified Customer',
       rating: r.rating || 5,
-      comment: r.text || 'Verified review',
-      relativePublishTimeDescription: r.publishedAt ? new Date(r.publishedAt).toLocaleDateString() : 'Verified Review',
+      comment: r.text || '',
+      relativePublishTimeDescription: r.publishedAt ? new Date(r.publishedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'Verified Review',
+      publishedAt: r.publishedAt ? new Date(r.publishedAt).toISOString() : undefined,
+      replyText: r.replyText || null,
+      responseDate: r.repliedAt ? new Date(r.repliedAt).toISOString() : null,
+      source: r.source === 'google_gbp' || r.source === 'google' ? 'Google' : (r.source || 'Google'),
     }));
 
     const avgRating = publicReviews.length > 0
       ? Number((publicReviews.reduce((acc, r) => acc + r.rating, 0) / publicReviews.length).toFixed(1))
-      : 5.0;
+      : null;
+
+    // Use strictly real rating. Never fallback to fake 5.0!
+    const resolvedRating = (dirProfile?.googleRating != null && dirProfile.googleRating > 0)
+      ? Number(dirProfile.googleRating)
+      : (avgRating !== null ? avgRating : null);
+
+    // Use strictly real review count. Never fallback to fake 1!
+    const resolvedReviewCount = (dirProfile?.googleReviewCount != null && dirProfile.googleReviewCount >= 0)
+      ? Number(dirProfile.googleReviewCount)
+      : (publicReviews.length > 0 ? publicReviews.length : 0);
+
+    // Real services only: Never invent generic services
+    const resolvedServices = (dirProfile?.services && Array.isArray(dirProfile.services) && dirProfile.services.length > 0)
+      ? dirProfile.services
+      : (biz.services && Array.isArray(biz.services) && biz.services.length > 0 ? biz.services : []);
+
+    const resolvedDescription = dirProfile?.description || biz.description || biz.tagline || '';
 
     return {
       id: biz.id,
-      businessName: biz.name,
+      businessName: dirProfile?.name || biz.name,
       slug: validDynamicSlug,
-      websiteUrl: biz.website ? (biz.website.startsWith('http') ? biz.website : `https://${biz.website}`) : '',
-      phone: loc?.phone || biz.phone || null,
+      websiteUrl: cleanWebsite,
+      phone,
       email: biz.email || null,
+      address,
+      latitude: dirProfile?.latitude != null ? dirProfile.latitude : loc?.lat,
+      longitude: dirProfile?.longitude != null ? dirProfile.longitude : loc?.lng,
       categorySlug: biz.categorySlug || category.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       categoryName: category,
       citySlug: biz.citySlug || (city ? city.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'all'),
@@ -3500,6 +3662,10 @@ export async function getDirectoryListingBySlugOrId(slugOrId: string) {
       isClaimed,
       isVerified: Boolean(dirProfile?.isVerified || finalDirStatus === 'VERIFIED'),
       targetKeywords: biz.targetKeywords || [category, `${category} in ${city}`],
+      socialLinks: dirProfile?.socialLinks || biz.socialLinks || {},
+      googleLocationId: dirProfile?.googleLocationId || null,
+      reviewSource: dirProfile?.reviewSource || (publicReviews.length > 0 ? 'google_gbp' : null),
+      lastSyncedAt: dirProfile?.lastSyncedAt || null,
       sourceAttributions: {
         gbp: 'GOOGLE_BUSINESS_PROFILE',
         website: 'WEBSITE',
@@ -3521,21 +3687,22 @@ export async function getDirectoryListingBySlugOrId(slugOrId: string) {
         lastViewedAt: null,
       },
       gbpData: {
-        phone: loc?.phone || biz.phone || null,
-        address: loc?.address ? `${loc.address}, ${loc.city || ''} ${loc.state || ''}`.trim() : (city ? `${city}, ${state}` : null),
-        hours: null,
-        averageRating: avgRating,
-        reviewCount: publicReviews.length,
+        phone,
+        address,
+        hours: dirProfile?.hours || loc?.hours || null,
+        averageRating: resolvedRating,
+        reviewCount: resolvedReviewCount,
         reviews: publicReviews,
         coverImageUrl: null,
-        logoUrl: null,
+        logoUrl: dirProfile?.logo || biz.logoUrl || null,
         mediaPhotos: biz.mediaPhotos || [],
+        source: dirProfile?.reviewSource || (publicReviews.length > 0 ? 'google_gbp' : null),
       },
       scrapedContent: {
-        metaTitle: `${biz.name} | ${category} in ${city || 'Local Area'}`,
-        description: biz.description || biz.tagline || '',
-        serviceTags: biz.services && biz.services.length > 0 ? biz.services : [category],
-        aboutSummary: biz.description || biz.tagline || '',
+        metaTitle: `${dirProfile?.name || biz.name} | ${category} in ${city || 'Local Area'}`,
+        description: resolvedDescription,
+        serviceTags: resolvedServices,
+        aboutSummary: resolvedDescription,
       },
       createdAt: biz.createdAt,
       updatedAt: biz.updatedAt,

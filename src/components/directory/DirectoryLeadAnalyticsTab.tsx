@@ -53,7 +53,7 @@ interface AnalyticsApiResponse {
 }
 
 export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps> = ({ activeBusiness }) => {
-  const { businesses, switchBusiness } = useApp();
+  const { businesses, switchBusiness, user } = useApp();
   const [selectedBizId, setSelectedBizId] = useState<string>(activeBusiness.id);
   const [data, setData] = useState<AnalyticsApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,7 +76,11 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
     try {
       const targetBiz = businesses.find((b) => b.id === selectedBizId) || activeBusiness;
       const targetQuery = targetBiz.directorySlug || targetBiz.slug || targetBiz.id;
-      const res = await fetch(`/api/directory/analytics?businessId=${encodeURIComponent(targetQuery)}`);
+      const authEmail = user?.email || targetBiz.ownerEmail || (typeof window !== 'undefined' ? localStorage.getItem('locora_auth_email') : '') || '';
+      const emailParam = authEmail ? `&userEmail=${encodeURIComponent(authEmail)}` : '';
+      const res = await fetch(`/api/directory/analytics?businessId=${encodeURIComponent(targetQuery)}${emailParam}`, {
+        headers: authEmail ? { 'x-user-email': authEmail } : {},
+      });
       if (!res.ok) throw new Error('Failed to load directory analytics');
       const json = await res.json();
       if (json.success) {
@@ -116,12 +120,17 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
   const handleMarkResponded = async (leadId: string) => {
     setActionLoadingId(leadId);
     try {
+      const authEmail = user?.email || activeBusiness?.ownerEmail || (typeof window !== 'undefined' ? localStorage.getItem('locora_auth_email') : '') || '';
       const res = await fetch('/api/directory/lead/respond', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authEmail ? { 'x-user-email': authEmail } : {}),
+        },
         body: JSON.stringify({
           leadId,
           businessId: activeBusiness.id,
+          userEmail: authEmail,
         }),
       });
       const resJson = await res.json();
@@ -145,9 +154,13 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
 
     setActionLoadingId(convertModalLead.id);
     try {
+      const authEmail = user?.email || activeBusiness?.ownerEmail || (typeof window !== 'undefined' ? localStorage.getItem('locora_auth_email') : '') || '';
       const res = await fetch('/api/directory/lead/convert', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authEmail ? { 'x-user-email': authEmail } : {}),
+        },
         body: JSON.stringify({
           leadId: convertModalLead.id,
           businessId: activeBusiness.id,
@@ -155,6 +168,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
           customerEmail: convertModalLead.leadEmail,
           customerPhone: convertModalLead.leadPhone,
           value: parseFloat(convertRevenue) || 0,
+          userEmail: authEmail,
         }),
       });
       const resJson = await res.json();
