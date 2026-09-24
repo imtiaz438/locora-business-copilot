@@ -270,6 +270,7 @@ export interface LocoraBusinessRecord {
   status?: string;
   isVerified?: boolean;
   isClaimed?: boolean;
+  gbpConnected?: boolean;
   claimedByEmail?: string | null;
   googlePlaceId?: string;
   sourceAttributions?: {

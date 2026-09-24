@@ -1162,9 +1162,11 @@ export function getPublishedDirectoryListings(): any[] {
       isPublishedInDirectory: true,
       directoryStatus: status,
       isClaimed: isActuallyClaimed,
+      gbpConnected: Boolean((b.gbpConnected || b.gbpData?.connected) && (b.gbpData?.reviewCount ? b.gbpData.reviewCount > 0 : false) && b.sourceAttributions?.verification !== 'Manual Input'),
+      isVerified: Boolean((b.gbpConnected || b.gbpData?.connected) && b.sourceAttributions?.verification !== 'Manual Input'),
       targetKeywords: Array.from(new Set(publicKeywords)).slice(0, 10),
       sourceAttributions: {
-        gbp: DataSourceAttribution.GOOGLE_BUSINESS_PROFILE,
+        gbp: (b.gbpConnected || b.gbpData?.connected) ? DataSourceAttribution.GOOGLE_BUSINESS_PROFILE : DataSourceAttribution.USER_PROVIDED,
         website: DataSourceAttribution.WEBSITE,
         verification: isActuallyClaimed ? DataSourceAttribution.USER_PROVIDED : DataSourceAttribution.DIRECTORY_ACTIVITY,
         calculated: DataSourceAttribution.CALCULATED,

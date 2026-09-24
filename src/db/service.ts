@@ -3593,6 +3593,25 @@ export async function getDirectoryListingBySlugOrId(slugOrId: string) {
       .limit(1);
     const dirProfile = dirProfiles[0] || null;
 
+    // Check real Google Business Profile connection & verified status
+    const [gbpConn] = await db
+      .select()
+      .from(schema.googleConnectionsTable)
+      .where(eq(schema.googleConnectionsTable.businessId, biz.id))
+      .limit(1);
+
+    const [gbpLoc] = await db
+      .select()
+      .from(schema.googleBusinessLocationsTable)
+      .where(eq(schema.googleBusinessLocationsTable.businessId, biz.id))
+      .limit(1);
+
+    const isGbpConnected = Boolean(
+      (gbpConn && gbpConn.status === 'connected') ||
+      (gbpLoc && gbpLoc.connectionId != null && gbpLoc.isVerified) ||
+      (dirProfile?.reviewSource === 'google_gbp' && (dirProfile?.googleReviewCount ?? 0) > 0)
+    );
+
     const isSuspended = dirProfile?.status === 'SUSPENDED' || biz.status === 'suspended';
     const isActuallyPublished = biz.isPublishedInDirectory && !isSuspended && dirProfile?.status !== 'UNPUBLISHED';
     const finalDirStatus = isSuspended
@@ -3660,16 +3679,17 @@ export async function getDirectoryListingBySlugOrId(slugOrId: string) {
       isPublishedInDirectory: isActuallyPublished,
       directoryStatus: finalDirStatus,
       isClaimed,
-      isVerified: Boolean(dirProfile?.isVerified || finalDirStatus === 'VERIFIED'),
+      isVerified: Boolean(isGbpConnected || dirProfile?.isVerified || finalDirStatus === 'VERIFIED'),
+      gbpConnected: isGbpConnected,
       targetKeywords: biz.targetKeywords || [category, `${category} in ${city}`],
       socialLinks: dirProfile?.socialLinks || biz.socialLinks || {},
       googleLocationId: dirProfile?.googleLocationId || null,
-      reviewSource: dirProfile?.reviewSource || (publicReviews.length > 0 ? 'google_gbp' : null),
+      reviewSource: dirProfile?.reviewSource || (isGbpConnected && publicReviews.length > 0 ? 'google_gbp' : null),
       lastSyncedAt: dirProfile?.lastSyncedAt || null,
       sourceAttributions: {
-        gbp: 'GOOGLE_BUSINESS_PROFILE',
+        gbp: isGbpConnected ? 'GOOGLE_BUSINESS_PROFILE' : 'MANUAL_WORKSPACE',
         website: 'WEBSITE',
-        verification: isClaimed ? 'USER_PROVIDED' : 'DIRECTORY_ACTIVITY',
+        verification: isGbpConnected ? 'GOOGLE_VERIFIED' : (isClaimed ? 'USER_PROVIDED' : 'DIRECTORY_ACTIVITY'),
         calculated: 'CALCULATED',
       },
       diagnosticSnapshot: {

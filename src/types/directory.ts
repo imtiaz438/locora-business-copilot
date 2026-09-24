@@ -44,6 +44,8 @@ export interface DirectoryBusinessListing {
   stateCode: string;
   socialLinks?: Record<string, string> | null;
   googleLocationId?: string | null;
+  gbpConnected?: boolean;
+  isVerified?: boolean;
   reviewSource?: string | null;
   lastSyncedAt?: string | null;
   planTier: 'free' | 'pro' | 'agency' | 'starter' | 'growth';

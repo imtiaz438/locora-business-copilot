@@ -420,6 +420,13 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
   const fullAddress = addressParts.length > 0 ? addressParts.join(', ') : (business.address || (business.cityName && business.stateCode ? `${business.cityName}, ${business.stateCode}` : null));
   const hasValidMapLocation = hasCoordinates || Boolean(fullAddress);
 
+  // Real Google Business Profile Connection & Sync Status
+  const isGbpConnected = Boolean(
+    business.gbpConnected ||
+    (business.sourceAttributions?.gbp === 'GOOGLE_BUSINESS_PROFILE' && (business.gbpData?.reviewCount ? business.gbpData.reviewCount > 0 : false)) ||
+    (business.reviewSource === 'google_gbp' && typeof business.gbpData?.reviewCount === 'number' && business.gbpData.reviewCount > 0)
+  );
+
   const mapEmbedQuery = hasCoordinates
     ? `${business.latitude},${business.longitude}`
     : encodeURIComponent(`${business.businessName}, ${fullAddress || ''}`);
@@ -843,13 +850,15 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               </div>
               <div>
                 <div className="text-xs font-bold text-emerald-900 flex items-center gap-1.5 font-heading">
-                  <span>Verified Owner Managed Profile</span>
+                  <span>{isGbpConnected ? 'Verified Owner Managed Profile' : 'Owner Managed Business Profile'}</span>
                   <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
                     Active
                   </span>
                 </div>
                 <p className="text-xs text-emerald-700 mt-0.5">
-                  Locora is actively helping this business manage customer inquiries, sync reviews, and optimize local visibility.
+                  {isGbpConnected
+                    ? 'Locora is actively helping this business manage customer inquiries, sync reviews, and optimize local visibility.'
+                    : 'Locora is managing customer inquiries and directory visibility for this business workspace.'}
                 </p>
               </div>
             </div>
@@ -881,14 +890,14 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                 {business.scrapedContent?.description ||
                   business.scrapedContent?.aboutSummary ||
-                  `${business.businessName} provides verified ${business.categoryName} services throughout ${business.cityName || 'the local area'}. Certified Google Business Profile pro dedicated to high quality customer outcomes.`}
+                  `${business.businessName} provides ${business.categoryName} services throughout ${business.cityName || 'the local area'}. Dedicated to high quality customer outcomes.`}
               </p>
 
               {/* Service Capabilities */}
               {business.scrapedContent?.serviceTags && business.scrapedContent.serviceTags.length > 0 && (
                 <div className="mt-6 pt-6 border-t border-slate-100">
                   <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">
-                    Verified Services & Specializations
+                    {isGbpConnected ? 'Verified Services & Specializations' : 'Core Services & Specializations'}
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {business.scrapedContent.serviceTags.map((tag, idx) => (
@@ -941,7 +950,11 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                     Google Maps & Location
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {hasCoordinates ? 'Verified coordinates from Google Business Profile' : fullAddress ? 'Verified physical address' : 'Location details'}
+                    {hasCoordinates
+                      ? (isGbpConnected ? 'Verified coordinates from Google Business Profile' : 'Geocoded GPS coordinates')
+                      : fullAddress
+                      ? 'Physical address location'
+                      : 'Location details'}
                   </p>
                 </div>
 
@@ -1269,8 +1282,8 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
             {/* Badges / Guarantees */}
             <div className="p-4 rounded-xl bg-white border border-slate-200 text-xs space-y-2.5">
               <div className="flex items-center gap-2 text-slate-700 font-semibold">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Verified Business Registration</span>
+                <ShieldCheck className={`w-4 h-4 ${isGbpConnected ? 'text-emerald-600' : 'text-slate-500'}`} />
+                <span>{isGbpConnected ? 'Verified Business Registration' : 'Business Workspace Profile'}</span>
               </div>
               <div className="flex items-center gap-2 text-slate-700 font-semibold">
                 <Clock className="w-4 h-4 text-emerald-600" />
@@ -1282,32 +1295,94 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               </div>
             </div>
 
-            {/* Verified Listing Information */}
-            <div className="p-4 rounded-xl bg-white border border-slate-200 text-xs space-y-2">
+            {/* Verified Listing vs Manual Business Details Information */}
+            <div className="p-4 rounded-xl bg-white border border-slate-200 text-xs space-y-2.5 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
-                  Verified Listing Details
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider font-heading">
+                  {isGbpConnected ? 'Verified Listing Details' : 'Manual Business Details'}
                 </span>
-                <span className="text-[10px] text-emerald-600 font-bold">Verified</span>
+                {isGbpConnected ? (
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Verified
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                    <Info className="w-3 h-3 text-amber-600" /> Manual Entry
+                  </span>
+                )}
               </div>
-              <div className="space-y-1.5 text-slate-600 text-[11px]">
+
+              <div className="space-y-2 text-slate-600 text-[11px]">
                 <div className="flex items-center justify-between">
                   <span>Google Business Profile:</span>
-                  <span className="font-semibold text-slate-800">Verified & Synced</span>
+                  {isGbpConnected ? (
+                    <span className="font-semibold text-emerald-700 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Verified & Synced
+                    </span>
+                  ) : (
+                    <span className="font-semibold text-slate-500">
+                      Not Connected (Manual Entry)
+                    </span>
+                  )}
                 </div>
-                {business.websiteUrl && (
-                  <div className="flex items-center justify-between">
-                    <span>Website Verification:</span>
-                    <span className="font-semibold text-slate-800">Active Domain</span>
-                  </div>
-                )}
+
+                <div className="flex items-center justify-between">
+                  <span>Website Verification:</span>
+                  {business.websiteUrl ? (
+                    <span className="font-semibold text-emerald-700 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Active Domain
+                    </span>
+                  ) : (
+                    <span className="font-semibold text-slate-400">Not Provided</span>
+                  )}
+                </div>
+
                 <div className="flex items-center justify-between">
                   <span>Directory Status:</span>
                   <span className="font-semibold text-slate-800">
-                    {business.isClaimed ? 'Claimed & Managed by Owner' : 'Verified Local Business'}
+                    {business.isClaimed
+                      ? 'Claimed & Managed by Owner'
+                      : isGbpConnected
+                      ? 'Verified Local Business'
+                      : 'Public Directory Listing'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span>Customer Reviews:</span>
+                  {isGbpConnected && typeof business.gbpData?.reviewCount === 'number' && business.gbpData.reviewCount > 0 ? (
+                    <span className="font-semibold text-emerald-700">
+                      Google Verified ({business.gbpData.reviewCount})
+                    </span>
+                  ) : (
+                    <span className="font-semibold text-slate-500">
+                      No Reviews Connected
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span>Location Source:</span>
+                  <span className="font-semibold text-slate-800">
+                    {isGbpConnected
+                      ? 'Google Maps Profile'
+                      : hasCoordinates
+                      ? 'GPS Geocoded'
+                      : fullAddress
+                      ? 'Physical Address'
+                      : 'Regional Only'}
                   </span>
                 </div>
               </div>
+
+              {!isGbpConnected && (
+                <div className="pt-2 border-t border-slate-100 flex items-start gap-1.5 text-[10px] text-amber-700/90 leading-tight">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                  <span>
+                    Entered manually. Google reviews & star ratings are only pulled automatically when official Google Business Profile is connected.
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Free Business Checkup Card */}
