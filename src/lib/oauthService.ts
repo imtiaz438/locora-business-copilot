@@ -75,11 +75,37 @@ export async function triggerGoogleSSO({
   const google = (window as any).google;
   if (google?.accounts?.oauth2?.initTokenClient) {
     try {
+      let isSettled = false;
+      let focusTimeout: any = null;
+
+      const cleanup = () => {
+        isSettled = true;
+        window.removeEventListener('focus', onWindowFocus);
+        if (focusTimeout) clearTimeout(focusTimeout);
+      };
+
+      const onWindowFocus = () => {
+        if (focusTimeout) clearTimeout(focusTimeout);
+        focusTimeout = setTimeout(() => {
+          if (!isSettled) {
+            cleanup();
+            onError('Google sign-in popup was closed.');
+          }
+        }, 1200);
+      };
+
+      window.addEventListener('focus', onWindowFocus);
+
       const tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: clientId,
         scope: 'openid email profile',
         prompt: 'select_account',
+        error_callback: (err: any) => {
+          cleanup();
+          onError(err?.type === 'popup_closed' ? 'Google sign-in popup was closed.' : (err?.message || 'Google sign-in was cancelled.'));
+        },
         callback: async (tokenResponse: any) => {
+          cleanup();
           if (tokenResponse.error) {
             console.warn('Google SSO token notice:', tokenResponse);
             onError(tokenResponse.error_description || 'Google sign-in was cancelled or closed.');
@@ -149,15 +175,26 @@ export async function triggerGoogleSSO({
         `width=${width},height=${height},left=${left},top=${top},status=yes,scrollbars=yes`
       );
 
+      let closedTimer: any = null;
       // Listen for message from callback popup
       const handleMessage = (event: MessageEvent) => {
         if (event.data?.type === 'OAUTH_AUTH_SUCCESS' && event.data?.user) {
+          if (closedTimer) clearInterval(closedTimer);
           window.removeEventListener('message', handleMessage);
           if (popup && !popup.closed) popup.close();
           onSuccess(event.data.user);
         }
       };
       window.addEventListener('message', handleMessage);
+
+      // Detect popup close
+      closedTimer = setInterval(() => {
+        if (popup && popup.closed) {
+          clearInterval(closedTimer);
+          window.removeEventListener('message', handleMessage);
+          onError('Google sign-in popup was closed.');
+        }
+      }, 600);
     } else {
       onError('Unable to initiate Google sign-in.');
     }
@@ -237,11 +274,37 @@ export async function triggerGoogleAnalyticsOAuth({
   const google = (window as any).google;
   if (google?.accounts?.oauth2?.initTokenClient) {
     try {
+      let isSettled = false;
+      let focusTimeout: any = null;
+
+      const cleanup = () => {
+        isSettled = true;
+        window.removeEventListener('focus', onWindowFocus);
+        if (focusTimeout) clearTimeout(focusTimeout);
+      };
+
+      const onWindowFocus = () => {
+        if (focusTimeout) clearTimeout(focusTimeout);
+        focusTimeout = setTimeout(() => {
+          if (!isSettled) {
+            cleanup();
+            onError('Google Analytics sign-in popup was closed.');
+          }
+        }, 1200);
+      };
+
+      window.addEventListener('focus', onWindowFocus);
+
       const tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: clientId,
         scope: 'openid email profile https://www.googleapis.com/auth/analytics.readonly https://www.googleapis.com/auth/webmasters.readonly',
         prompt: 'consent',
+        error_callback: (err: any) => {
+          cleanup();
+          onError(err?.type === 'popup_closed' ? 'Google Analytics sign-in popup was closed.' : (err?.message || 'Google Analytics connection was cancelled.'));
+        },
         callback: async (tokenResponse: any) => {
+          cleanup();
           if (tokenResponse.error) {
             console.warn('GA4 OAuth token notice:', tokenResponse);
             const isAccessDenied = tokenResponse.error === 'access_denied';
@@ -307,3 +370,4 @@ export async function triggerGoogleAnalyticsOAuth({
     onError(err.message || 'Connection to GA4 service failed.');
   }
 }
+

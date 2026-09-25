@@ -139,6 +139,15 @@ export const IntegrationsSettingsTab: React.FC = () => {
     }
   };
 
+  const handleCloseAnyModal = () => {
+    setShowManualLinkModal(false);
+    setShowGoogleHelpModal(false);
+    setShowDisconnectModal(false);
+    setIsLoading(false);
+    setIsDetecting(false);
+    setIsManualSubmitting(false);
+  };
+
   const handleConnectGa4 = async () => {
     if (isFreePlan) {
       setCheckoutModalPlan('pro');
@@ -150,16 +159,23 @@ export const IntegrationsSettingsTab: React.FC = () => {
     setSuccessMsg(null);
     setOauthBlockedDetails(null);
 
+    // Watchdog safety timeout: automatically re-enable button after 35s if popup is abandoned
+    const watchdog = setTimeout(() => {
+      setIsLoading(false);
+    }, 35000);
+
     await triggerGoogleAnalyticsOAuth({
       userEmail: user.email || '',
       onStart: () => setIsLoading(true),
       onSuccess: (data) => {
+        clearTimeout(watchdog);
         setIsLoading(false);
         setSuccessMsg('Google Analytics 4 linked successfully to your Locora workspace.');
         logActivity('integration', 'Google Analytics 4 Linked', `Property ${data.propertyId || ''} connected`);
         fetchGa4Status();
       },
       onError: (err, details) => {
+        clearTimeout(watchdog);
         setIsLoading(false);
         setErrorMsg(err || 'Failed to connect Google Analytics 4.');
         if (details?.isAccessDenied || details?.isUnverifiedApp) {
@@ -635,7 +651,7 @@ export const IntegrationsSettingsTab: React.FC = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setShowManualLinkModal(false)}
+                onClick={handleCloseAnyModal}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -681,7 +697,7 @@ export const IntegrationsSettingsTab: React.FC = () => {
               <div className="pt-2 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
-                  onClick={() => setShowManualLinkModal(false)}
+                  onClick={handleCloseAnyModal}
                   className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
                   Cancel
@@ -713,7 +729,7 @@ export const IntegrationsSettingsTab: React.FC = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setShowGoogleHelpModal(false)}
+                onClick={handleCloseAnyModal}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -763,7 +779,7 @@ export const IntegrationsSettingsTab: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
-                  setShowGoogleHelpModal(false);
+                  handleCloseAnyModal();
                   setShowManualLinkModal(true);
                 }}
                 className="px-4 py-2 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs font-bold shadow-sm transition-colors cursor-pointer"
@@ -772,7 +788,7 @@ export const IntegrationsSettingsTab: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setShowGoogleHelpModal(false)}
+                onClick={handleCloseAnyModal}
                 className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
               >
                 Close
@@ -790,7 +806,7 @@ export const IntegrationsSettingsTab: React.FC = () => {
         message="Are you sure you want to disconnect Google Analytics 4 from this business? Real-time organic session streaming will be paused."
         confirmLabel="Disconnect GA4"
         onConfirm={handleDisconnectGa4}
-        onClose={() => setShowDisconnectModal(false)}
+        onClose={handleCloseAnyModal}
       />
     </div>
   );
