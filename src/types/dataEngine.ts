@@ -140,6 +140,7 @@ export interface TrafficMetrics {
   source: 'ga4' | 'gsc' | 'estimated';
   ga4Connected?: boolean;
   ga4PropertyId?: string;
+  ga4MeasurementId?: string | null;
   ga4PropertyName?: string;
   ga4AccountName?: string;
   gscConnected?: boolean;

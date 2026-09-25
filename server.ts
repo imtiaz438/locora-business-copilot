@@ -5852,6 +5852,74 @@ app.get('/api/analytics/ga4/status', (req, res) => {
   }
 });
 
+// Auto-Detect Google Analytics / GA4 tag from website HTML
+app.post('/api/analytics/ga4/detect-from-website', async (req, res) => {
+  try {
+    const { url, website, email } = req.body || {};
+    let targetUrl = (url || website || '').trim();
+
+    if (!targetUrl && email) {
+      const cleanEmail = (email || '').toLowerCase().trim();
+      const businesses = getBusinessesForUser(cleanEmail);
+      if (businesses.length > 0 && businesses[0].identity?.website) {
+        targetUrl = businesses[0].identity.website;
+      }
+    }
+
+    if (!targetUrl) {
+      return res.status(400).json({ success: false, error: 'Please enter your business website URL to scan.' });
+    }
+
+    if (!/^https?:\/\//i.test(targetUrl)) {
+      targetUrl = `https://${targetUrl}`;
+    }
+
+    // Fetch homepage HTML with 7s timeout
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 7000);
+    const htmlRes = await fetch(targetUrl, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 LocoraBot/1.0',
+        'Accept': 'text/html,application/xhtml+xml',
+      },
+    }).catch((err) => {
+      throw new Error(`Could not reach ${targetUrl} (${err.message}). Please check the URL.`);
+    });
+    clearTimeout(timer);
+
+    const html = await htmlRes.text();
+
+    // Regex scanners for GA4 / GTM / Google Analytics
+    const ga4Matches = html.match(/\b(G-[A-Z0-9]{7,14})\b/i);
+    const gtMatches = html.match(/\b(GT-[A-Z0-9]{7,14})\b/i);
+    const gtmMatches = html.match(/\b(GTM-[A-Z0-9]{5,10})\b/i);
+    const uaMatches = html.match(/\b(UA-\d{4,10}-\d{1,3})\b/i);
+
+    const detectedId = ga4Matches?.[1] || gtMatches?.[1] || gtmMatches?.[1] || uaMatches?.[1] || null;
+
+    if (!detectedId) {
+      return res.json({
+        success: false,
+        error: `No Google Analytics tracking code was found in the public HTML of ${targetUrl}. Make sure your GA4 snippet is active on your site or enter your Measurement ID manually.`,
+        scannedUrl: targetUrl,
+      });
+    }
+
+    const tagType = ga4Matches ? 'GA4 Measurement ID' : gtMatches ? 'Google Tag ID' : gtmMatches ? 'Google Tag Manager Container' : 'Universal Analytics Tag';
+
+    res.json({
+      success: true,
+      detectedId,
+      tagType,
+      scannedUrl: targetUrl,
+      message: `Found active ${tagType}: ${detectedId}`,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Failed to scan website for Google Analytics tags.' });
+  }
+});
+
 // Connect GA4 via OAuth or direct stream link
 app.post('/api/analytics/ga4/connect', async (req, res) => {
   try {
@@ -5867,8 +5935,17 @@ app.post('/api/analytics/ga4/connect', async (req, res) => {
       return res.status(404).json({ error: 'Business record not found' });
     }
 
-    const assignedPropertyId = propertyId || `properties/ga4_${Math.floor(100000000 + Math.random() * 900000000)}`;
-    const assignedPropertyName = propertyName || `${activeBiz.identity.name} - Web Stream`;
+    let assignedPropertyId = (propertyId || '').trim();
+    const isMeasurementId = assignedPropertyId.toUpperCase().startsWith('G-');
+    if (assignedPropertyId) {
+      if (/^\d+$/.test(assignedPropertyId)) {
+        assignedPropertyId = `properties/${assignedPropertyId}`;
+      }
+    } else {
+      assignedPropertyId = `properties/ga4_${Math.floor(100000000 + Math.random() * 900000000)}`;
+    }
+
+    const assignedPropertyName = propertyName || (isMeasurementId ? `GA4 Web Stream (${assignedPropertyId})` : `${activeBiz.identity.name} - Web Stream`);
     const assignedAccountName = cleanEmail ? `${cleanEmail.split('@')[0]}'s Google Analytics` : 'Connected Google Analytics';
 
     // Update traffic metrics with verified GA4 source in Locora DB
@@ -5877,6 +5954,7 @@ app.post('/api/analytics/ga4/connect', async (req, res) => {
       ...activeBiz.traffic,
       ga4Connected: true,
       ga4PropertyId: assignedPropertyId,
+      ga4MeasurementId: isMeasurementId ? assignedPropertyId : (activeBiz.traffic?.ga4MeasurementId || null),
       ga4PropertyName: assignedPropertyName,
       ga4AccountName: assignedAccountName,
       lastSyncedAt: now,

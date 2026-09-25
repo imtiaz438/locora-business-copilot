@@ -227,7 +227,7 @@ export async function triggerGoogleAnalyticsOAuth({
   userEmail: string;
   onStart?: () => void;
   onSuccess: (ga4Data: any) => void;
-  onError: (errorMsg: string) => void;
+  onError: (errorMsg: string, details?: { isAccessDenied?: boolean; isUnverifiedApp?: boolean }) => void;
 }): Promise<void> {
   if (onStart) onStart();
 
@@ -244,7 +244,15 @@ export async function triggerGoogleAnalyticsOAuth({
         callback: async (tokenResponse: any) => {
           if (tokenResponse.error) {
             console.warn('GA4 OAuth token notice:', tokenResponse);
-            onError(tokenResponse.error_description || 'Google Analytics connection was cancelled.');
+            const isAccessDenied = tokenResponse.error === 'access_denied';
+            const desc = (tokenResponse.error_description || '').toLowerCase();
+            const isUnverified = desc.includes('verification') || desc.includes('tested') || isAccessDenied;
+
+            const errorMessage = isAccessDenied
+              ? 'Google blocked access: locoraai.com has not completed the Google verification process (Error 403: access_denied). In Google Cloud Console, your OAuth consent screen is in "Testing" mode. Only developer-approved "Test users" can authorize sensitive scopes, or you can connect directly via your GA4 Property ID.'
+              : (tokenResponse.error_description || 'Google Analytics connection was cancelled or closed.');
+
+            onError(errorMessage, { isAccessDenied, isUnverifiedApp: isUnverified });
             return;
           }
 
@@ -299,4 +307,3 @@ export async function triggerGoogleAnalyticsOAuth({
     onError(err.message || 'Connection to GA4 service failed.');
   }
 }
-
