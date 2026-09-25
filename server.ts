@@ -5879,9 +5879,10 @@ app.post('/api/analytics/ga4/detect-from-website', async (req, res) => {
     const timer = setTimeout(() => controller.abort(), 7000);
     const htmlRes = await fetch(targetUrl, {
       signal: controller.signal,
+      redirect: 'follow',
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 LocoraBot/1.0',
-        'Accept': 'text/html,application/xhtml+xml',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       },
     }).catch((err) => {
       throw new Error(`Could not reach ${targetUrl} (${err.message}). Please check the URL.`);
@@ -5891,12 +5892,13 @@ app.post('/api/analytics/ga4/detect-from-website', async (req, res) => {
     const html = await htmlRes.text();
 
     // Regex scanners for GA4 / GTM / Google Analytics
-    const ga4Matches = html.match(/\b(G-[A-Z0-9]{7,14})\b/i);
-    const gtMatches = html.match(/\b(GT-[A-Z0-9]{7,14})\b/i);
-    const gtmMatches = html.match(/\b(GTM-[A-Z0-9]{5,10})\b/i);
-    const uaMatches = html.match(/\b(UA-\d{4,10}-\d{1,3})\b/i);
+    const ga4Matches = html.match(/(?:id=|config['",\s]+|measurement_id['":\s]+|['"/]|\b)(G-[A-Z0-9]{7,14})\b/i);
+    const gtMatches = html.match(/(?:id=|config['",\s]+|['"/]|\b)(GT-[A-Z0-9]{7,14})\b/i);
+    const gtmMatches = html.match(/(?:id=|config['",\s]+|['"/]|\b)(GTM-[A-Z0-9]{5,10})\b/i);
+    const uaMatches = html.match(/(?:id=|config['",\s]+|['"/]|\b)(UA-\d{4,10}-\d{1,3})\b/i);
 
-    const detectedId = ga4Matches?.[1] || gtMatches?.[1] || gtmMatches?.[1] || uaMatches?.[1] || null;
+    const rawDetectedId = ga4Matches?.[1] || gtMatches?.[1] || gtmMatches?.[1] || uaMatches?.[1] || null;
+    const detectedId = rawDetectedId ? rawDetectedId.toUpperCase() : null;
 
     if (!detectedId) {
       return res.json({
