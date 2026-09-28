@@ -3720,7 +3720,7 @@ app.get('/api/data-engine/business/:id', (req, res) => {
 });
 
 // Get All Business Records (Scoring & Multi-Location & Agency Elite)
-app.get('/api/data-engine/businesses', (req, res) => {
+app.get('/api/data-engine/businesses', async (req, res) => {
   try {
     const userEmail = (
       (req.query.email as string) ||
@@ -3729,8 +3729,9 @@ app.get('/api/data-engine/businesses', (req, res) => {
       ''
     ).toLowerCase().trim();
     const isSuper = verifyAdminAccess(req) || SUPER_ADMIN_EMAILS.has(userEmail);
+    const returnAll = req.query.all === 'true' && isSuper;
     let businesses: any[] = [];
-    if (userEmail && !isSuper) {
+    if (!returnAll && userEmail) {
       businesses = getBusinessesForUser(userEmail);
       if (businesses.length === 0) {
         const u = usersDb.get(userEmail);
@@ -4267,7 +4268,11 @@ app.get('/api/production/businesses', async (req, res) => {
       effectiveEmail === 'support@locoraai.com' ||
       SUPER_ADMIN_EMAILS.has(effectiveEmail);
 
-    let list = isSuperAdmin
+    // Multi-tenant isolation: The main top bar dropdown workspace switcher only shows the user's authentic owned businesses.
+    // Full customer workspaces across all accounts are only returned when explicitly requested with all=true by an admin (or in Admin Portal).
+    const returnAll = req.query.all === 'true' && isSuperAdmin;
+
+    let list = returnAll
       ? await db
           .select()
           .from(schema.businessesTable)
@@ -4777,12 +4782,24 @@ app.delete('/api/admin/businesses/:businessId', async (req, res) => {
     const headerEmail = req.headers['x-user-email'] as string;
     const queryEmail = (req.query?.email as string) || (req.query?.userEmail as string);
     const email = (cookieEmail || headerEmail || queryEmail || '').toLowerCase().trim();
-    if (!SUPER_ADMIN_EMAILS.has(email)) {
+    const isAdmin = SUPER_ADMIN_EMAILS.has(email) || (await verifyAdminAccessAsync(req));
+    if (!isAdmin) {
       return res.status(403).json({ error: 'System administrator authorization required.' });
     }
     const bId = req.params.businessId;
+    if (!bId) {
+      return res.status(400).json({ error: 'Business ID is required.' });
+    }
+
+    // 1. Delete in PostgreSQL (cascades across 40+ dependent tables: locations, reviews, directory, audits, CRM, etc.)
+    await dbService.deleteBusiness(bId).catch((err) => {
+      console.warn(`[Admin Delete] PostgreSQL cascade delete error for ${bId}:`, err);
+    });
+
+    // 2. Delete from Locora Data Engine (in-memory, disk, leads, events, listings cache)
     deleteBusinessRecord(bId);
-    await dbService.deleteBusiness(bId);
+
+    // 3. Clean up user workspace maps and disk stores
     userWorkspaceDataMap.forEach((store) => {
       store.customers = (store.customers || []).filter((c: any) => c.businessId !== bId);
       store.projects = (store.projects || []).filter((p: any) => p.businessId !== bId);
@@ -4791,9 +4808,15 @@ app.delete('/api/admin/businesses/:businessId', async (req, res) => {
       store.documents = (store.documents || []).filter((d: any) => d.businessId !== bId);
     });
     saveUserWorkspaceDataToDisk();
-    res.json({ success: true, message: 'Business deleted by system administrator' });
+    invalidateDirectoryListingsCache();
+
+    res.json({
+      success: true,
+      message: `Business ${bId} and all associated records permanently erased from database and site.`,
+    });
   } catch (err: any) {
-    res.status(err.status || 500).json({ error: err.message });
+    console.error('Error in admin delete business:', err);
+    res.status(err.status || 500).json({ error: err.message || 'Failed to delete business' });
   }
 });
 

@@ -55,6 +55,7 @@ import {
   Globe2,
   MapPin,
   Star,
+  X,
 } from 'lucide-react';
 import { PlanProviderAccessSummary } from './PlanProviderAccessSummary';
 import { DataFreshnessPanel } from './DataFreshnessPanel';
@@ -111,6 +112,46 @@ export const AdminView: React.FC = () => {
   const [activeDbTable, setActiveDbTable] = useState<'businesses' | 'locations' | 'directoryProfiles' | 'reviews' | 'dataConnections' | 'leads' | 'users'>('businesses');
   const [dbSearchTerm, setDbSearchTerm] = useState('');
   const [workspaceSearchTerm, setWorkspaceSearchTerm] = useState('');
+
+  // Business Deletion State (Admin Master Purge)
+  const [businessToDelete, setBusinessToDelete] = useState<any | null>(null);
+  const [isDeletingBusiness, setIsDeletingBusiness] = useState(false);
+
+  const handleConfirmDeleteBusiness = async () => {
+    if (!businessToDelete) return;
+    setIsDeletingBusiness(true);
+    setActionErrorMsg(null);
+    setActionSuccessMsg(null);
+
+    const bId = businessToDelete.id;
+    const bName = businessToDelete.name || bId;
+
+    try {
+      const adminEmail = user.email || 'imtiazbaloch3322@gmail.com';
+      const res = await fetch(`/api/admin/businesses/${encodeURIComponent(bId)}?email=${encodeURIComponent(adminEmail)}`, {
+        method: 'DELETE',
+        headers: {
+          'x-user-email': adminEmail,
+        },
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setBusinessesTable((prev) => prev.filter((b: any) => b.id !== bId));
+        setLocationsTable((prev) => prev.filter((l: any) => l.businessId !== bId));
+        setDirectoryProfilesTable((prev) => prev.filter((p: any) => p.businessId !== bId));
+        setReviewsTable((prev) => prev.filter((r: any) => r.businessId !== bId));
+        setActionSuccessMsg(`Business "${bName}" (${bId}) and all complete data permanently deleted from overall site and database.`);
+        setBusinessToDelete(null);
+        fetchAdminData();
+      } else {
+        setActionErrorMsg(data.error || 'Failed to delete business.');
+      }
+    } catch (err: any) {
+      setActionErrorMsg(err.message || 'Error occurred while deleting business.');
+    } finally {
+      setIsDeletingBusiness(false);
+    }
+  };
 
   // Brevo Mail Server State
   const [emailStatus, setEmailStatus] = useState<any>(null);
@@ -2020,6 +2061,17 @@ export const AdminView: React.FC = () => {
                                 <ExternalLink className="w-3 h-3 text-slate-500" />
                                 <span>Directory</span>
                               </button>
+
+                              <button
+                                onClick={() => {
+                                  setBusinessToDelete(biz);
+                                }}
+                                className="px-2.5 py-1.5 text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+                                title={`Permanently delete ${biz.name} and all data`}
+                              >
+                                <Trash2 className="w-3 h-3 text-rose-600" />
+                                <span>Delete</span>
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -2027,6 +2079,87 @@ export const AdminView: React.FC = () => {
                     })}
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ADMIN MASTER BUSINESS DELETION */}
+      {businessToDelete && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden space-y-4 p-6 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center">
+                  <Trash2 className="w-4 h-4" />
+                </div>
+                <h4 className="text-base font-bold font-heading text-slate-900">
+                  Delete Business & Complete Data
+                </h4>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBusinessToDelete(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-900 space-y-2">
+                <div className="flex items-center gap-1.5 font-bold text-rose-800">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>Permanent Master Purge Warning</span>
+                </div>
+                <p className="text-[11px] text-rose-800 leading-relaxed">
+                  You are about to permanently delete <strong>{businessToDelete.name}</strong> (Owner: <code className="font-mono bg-rose-100 px-1 py-0.5 rounded text-[10px]">{businessToDelete.ownerEmail || '—'}</code>).
+                </p>
+                <p className="text-[11px] text-rose-700 font-semibold">
+                  This action is irreversible and will completely delete:
+                </p>
+                <ul className="list-disc list-inside text-[11px] space-y-0.5 text-rose-900 pl-1">
+                  <li>Business identity, profile & locations</li>
+                  <li>Public directory listings & SEO landing pages</li>
+                  <li>Google Business Profile, Search Console & GA4 integrations</li>
+                  <li>Customer CRM records, leads, proposals & invoices</li>
+                  <li>Reviews, local rank tracking & AI audit data</li>
+                  <li>All associated rows in Cloud SQL database tables</li>
+                </ul>
+              </div>
+
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block font-mono">Workspace Details</span>
+                <p className="text-xs font-bold text-slate-800">{businessToDelete.name}</p>
+                <p className="text-[11px] text-slate-500 font-mono">ID: {businessToDelete.id}</p>
+                {businessToDelete.city && (
+                  <p className="text-[11px] text-slate-500">{businessToDelete.city}{businessToDelete.state ? `, ${businessToDelete.state}` : ''}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2.5 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setBusinessToDelete(null)}
+                disabled={isDeletingBusiness}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteBusiness}
+                disabled={isDeletingBusiness}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                {isDeletingBusiness ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="w-3.5 h-3.5" />
+                )}
+                <span>{isDeletingBusiness ? 'Deleting Complete Data...' : 'Permanently Delete Business'}</span>
+              </button>
             </div>
           </div>
         </div>
