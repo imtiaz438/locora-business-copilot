@@ -68,7 +68,27 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-JK4D86S70Z');
+      (function() {
+        var isDebug = false;
+        try {
+          var params = new URLSearchParams(window.location.search);
+          if (params.get('ga_debug') === '0' || params.get('ga_debug') === 'false') {
+            sessionStorage.removeItem('locora_ga_debug');
+            isDebug = false;
+          } else if (params.get('ga_debug') === '1' || params.get('debug_mode') === 'true') {
+            isDebug = true;
+            sessionStorage.setItem('locora_ga_debug', '1');
+          } else if (sessionStorage.getItem('locora_ga_debug') === '1') {
+            isDebug = true;
+          }
+        } catch (e) {}
+
+        if (isDebug) {
+          gtag('config', 'G-JK4D86S70Z', { debug_mode: true });
+        } else {
+          gtag('config', 'G-JK4D86S70Z');
+        }
+      })();
     </script>
 
     <!-- Google Identity Services (Deferred for Fast TBT) -->
@@ -135,7 +155,7 @@
         "aggregateRating": {
           "@type": "AggregateRating",
           "ratingValue": "4.9",
-          "ratingCount": "1280",
+          "ratingCount": "5",
           "bestRating": "5",
           "worstRating": "1"
         },
