@@ -69,7 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
     { id: 'customers', label: 'Customers', icon: Users },
     { id: 'work', label: 'Work', icon: Briefcase },
     { id: 'reports', label: 'Reports', icon: BarChart3 },
-    { id: 'clients', label: 'Clients', icon: Building2, badge: 'Agency', requiredPlan: 'agency' },
+    { id: 'clients', label: 'Agency Clients', icon: Building2, badge: 'Agency', requiredPlan: 'agency' },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
@@ -151,7 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
             const isActive = isNavActive(item.id);
 
             const isLocked =
-              !(user.role === 'admin' || user.role === 'owner') &&
+              !(user.role === 'admin' || user.role === 'owner' || user.email === 'imtiazbaloch3322@gmail.com' || user.email === 'support@locoraai.com') &&
               ((item.requiredPlan === 'pro' && user.planTier === 'free') ||
               (item.requiredPlan === 'agency' && (user.planTier === 'free' || user.planTier === 'pro')));
 

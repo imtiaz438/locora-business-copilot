@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { PricingComparisonTable } from '../PricingComparisonTable';
 import { OneTimeOffersSection } from '../OneTimeOffersSection';
+import { trackPricingViewed } from '../../lib/analytics';
 import {
   Zap,
   CheckCircle2,
@@ -15,6 +16,10 @@ import {
 export const PricingPublicView: React.FC = () => {
   const { setCheckoutModalPlan, setActiveTab, user } = useApp();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+
+  useEffect(() => {
+    trackPricingViewed('all', '/pricing');
+  }, []);
 
   const handleSelectPlan = (plan: 'free' | 'pro' | 'agency') => {
     if (plan === 'free') {

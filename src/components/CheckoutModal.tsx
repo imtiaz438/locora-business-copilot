@@ -22,6 +22,7 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { openWhopCheckout, getWhopConfig, WhopConfig } from '../lib/whopService';
+import { trackCheckoutStarted } from '../lib/analytics';
 
 export const CheckoutModal: React.FC = () => {
   const {
@@ -95,6 +96,7 @@ export const CheckoutModal: React.FC = () => {
     const customerName = user.name || user.companyName || customerEmail.split('@')[0];
 
     setIsProcessing(true);
+    trackCheckoutStarted(checkoutModalPlan, checkoutModalCycle);
 
     try {
       // 1. Request verified Whop Checkout Session / Direct Link

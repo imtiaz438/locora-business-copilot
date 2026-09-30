@@ -4,6 +4,7 @@ import { WebsiteAuditResult, PublicCheckupResult } from '../../types';
 import { LocoraLogo } from '../LocoraLogo';
 import { QuickCheckupReport } from './QuickCheckupReport';
 import { navigateToDirectory } from '../../utils/domain';
+import { trackCtaClick } from '../../lib/analytics';
 import {
   Sparkles,
   ArrowRight,
@@ -320,18 +321,29 @@ export const HomeView: React.FC = () => {
             Audit your business, dominate the Google Maps 3-Pack, and get discovered by local customers and 2026 AI search engines through the Locora Verified Directory.
           </p>
 
-          {/* Directory Quick Navigation Banner */}
+          {/* Primary & Secondary Acquisition CTAs */}
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               type="button"
+              onClick={() => {
+                trackCtaClick('check_local_visibility', '/', '/checkup');
+                setActiveTab('checkup');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="w-full sm:w-auto px-7 py-3.5 bg-[#059669] hover:bg-[#047857] text-white rounded-full text-sm font-bold transition-all inline-flex items-center justify-center gap-2 cursor-pointer font-heading shadow-lg hover:shadow-xl hover:scale-[1.02]"
+            >
+              <span>Check Your Local Visibility</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
               onClick={() => navigateToDirectory()}
-              className="w-full sm:w-auto px-5 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 hover:text-white rounded-full text-xs font-bold transition-all inline-flex items-center justify-center gap-2 cursor-pointer font-heading shadow-md"
+              className="w-full sm:w-auto px-5 py-3 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 hover:text-white rounded-full text-xs font-bold transition-all inline-flex items-center justify-center gap-2 cursor-pointer font-heading shadow-md"
             >
               <Building2 className="w-4 h-4 text-[#6ee7b7]" />
               <span>Explore Verified Business Directory</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
-            <span className="text-xs text-emerald-200/70 font-sans hidden sm:inline">or run a real-time site audit below:</span>
           </div>
 
           {/* Website Input + CTA */}
@@ -359,7 +371,7 @@ export const HomeView: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <span>Start Quick Checkup</span>
+                    <span>Check Your Local Visibility</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -2037,13 +2049,13 @@ export const HomeView: React.FC = () => {
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
                 onClick={() => {
+                  trackCtaClick('check_local_visibility', 'home_bottom', '/checkup');
+                  setActiveTab('checkup');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
-                  const inp = document.getElementById('hero-input');
-                  if (inp) inp.scrollIntoView({ behavior: 'smooth' });
                 }}
                 className="w-full sm:w-auto px-8 py-4 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
               >
-                <span>Analyze My Business — Free</span>
+                <span>Check Your Local Visibility</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
               <button

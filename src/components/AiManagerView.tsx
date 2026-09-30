@@ -6,6 +6,7 @@ import { generateFullReportSnapshot } from '../services/reportEngine';
 import { saveReportSnapshot } from '../services/reportStorageService';
 import { exportReportToPdf } from './reports/ReportPdfExport';
 import { getDirectoryBusinessUrl } from '../utils/domain';
+import { trackAiChatStarted } from '../lib/analytics';
 import {
   Bot,
   Sparkles,
@@ -211,6 +212,8 @@ export const AiManagerView: React.FC = () => {
   const handleExecute = (customPrompt?: string) => {
     const q = (customPrompt || inputQuery).trim();
     if (!q || isProcessing) return;
+
+    trackAiChatStarted(q, 'ai_manager');
 
     consumeAiCredit(1);
     setInputQuery('');

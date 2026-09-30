@@ -36,6 +36,7 @@ import { isAppSubdomain } from '../utils/domain';
 import { resolveRouteFromPath, resolvePathFromTab, PATH_TO_TAB, TAB_TO_PATH } from '../utils/routeUtils';
 import { dashboardService } from '../services/dashboardService';
 import type { NormalizedDashboardData } from '../types/production';
+import { trackBusinessAdded, trackSubscriptionStarted, initUtmAttribution } from '../lib/analytics';
 
 interface AppContextType {
   // Production Data Architecture
@@ -330,11 +331,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [activeTab, setActiveTabState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
+      initUtmAttribution();
       const isApp = isAppSubdomain();
       const resolved = resolveRouteFromPath(window.location.pathname, isApp);
-      // Clean up legacy URL in address bar if needed without page refresh
+      // Clean up legacy URL in address bar if needed without page refresh or dropping search query
       if (!resolved.isCanonical && window.location.pathname !== resolved.canonicalPath) {
-        window.history.replaceState({}, '', resolved.canonicalPath);
+        window.history.replaceState({}, '', resolved.canonicalPath + (window.location.search || ''));
       }
       return resolved.targetTab;
     }
@@ -1136,6 +1138,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const amount = billingCycle === 'yearly' ? priceMapYearly[plan] : priceMapMonthly[plan];
 
+    if (plan !== 'free') {
+      trackSubscriptionStarted(plan, billingCycle, amount);
+    }
+
     setUser((prev) => {
       const newCredits = creditsMap[plan] || 25;
       const updatedUser: UserProfile = {
@@ -1512,6 +1518,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const filtered = prev.filter((b) => b.id !== newId);
       const next = [newBiz, ...filtered];
       return next;
+    });
+
+    trackBusinessAdded({
+      id: newId,
+      name: newBiz.name,
+      industry: newBiz.category,
     });
 
     if (user.email) {
@@ -2146,8 +2158,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 aiReadinessScore: r.businessBrain?.readinessScore || 0,
               }));
 
-              setBusinesses(mappedBusinesses);
+              setBusinesses((prev) => {
+                if (prev.length > 0) {
+                  // Merge data-engine enrichments with PostgreSQL businesses list so all client workspaces remain accessible
+                  return prev.map((p) => {
+                    const match = mappedBusinesses.find((m) => m.id === p.id);
+                    return match ? { ...p, ...match } : p;
+                  });
+                }
+                return mappedBusinesses;
+              });
               setActiveBusinessId((curr) => {
+                if (curr) return curr;
                 if (mappedBusinesses.some((b) => b.id === curr)) return curr;
                 return mappedBusinesses[0].id;
               });

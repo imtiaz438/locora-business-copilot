@@ -8,6 +8,7 @@ import { AiVisibilityObservationsPanel } from './AiVisibilityObservationsPanel';
 import { DatasetFreshnessBadge } from './DatasetFreshnessBadge';
 import { ProviderAccessGate } from './ProviderAccessGate';
 import { DirectoryLeadAnalyticsTab } from './directory/DirectoryLeadAnalyticsTab';
+import { trackVisibilityCheck } from '../lib/analytics';
 import {
   MapPin,
   Search,
@@ -127,6 +128,7 @@ export const LocalVisibilityView: React.FC = () => {
   const handleScanVisibility = async () => {
     if (!activeBusiness?.id || isScanningVisibility) return;
     setIsScanningVisibility(true);
+    trackVisibilityCheck(activeBusiness.id, activeBusiness.name);
     try {
       const res = await fetch(`/api/production/seo/${activeBusiness.id}/scan-visibility`, {
         method: 'POST',

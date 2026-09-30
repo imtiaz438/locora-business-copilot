@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { PricingComparisonTable } from './PricingComparisonTable';
 import { OneTimeOffersSection } from './OneTimeOffersSection';
+import { trackPricingViewed } from '../lib/analytics';
 import {
   Check,
   Zap,
@@ -25,6 +26,10 @@ export const PricingView: React.FC = () => {
   const { user, setCheckoutModalPlan, setActiveTab } = useApp();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  useEffect(() => {
+    trackPricingViewed('all', '/pricing-plans');
+  }, []);
 
   // ROI Calculator State
   const [clientsCount, setClientsCount] = useState(12);

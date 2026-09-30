@@ -8,6 +8,7 @@ import { WorkTasksTab } from './work/WorkTasksTab';
 import { WorkProjectsTab } from './work/WorkProjectsTab';
 import { WorkTemplatesTab } from './work/WorkTemplatesTab';
 import { WorkDocumentsTab } from './work/WorkDocumentsTab';
+import { trackProposalGenerated } from '../lib/analytics';
 import {
   Briefcase,
   FileText,
@@ -193,6 +194,7 @@ Locora AI analyzed your digital footprint and identified core high-impact growth
       };
 
       addProposal(newProp);
+      trackProposalGenerated(newProp.title, clientName, newProp.totalAmount);
       setIsGeneratingProposal(false);
       setShowNewProposalModal(false);
       logActivity('work', 'Proposal Generated', `AI Proposal created for ${clientName} from 7 Growth Opportunities`);

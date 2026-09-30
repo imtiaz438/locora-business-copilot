@@ -59,14 +59,18 @@ import { PrivacyPolicyView } from './components/public/PrivacyPolicyView';
 import { TermsOfServiceView } from './components/public/TermsOfServiceView';
 import { SecurityOverviewView } from './components/public/SecurityOverviewView';
 import { RefundPolicyView } from './components/public/RefundPolicyView';
+import { CheckupView } from './components/public/CheckupView';
 import { DirectoryHubView } from './components/directory/DirectoryHubView';
 import { DirectoryBusinessDetailView } from './components/directory/DirectoryBusinessDetailView';
 import { applyPageMetadata } from './utils/seoMetadata';
 import { resolveRouteFromPath } from './utils/routeUtils';
+import { initUtmAttribution, trackSubscriptionStarted } from './lib/analytics';
 
 const PATH_TO_TAB: Record<string, string> = {
   '': 'home',
   'home': 'home',
+  'checkup': 'checkup',
+  'checkup/': 'checkup',
   'products': 'products',
   'product': 'products',
   'features': 'features',
@@ -172,6 +176,9 @@ const MainContent: React.FC = () => {
   // Handle initial URL path routing and popstate events
   useEffect(() => {
     const syncRouteFromLocation = () => {
+      // Capture and persist any campaign UTMs on first or subsequent navigation
+      initUtmAttribution();
+
       const rawPath = window.location.pathname;
       const isApp = isAppSubdomain();
       const isDirectory = isDirectorySubdomain();
@@ -267,9 +274,9 @@ const MainContent: React.FC = () => {
         targetTab = 'dashboard';
       }
 
-      // If browser was pointed to an uncanonical alias (like /resource_google-business-profile-guide), clean it up silently
+      // If browser was pointed to an uncanonical alias (like /resource_google-business-profile-guide), clean it up silently without dropping query search
       if (!resolved.isCanonical && rawPath !== resolved.canonicalPath) {
-        window.history.replaceState({}, '', resolved.canonicalPath);
+        window.history.replaceState({}, '', resolved.canonicalPath + (window.location.search || ''));
       }
 
       setActiveTab(targetTab);
@@ -333,6 +340,9 @@ const MainContent: React.FC = () => {
           if (data.invoice) {
             setSuccessInvoice(data.invoice);
             setShowSuccessModal(true);
+            if (!productType) {
+              trackSubscriptionStarted(plan, billingCycle, data.invoice.amount);
+            }
           } else {
             const fallbackInv: SubscriptionInvoice = {
               id: `INV-${new Date().getFullYear()}-WHOP`,
@@ -351,6 +361,9 @@ const MainContent: React.FC = () => {
             };
             setSuccessInvoice(fallbackInv);
             setShowSuccessModal(true);
+            if (!productType) {
+              trackSubscriptionStarted(plan, billingCycle, fallbackInv.amount);
+            }
           }
         })
         .catch(() => {
@@ -424,6 +437,7 @@ const MainContent: React.FC = () => {
 
     // Other Public Routes
     if (activeTab === 'home') return <HomeView />;
+    if (activeTab === 'checkup') return <CheckupView />;
     if (activeTab === 'products' || activeTab === 'product') return <ProductView />;
     if (activeTab === 'features') return <FeaturesView />;
     if (activeTab === 'pricing_public') return <PricingPublicView />;

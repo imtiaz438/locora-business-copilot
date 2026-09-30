@@ -22,6 +22,7 @@ import { UserPlan } from '../../types';
 import { validateRealEmail } from '../../lib/emailValidation';
 import { LocoraLogo } from '../LocoraLogo';
 import { triggerGoogleSSO, triggerLinkedInSSO } from '../../lib/oauthService';
+import { trackSignupStarted, trackSignupCompleted } from '../../lib/analytics';
 
 interface AuthViewProps {
   initialMode?: 'login' | 'signup';
@@ -84,6 +85,20 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
           if (parsed.businessName && !hasClaimParam) {
             setCompany((curr) => curr || parsed.businessName);
           }
+        }
+
+        const rawCheckup = sessionStorage.getItem('locora_pending_checkup');
+        if (rawCheckup) {
+          try {
+            const parsedCheckup = JSON.parse(rawCheckup);
+            if (parsedCheckup?.businessName && !hasClaimParam) {
+              setCompany((curr) => curr || parsedCheckup.businessName);
+            }
+          } catch {}
+        }
+
+        if (initialMode === 'signup' || modeParam === 'signup') {
+          trackSignupStarted('/signup', 'email');
         }
 
         const rawClaim = localStorage.getItem('locora_pending_directory_claim');
@@ -341,6 +356,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
       }
 
       if (data.user) {
+        if (isSignUp) {
+          trackSignupCompleted({
+            email: data.user.email,
+            planTier: data.user.planTier,
+            companyName: data.user.companyName,
+            method: 'email',
+          });
+        }
         login(data.user.email, data.user.name, data.user.companyName, data.user.planTier, data.user.aiCreditsUsed, data.user.role, data.user.id);
         setActiveTab('dashboard');
       }
@@ -365,6 +388,12 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
         await triggerGoogleSSO({
           onStart: () => setLoading(true),
           onSuccess: (authenticatedUser) => {
+            trackSignupCompleted({
+              email: authenticatedUser.email,
+              planTier: authenticatedUser.planTier,
+              companyName: authenticatedUser.companyName,
+              method: 'google',
+            });
             login(
               authenticatedUser.email,
               authenticatedUser.name,
@@ -387,6 +416,12 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
         await triggerLinkedInSSO({
           onStart: () => setLoading(true),
           onSuccess: (authenticatedUser) => {
+            trackSignupCompleted({
+              email: authenticatedUser.email,
+              planTier: authenticatedUser.planTier,
+              companyName: authenticatedUser.companyName,
+              method: 'linkedin',
+            });
             login(
               authenticatedUser.email,
               authenticatedUser.name,

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { trackAiChatStarted } from '../lib/analytics';
 import {
   Bot,
   X,
@@ -94,6 +95,8 @@ export const RightAiPanel: React.FC = () => {
   const handleSendMessage = async (textToSend?: string) => {
     const text = (textToSend || inputPrompt).trim();
     if (!text || isTyping) return;
+
+    trackAiChatStarted(text, 'copilot_panel');
 
     consumeAiCredit(1);
 

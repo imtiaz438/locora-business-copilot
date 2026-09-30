@@ -7,6 +7,7 @@ import { SeoKeywordsAndTrafficPanel } from './SeoKeywordsAndTrafficPanel';
 import { RealSeoDashboard } from './RealSeoDashboard';
 import { WhiteLabelAuditExportModal } from './WhiteLabelAuditExportModal';
 import { LockedSeoFeatureView } from './LockedSeoFeatureView';
+import { trackAuditStarted, trackAuditCompleted } from '../lib/analytics';
 import {
   Globe,
   Search,
@@ -121,6 +122,9 @@ export const WebsiteReviewView: React.FC = () => {
     setApiError(null);
     setAuditDiagnosis(null);
 
+    // GA4 Audit Tracking
+    trackAuditStarted(targetUrl, mode);
+
     try {
       const activeModel = (settings.providerModels && settings.providerModels[settings.activeProvider]) || settings.activeModelVersion;
 
@@ -172,6 +176,11 @@ export const WebsiteReviewView: React.FC = () => {
         }
 
         setLatestWebsiteAudit(data);
+        trackAuditCompleted(targetUrl, data.overallScore, {
+          seoScore: data.scores?.seo,
+          performanceScore: data.scores?.performance,
+          accessibilityScore: data.scores?.accessibility,
+        });
         logActivity('audit', 'Ran Website Audit', `Audited ${targetUrl}`);
         if (activeBusiness?.id) {
           refreshProductionDashboard(activeBusiness.id).catch(console.error);

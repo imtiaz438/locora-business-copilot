@@ -16,6 +16,7 @@ export interface ResolvedRoute {
 // Canonical Tab -> URL Path Map
 export const TAB_TO_PATH: Record<string, string> = {
   home: '/',
+  checkup: '/checkup',
   products: '/products',
   product: '/products',
   features: '/features',
@@ -81,6 +82,8 @@ export const TAB_TO_PATH: Record<string, string> = {
 export const PATH_TO_TAB: Record<string, string> = {
   '': 'home',
   'home': 'home',
+  'checkup': 'checkup',
+  'checkup/': 'checkup',
   'products': 'products',
   'product': 'products',
   'features': 'features',

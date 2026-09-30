@@ -30,6 +30,13 @@ export const MARKETING_METADATA: Record<string, PageMetadata> = {
     canonicalPath: '/',
     noIndex: false,
   },
+  checkup: {
+    title: "Free Local Business Checkup — See Your Business Through Google's Eyes | Locora AI",
+    description:
+      'Check how your business appears in Google Search and Maps and discover the actions that can improve your local visibility.',
+    canonicalPath: '/checkup',
+    noIndex: false,
+  },
   directory: {
     title: 'Verified Local Business Directory — Top-Rated Service Providers & Contractors | Locora AI',
     description:

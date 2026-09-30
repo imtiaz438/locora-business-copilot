@@ -6,6 +6,7 @@ import { validateRealEmail } from '../lib/emailValidation';
 import { LocoraLogo } from './LocoraLogo';
 import { SocialAuthModal } from './SocialAuthModal';
 import { triggerGoogleSSO, triggerLinkedInSSO } from '../lib/oauthService';
+import { trackSignupStarted, trackSignupCompleted } from '../lib/analytics';
 
 export const AuthModal: React.FC = () => {
   const { authModalOpen, setAuthModalOpen, login, pendingPlanAfterAuth, setActiveTab } = useApp();
@@ -249,6 +250,14 @@ export const AuthModal: React.FC = () => {
       }
 
       if (data.user) {
+        if (isSignUp) {
+          trackSignupCompleted({
+            email: data.user.email,
+            planTier: data.user.planTier || selectedPlan,
+            companyName: data.user.companyName,
+            method: 'email',
+          });
+        }
         login(data.user.email, data.user.name, data.user.companyName, data.user.planTier, data.user.aiCreditsUsed, data.user.role, data.user.id);
         setAuthModalOpen(false);
         setActiveTab('dashboard');
@@ -275,6 +284,14 @@ export const AuthModal: React.FC = () => {
         await triggerGoogleSSO({
           onStart: () => setLoading(true),
           onSuccess: (authenticatedUser) => {
+            if (isSignUp) {
+              trackSignupCompleted({
+                email: authenticatedUser.email,
+                planTier: authenticatedUser.planTier,
+                companyName: authenticatedUser.companyName,
+                method: 'google',
+              });
+            }
             login(
               authenticatedUser.email,
               authenticatedUser.name,
@@ -298,6 +315,14 @@ export const AuthModal: React.FC = () => {
         await triggerLinkedInSSO({
           onStart: () => setLoading(true),
           onSuccess: (authenticatedUser) => {
+            if (isSignUp) {
+              trackSignupCompleted({
+                email: authenticatedUser.email,
+                planTier: authenticatedUser.planTier,
+                companyName: authenticatedUser.companyName,
+                method: 'linkedin',
+              });
+            }
             login(
               authenticatedUser.email,
               authenticatedUser.name,
@@ -872,7 +897,13 @@ export const AuthModal: React.FC = () => {
           <div className="text-center pt-4 border-t border-slate-100 mt-6">
             <button
               type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                const nextMode = !isSignUp;
+                setIsSignUp(nextMode);
+                if (nextMode) {
+                  trackSignupStarted(typeof window !== 'undefined' ? window.location.pathname : '/', 'modal');
+                }
+              }}
               className="text-xs text-slate-600 font-medium hover:text-[#059669] transition-colors cursor-pointer"
             >
               {isSignUp ? (
