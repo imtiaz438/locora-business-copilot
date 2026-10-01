@@ -371,7 +371,7 @@ export const HomeView: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <span>Check Your Local Visibility</span>
+                    <span>Analyze My Website</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -1973,24 +1973,84 @@ export const HomeView: React.FC = () => {
         </div>
       </section>
 
-      {/* 12 — RESULTS & IMPACT */}
+      {/* 12 — HONEST PRODUCT-ANCHORED CHECKUP BANNER */}
       <section className="max-w-6xl mx-auto px-6">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-8 bg-white border border-slate-200 rounded-3xl shadow-sm text-center">
-          <div>
-            <div className="text-3xl sm:text-4xl font-black text-slate-900 font-heading">150+</div>
-            <div className="text-xs text-slate-500 mt-1 font-medium">Businesses Analyzed</div>
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 shadow-sm relative overflow-hidden space-y-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="space-y-3 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#059669]" />
+                <span>Honest Real-Time Diagnostics</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-heading text-slate-900 tracking-tight">
+                Run the free checkup — your numbers, not ours.
+              </h2>
+              <p className="text-sm sm:text-base text-slate-600 font-sans leading-relaxed">
+                A real scan of your Maps presence, website health, and review footprint.
+              </p>
+            </div>
+
+            <div className="shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  trackCtaClick('start_free_checkup', 'honest_checkup_banner', '/checkup');
+                  setActiveTab('checkup');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="px-7 py-3.5 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs sm:text-sm font-bold transition-all inline-flex items-center justify-center gap-2 cursor-pointer font-heading shadow-md hover:shadow-lg"
+              >
+                <span>Start Free Checkup</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-          <div>
-            <div className="text-3xl sm:text-4xl font-black text-[#059669] font-heading">2K+</div>
-            <div className="text-xs text-slate-500 mt-1 font-medium">Growth Gaps Discovered</div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-slate-100">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-xs sm:text-sm font-heading">
+                <MapPin className="w-4 h-4 text-emerald-600" />
+                <span>Maps &amp; Local Pack Presence</span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed font-sans">
+                Live Google Maps search observations, NAP citation accuracy, and LocalBusiness schema markup verification.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-xs sm:text-sm font-heading">
+                <Activity className="w-4 h-4 text-emerald-600" />
+                <span>Technical Website Health</span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed font-sans">
+                Real TLS/SSL handshake validation, server TTFB latency measurement, heading tag structure, and mobile readiness.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-xs sm:text-sm font-heading">
+                <Sparkles className="w-4 h-4 text-emerald-600" />
+                <span>Review &amp; Visibility Footprint</span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed font-sans">
+                Unanswered review detection, customer sentiment flags, competitor keyword gaps, and 2026 AI search discovery readiness.
+              </p>
+            </div>
           </div>
-          <div>
-            <div className="text-3xl sm:text-4xl font-black text-slate-900 font-heading">3K+</div>
-            <div className="text-xs text-slate-500 mt-1 font-medium">Hours Saved</div>
-          </div>
-          <div>
-            <div className="text-3xl sm:text-4xl font-black text-emerald-600 font-heading">5K+</div>
-            <div className="text-xs text-slate-500 mt-1 font-medium">Reviews Analyzed</div>
+
+          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 pt-1 font-sans">
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              100% Real Live Google Scan
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              Zero Vanity Metrics
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              No Credit Card Required
+            </span>
           </div>
         </div>
       </section>
