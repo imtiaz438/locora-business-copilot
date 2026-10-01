@@ -398,7 +398,7 @@ export const HomeView: React.FC = () => {
                     type="text"
                     value={heroBusinessName}
                     onChange={(e) => setHeroBusinessName(e.target.value)}
-                    placeholder="e.g. Apex Auto Care"
+                    placeholder="e.g. Gotham Enterprises Ltd"
                     className="w-full px-3 py-2 bg-white/90 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                   />
                 </div>
@@ -1748,61 +1748,80 @@ export const HomeView: React.FC = () => {
         {/* Interactive Directory Showcase Card */}
         <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-3xl p-8 sm:p-10 border border-slate-800 shadow-xl space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            {/* Left: Verified Listing Mockup Card */}
+            {/* Left: Verified Real Listing Card */}
             <div className="lg:col-span-7 bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 space-y-5 backdrop-blur-sm">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-700/60 pb-4">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold font-heading">
                   <BadgeCheck className="w-4 h-4 text-emerald-400" />
-                  <span>Locora Verified Business</span>
+                  <span>Locora Directory Profile</span>
                 </div>
-                <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  Google Business Synced
+                  Claimed Business Workspace
                 </span>
               </div>
 
               <div className="space-y-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <h4 className="text-xl font-bold font-heading text-white">Apex Heating & Air Conditioning</h4>
-                  <div className="flex items-center gap-1 text-amber-400 text-xs font-bold">
-                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                    <span>4.9</span>
-                    <span className="text-slate-400 font-normal">(142 verified reviews)</span>
+                  <h4 className="text-xl font-bold font-heading text-white">Gotham Enterprises Ltd</h4>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-xs font-semibold">
+                      Professional Services
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-slate-700/80 border border-slate-600/60 text-slate-300 text-xs font-mono font-bold">
+                      85 SEO Score
+                    </span>
                   </div>
                 </div>
                 <p className="text-xs text-slate-300 flex items-center gap-2">
                   <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>Austin, TX • South Congress Metro • Serving Central Texas</span>
+                  <span>Wilmington, Delaware 19801 • Serving Nationwide Healthcare Practices</span>
+                </p>
+                <p className="text-xs text-slate-300/90 leading-relaxed font-sans pt-1">
+                  U.S.-based recruitment platform specializing in healthcare and mental health staffing, connecting therapists, social workers, nurse practitioners, and physical therapists across the United States.
                 </p>
               </div>
 
-              {/* Service Badges */}
+              {/* Real Service Badges */}
               <div className="flex flex-wrap gap-2 pt-1">
-                {['24/7 Emergency AC Repair', 'Heat Pump Installation', 'Ductless Mini-Splits', 'Seasonal Tune-Up'].map((svc, idx) => (
+                {[
+                  'Healthcare & Mental Health Staffing',
+                  'Therapist Placement',
+                  'Nurse Practitioners & PTs',
+                  'Nationwide Remote Search',
+                ].map((svc, idx) => (
                   <span key={idx} className="px-2.5 py-1 rounded-lg bg-slate-700/70 border border-slate-600/50 text-[11px] text-slate-200 font-medium">
                     {svc}
                   </span>
                 ))}
               </div>
 
-              {/* Action Buttons */}
-              <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+              {/* Action Buttons with Real Directory Profile & Direct Links */}
+              <div className="pt-2 flex flex-wrap items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => navigateToDirectory()}
-                  className="w-full sm:w-auto px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-sans shadow-md"
+                  onClick={() => navigateToDirectory('/biz/gotham-enterprises-ltd-s-business-workspace')}
+                  className="px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-sans shadow-md"
                 >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>Request Direct Quote (0% Fee)</span>
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>View Directory Profile</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => navigateToDirectory()}
-                  className="w-full sm:w-auto px-4 py-2.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans"
+                <a
+                  href="tel:8622034648"
+                  className="px-4 py-2.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 font-sans"
                 >
                   <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Call Direct: (512) 555-0198</span>
-                </button>
+                  <span>Call Direct: (862) 203-4648</span>
+                </a>
+                <a
+                  href="https://www.gothamenterprisesltd.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 font-sans"
+                >
+                  <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>gothamenterprisesltd.com</span>
+                </a>
               </div>
             </div>
 
