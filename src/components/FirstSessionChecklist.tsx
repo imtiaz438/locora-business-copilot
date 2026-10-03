@@ -64,7 +64,15 @@ export const FirstSessionChecklist: React.FC = () => {
 
   const scrollToFixIt = () => {
     const el = document.getElementById('fixit-actions');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Brief highlight so the user sees where they landed.
+      el.classList.add('ring-2', 'ring-emerald-400', 'rounded-2xl');
+      setTimeout(() => el.classList.remove('ring-2', 'ring-emerald-400', 'rounded-2xl'), 1800);
+    } else {
+      // Section not on this page (e.g. checklist shown elsewhere) — go to Growth.
+      setActiveTab('growth');
+    }
   };
 
   const items: ChecklistItem[] = [

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import {
   BusinessProfile,
   AppSettings,
@@ -103,7 +103,7 @@ interface AppContextType {
   contentRecords: ContentRecord[];
   addContentRecord: (record: Omit<ContentRecord, 'id' | 'created_at' | 'updated_at'>) => Promise<ContentRecord>;
   updateContentRecord: (id: string, updates: Partial<ContentRecord>) => Promise<ContentRecord>;
-  deleteContentRecord: (id: string) => Promise<void>;
+  deleteContentRecord: (id: string) => Promise<boolean>;
   conversations: AIConversation[];
   activeConversationId: string | null;
   setActiveConversationId: (id: string | null) => void;
@@ -2665,6 +2665,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Tracks in-flight content-record server writes per record ID so a delete
+  // never races a still-pending create (which would resurrect the record).
+  const inFlightContentSavesRef = useRef<Map<string, Promise<void>>>(new Map());
+
   const addContentRecord = async (recordData: Omit<ContentRecord, 'id' | 'created_at' | 'updated_at'>): Promise<ContentRecord> => {
     const newRecord: ContentRecord = {
       ...recordData,
@@ -2678,11 +2682,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return updated;
     });
 
-    fetch(`/api/workspace/content?email=${encodeURIComponent(user.email || '')}`, {
+    const savePromise = fetch(`/api/workspace/content?email=${encodeURIComponent(user.email || '')}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...newRecord, userEmail: user.email }),
-    }).catch(() => {});
+    }).catch(() => {}).then(() => undefined);
+    inFlightContentSavesRef.current.set(newRecord.id, savePromise);
+    savePromise.finally(() => {
+      if (inFlightContentSavesRef.current.get(newRecord.id) === savePromise) {
+        inFlightContentSavesRef.current.delete(newRecord.id);
+      }
+    });
 
     logActivity('content', `Content Created: ${newRecord.title}`, `Type: ${newRecord.content_type} • Status: ${newRecord.status}`);
     return newRecord;
@@ -2713,16 +2723,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return updatedRecord || ({} as ContentRecord);
   };
 
-  const deleteContentRecord = async (id: string) => {
+  const deleteContentRecord = async (id: string): Promise<boolean> => {
+    // Wait for any still-pending create for this record so the server DELETE
+    // cannot be processed before the create POST (which would resurrect it).
+    const pendingSave = inFlightContentSavesRef.current.get(id);
+    if (pendingSave) {
+      try { await pendingSave; } catch {}
+      inFlightContentSavesRef.current.delete(id);
+    }
+
+    let serverOk = true;
+    try {
+      const res = await fetch(`/api/workspace/content/${id}?email=${encodeURIComponent(user.email || '')}`, {
+        method: 'DELETE',
+      });
+      serverOk = res.ok;
+    } catch {
+      serverOk = false;
+    }
+
+    if (!serverOk) {
+      // Do NOT remove locally — the record still exists server-side and would
+      // reappear on the next hydration, looking like a failed delete.
+      return false;
+    }
+
     setContentRecords((prev) => {
       const updated = prev.filter((item) => item.id !== id);
       try { localStorage.setItem('locora_content_records', JSON.stringify(updated)); } catch {}
       return updated;
     });
-
-    fetch(`/api/workspace/content/${id}?email=${encodeURIComponent(user.email || '')}`, {
-      method: 'DELETE',
-    }).catch(() => {});
+    return true;
   };
 
   const approveAndExecuteAIAction = useCallback(async (actionId: string) => {

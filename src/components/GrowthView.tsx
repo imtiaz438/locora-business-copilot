@@ -59,6 +59,7 @@ export const GrowthView: React.FC = () => {
     refreshProductionDashboard,
     latestWebsiteAudit,
     setOnboardingModalOpen,
+    setIsGbpSyncModalOpen,
   } = useApp();
 
   // 1. Authenticity check: Has genuine crawl or website audit data been collected?
@@ -295,7 +296,8 @@ export const GrowthView: React.FC = () => {
     }
 
     if (opp.actionType === 'gbp_connect' || opp.type === 'gbp_profile') {
-      setActiveTab('integrations');
+      // Open the GBP sync modal directly — there is no standalone integrations tab.
+      setIsGbpSyncModalOpen(true);
       return;
     }
 

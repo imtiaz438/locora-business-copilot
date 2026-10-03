@@ -1103,11 +1103,17 @@ export const ContentStudioView: React.FC = () => {
         confirmLabel="Delete Post"
         onConfirm={() => {
           if (recordToDelete) {
-            deleteContentRecord(recordToDelete.id);
-            if (activeEditingRecord?.id === recordToDelete.id) {
-              setActiveEditingRecord(null);
-            }
-            setRecordToDelete(null);
+            const targetId = recordToDelete.id;
+            deleteContentRecord(targetId).then((ok) => {
+              if (!ok) {
+                alert('Could not delete the content item. Please check your connection and try again.');
+                return;
+              }
+              if (activeEditingRecord?.id === targetId) {
+                setActiveEditingRecord(null);
+              }
+              setRecordToDelete(null);
+            });
           }
         }}
         onClose={() => setRecordToDelete(null)}

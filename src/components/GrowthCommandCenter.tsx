@@ -1024,7 +1024,7 @@ export const GrowthCommandCenter: React.FC = () => {
                           size="xs"
                         />
                       </div>
-                      {action.isFixed ? (
+                      {(action.isFixed || action.draft?.status === 'draft') ? (
                         <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full flex items-center gap-1">
                           <Check className="w-3 h-3" /> Draft saved
                         </span>
@@ -1117,12 +1117,12 @@ export const GrowthCommandCenter: React.FC = () => {
                     type="button"
                     onClick={() => setSelectedFixItAction(action)}
                     className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs ${
-                      action.isFixed
+                      action.isFixed || action.draft?.status === 'draft'
                         ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-900'
                         : 'bg-[#059669] hover:bg-[#047857] text-white'
                     }`}
                   >
-                    {action.isFixed ? (
+                    {action.isFixed || action.draft?.status === 'draft' ? (
                       <>
                         <CheckCircle2 className="w-4 h-4 text-emerald-700" />
                         <span>Draft saved — Review Draft</span>

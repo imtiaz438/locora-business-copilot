@@ -8302,9 +8302,12 @@ Format Requirements:
     let usedAi = false;
 
     try {
+      // Unified AI engine: Groq is the default for every AI feature (platform key).
+      // Claude only when the caller explicitly selects it with a funded key.
+      // (Legacy 'gemini' default removed — Gemini is no longer supported.)
       const completion = await executeAICompletion({
-        provider: provider || 'gemini',
-        modelVersion: modelVersion || 'gemini-3.8-flash',
+        provider: provider === 'claude' ? 'claude' : undefined,
+        modelVersion: provider === 'claude' ? modelVersion : undefined,
         providerKey,
         userEmail: email,
         systemInstruction,
@@ -8315,58 +8318,19 @@ Format Requirements:
       });
 
       generatedText = completion.text || '';
-      usedAi = !completion.isFallback;
+      usedAi = completion.realApiExecuted === true;
     } catch (aiErr: any) {
       console.warn('AI execution fallback for content generation:', aiErr.message);
     }
 
-    // Fallback template strictly grounded in Business Truth if AI unreachable
-    if (!generatedText || generatedText.includes('⚠️ Live AI Generation Required')) {
-      if (contentType === 'google_post' || contentType === 'offer') {
-        generatedText = `TITLE: ${targetService} Services in ${targetLocation} | ${bizName}
-
-Are you seeking dependable **${targetService}** in **${targetLocation}**?
-
-${bizName} is dedicated to providing high-standard ${category.toLowerCase()} across our service radius. Our team focuses on transparent communication, prompt turnaround, and quality workmanship.
-
-### What You Can Expect:
-- Dedicated expertise in ${targetService}
-- Clear, upfront estimates tailored to your specific requirements
-- Local service serving ${targetLocation}
-
-📞 **Ready to get started?**
-Contact ${bizName}${phone ? ` at ${phone}` : ''}${website ? ` or visit ${website}` : ''} today to schedule your consultation.`;
-      } else if (contentType === 'faq') {
-        generatedText = `TITLE: ${targetService} FAQs for ${targetLocation} Clients | ${bizName}
-
-### Frequently Asked Questions: ${targetService}
-
-**Q: What ${targetService} solutions does ${bizName} provide in ${targetLocation}?**
-A: We provide comprehensive ${targetService.toLowerCase()} throughout ${targetLocation} and surrounding communities, backed by our commitment to quality and dependable service.
-
-**Q: How can I request an estimate for ${targetService}?**
-A: You can reach our team directly${phone ? ` at ${phone}` : ''} or through our website${website ? ` (${website})` : ''}. We assess your project scope and provide upfront pricing before any work begins.
-
-**Q: Which areas do you cover around ${targetLocation}?**
-A: ${bizName} serves ${locations}. Contact us to verify immediate availability in your specific neighborhood.`;
-      } else {
-        generatedText = `TITLE: ${targetService} in ${targetLocation} | ${bizName}
-
-# Professional ${targetService} in ${targetLocation}
-
-When you need trusted ${category.toLowerCase()} in ${targetLocation}, **${bizName}** provides high-quality, professional solutions designed to meet your needs.
-
-## Why Choose ${bizName} for ${targetService}?
-- **Local Dedication**: Rooted in the ${targetLocation} area, serving ${locations}.
-- **Specialized Work**: Dedicated focus on ${targetService} with attention to detail.
-- **Honest Communication**: Transparent quotes and direct client support.
-
-## Schedule Your ${targetService} Inquiry
-Contact our team today to discuss your requirements and receive a clear quote:
-- Phone: ${phone || 'Contact via website'}
-- Web: ${website || 'Direct online inquiry'}
-- Service Area: ${targetLocation} and surrounding communities`;
-      }
+    // Honest failure: if the AI engine did not really execute (no key, provider
+    // down, rate-limited), return the error — never save the error notice as
+    // if it were generated content.
+    if (!usedAi) {
+      const failMsg =
+        (generatedText && generatedText.trim()) ||
+        'AI generation failed. Please try again.';
+      return res.status(503).json({ error: failMsg });
     }
 
     // Parse Title and Body

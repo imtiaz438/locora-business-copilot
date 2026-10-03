@@ -89,7 +89,7 @@ export const Header: React.FC<HeaderProps> = ({
             id="header_upgrade_to_pro_btn"
             onClick={() => setCheckoutModalPlan('pro')}
             className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-sm transition-all cursor-pointer font-sans"
-            title="Unlock Autonomous AI Fixes, 3-Pack Copilot & 500 Credits"
+            title="Unlock Autonomous AI Fixes, 3-Pack Copilot & 250 Credits"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
             <span>Upgrade Pro ($29)</span>

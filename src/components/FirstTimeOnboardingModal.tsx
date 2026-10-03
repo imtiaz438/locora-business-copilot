@@ -108,6 +108,7 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
   const [isSavingRecord, setIsSavingRecord] = useState<boolean>(false);
   const [isSynthesizingBrain, setIsSynthesizingBrain] = useState<boolean>(false);
   const [brainResult, setBrainResult] = useState<any | null>(null);
+  const [brainError, setBrainError] = useState<string | null>(null);
   const [brainSynthesisStage, setBrainSynthesisStage] = useState<string>('Synthesizing your verified Business Brain...');
 
   // Automatically pre-populate discovered information from claimed Public Quick Checkup
@@ -342,6 +343,7 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
 
     setCurrentStep(6);
     setIsSynthesizingBrain(true);
+    setBrainError(null);
     setBrainSynthesisStage('Saving all verified business details to persistent database...');
 
     try {
@@ -408,7 +410,7 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
     } catch (err: any) {
       setIsSynthesizingBrain(false);
       console.error('[Onboarding Flow Error]:', err);
-      alert(err.message || 'An error occurred while creating Business Brain.');
+      setBrainError(err.message || 'An error occurred while creating Business Brain. Your business details were saved — you can retry or continue to the dashboard.');
     }
   };
 
@@ -1260,6 +1262,39 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
                     >
                       <span>Enter Growth Command Center</span>
                       <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : brainError ? (
+                <div className="py-12 px-4 text-center space-y-5">
+                  <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
+                    <AlertCircle className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">
+                      Business Brain couldn't be created
+                    </h3>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+                      {brainError}
+                    </p>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto mt-2">
+                      Your business details were saved. You can retry, or continue to the dashboard and generate the Brain later from Settings.
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleSaveAndCreateBrain({ preventDefault: () => {} } as React.FormEvent)}
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow transition-all cursor-pointer"
+                    >
+                      Retry Brain Creation
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleLaunchDashboard}
+                      className="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-sm rounded-xl transition-all cursor-pointer"
+                    >
+                      Continue to Dashboard
                     </button>
                   </div>
                 </div>
