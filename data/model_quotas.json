@@ -35,9 +35,9 @@
     "status": "inactive",
     "badge": "High-Speed Thinking"
   },
-  "llama-3.3-70b-versatile": {
-    "id": "llama-3.3-70b-versatile",
-    "name": "Meta Llama 3.3 70B (Groq)",
+  "openai/gpt-oss-120b": {
+    "id": "openai/gpt-oss-120b",
+    "name": "gpt-oss-120b (Groq)",
     "provider": "Groq",
     "allocatedTokens": 0,
     "usedTokens": 0,
@@ -45,11 +45,11 @@
     "apiKeyEnvVar": "GROQ_API_KEY",
     "hasCustomKey": false,
     "status": "inactive",
-    "badge": "300+ t/s LPU"
+    "badge": "Flagship LPU"
   },
-  "llama-3.1-8b-instant": {
-    "id": "llama-3.1-8b-instant",
-    "name": "Meta Llama 3.1 8B Instant (Groq)",
+  "openai/gpt-oss-20b": {
+    "id": "openai/gpt-oss-20b",
+    "name": "gpt-oss-20b (Groq)",
     "provider": "Groq",
     "allocatedTokens": 0,
     "usedTokens": 0,
@@ -57,18 +57,6 @@
     "apiKeyEnvVar": "GROQ_API_KEY",
     "hasCustomKey": false,
     "status": "inactive",
-    "badge": "Sub-Second LPU"
-  },
-  "mixtral-8x7b-32768": {
-    "id": "mixtral-8x7b-32768",
-    "name": "Mistral Mixtral 8x7B (Groq)",
-    "provider": "Groq",
-    "allocatedTokens": 0,
-    "usedTokens": 0,
-    "remainingTokens": 0,
-    "apiKeyEnvVar": "GROQ_API_KEY",
-    "hasCustomKey": false,
-    "status": "inactive",
-    "badge": "MoE Fast"
+    "badge": "Fastest Free"
   }
 }

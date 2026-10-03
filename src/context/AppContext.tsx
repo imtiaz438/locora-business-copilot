@@ -2191,7 +2191,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 locations: [
                   {
                     id: `loc_${r.id}`,
-                    name: 'Main Location',
+                    name: r.identity?.city ? `${r.identity.city} Location` : 'Main Location',
                     isMain: true,
                     address: r.identity?.address || '',
                     city: r.identity?.city || '',

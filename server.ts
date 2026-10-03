@@ -4669,13 +4669,16 @@ app.post('/api/production/business/:businessId/fixit/generate-draft', async (req
     const biz: any = business || {};
     const bizName = biz.name || 'our business';
     const bizCategory = biz.category || biz.industry || 'local business';
-    const primaryLoc = Array.isArray(biz.locations) && biz.locations.length > 0 ? biz.locations[0] : {};
-    const bizCity = biz.city || primaryLoc.city || '';
+    // NOTE: businessesTable uses cityName/serviceAreas (not city/locations).
+    const serviceAreas = Array.isArray(biz.serviceAreas) ? biz.serviceAreas.filter(Boolean) : [];
+    const bizCity = biz.cityName || serviceAreas[0] || '';
+    const bizState = biz.stateCode || '';
+    const bizCityState = [bizCity, bizState].filter(Boolean).join(', ');
     const bizPhone = biz.phone || '';
     const bizWebsite = biz.website || '';
 
     const systemInstruction = `You are drafting website/service-page content for a local business fix-it action. Output a JSON object and ONLY the JSON object (no markdown fences, no commentary) with these keys: "seoTitle" (under 60 chars, mentions the business and city), "metaDescription" (under 160 chars), "bodyCopy" (2-3 short paragraphs of ready-to-publish page copy in a professional, trustworthy tone), "faqs" (array of 3 objects with "question" and "answer"). Use the real business name and city${bizPhone ? ' and phone' : ''}. NEVER invent awards, ratings, statistics, claims, or a phone number${bizPhone ? '' : ' — write every call-to-action WITHOUT any phone number'}. Do not repeat paragraphs.`;
-    const prompt = `Business: ${bizName}\nCategory: ${bizCategory}\nCity: ${bizCity}\n${bizPhone ? `Phone: ${bizPhone}\n` : ''}${bizWebsite ? `Website: ${bizWebsite}\n` : ''}\nFix-it action: ${actionTitle || 'Improve local presence'}\nProblem: ${problem || ''}\nWhy it matters: ${whyItMatters || ''}`;
+    const prompt = `Business: ${bizName}\nCategory: ${bizCategory}\nCity: ${bizCityState}\n${bizPhone ? `Phone: ${bizPhone}\n` : ''}${bizWebsite ? `Website: ${bizWebsite}\n` : ''}\nFix-it action: ${actionTitle || 'Improve local presence'}\nProblem: ${problem || ''}\nWhy it matters: ${whyItMatters || ''}`;
 
     const completion = await executeAICompletion({
       provider: undefined,
