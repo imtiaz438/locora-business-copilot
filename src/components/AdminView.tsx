@@ -2966,7 +2966,7 @@ export const AdminView: React.FC = () => {
                   Live AI Models & Token Monitoring System
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5 font-sans">
-                  Real-time token allocation, utilization tracking, and live API key management for Anthropic Claude 3.7 / 3.5 and Groq LPUs (Llama 3.3 70B & Mixtral).
+                  Real-time token allocation, utilization tracking, and live API key management for Anthropic Claude and Groq (gpt-oss-120b).
                 </p>
               </div>
 
@@ -3329,7 +3329,7 @@ export const AdminView: React.FC = () => {
                     className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
                   />
                   <p className="text-[10px] text-slate-400">
-                    Powers Meta Llama 3.3 70B & 3.1 8B on high-speed LPUs (300+ t/s).
+                    Powers gpt-oss-120b on high-speed Groq LPUs.
                   </p>
                   {savedKeyHints.groq && (
                     <p className={`text-[10px] font-mono font-bold ${savedKeyHints.groq.configured ? 'text-emerald-700' : 'text-slate-400'}`}>

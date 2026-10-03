@@ -98,8 +98,6 @@ export const RightAiPanel: React.FC = () => {
 
     trackAiChatStarted(text, 'copilot_panel');
 
-    consumeAiCredit(1);
-
     const userMsg = {
       id: `u_${Date.now()}`,
       role: 'user' as const,
@@ -138,38 +136,22 @@ export const RightAiPanel: React.FC = () => {
       });
 
       let aiReply = '';
+      let realAiSucceeded = false;
       if (res.ok) {
         const data = await res.json();
         aiReply = data.reply || data.text || '';
+        // realApiExecuted=false means the engine returned an error notice, not a real answer.
+        realAiSucceeded = !!aiReply && (data as any).realApiExecuted !== false;
       }
 
-      if (!aiReply) {
-        // Fallback intelligent domain response tailored dynamically to activeBusiness
-        const targetService = activeBusiness.services?.[0] || 'Core Services';
-        const topComp = activeBusiness.competitors?.[0] || 'Local Competitors';
-        const bizCity = activeBusiness.city || 'Metro Area';
-
-        if (text.toLowerCase().includes('service') || text.toLowerCase().includes('landing page') || text.toLowerCase().includes('emergency')) {
-          aiReply = `### Why the Dedicated ${targetService} Page Matters for ${activeBusiness.name}:
-- **High-Intent Search Volume**: Over **1,200 people search "${targetService.toLowerCase()} ${bizCity}"** every month.
-- **Top Competitor Advantage**: *${topComp}* currently captures significant traffic because they maintain dedicated geo-targeted service pages with structured schema.
-- **Estimated ROI**: Capturing additional high-intent client bookings per week represents **~$15,000–$25,000 in monthly incremental revenue**.
-
-Would you like me to generate the full page draft, LocalBusiness schema, and meta tags right now in your **Fix It** queue?`;
-        } else if (text.toLowerCase().includes('review') || text.toLowerCase().includes('reputation')) {
-          aiReply = `### Reputation Diagnostics for ${activeBusiness.name}:
-You currently have unanswered client reviews on Google Maps. 
-- **Google's Algorithm**: Google explicitly states that actively replying to reviews improves local search velocity and conversion.
-- **Brand Protection**: Professional, timely responses show future prospective clients that you take service quality seriously.
-- **Locora Action**: I've pre-drafted empathetic, high-converting replies acknowledging their feedback and directing any offline support to your direct line at ${activeBusiness.phone || 'our office'}.`;
-        } else {
-          aiReply = `Based on your diagnostic profile for **${activeBusiness.name}**, your immediate lever is completing the **Top Priority Actions** in your Command Center:
-1. **Publish Dedicated ${targetService} Landing Pages** (+28% call conversions)
-2. **Respond to Pending Google Reviews** (Boosts Google Maps 3-Pack rank)
-3. **Deploy LocalBusiness & Service Structured Schema** (Enables Rich Snippets & AI Overview citations)
-
-Let me know which one you'd like to inspect or generate!`;
-        }
+      if (realAiSucceeded) {
+        // A real deliverable was produced — this is the ONLY point where a credit moves.
+        consumeAiCredit(1);
+      } else {
+        // Honest failure: no credit consumed, no fabricated statistics.
+        aiReply = res.ok
+          ? 'The AI assistant is temporarily unavailable. No credit was used for this attempt — please try again in a moment.'
+          : 'The AI assistant returned an error. No credit was used for this attempt — please try again in a moment.';
       }
 
       setMessages((prev) => [
@@ -187,7 +169,7 @@ Let me know which one you'd like to inspect or generate!`;
         {
           id: `a_${Date.now()}`,
           role: 'assistant',
-          content: `Here is the AI Manager diagnostic for **${activeBusiness.name}**:\n\nOur priority recommendation is implementing the **${priorityActions[0]?.title || 'high-intent service landing page'}** and addressing the **${activeBusiness.unansweredReviews || 0} unanswered customer reviews**. ${activeBusiness.healthScore > 0 ? `This will raise your overall Growth Health score from **${activeBusiness.healthScore} to ${Math.min(100, activeBusiness.healthScore + 10)}+** within 14 days.` : 'This will establish your initial Growth Health score and unlock verified local search presence within 14 days.'}`,
+          content: `The AI assistant couldn't be reached due to a connection problem. No credit was used - please check your connection and try again.`,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);

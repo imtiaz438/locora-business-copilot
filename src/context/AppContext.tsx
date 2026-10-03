@@ -225,9 +225,9 @@ const getInitialCachedProfile = (): BusinessProfile => {
 const getInitialCachedSettings = (): AppSettings => {
   const base: AppSettings = {
     activeProvider: 'groq',
-    activeModelVersion: 'llama-3.3-70b-versatile',
+    activeModelVersion: 'openai/gpt-oss-120b',
     providerModels: {
-      groq: 'llama-3.3-70b-versatile',
+      groq: 'openai/gpt-oss-120b',
       claude: 'claude-3-7-sonnet-20250219',
     },
     providerKeys: {

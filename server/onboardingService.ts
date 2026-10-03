@@ -478,7 +478,8 @@ export async function confirmAndSaveBusiness(
   existingBusinessId?: string
 ) {
   const normalizedEmail = (userEmail || '').toLowerCase().trim();
-  const bizId = existingBusinessId || `biz_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  // NOTE: bizId is resolved after the account lookup below so onboarding is
+  // idempotent (attaches to the existing owned business when appropriate).
   const cleanName = (formData.businessName || 'My Business').trim();
   const cleanCategory = (formData.businessCategory || 'Local Business').trim();
   const cleanCity = (formData.city || '').trim();
@@ -507,6 +508,32 @@ export async function confirmAndSaveBusiness(
 
   // Resolve user account as primary ownership boundary
   const account = await ensureAccountForUser(normalizedEmail);
+
+  // Onboarding is idempotent: when no explicit business ID is given but the
+  // account already owns businesses (e.g. one auto-created at signup), attach
+  // to the best match instead of failing the plan-limit check. Prefer a
+  // website-domain match, else the most recently updated owned business.
+  let bizId = existingBusinessId || `biz_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  if (!existingBusinessId) {
+    const ownedBizs = await db
+      .select()
+      .from(schema.businessesTable)
+      .where(eq(schema.businessesTable.accountId, account.id));
+    if (ownedBizs.length > 0) {
+      const domainOf = (u: string) => {
+        try { return new URL(u.startsWith('http') ? u : `https://${u}`).hostname.replace(/^www\./, ''); }
+        catch { return ''; }
+      };
+      const targetDomain = domainOf(cleanWebsite);
+      const byDomain = targetDomain
+        ? ownedBizs.find((b: any) => domainOf(b.website || '') === targetDomain)
+        : undefined;
+      const fallback = [...ownedBizs].sort((a: any, b: any) =>
+        new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime()
+      )[0];
+      bizId = (byDomain || fallback).id;
+    }
+  }
 
   // Check if business already exists
   const existingBiz = await db

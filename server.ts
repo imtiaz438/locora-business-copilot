@@ -715,9 +715,9 @@ function getUserSettingsDiskStore(email: string) {
   if (!userSettingsMap.has(cleanEmail)) {
     userSettingsMap.set(cleanEmail, {
       activeProvider: 'groq',
-      activeModelVersion: 'llama-3.3-70b-versatile',
+      activeModelVersion: 'openai/gpt-oss-120b',
       providerModels: {
-        groq: 'llama-3.3-70b-versatile',
+        groq: 'openai/gpt-oss-120b',
         gemini: 'gemini-3.7-flash',
         openai: 'gpt-4o',
         claude: 'claude-3-7-sonnet-20250219',
@@ -1013,10 +1013,9 @@ const DEFAULT_MODEL_POOLS: Record<string, { name: string; provider: string; envV
   'claude-3-5-sonnet': { name: 'Claude 3.5 Sonnet', provider: 'Anthropic', envVar: 'ANTHROPIC_API_KEY', defaultQuota: 20000000, badge: 'Proven Quality' },
   'claude-3-5-haiku': { name: 'Claude 3.5 Haiku', provider: 'Anthropic', envVar: 'ANTHROPIC_API_KEY', defaultQuota: 35000000, badge: 'High-Speed Thinking' },
 
-  // Groq LPU Models (Ultra Fast & Global Access)
-  'llama-3.3-70b-versatile': { name: 'Meta Llama 3.3 70B (Groq)', provider: 'Groq', envVar: 'GROQ_API_KEY', defaultQuota: 45000000, badge: '300+ t/s LPU' },
-  'llama-3.1-8b-instant': { name: 'Meta Llama 3.1 8B Instant (Groq)', provider: 'Groq', envVar: 'GROQ_API_KEY', defaultQuota: 50000000, badge: 'Sub-Second LPU' },
-  'mixtral-8x7b-32768': { name: 'Mistral Mixtral 8x7B (Groq)', provider: 'Groq', envVar: 'GROQ_API_KEY', defaultQuota: 35000000, badge: 'MoE Fast' },
+  // Groq LPU Models (Ultra Fast & Global Access) — verified Oct 2026
+  'openai/gpt-oss-120b': { name: 'gpt-oss-120b (Groq)', provider: 'Groq', envVar: 'GROQ_API_KEY', defaultQuota: 45000000, badge: 'Flagship LPU' },
+  'openai/gpt-oss-20b': { name: 'gpt-oss-20b (Groq)', provider: 'Groq', envVar: 'GROQ_API_KEY', defaultQuota: 50000000, badge: 'Fastest Free' },
 };
 
 const aiModelQuotas = new Map<string, AiModelTokenQuota>();
@@ -1052,17 +1051,14 @@ async function discoverProviderModels(provider: string, apiKey: string): Promise
       return {
         valid: true,
         provider: 'groq',
-        detectedModel: 'llama-3.3-70b-versatile',
+        detectedModel: 'openai/gpt-oss-120b',
         accessibleModels: [
-          { id: 'llama-3.3-70b-versatile', name: 'Meta Llama 3.3 70B Versatile', description: 'Flagship 70B open model running on Groq LPUs at 300+ tok/s', badge: 'Ultra Fast Default', isAutoSelected: true },
-          { id: 'llama-3.1-8b-instant', name: 'Meta Llama 3.1 8B Instant', description: 'Lightweight sub-second generation for quick tasks', badge: 'Fastest Free' },
-          { id: 'llama-3.2-3b-preview', name: 'Meta Llama 3.2 3B Preview', description: 'Ultra-compact lightweight model with lightning fast latency', badge: 'Ultra Low Latency' },
-          { id: 'mixtral-8x7b-32768', name: 'Mistral Mixtral 8x7B', description: 'High-performance Mixture-of-Experts with 32k context', badge: 'MoE' },
-          { id: 'gemma2-9b-it', name: 'Google Gemma 2 9B', description: 'Instruction-tuned 9B model on Groq hardware', badge: 'Gemma 9B' },
+          { id: 'openai/gpt-oss-120b', name: 'gpt-oss-120b', description: 'Flagship open reasoning model running on Groq LPUs', badge: 'Default', isAutoSelected: true },
+          { id: 'openai/gpt-oss-20b', name: 'gpt-oss-20b', description: 'Lightweight sub-second generation for quick tasks', badge: 'Fastest Free' },
         ],
         isAutoDetected: true,
         isManaged: true,
-        message: 'Groq system engine active (Meta Llama 3.3 70B Versatile auto-selected).',
+        message: 'Groq system engine active (gpt-oss-120b auto-selected).',
       };
     }
     if (prov === 'gemini') {
@@ -1176,10 +1172,8 @@ async function discoverProviderModels(provider: string, apiKey: string): Promise
 
       // Map to human-friendly rich variants
       const knownGroqMeta: Record<string, { name: string; desc: string; badge: string; rank: number }> = {
-        'llama-3.3-70b-versatile': { name: 'Meta Llama 3.3 70B Versatile', desc: 'Flagship 70B open model running on Groq LPUs at 300+ tok/s', badge: 'Optimal Active', rank: 1 },
-        'llama-3.1-8b-instant': { name: 'Meta Llama 3.1 8B Instant', desc: 'Lightweight sub-second generation for quick tasks', badge: 'Fastest Free', rank: 2 },
-        'llama-3.2-3b-preview': { name: 'Meta Llama 3.2 3B Preview', desc: 'Ultra-compact lightweight model with lightning fast latency', badge: 'Ultra Low Latency', rank: 3 },
-        'llama-3.2-1b-preview': { name: 'Meta Llama 3.2 1B Preview', desc: 'Smallest footprint instant generation model', badge: 'Lightweight', rank: 4 },
+        'openai/gpt-oss-120b': { name: 'gpt-oss-120b', desc: 'Flagship open reasoning model running on Groq LPUs', badge: 'Optimal Active', rank: 1 },
+        'openai/gpt-oss-20b': { name: 'gpt-oss-20b', desc: 'Lightweight sub-second generation for quick tasks', badge: 'Fastest Free', rank: 2 },
         'llama3-70b-8192': { name: 'Meta Llama 3 70B', desc: 'High-capacity 70B parameter model with 8k context', badge: '70B Capacity', rank: 5 },
         'llama3-8b-8192': { name: 'Meta Llama 3 8B', desc: 'Instant response model for high-frequency commands', badge: 'Instant 8B', rank: 6 },
         'mixtral-8x7b-32768': { name: 'Mistral Mixtral 8x7B', desc: 'High-performance Mixture-of-Experts with 32k context', badge: 'MoE', rank: 7 },
@@ -1215,8 +1209,8 @@ async function discoverProviderModels(provider: string, apiKey: string): Promise
         return rankA - rankB;
       });
 
-      let detectedModel = 'llama-3.3-70b-versatile';
-      if (!chatModels.includes('llama-3.3-70b-versatile') && accessibleModels.length > 0) {
+      let detectedModel = 'openai/gpt-oss-120b';
+      if (!chatModels.includes('openai/gpt-oss-120b') && accessibleModels.length > 0) {
         detectedModel = accessibleModels[0].id;
       }
       accessibleModels.forEach((m) => {
@@ -1245,13 +1239,13 @@ async function discoverProviderModels(provider: string, apiKey: string): Promise
           return {
             valid: true,
             provider: 'gemini',
-            detectedModel: 'llama-3.3-70b-versatile',
+            detectedModel: 'openai/gpt-oss-120b',
             accessibleModels: [
-              { id: 'llama-3.3-70b-versatile', name: 'Meta Llama 3.3 70B (Groq Default)', description: 'Auto-fallback high-speed engine (Gemini location restricted in container region)', badge: 'Active Default', isAutoSelected: true },
+              { id: 'openai/gpt-oss-120b', name: 'gpt-oss-120b (Groq Default)', description: 'Auto-fallback high-speed engine (Gemini location restricted in container region)', badge: 'Active Default', isAutoSelected: true },
             ],
             isAutoDetected: true,
             isManaged: true,
-            warning: 'Google Gemini API is location-restricted in this server region (FAILED_PRECONDITION). System has automatically switched to Groq (Llama 3.3 70B) for instant AI generation.',
+            warning: 'Google Gemini API is location-restricted in this server region (FAILED_PRECONDITION). System has automatically switched to Groq (gpt-oss-120b) for instant AI generation.',
           };
         }
         return {
@@ -3596,14 +3590,14 @@ app.get('/api/workspace/data', async (req, res) => {
 
     const mergedSettings = {
       activeProvider: 'groq',
-      activeModelVersion: 'llama-3.3-70b-versatile',
+      activeModelVersion: 'openai/gpt-oss-120b',
       providerModels: {
-        groq: 'llama-3.3-70b-versatile',
+        groq: 'openai/gpt-oss-120b',
         claude: 'claude-3-7-sonnet-20250219',
         openai: 'gpt-4o',
         perplexity: 'sonar-pro',
         deepseek: 'deepseek-chat',
-        gemini: 'llama-3.3-70b-versatile',
+        gemini: 'openai/gpt-oss-120b',
       },
       providerKeys: {
         gemini: '',
@@ -7418,7 +7412,7 @@ app.post('/api/workspace/settings', async (req, res) => {
     // Enforce Groq as primary active provider when gemini is submitted
     if (incoming.activeProvider === 'gemini') {
       incoming.activeProvider = 'groq';
-      incoming.activeModelVersion = incoming.activeModelVersion || 'llama-3.3-70b-versatile';
+      incoming.activeModelVersion = incoming.activeModelVersion || 'openai/gpt-oss-120b';
     }
 
     const keyStatusUpdates: Record<string, { isValid: boolean; lastTested: string; warning?: string; modelDetected?: string }> = {};
@@ -12345,7 +12339,7 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
     try { recordRealModelTokenUsage(result.modelUsed, result.tokensUsed); } catch { /* telemetry only */ }
     return {
       text: result.text.trim(),
-      providerUsed: result.providerUsed === 'claude' ? 'Anthropic Claude (3.7 Sonnet)' : 'Groq LPU (Llama 3.3 70B)',
+      providerUsed: result.providerUsed === 'claude' ? 'Anthropic Claude (3.7 Sonnet)' : 'Groq (gpt-oss-120b)',
       modelUsed: result.modelUsed,
       isCustomKey,
       tokensUsed: result.tokensUsed,
@@ -13692,7 +13686,7 @@ Construct realistic, highly specific issues (marked as "pass", "warning", or "er
 
     let auditData: any = {};
     let providerUsed = provider || 'groq';
-    let modelUsed = modelVersion || 'llama-3.3-70b-versatile';
+    let modelUsed = modelVersion || 'openai/gpt-oss-120b';
     let tokensUsed = 0;
 
     try {

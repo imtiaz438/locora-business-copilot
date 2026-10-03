@@ -2,7 +2,7 @@
  * LocoraAI Unified AI Engine — the SINGLE entry point for all AI text generation.
  *
  * Provider policy (decided Oct 2026, after a full codebase audit):
- *   - PRIMARY: Groq (llama-3.3-70b-versatile) — free tier, very fast, no region
+ *   - PRIMARY: Groq (openai/gpt-oss-120b) — free tier, very fast, no region
  *     restrictions. Used for every AI feature by default.
  *   - PREMIUM (opt-in): Claude (claude-3-7-sonnet-20250219) — used ONLY when the
  *     caller explicitly selects it AND a funded ANTHROPIC_API_KEY exists
@@ -67,12 +67,14 @@ const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
 const CLAUDE_API_VERSION = '2023-06-01';
 
-const GROQ_DEFAULT_MODEL = 'llama-3.3-70b-versatile';
+const GROQ_DEFAULT_MODEL = 'openai/gpt-oss-120b';
 const CLAUDE_DEFAULT_MODEL = 'claude-3-7-sonnet-20250219';
 
-/** Verified model IDs. Anything else falls back to the provider default (logged). */
+/** Verified model IDs. Anything else falls back to the provider default (logged).
+ *  NOTE (Oct 2026): Groq decommissioned llama-3.3-70b-versatile and
+ *  llama-3.1-8b-instant on 2026-08-16. Current production IDs below. */
 const ALLOWED_MODELS: Record<AiEngineProvider, string[]> = {
-  groq: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'],
+  groq: ['openai/gpt-oss-120b', 'openai/gpt-oss-20b'],
   claude: ['claude-3-7-sonnet-20250219', 'claude-3-5-sonnet-20241022'],
 };
 
@@ -169,6 +171,9 @@ async function callGroq(
     model: resolved.model,
     messages: allMessages.map((m) => ({ role: m.role, content: m.content })),
     temperature: req.temperature ?? 0.7,
+    // gpt-oss models are reasoning models; 'low' keeps responses fast and
+    // prevents reasoning tokens from consuming the completion budget.
+    reasoning_effort: 'low',
   };
   if (typeof req.maxTokens === 'number') body.max_tokens = req.maxTokens;
   if (req.jsonMode) body.response_format = { type: 'json_object' };
@@ -346,7 +351,7 @@ export function describeAiEngineState(providerOverride?: AiEngineProvider): {
  * PROVIDER LANES + LIVE HEALTH CHECKS
  *
  * Two lanes, explicit and honest:
- *   - FREE lane  → Groq (llama-3.3-70b-versatile). Platform-funded key,
+ *   - FREE lane  → Groq (openai/gpt-oss-120b). Platform-funded key,
  *                  metered by Locora AI credits. The default for every feature.
  *   - PAID lane  → Claude (claude-3-7-sonnet-20250219). Requires a funded
  *                  Anthropic key (user-supplied or platform). Opt-in only;

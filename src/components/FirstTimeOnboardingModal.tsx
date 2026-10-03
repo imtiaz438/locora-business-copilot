@@ -354,11 +354,14 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
         body: JSON.stringify({
           userEmail: user?.email || 'demo@locora.ai',
           formData: updatedFormData,
-          existingBusinessId: savedBusinessId || undefined,
+          existingBusinessId: savedBusinessId || activeBusiness?.id || undefined,
         }),
       });
 
       const saveJson = await saveRes.json();
+      if (!saveRes.ok || !saveJson.success || !saveJson.businessId) {
+        throw new Error(saveJson.error || 'Failed to save business record.');
+      }
       const confirmedBizId = saveJson.businessId || savedBusinessId;
       setSavedBusinessId(confirmedBizId);
 

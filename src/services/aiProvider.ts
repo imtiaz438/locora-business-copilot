@@ -3,16 +3,14 @@ import { AIProviderConfig, AIProviderId } from '../types';
 export const SUPPORTED_PROVIDERS: AIProviderConfig[] = [
   {
     id: 'groq',
-    name: 'Groq LPUs (Meta Llama 3.3 70B & 3.1 8B)',
-    description: 'Ultra-low-latency real-time inference engine running at 300+ tokens/sec on specialized LPUs (Default Engine)',
+    name: 'Groq (gpt-oss-120b)',
+    description: 'Ultra-low-latency real-time inference engine on specialized LPUs (Default Engine)',
     apiKeyEnv: 'GROQ_API_KEY',
     isCustomKeySet: true,
-    model: 'llama-3.3-70b-versatile',
+    model: 'openai/gpt-oss-120b',
     models: [
-      { id: 'llama-3.3-70b-versatile', name: 'Meta Llama 3.3 70B Versatile', description: 'Flagship reasoning model running at 300+ tokens/sec on Groq LPUs', badge: 'Ultra Fast Default', isDefault: true },
-      { id: 'llama-3.1-8b-instant', name: 'Meta Llama 3.1 8B Instant', description: 'Lightweight generation ideal for rapid draft summaries and replies', badge: 'Fastest Free' },
-      { id: 'llama-3.2-3b-preview', name: 'Meta Llama 3.2 3B Preview', description: 'Ultra-compact lightweight model with lightning fast latency', badge: 'Ultra Low Latency' },
-      { id: 'mixtral-8x7b-32768', name: 'Mistral Mixtral 8x7B (Groq)', description: 'High-performance Mixture-of-Experts with 32k context window', badge: 'MoE' },
+      { id: 'openai/gpt-oss-120b', name: 'gpt-oss-120b', description: 'Flagship open reasoning model running on Groq LPUs', badge: 'Default', isDefault: true },
+      { id: 'openai/gpt-oss-20b', name: 'gpt-oss-20b', description: 'Lightweight generation ideal for rapid draft summaries and replies', badge: 'Fastest Free' },
     ],
     isUpcoming: false,
     statusTag: 'Active / Default Engine',
