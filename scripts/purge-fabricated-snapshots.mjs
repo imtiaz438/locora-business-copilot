@@ -10,9 +10,10 @@
  * snapshots taken on the same (business, date) as fabricated rank snapshots.
  * Manual user-recorded observations are never touched.
  *
- * Run on the VPS (needs DATABASE_URL env):
- *   node scripts/purge-fabricated-snapshots.mjs            # dry run (lists what would go)
- *   node scripts/purge-fabricated-snapshots.mjs --execute  # actually deletes
+ * Run on the VPS (needs DATABASE_URL env — the app's Postgres connection string):
+ *   npx tsx scripts/purge-fabricated-snapshots.mjs            # dry run (lists what would go)
+ *   npx tsx scripts/purge-fabricated-snapshots.mjs --execute  # actually deletes
+ * NOTE: must run with tsx, not plain node (the script imports .ts modules).
  */
 import { db, schema } from '../src/db/index.ts';
 import { eq, and } from 'drizzle-orm';
