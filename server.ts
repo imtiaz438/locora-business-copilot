@@ -4640,6 +4640,81 @@ app.post('/api/production/business/:businessId/generate-description', async (req
   }
 });
 
+// ---- Placeholder phone sanitizer ----
+// Strips fabricated/placeholder phone numbers from AI-generated copy:
+// all-zero placeholders (+1 000-000-0000, (000) 000-0000, ...) and the
+// fictional 555-01XX range. Real numbers are never touched.
+const FAKE_PHONE_PATTERN = String.raw`(?:\+?1[\s\-.]?)?(?:\(?000\)?[\s\-.]?000[\s\-.]?0{4}|\(?555\)?[\s\-.]?01\d[\s\-.]?\d{4})`;
+function stripFakePhones(text: string, realPhone?: string): string {
+  if (!text) return text;
+  const connectors = String.raw`\s+(?:at|on)\s+` + FAKE_PHONE_PATTERN + String.raw`|\s*:\s*` + FAKE_PHONE_PATTERN;
+  let out = text.replace(new RegExp(connectors, 'gi'), realPhone ? ' ' + realPhone : '');
+  out = out.replace(new RegExp(FAKE_PHONE_PATTERN, 'g'), realPhone || '');
+  return out;
+}
+
+// POST /api/production/business/:businessId/fixit/generate-draft
+// Generates a real AI draft for a Fix-It action via the consolidated engine.
+// Credits are deducted by the CLIENT only after it verifies success (same
+// pattern as /api/content/generate); failures return 503 and cost nothing.
+app.post('/api/production/business/:businessId/fixit/generate-draft', async (req, res) => {
+  try {
+    const { business, ownerEmail } = await resolveAuthenticatedBusiness(req, req.params.businessId);
+    const creditCheck = checkUserCredits(ownerEmail, undefined, 1);
+    if (!creditCheck.allowed) {
+      return res.status(403).json({ success: false, error: 'CREDITS_EXHAUSTED', message: creditCheck.error });
+    }
+
+    const { actionTitle, problem, whyItMatters } = req.body || {};
+    const biz: any = business || {};
+    const bizName = biz.name || 'our business';
+    const bizCategory = biz.category || biz.industry || 'local business';
+    const primaryLoc = Array.isArray(biz.locations) && biz.locations.length > 0 ? biz.locations[0] : {};
+    const bizCity = biz.city || primaryLoc.city || '';
+    const bizPhone = biz.phone || '';
+    const bizWebsite = biz.website || '';
+
+    const systemInstruction = `You are drafting website/service-page content for a local business fix-it action. Output a JSON object and ONLY the JSON object (no markdown fences, no commentary) with these keys: "seoTitle" (under 60 chars, mentions the business and city), "metaDescription" (under 160 chars), "bodyCopy" (2-3 short paragraphs of ready-to-publish page copy in a professional, trustworthy tone), "faqs" (array of 3 objects with "question" and "answer"). Use the real business name and city${bizPhone ? ' and phone' : ''}. NEVER invent awards, ratings, statistics, claims, or a phone number${bizPhone ? '' : ' — write every call-to-action WITHOUT any phone number'}. Do not repeat paragraphs.`;
+    const prompt = `Business: ${bizName}\nCategory: ${bizCategory}\nCity: ${bizCity}\n${bizPhone ? `Phone: ${bizPhone}\n` : ''}${bizWebsite ? `Website: ${bizWebsite}\n` : ''}\nFix-it action: ${actionTitle || 'Improve local presence'}\nProblem: ${problem || ''}\nWhy it matters: ${whyItMatters || ''}`;
+
+    const completion = await executeAICompletion({
+      provider: undefined,
+      modelVersion: undefined,
+      providerKey: undefined,
+      userEmail: ownerEmail,
+      systemInstruction,
+      prompt,
+      temperature: 0.6,
+    });
+
+    const text = (completion.text || '').trim();
+    if (completion.realApiExecuted !== true || !text || completion.isFallback) {
+      return res.status(503).json({ success: false, error: 'AI drafting is unavailable right now. Please try again.' });
+    }
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    let parsed: any = null;
+    try { parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null; } catch { parsed = null; }
+    if (!parsed || !parsed.seoTitle || !parsed.bodyCopy) {
+      return res.status(503).json({ success: false, error: 'The AI returned an unreadable draft. Please try again.' });
+    }
+
+    res.json({
+      success: true,
+      draft: {
+        seoTitle: String(parsed.seoTitle).slice(0, 120),
+        metaDescription: String(parsed.metaDescription || '').slice(0, 300),
+        bodyCopy: stripFakePhones(String(parsed.bodyCopy), bizPhone || undefined),
+        faqs: Array.isArray(parsed.faqs)
+          ? parsed.faqs.slice(0, 5).map((f: any) => ({ question: String(f.question || ''), answer: String(f.answer || '') }))
+          : [],
+      },
+    });
+  } catch (err: any) {
+    res.status(err.status || 500).json({ success: false, error: err.message || 'Failed to generate draft' });
+  }
+});
+
 app.patch('/api/production/business/:businessId', async (req, res) => {
   try {
     const { business, ownerEmail } = await resolveAuthenticatedBusiness(req, req.params.businessId);
@@ -8341,6 +8416,8 @@ Format Requirements:
       title = titleMatch[1].trim();
       body = generatedText.replace(/^TITLE:\s*.+$/m, '').trim();
     }
+    // Deterministic backstop: never ship a fabricated phone number.
+    body = stripFakePhones(body, phone || undefined);
 
     const newRecord = {
       id: `cnt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,

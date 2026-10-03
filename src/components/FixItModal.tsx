@@ -117,32 +117,6 @@ export const FixItModal: React.FC<FixItModalProps> = ({ action, onClose }) => {
     setGenError(null);
     setStep('generating');
 
-    const bizName = activeBusiness.name || businessProfile.name || 'our business';
-    const bizCategory = activeBusiness.category || businessProfile.industry || 'local business';
-    const bizCity = activeBusiness.city || businessProfile.city || '';
-    const bizPhone = activeBusiness.phone || businessProfile.phone || '';
-    const bizWebsite = activeBusiness.website || businessProfile.website || '';
-
-    const prompt = `You are drafting website/service-page content for a local business fix-it action.
-
-Business: ${bizName}
-Category: ${bizCategory}
-City: ${bizCity}
-Phone: ${bizPhone}
-Website: ${bizWebsite}
-
-Fix-it action: ${action.recommendationTitle}
-Problem: ${action.problem || ''}
-Why it matters: ${action.whyItMatters || ''}
-
-Write a JSON object (and ONLY the JSON object, no markdown fences, no commentary) with these keys:
-{
-  "seoTitle": "SEO title under 60 chars mentioning the business and city",
-  "metaDescription": "meta description under 160 chars",
-  "bodyCopy": "2-3 short paragraphs of ready-to-publish page copy in a professional, trustworthy tone. Use the real business name, city, and phone. Never invent awards, ratings, statistics, or claims.",
-  "faqs": [{"question": "...", "answer": "..."}, {"question": "...", "answer": "..."}, {"question": "...", "answer": "..."}]
-}`;
-
     const useTemplateFallback = (reason: string) => {
       // Template draft was pre-built when the modal opened; keep it, charge nothing.
       setGenError(reason);
@@ -150,52 +124,41 @@ Write a JSON object (and ONLY the JSON object, no markdown fences, no commentary
     };
 
     try {
-      const res = await fetch('/api/ai/chat', {
+      const businessId = activeBusiness.id || (businessProfile as any)?.id || '';
+      const res = await fetch(`/api/production/business/${businessId}/fixit/generate-draft`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
-          message: prompt,
-          businessProfile: {
-            id: activeBusiness.id,
-            name: bizName,
-            industry: bizCategory,
-            website: bizWebsite,
-            phone: bizPhone,
-          },
+          actionId: action.id,
+          actionTitle: action.recommendationTitle,
+          problem: action.problem || '',
+          whyItMatters: action.whyItMatters || '',
         }),
       });
-      const data = await res.json().catch(() => ({}));
-      const text = (data.reply || data.text || '') as string;
-      const engineOk = res.ok && !!text && (data as any).realApiExecuted !== false;
+      const data = await res.json().catch(() => ({}) as any);
 
-      if (engineOk) {
-        // Extract the JSON object from the response (tolerate surrounding prose).
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          try {
-            const parsed = JSON.parse(jsonMatch[0]);
-            if (parsed.seoTitle) setDraftSeoTitle(String(parsed.seoTitle));
-            if (parsed.metaDescription) setDraftMetaDesc(String(parsed.metaDescription));
-            if (parsed.bodyCopy) setDraftBodyCopy(String(parsed.bodyCopy));
-            if (Array.isArray(parsed.faqs) && parsed.faqs.length > 0) {
-              setDraftFaqs(
-                parsed.faqs.slice(0, 5).map((f: any) => ({
-                  question: String(f.question || ''),
-                  answer: String(f.answer || ''),
-                }))
-              );
-            }
-            // A real AI deliverable was produced — the ONLY point where a credit moves.
-            consumeAiCredit(1);
-            setStep('draft_review');
-            return;
-          } catch {
-            // fall through to template fallback
-          }
+      if (res.ok && data.success && data.draft && data.draft.seoTitle && data.draft.bodyCopy) {
+        const d = data.draft;
+        setDraftSeoTitle(String(d.seoTitle || ''));
+        setDraftMetaDesc(String(d.metaDescription || ''));
+        setDraftBodyCopy(String(d.bodyCopy || ''));
+        if (Array.isArray(d.faqs) && d.faqs.length > 0) {
+          setDraftFaqs(
+            d.faqs.slice(0, 5).map((f: any) => ({
+              question: String(f.question || ''),
+              answer: String(f.answer || ''),
+            }))
+          );
         }
+        // A real AI deliverable was produced and verified — the ONLY point where a credit moves.
+        consumeAiCredit(1);
+        setStep('draft_review');
+        return;
       }
       useTemplateFallback(
-        'AI drafting was unavailable, so a template draft was prepared instead. No credit was used.'
+        (data && (data.message || data.error)) ||
+          'AI drafting was unavailable, so a template draft was prepared instead. No credit was used.'
       );
     } catch {
       useTemplateFallback(

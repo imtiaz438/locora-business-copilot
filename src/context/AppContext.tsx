@@ -2114,6 +2114,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
           // Sync database opportunities directly into priorityActions
           if (Array.isArray(prodData.opportunities)) {
+            // Preserve locally-saved Fix-It drafts across the server sync:
+            // drafts are stored in localStorage keyed by action id, and the
+            // fresh server actions arrive without them.
+            let savedDrafts: Record<string, any> = {};
+            try {
+              const raw = typeof window !== 'undefined' ? localStorage.getItem('locora_priority_actions') : null;
+              if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                  for (const a of parsed) {
+                    if (a && a.id && a.draft && a.draft.status === 'draft') savedDrafts[String(a.id)] = a.draft;
+                  }
+                }
+              }
+            } catch { /* corrupted cache — ignore */ }
             const mappedActions: PriorityAction[] = prodData.opportunities.map((opp) => ({
               id: opp.id,
               urgency: opp.urgency,
@@ -2134,7 +2149,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               confidence: opp.confidence,
               createdAt: opp.createdAt,
               businessId: opp.businessId,
+              draft: savedDrafts[String(opp.id)] || undefined,
             }));
+            // Re-cache so a subsequent reload keeps the drafts attached.
+            try {
+              if (typeof window !== 'undefined') localStorage.setItem('locora_priority_actions', JSON.stringify(mappedActions));
+            } catch { /* storage full — ignore */ }
             setPriorityActions(mappedActions);
           }
         }
