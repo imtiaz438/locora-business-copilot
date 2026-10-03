@@ -1067,7 +1067,7 @@ export const WebsiteReviewView: React.FC = () => {
           {!isPaidUser ? (
             <LockedSeoFeatureView
               title="Real SEO Telemetry & Multi-Model AI Citations"
-              description="Live search intelligence including Google AI Overview presence checks and automated brand citation benchmarks across ChatGPT, Claude, Gemini, and Perplexity."
+              description="Live search intelligence including Google AI Overview presence checks and automated brand citation benchmarks across ChatGPT, Claude, Perplexity, and Groq."
               badgeLabel="PRO & AGENCY ONLY"
               onUpgradePro={() => setCheckoutModalPlan('pro')}
               onUpgradeAgency={() => setCheckoutModalPlan('agency')}

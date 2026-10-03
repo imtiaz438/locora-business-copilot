@@ -153,7 +153,7 @@ export const ProposalView: React.FC = () => {
       <LockedFeature
         requiredPlan="pro"
         featureTitle="Proposals, Quotes & Contracts Engine"
-        featureDescription="Generating AI Proposals, Quotes & Contracts requires a Pro Growth ($19/mo) or Agency Elite plan. Upgrade to unlock full access."
+        featureDescription="Generating AI Proposals, Quotes & Contracts requires a Pro Growth ($29/mo) or Agency Elite plan. Upgrade to unlock full access."
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Form Controls */}

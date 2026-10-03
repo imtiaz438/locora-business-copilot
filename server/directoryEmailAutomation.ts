@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import nodemailer from 'nodemailer';
-import { GoogleGenAI } from '@google/genai';
+import { generateCompletion } from './aiEngine.ts';
 import { db, schema } from '../src/db/index.ts';
 import { eq, desc, and } from 'drizzle-orm';
 import { getBusinessRecordById, getBusinessRecordFromLocoraDb } from './locoraDataEngine.ts';
@@ -937,22 +937,9 @@ export async function generateAIPersonalizedCopy(
     isAiGenerated: false,
   };
 
-  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
-  if (!apiKey) {
-    return deterministic;
-  }
-
   try {
-    const ai = new GoogleGenAI({
-      apiKey,
-      httpOptions: {
-        headers: { 'User-Agent': 'aistudio-build' },
-      },
-    });
-
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('AI generation timeout')), 4000)
-    );
+    // Unified AI engine (Groq primary). Falls back to the deterministic
+    // baseline copy below when AI is unavailable — never fails the email.
 
     const promptPayload = {
       scenario: variant === 'variant_b' ? 'GBP_CONNECTED_UPDATE' : 'GBP_NOT_CONNECTED_UPDATE',
@@ -972,9 +959,8 @@ export async function generateAIPersonalizedCopy(
       topOpportunities: context.topOpportunities.map((o) => o.title),
     };
 
-    const aiCall = ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: `You are an editorial assistant writing personalized text for a transactional notification email sent to a business owner by Locora AI.
+    const engineResult = await generateCompletion({
+      messages: [{ role: 'user', content: `You are an editorial assistant writing personalized text for a transactional notification email sent to a business owner by Locora AI.
 Based STRICTLY on the real database facts below, produce concise, professional copy.
 
 REAL FACTS:
@@ -992,14 +978,12 @@ Return ONLY a JSON object with these 4 keys:
 - "greeting": A professional, personal greeting line (e.g. "Hello [Business Name] Team,")
 - "whatHappened": 1-2 sentences stating the listing update clearly.
 - "connectionSummary": 1-2 sentences summarizing verified integrations / GBP status.
-- "nextStepsOverview": 1-2 sentences guiding them on the most relevant next step (e.g. connecting Search Console/Analytics if disconnected).`,
-      config: {
-        responseMimeType: 'application/json',
-      },
+- "nextStepsOverview": 1-2 sentences guiding them on the most relevant next step (e.g. connecting Search Console/Analytics if disconnected).` }],
+      jsonMode: true,
+      timeoutMs: 4000,
     });
-
-    const res: any = await Promise.race([aiCall, timeoutPromise]);
-    const textOutput = res?.text?.trim();
+    if (!engineResult.ok) return deterministic;
+    const textOutput = (engineResult.text || '').trim();
     if (!textOutput) return deterministic;
 
     const parsed = JSON.parse(textOutput);

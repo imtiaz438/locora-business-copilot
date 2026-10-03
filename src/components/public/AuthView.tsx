@@ -87,6 +87,27 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
           }
         }
 
+        // Cross-domain checkup handoff: ?auditId=... arrives from the marketing
+        // site (localStorage doesn't cross origins). Fetch the audit and stage
+        // it so the post-signup claim fires on this domain.
+        const urlAuditId = params.get('auditId');
+        if (urlAuditId && !raw) {
+          fetch(`/api/public/checkup/${encodeURIComponent(urlAuditId)}`)
+            .then((auditRes) => (auditRes.ok ? auditRes.json() : null))
+            .then((audit) => {
+              if (audit?.auditId) {
+                try {
+                  localStorage.setItem('locora_pending_public_audit', JSON.stringify(audit));
+                } catch {}
+                setPendingAudit({ domain: audit.domain, businessName: audit.businessName });
+                if (audit.businessName) {
+                  setCompany((curr) => curr || audit.businessName);
+                }
+              }
+            })
+            .catch(() => {});
+        }
+
         const rawCheckup = sessionStorage.getItem('locora_pending_checkup');
         if (rawCheckup) {
           try {

@@ -514,7 +514,7 @@ export const SEO_FEATURES_DATABASE: Record<string, SeoFeatureItem> = {
         { label: '3-Pack Score', value: '94/100' }
       ],
       snippetLabel: 'Generated LocalBusiness JSON-LD Schema Snippet',
-      snippetContent: '{\n  "@context": "https://schema.org",\n  "@type": "PlumbingService",\n  "name": "Tri-County Emergency Plumbing",\n  "telephone": "+1-602-555-0199",\n  "geo": { "@type": "GeoCoordinates", "latitude": 33.4484, "longitude": -112.0740 }\n}'
+      snippetContent: '{\n  "@context": "https://schema.org",\n  "@type": "PlumbingService",\n  "name": "Tri-County Emergency Plumbing",\n  "telephone": "YOUR_BUSINESS_PHONE",\n  "geo": { "@type": "GeoCoordinates", "latitude": 33.4484, "longitude": -112.0740 }\n}'
     },
     faqs: [
       {
@@ -1503,7 +1503,7 @@ export const SEO_FEATURES_DATABASE: Record<string, SeoFeatureItem> = {
           industry: 'Dental Practice',
           location: 'San Francisco, CA',
           sampleInput: '2-Star Review from Linda: "Cleaning was fine, but I had to wait 25 minutes past my appointment time."',
-          sampleOutput: 'GENERATED RESPONSE:\n"Hi Linda, thank you for sharing your feedback. We are glad your dental cleaning was thorough, but we sincerely apologize for the 25-minute wait past your scheduled time. We pride ourselves on running on schedule and fell short of our standard during your visit. Please call our office manager Sarah directly at (415) 555-0192 so we can make this right on your next visit."',
+          sampleOutput: 'GENERATED RESPONSE:\n"Hi Linda, thank you for sharing your feedback. We are glad your dental cleaning was thorough, but we sincerely apologize for the 25-minute wait past your scheduled time. We pride ourselves on running on schedule and fell short of our standard during your visit. Please call our office manager Sarah directly at YOUR_OFFICE_NUMBER so we can make this right on your next visit."',
           outputType: 'De-escalation Reply'
         }
       ]

@@ -390,7 +390,7 @@ export const CheckupView: React.FC = () => {
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold font-mono">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Live Google Scan Complete</span>
+                <span>Live Website Scan Complete</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
                 {businessName || 'Your Business'} Visibility Summary
@@ -590,7 +590,7 @@ export const CheckupView: React.FC = () => {
                 Unlock Your Full Report
               </h3>
               <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
-                Connect your business to Locora AI to access your full 40-point technical audit, automated Google Maps rank tracker, competitor keyword gaps, and 1-click AI fix generators.
+                Connect your business to Locora AI to access your full 40-point technical audit, Search Console-powered visibility tracking, competitor intelligence, and 1-click AI fix generators.
               </p>
             </div>
 
@@ -618,7 +618,7 @@ export const CheckupView: React.FC = () => {
       <section className="max-w-5xl mx-auto px-6 py-16 space-y-12">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
-            Why Local Visibility Dictates 80% of Inbound Customers
+            Why Local Visibility Decides Most Inbound Customers
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
             When potential customers in your city search for local services, Google makes instantaneous ranking decisions based on crawlable signals.
@@ -632,7 +632,7 @@ export const CheckupView: React.FC = () => {
             </div>
             <h3 className="text-base font-bold text-slate-900 font-heading">Google Maps 3-Pack</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Over 70% of clicks for local searches go directly to the top 3 Google Maps listings. Consistent NAP citations and local schemas secure that coveted real estate.
+              Most clicks for local searches go directly to the top 3 Google Maps listings. Consistent NAP citations and local schemas secure that coveted real estate.
             </p>
           </div>
 
@@ -653,6 +653,41 @@ export const CheckupView: React.FC = () => {
             <h3 className="text-base font-bold text-slate-900 font-heading">Fast Deterministic Remediation</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
               Fix missing meta descriptions, broken heading tags, slow mobile rendering, and unlinked citations with Locora&apos;s pre-packaged 1-click prompt copilot.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 04 — FAQ */}
+      <section className="max-w-3xl mx-auto px-6 pb-16 space-y-6">
+        <div className="text-center space-y-3">
+          <h2 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
+            Common Questions
+          </h2>
+        </div>
+        <div className="space-y-4">
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
+            <h3 className="text-sm font-bold text-slate-900 font-heading">Can a missed phone call really cost me money?</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Since October 1, 2026, Google&apos;s Local Services Ads treats a missed business-hours call as a billable lead when the caller waits more than 20 seconds. A phone that rings out doesn&apos;t just lose the job anymore — it can also cost you the lead fee.
+            </p>
+          </div>
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
+            <h3 className="text-sm font-bold text-slate-900 font-heading">What happens after I unlock my full report?</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Your audit is imported into a free Locora workspace as your first business. From there you can connect your Google Business Profile, track visibility, manage reviews, and generate AI fixes — no credit card required.
+            </p>
+          </div>
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
+            <h3 className="text-sm font-bold text-slate-900 font-heading">Is the checkup really free?</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Yes. The checkup is a free automated scan of your website and public listings. No credit card required.
+            </p>
+          </div>
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
+            <h3 className="text-sm font-bold text-slate-900 font-heading">What does the checkup scan?</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Your website&apos;s technical health, on-page SEO, local signals (name, phone, and address consistency), content depth, structured data, and performance — scored from the live crawl of your site.
             </p>
           </div>
         </div>

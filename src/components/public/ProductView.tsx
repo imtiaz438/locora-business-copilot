@@ -290,7 +290,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
   "image": "https://austinpremierplumbing.com/logo.png",
   "@id": "https://austinpremierplumbing.com/#localbusiness",
   "url": "https://austinpremierplumbing.com",
-  "telephone": "+1-512-555-0199",
+  "telephone": "YOUR_BUSINESS_PHONE",
   "priceRange": "$$",
   "address": {
     "@type": "PostalAddress",

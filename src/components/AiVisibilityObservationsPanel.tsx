@@ -221,8 +221,6 @@ export const AiVisibilityObservationsPanel: React.FC<AiVisibilityObservationsPan
   const getProviderBadge = (provider: string) => {
     const prov = (provider || '').toLowerCase();
     switch (prov) {
-      case 'gemini':
-        return { name: 'Google Gemini', color: 'bg-blue-50 text-blue-800 border-blue-200' };
       case 'openai':
         return { name: 'ChatGPT (OpenAI)', color: 'bg-emerald-50 text-emerald-800 border-emerald-200' };
       case 'anthropic':
@@ -249,7 +247,7 @@ export const AiVisibilityObservationsPanel: React.FC<AiVisibilityObservationsPan
               </h3>
             </div>
             <p className="text-xs text-slate-500 max-w-2xl">
-              Tracks actual queries across frontier LLMs (Gemini, ChatGPT, Claude, Perplexity).
+              Tracks actual queries across frontier LLMs (ChatGPT, Claude, Perplexity, Groq).
               Metrics are strictly computed from recorded provider responses.
             </p>
           </div>
@@ -291,7 +289,7 @@ export const AiVisibilityObservationsPanel: React.FC<AiVisibilityObservationsPan
           <div className="pt-2">
             <ProviderStatusDisplay
               status={providerStatus}
-              providerName="AI Visibility Monitoring (Gemini / Perplexity / Search Index)"
+              providerName="AI Visibility Monitoring (ChatGPT / Claude / Perplexity / Groq)"
               customMessage={providerStatusMessage || error || undefined}
               onConfigureClick={() => setActiveTab('settings')}
               onRetryClick={handleRunAudit}
@@ -451,7 +449,7 @@ export const AiVisibilityObservationsPanel: React.FC<AiVisibilityObservationsPan
 
               {/* Provider Filter Tabs */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                {['all', 'gemini', 'openai', 'anthropic', 'perplexity'].map((prov) => (
+                {['all', 'openai', 'anthropic', 'perplexity'].map((prov) => (
                   <button
                     key={prov}
                     type="button"

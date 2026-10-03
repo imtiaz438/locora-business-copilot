@@ -911,7 +911,7 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
                     type="text"
                     value={manualPhone}
                     onChange={(e) => setManualPhone(e.target.value)}
-                    placeholder="e.g. (312) 555-0199"
+                    placeholder="e.g. (312) 512-0199"
                     className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#059669] bg-white shadow-2xs"
                   />
                 </div>

@@ -158,7 +158,7 @@ export const PricingPublicView: React.FC = () => {
                 {billingCycle === 'yearly' ? '$249' : '$29'}
               </span>
               <span className="text-xs text-slate-500 font-medium font-sans">
-                {billingCycle === 'yearly' ? ' / year ($20.75/mo)' : ' / month'}
+                {billingCycle === 'yearly' ? ' / year ($21/mo)' : ' / month'}
               </span>
             </div>
 
@@ -169,19 +169,27 @@ export const PricingPublicView: React.FC = () => {
               </div>
               <div className="flex items-center gap-2 text-slate-700">
                 <CheckCircle2 className="w-4 h-4 text-[#059669] flex-shrink-0" />
-                <span>AI Local SEO Copilot & Google Maps ranking</span>
+                <span>AI Local SEO Copilot</span>
               </div>
               <div className="flex items-center gap-2 text-slate-700">
                 <CheckCircle2 className="w-4 h-4 text-[#059669] flex-shrink-0" />
-                <span>AI Reputation Manager (200 review actions/mo)</span>
+                <span>Live Google Maps & organic rank tracking</span>
               </div>
               <div className="flex items-center gap-2 text-slate-700">
                 <CheckCircle2 className="w-4 h-4 text-[#059669] flex-shrink-0" />
-                <span>Competitor Intelligence (5 competitors tracked)</span>
+                <span>Automated weekly health scans with alerts</span>
               </div>
               <div className="flex items-center gap-2 text-slate-700">
                 <CheckCircle2 className="w-4 h-4 text-[#059669] flex-shrink-0" />
-                <span>50 Tracked search opportunities & geo gaps</span>
+                <span>AI Reputation Manager (AI review reply drafts)</span>
+              </div>
+              <div className="flex items-center gap-2 text-slate-700">
+                <CheckCircle2 className="w-4 h-4 text-[#059669] flex-shrink-0" />
+                <span>Competitor Intelligence Tracking</span>
+              </div>
+              <div className="flex items-center gap-2 text-slate-700">
+                <CheckCircle2 className="w-4 h-4 text-[#059669] flex-shrink-0" />
+                <span>Tracked search opportunities & keyword tracking</span>
               </div>
               <div className="flex items-center gap-2 text-slate-700">
                 <CheckCircle2 className="w-4 h-4 text-[#059669] flex-shrink-0" />
@@ -240,11 +248,15 @@ export const PricingPublicView: React.FC = () => {
               </div>
               <div className="flex items-center gap-2 text-slate-700">
                 <CheckCircle2 className="w-4 h-4 text-[#059669] flex-shrink-0" />
-                <span>AI Client Monitoring (Automated Scans)</span>
+                <span>AI Client Manager with automated health scans</span>
               </div>
               <div className="flex items-center gap-2 text-slate-700">
                 <CheckCircle2 className="w-4 h-4 text-[#059669] flex-shrink-0" />
-                <span>Bulk Analysis, Review & Content Actions</span>
+                <span>Live rank tracking across all client businesses</span>
+              </div>
+              <div className="flex items-center gap-2 text-slate-700">
+                <CheckCircle2 className="w-4 h-4 text-[#059669] flex-shrink-0" />
+                <span>Multi-Client Review & Content Actions</span>
               </div>
               <div className="flex items-center gap-2 text-slate-700">
                 <CheckCircle2 className="w-4 h-4 text-[#059669] flex-shrink-0" />
@@ -252,7 +264,7 @@ export const PricingPublicView: React.FC = () => {
               </div>
               <div className="flex items-center gap-2 text-slate-700">
                 <CheckCircle2 className="w-4 h-4 text-[#059669] flex-shrink-0" />
-                <span>Custom Client Portals & Dashboards</span>
+                <span>Client Workspaces & Dashboards</span>
               </div>
               <div className="flex items-center gap-2 text-slate-700">
                 <CheckCircle2 className="w-4 h-4 text-[#059669] flex-shrink-0" />

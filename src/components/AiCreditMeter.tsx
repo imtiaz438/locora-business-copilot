@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Zap, Sparkles, PlusCircle, Flame } from 'lucide-react';
+import { creditsForPlan, remainingCredits, creditsUsedPercent } from '../lib/credits';
 
 export const AiCreditMeter: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
   const { user, setActiveTab, setFuelPackModalOpen } = useApp();
 
   const isUnlimited = user.planTier === 'agency';
   const used = user.aiCreditsUsed || 0;
-  const limit = user.monthlyAiCredits || (user.email ? 25 : 15);
-  const remaining = Math.max(0, limit - used);
-  const percentage = Math.min(100, Math.round((used / limit) * 100));
+  const limit = user.monthlyAiCredits || creditsForPlan(user.planTier, !user.email);
+  const remaining = remainingCredits(limit, used);
+  const percentage = creditsUsedPercent(limit, used);
   const isHighUsage = percentage >= 80 || remaining <= 3;
 
   if (isUnlimited) {

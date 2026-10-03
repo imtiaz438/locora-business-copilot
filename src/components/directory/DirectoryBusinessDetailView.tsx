@@ -372,7 +372,15 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
   const status = business.directoryStatus || (business.isClaimed ? 'CLAIMED' : 'PUBLISHED');
   const isUnclaimed = !business.isClaimed && status !== 'CLAIMED' && status !== 'VERIFIED';
 
-  const reviewSourceLabel = business.reviewSource === 'google_gbp' || business.reviewSource === 'google' || !business.reviewSource ? 'Google' : business.reviewSource;
+  // T-02: Review source must NEVER default to "Google". Only label as Google
+  // when the reviews genuinely came from the Google Business Profile API.
+  // Manually entered reviews are "Owner-added".
+  const reviewSourceLabel = (() => {
+    const src = (business.reviewSource || '').toLowerCase();
+    if (src === 'google_gbp' || src === 'google') return 'Google';
+    if (!src || src === 'user_entered' || src === 'manual' || src === 'owner') return 'Owner-added';
+    return business.reviewSource;
+  })();
 
   // Real Reviews sorting: Most recent available first
   const sortedReviews = [...reviews].sort((a, b) => {
@@ -1121,7 +1129,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
 
                       <div className="flex items-center justify-between text-[10px] text-slate-400 mt-2.5 pt-2 border-t border-slate-100">
                         <span className="inline-flex items-center gap-1">
-                          Source: <strong className="text-slate-600">{rev.source || reviewSourceLabel}</strong>
+                          Source: <strong className="text-slate-600">{rev.source === 'user_entered' ? 'Owner-added' : (rev.source || reviewSourceLabel)}</strong>
                         </span>
                       </div>
                     </div>
@@ -1216,7 +1224,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       value={quoteForm.phone}
                       onFocus={handleLeadInputFocus}
                       onChange={(e) => setQuoteForm({ ...quoteForm, phone: e.target.value })}
-                      placeholder="(555) 000-0000"
+                      placeholder="(512) 000-0000"
                       className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>

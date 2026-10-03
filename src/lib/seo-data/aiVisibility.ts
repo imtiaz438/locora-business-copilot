@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import { saveAiVisibilityCheck, getAiVisibilityChecks } from '../../db/service.ts';
 import type { AiVisibilityObservation, AiVisibilityCheckItem } from './types.ts';
-import { GoogleGenAI } from '@google/genai';
 
 export interface BusinessProfileForAi {
   name: string;
@@ -16,7 +15,6 @@ export interface BusinessProfileForAi {
 export interface ProviderKeys {
   openai?: string;
   anthropic?: string;
-  gemini?: string;
   perplexity?: string;
   groq?: string;
 }
@@ -37,7 +35,6 @@ export function getAppLevelLlmKeys(): ProviderKeys {
   return {
     openai: diskKeys.OPENAI_API_KEY || diskKeys.openaiKey || diskKeys.openai || process.env.OPENAI_API_KEY || '',
     anthropic: diskKeys.ANTHROPIC_API_KEY || diskKeys.anthropicKey || diskKeys.anthropic || diskKeys.claude || process.env.ANTHROPIC_API_KEY || '',
-    gemini: diskKeys.GEMINI_API_KEY || diskKeys.geminiKey || diskKeys.gemini || process.env.GEMINI_API_KEY || '',
     perplexity: diskKeys.PERPLEXITY_API_KEY || diskKeys.perplexityKey || diskKeys.perplexity || process.env.PERPLEXITY_API_KEY || '',
     groq: diskKeys.GROQ_API_KEY || diskKeys.groqKey || diskKeys.groq || process.env.GROQ_API_KEY || '',
   };
@@ -62,7 +59,7 @@ export function generateAiPrompts(profile: BusinessProfileForAi): string[] {
  * return success: false without fabricating text.
  */
 async function queryLlmProvider(
-  provider: 'openai' | 'anthropic' | 'gemini' | 'perplexity' | 'groq',
+  provider: 'openai' | 'anthropic' | 'perplexity' | 'groq',
   prompt: string,
   keys: ProviderKeys,
   businessName: string
@@ -122,52 +119,8 @@ async function queryLlmProvider(
     }
   }
 
-  // 3. Gemini
-  if (provider === 'gemini' && keys.gemini) {
-    try {
-      const ai = new GoogleGenAI({ apiKey: keys.gemini });
-      // Wrap in 20-second timeout
-      const generatePromise = (async () => {
-        try {
-          const resp = await ai.models.generateContent({
-            model: 'gemini-3.5-flash-lite',
-            contents: prompt,
-            config: {
-              systemInstruction: 'You are a local business recommendation engine. Give concise, direct answers listing top rated local companies.',
-              maxOutputTokens: 250,
-              temperature: 0.2,
-            },
-          });
-          return resp?.text || '';
-        } catch {
-          // Fallback to gemini-3.6-flash
-          try {
-            const fallback = await ai.models.generateContent({
-              model: 'gemini-3.6-flash',
-              contents: prompt,
-              config: {
-                systemInstruction: 'You are a local business recommendation engine. Give concise, direct answers listing top rated local companies.',
-                maxOutputTokens: 250,
-                temperature: 0.2,
-              },
-            });
-            return fallback?.text || '';
-          } catch {
-            return '';
-          }
-        }
-      })();
-
-      const timeoutPromise = new Promise<string>((_, reject) =>
-        setTimeout(() => reject(new Error('Gemini query timed out')), 20000)
-      );
-
-      const text = await Promise.race([generatePromise, timeoutPromise]);
-      return { text, success: Boolean(text.trim()) };
-    } catch (e: any) {
-      console.warn('[AiVisibility] Gemini call failed:', e?.message || e);
-    }
-  }
+  // 3. Gemini — REMOVED Oct 2026 (region restrictions produced
+  //    user-incomprehensible failures; fan-out keeps OpenAI/Anthropic/Perplexity/Groq).
 
   // 4. Perplexity
   if (provider === 'perplexity' && keys.perplexity) {
@@ -318,7 +271,7 @@ function parseObservationDetails(rawText: string, businessName: string, knownCom
 
 /**
  * Execute genuine multi-LLM brand citation benchmark.
- * Queries configured providers (Gemini, OpenAI, Anthropic, Perplexity)
+ * Queries configured providers (OpenAI, Anthropic, Perplexity, Groq)
  * and stores each real observation with all 9 required fields in database & disk storage.
  * If no providers are configured or responsive, NO fake metrics are created.
  */
@@ -339,8 +292,7 @@ export async function executeAiVisibilityAudit(params: {
   const keys = getAppLevelLlmKeys();
 
   // Detect which providers are actually configured
-  const candidateProviders: Array<'gemini' | 'openai' | 'anthropic' | 'perplexity' | 'groq'> = [];
-  if (keys.gemini) candidateProviders.push('gemini');
+  const candidateProviders: Array<'openai' | 'anthropic' | 'perplexity' | 'groq'> = [];
   if (keys.openai) candidateProviders.push('openai');
   if (keys.perplexity) candidateProviders.push('perplexity');
   if (keys.anthropic) candidateProviders.push('anthropic');
@@ -353,7 +305,7 @@ export async function executeAiVisibilityAudit(params: {
       totalMentions: 0,
       totalChecks: 0,
       provider_status: 'not_configured',
-      message: 'No AI provider API key configured. Provide an API key (e.g. Gemini, OpenAI, Perplexity) to execute real AI visibility queries.',
+      message: 'No AI provider API key configured. Provide an API key (e.g. OpenAI, Anthropic, Perplexity, Groq) to execute real AI visibility queries.',
     };
   }
 

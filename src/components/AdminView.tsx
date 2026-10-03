@@ -58,6 +58,7 @@ import {
   X,
 } from 'lucide-react';
 import { PlanProviderAccessSummary } from './PlanProviderAccessSummary';
+import { creditsForPlan } from '../lib/credits';
 import { DataFreshnessPanel } from './DataFreshnessPanel';
 import { DirectoryAdminPanel } from './admin/DirectoryAdminPanel';
 import { AdminEmailActivityPanel } from './admin/AdminEmailActivityPanel';
@@ -76,7 +77,8 @@ export const AdminView: React.FC = () => {
     setActiveTab: setAppActiveTab,
   } = useApp();
 
-  const [isAuthenticatedAdmin, setIsAuthenticatedAdmin] = useState<boolean>(true);
+  // Note: admin access is enforced at the route level (App.tsx) and on every
+  // /api/admin endpoint via session-based verifyAdminAccess. No client-side flag needed.
   const [activeTab, setActiveTab] = useState<
     | 'workspaces'
     | 'users'
@@ -128,10 +130,10 @@ export const AdminView: React.FC = () => {
 
     try {
       const adminEmail = user.email || 'imtiazbaloch3322@gmail.com';
-      const res = await fetch(`/api/admin/businesses/${encodeURIComponent(bId)}?email=${encodeURIComponent(adminEmail)}`, {
+      const res = await fetch(`/api/admin/businesses/${encodeURIComponent(bId)}`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: {
-          'x-user-email': adminEmail,
         },
       });
       const data = await res.json();
@@ -183,6 +185,7 @@ export const AdminView: React.FC = () => {
     setTestMailFeedback(null);
     try {
       const res = await fetch('/api/email/send-test', {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -395,12 +398,13 @@ export const AdminView: React.FC = () => {
   const [newsletterState, setNewsletterState] = useState<any>(null);
 
   // AI Tokens Stats & Live API Key Inputs
+  // SECURITY: key inputs are NEVER pre-filled with secrets. The backend returns
+  // only masked hints (•••• + last 4); typing a key + Save replaces the stored one.
   const [aiStats, setAiStats] = useState<any>(null);
-  const [geminiKeyInput, setGeminiKeyInput] = useState('');
+  const [savedKeyHints, setSavedKeyHints] = useState<Record<string, { configured: boolean; hint: string }>>({});
   const [openaiKeyInput, setOpenaiKeyInput] = useState('');
   const [claudeKeyInput, setClaudeKeyInput] = useState('');
   const [perplexityKeyInput, setPerplexityKeyInput] = useState('');
-  const [deepseekKeyInput, setDeepseekKeyInput] = useState('');
   const [groqKeyInput, setGroqKeyInput] = useState('');
   const [googleMapsKeyInput, setGoogleMapsKeyInput] = useState('');
   const [pageSpeedKeyInput, setPageSpeedKeyInput] = useState('');
@@ -449,8 +453,8 @@ export const AdminView: React.FC = () => {
     try {
       const adminEmail = user.email || 'imtiazbaloch3322@gmail.com';
       const res = await fetch('/api/admin/transactions', {
+        credentials: 'include',
         headers: {
-          'x-user-email': adminEmail,
         },
       });
       const data = await res.json();
@@ -497,10 +501,10 @@ export const AdminView: React.FC = () => {
       const adminEmail = user.email || 'imtiazbaloch3322@gmail.com';
 
       const res = await fetch('/api/admin/transactions/refund', {
+        credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-email': adminEmail,
         },
         body: JSON.stringify({
           transactionId: selectedTxnForRefund.id,
@@ -529,10 +533,10 @@ export const AdminView: React.FC = () => {
     try {
       const adminEmail = user.email || 'imtiazbaloch3322@gmail.com';
       const res = await fetch('/api/admin/transactions/update-status', {
+        credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-email': adminEmail,
         },
         body: JSON.stringify({ transactionId, status, userEmail: adminEmail }),
       });
@@ -556,10 +560,10 @@ export const AdminView: React.FC = () => {
     const adminEmail = user.email || 'imtiazbaloch3322@gmail.com';
     try {
       const res = await fetch('/api/admin/transactions/delete', {
+        credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-email': adminEmail,
         },
         body: JSON.stringify({ transactionId: txnId, userEmail: adminEmail }),
       });
@@ -586,16 +590,15 @@ export const AdminView: React.FC = () => {
     try {
       const adminEmail = user.email || 'imtiazbaloch3322@gmail.com';
       const res = await fetch('/api/admin/database-tables', {
+        credentials: 'include',
         headers: {
-          'x-user-email': adminEmail,
         },
       });
       const data = await res.json();
 
       if (!res.ok || data.error) {
-        setIsAuthenticatedAdmin(false);
+        setActionErrorMsg(data.error || 'Failed to load admin data.');
       } else {
-        setIsAuthenticatedAdmin(true);
         setDbStats(data.stats);
         setUsersTable(data.tables?.users || []);
         setBusinessesTable(data.tables?.businesses || []);
@@ -613,7 +616,7 @@ export const AdminView: React.FC = () => {
         fetchTransactionsData();
       }
     } catch (err) {
-      setIsAuthenticatedAdmin(false);
+      setActionErrorMsg('Failed to load admin data.');
     } finally {
       setLoading(false);
     }
@@ -622,33 +625,16 @@ export const AdminView: React.FC = () => {
   const fetchAiTokenStats = async () => {
     try {
       const res = await fetch('/api/admin/ai-tokens/stats', {
+        credentials: 'include',
         headers: {
-          'x-user-email': user.email || '',
         },
       });
       const data = await res.json();
       if (res.ok && data.success) {
         setAiStats(data);
+        // Masked hints only — inputs stay empty so secrets never sit in the DOM.
         if (data.savedKeys) {
-          setGeminiKeyInput(data.savedKeys.gemini || '');
-          setOpenaiKeyInput(data.savedKeys.openai || '');
-          setClaudeKeyInput(data.savedKeys.anthropic || data.savedKeys.claude || '');
-          setPerplexityKeyInput(data.savedKeys.perplexity || '');
-          setDeepseekKeyInput(data.savedKeys.deepseek || '');
-          setGroqKeyInput(data.savedKeys.groq || '');
-          setGoogleMapsKeyInput(data.savedKeys.googleMaps || '');
-          setPageSpeedKeyInput(data.savedKeys.pageSpeed || '');
-          setHunterKeyInput(data.savedKeys.hunter || '');
-          setApolloKeyInput(data.savedKeys.apollo || '');
-          setMillionVerifierKeyInput(data.savedKeys.millionverifier || data.savedKeys.millionVerifier || '');
-          setSerperKeyInput(data.savedKeys.serper || '');
-          setSerpApiKeyInput(data.savedKeys.serpapi || '');
-          setDataforseoLoginInput(data.savedKeys.dataforseoLogin || '');
-          setDataforseoPasswordInput(data.savedKeys.dataforseoPassword || '');
-          setGoogleSearchApiKeyInput(data.savedKeys.googleSearchApiKey || '');
-          setGoogleSearchCxInput(data.savedKeys.googleSearchCx || '');
-          setScaleSerpKeyInput(data.savedKeys.scaleserp || '');
-          setValueSerpKeyInput(data.savedKeys.valueserp || '');
+          setSavedKeyHints(data.savedKeys);
         }
       }
     } catch (err) {
@@ -671,10 +657,10 @@ export const AdminView: React.FC = () => {
       setUsersTable(prev => prev.map(u => u.email === targetEmail ? { ...u, planTier, ...(newRole ? { role: newRole } : {}) } : u));
       
       const res = await fetch('/api/admin/update-user-plan', {
+        credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-email': user.email || '',
         },
         body: JSON.stringify({ email: targetEmail, planTier, role: newRole }),
       });
@@ -699,10 +685,10 @@ export const AdminView: React.FC = () => {
       setUsersTable(prev => prev.map(u => u.email === targetEmail ? { ...u, autoRenew: nextVal } : u));
 
       const res = await fetch('/api/admin/update-user-plan', {
+        credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-email': user.email || '',
         },
         body: JSON.stringify({ email: targetEmail, autoRenew: nextVal }),
       });
@@ -726,10 +712,10 @@ export const AdminView: React.FC = () => {
       setUsersTable(prev => prev.map(u => u.email === targetEmail ? { ...u, billingCycle } : u));
 
       const res = await fetch('/api/admin/update-user-plan', {
+        credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-email': user.email || '',
         },
         body: JSON.stringify({ email: targetEmail, billingCycle }),
       });
@@ -752,10 +738,10 @@ export const AdminView: React.FC = () => {
       setUsersTable(prev => prev.map(u => u.email === targetEmail ? { ...u, subscriptionStatus } : u));
 
       const res = await fetch('/api/admin/update-user-plan', {
+        credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-email': user.email || '',
         },
         body: JSON.stringify({ email: targetEmail, subscriptionStatus }),
       });
@@ -772,18 +758,18 @@ export const AdminView: React.FC = () => {
     }
   };
 
-  const handleUpdateUserRole = async (targetEmail: string, role: string) => {
+  const handleUpdateUserRole = async (targetEmail: string, role: string, createIfMissing = false) => {
     try {
       // Optimistic update
       setUsersTable(prev => prev.map(u => u.email === targetEmail ? { ...u, role } : u));
 
       const res = await fetch('/api/admin/update-user-plan', {
+        credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-email': user.email || '',
         },
-        body: JSON.stringify({ email: targetEmail, role }),
+        body: JSON.stringify({ email: targetEmail, role, createIfMissing }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -803,10 +789,10 @@ export const AdminView: React.FC = () => {
     if (!userToDelete) return;
     try {
       const res = await fetch('/api/admin/delete-user', {
+        credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-email': user.email || '',
         },
         body: JSON.stringify({ email: userToDelete.email }),
       });
@@ -824,9 +810,13 @@ export const AdminView: React.FC = () => {
 
   const handleTransferAdminship = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!transferTargetEmail.trim()) return;
-    await handleUpdateUserRole(transferTargetEmail.trim(), 'admin');
-    setActionSuccessMsg(`Successfully granted ADMIN role to ${transferTargetEmail.trim()}!`);
+    const target = transferTargetEmail.trim();
+    if (!target) return;
+    // Explicit opt-in: granting admin to an unknown email creates the account.
+    const createIfMissing = window.confirm(
+      `Grant ADMIN to ${target}?\n\nOK = create the account if it doesn't exist yet.\nCancel = only grant if the account already exists.`
+    );
+    await handleUpdateUserRole(target, 'admin', createIfMissing);
     setTransferTargetEmail('');
   };
 
@@ -836,57 +826,45 @@ export const AdminView: React.FC = () => {
     setActionSuccessMsg(null);
     setActionErrorMsg(null);
     try {
+      // Only send keys the admin actually typed — empty inputs never wipe stored keys.
+      const nonEmpty = (v: string) => (v || '').trim().length > 0 ? v.trim() : undefined;
       const res = await fetch('/api/admin/ai-tokens/update-keys', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-email': user.email || '',
         },
         body: JSON.stringify({
-          geminiKey: geminiKeyInput,
-          openaiKey: openaiKeyInput,
-          anthropicKey: claudeKeyInput,
-          perplexityKey: perplexityKeyInput,
-          deepseekKey: deepseekKeyInput,
-          groqKey: groqKeyInput,
-          googleMapsKey: googleMapsKeyInput,
-          pageSpeedKey: pageSpeedKeyInput,
-          hunterKey: hunterKeyInput,
-          apolloKey: apolloKeyInput,
-          millionverifierKey: millionVerifierKeyInput,
-          serperKey: serperKeyInput,
-          serpApiKey: serpApiKeyInput,
-          dataforseoLogin: dataforseoLoginInput,
-          dataforseoPassword: dataforseoPasswordInput,
-          googleSearchApiKey: googleSearchApiKeyInput,
-          googleSearchCx: googleSearchCxInput,
-          scaleserpKey: scaleSerpKeyInput,
-          valueserpKey: valueSerpKeyInput,
+          openaiKey: nonEmpty(openaiKeyInput),
+          anthropicKey: nonEmpty(claudeKeyInput),
+          perplexityKey: nonEmpty(perplexityKeyInput),
+          groqKey: nonEmpty(groqKeyInput),
+          googleMapsKey: nonEmpty(googleMapsKeyInput),
+          pageSpeedKey: nonEmpty(pageSpeedKeyInput),
+          hunterKey: nonEmpty(hunterKeyInput),
+          apolloKey: nonEmpty(apolloKeyInput),
+          millionverifierKey: nonEmpty(millionVerifierKeyInput),
+          serperKey: nonEmpty(serperKeyInput),
+          serpApiKey: nonEmpty(serpApiKeyInput),
+          dataforseoLogin: nonEmpty(dataforseoLoginInput),
+          dataforseoPassword: nonEmpty(dataforseoPasswordInput),
+          googleSearchApiKey: nonEmpty(googleSearchApiKeyInput),
+          googleSearchCx: nonEmpty(googleSearchCxInput),
+          scaleserpKey: nonEmpty(scaleSerpKeyInput),
+          valueserpKey: nonEmpty(valueSerpKeyInput),
         }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setActionSuccessMsg('Validated & updated Live AI, SEO Intelligence & Search API credentials in database & server environment!');
+        setActionSuccessMsg(data.message || 'Keys saved.');
+        // Clear typed inputs — secrets must not linger in the DOM. Hints refresh from the server.
+        setOpenaiKeyInput(''); setClaudeKeyInput(''); setPerplexityKeyInput('');
+        setGroqKeyInput(''); setGoogleMapsKeyInput(''); setPageSpeedKeyInput(''); setHunterKeyInput('');
+        setApolloKeyInput(''); setMillionVerifierKeyInput(''); setSerperKeyInput(''); setSerpApiKeyInput('');
+        setDataforseoLoginInput(''); setDataforseoPasswordInput(''); setGoogleSearchApiKeyInput('');
+        setGoogleSearchCxInput(''); setScaleSerpKeyInput(''); setValueSerpKeyInput('');
         if (data.savedKeys) {
-          setGeminiKeyInput(data.savedKeys.gemini || '');
-          setOpenaiKeyInput(data.savedKeys.openai || '');
-          setClaudeKeyInput(data.savedKeys.anthropic || data.savedKeys.claude || '');
-          setPerplexityKeyInput(data.savedKeys.perplexity || '');
-          setDeepseekKeyInput(data.savedKeys.deepseek || '');
-          setGroqKeyInput(data.savedKeys.groq || '');
-          setGoogleMapsKeyInput(data.savedKeys.googleMaps || '');
-          setPageSpeedKeyInput(data.savedKeys.pageSpeed || '');
-          setHunterKeyInput(data.savedKeys.hunter || '');
-          setApolloKeyInput(data.savedKeys.apollo || '');
-          setMillionVerifierKeyInput(data.savedKeys.millionverifier || data.savedKeys.millionVerifier || '');
-          setSerperKeyInput(data.savedKeys.serper || '');
-          setSerpApiKeyInput(data.savedKeys.serpapi || '');
-          setDataforseoLoginInput(data.savedKeys.dataforseoLogin || '');
-          setDataforseoPasswordInput(data.savedKeys.dataforseoPassword || '');
-          setGoogleSearchApiKeyInput(data.savedKeys.googleSearchApiKey || '');
-          setGoogleSearchCxInput(data.savedKeys.googleSearchCx || '');
-          setScaleSerpKeyInput(data.savedKeys.scaleserp || '');
-          setValueSerpKeyInput(data.savedKeys.valueserp || '');
+          setSavedKeyHints(data.savedKeys);
         }
         fetchAiTokenStats();
       } else {
@@ -905,10 +883,10 @@ export const AdminView: React.FC = () => {
     setActionErrorMsg(null);
     try {
       const res = await fetch('/api/admin/ai-tokens/validate-all', {
+        credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-email': user.email || '',
         },
       });
       const data = await res.json();
@@ -928,10 +906,10 @@ export const AdminView: React.FC = () => {
   const handleRefillTokens = async (modelId?: string, amount?: number) => {
     try {
       const res = await fetch('/api/admin/ai-tokens/refill', {
+        credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-email': user.email || '',
         },
         body: JSON.stringify({ modelId, amount: amount || 5000000 }),
       });
@@ -948,10 +926,10 @@ export const AdminView: React.FC = () => {
   const handleUpdateQuota = async (modelId: string, allocatedTokens: number) => {
     try {
       const res = await fetch('/api/admin/ai-tokens/update-quota', {
+        credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-email': user.email || '',
         },
         body: JSON.stringify({ modelId, allocatedTokens }),
       });
@@ -972,10 +950,10 @@ export const AdminView: React.FC = () => {
   const handleDeleteSubscriber = async (targetEmail: string) => {
     try {
       const res = await fetch('/api/admin/delete-subscriber', {
+        credentials: 'include',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-email': user.email || '',
         },
         body: JSON.stringify({ email: targetEmail }),
       });
@@ -995,6 +973,7 @@ export const AdminView: React.FC = () => {
 
     try {
       const res = await fetch('/api/newsletter/subscribe', {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: newSubEmail.trim() }),
@@ -1013,9 +992,9 @@ export const AdminView: React.FC = () => {
     setLoading(true);
     try {
       const res = await fetch('/api/newsletter/send-weekly-dispatch', {
+        credentials: 'include',
         method: 'POST',
         headers: {
-          'x-user-email': user.email || '',
         },
       });
       const data = await res.json();
@@ -1037,15 +1016,19 @@ export const AdminView: React.FC = () => {
   const handleImportAdminDbJson = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!window.confirm('Import restores USERS and NEWSLETTER SUBSCRIBERS only. Businesses, locations, reviews, leads and other tables in this file will be ignored. Continue?')) {
+      e.target.value = '';
+      return;
+    }
     setLoading(true);
     try {
       const text = await file.text();
       const json = JSON.parse(text);
       const res = await fetch('/api/database/import', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-email': user.email || '',
         },
         body: JSON.stringify(json),
       });
@@ -1296,7 +1279,7 @@ export const AdminView: React.FC = () => {
               <Download className="w-3.5 h-3.5" />
               <span>Export Database</span>
             </button>
-            <label className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-md">
+            <label title="Restores users and newsletter subscribers only — not businesses, locations, reviews, or leads" className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-md">
               <Upload className="w-3.5 h-3.5 text-emerald-400" />
               <span>Import Database</span>
               <input
@@ -1785,7 +1768,7 @@ export const AdminView: React.FC = () => {
                           </select>
                         </td>
                         <td className="p-3 font-mono font-bold text-slate-800 text-[11px]">
-                          {usr.aiCreditsUsed || 0} / {usr.monthlyAiCredits || (usr.planTier === 'agency' ? 9999 : usr.planTier === 'pro' ? 250 : 25)}
+                          {usr.aiCreditsUsed || 0} / {usr.monthlyAiCredits || creditsForPlan(usr.planTier, false)}
                         </td>
                         <td className="p-3 text-right space-x-1">
                           <div className="inline-flex gap-1 flex-wrap justify-end">
@@ -2424,6 +2407,9 @@ export const AdminView: React.FC = () => {
                   <span>Save All Brand Assets</span>
                 </button>
               </div>
+              <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mt-3">
+                Note: slider and frame-style tweaks are staged locally — click "Save All Brand Assets" to persist them. File uploads save immediately.
+              </p>
             </div>
           </div>
 
@@ -3303,7 +3289,7 @@ export const AdminView: React.FC = () => {
                   <span>Update Live AI Model API Keys directly from Admin Portal</span>
                 </h4>
                 <p className="text-xs text-slate-500 font-sans mt-0.5">
-                  Enter live API keys here to replenish model tokens dynamically without modifying codebase files. Keys are validated in real-time before saving.
+                  Groq (default) and Claude (opt-in) power all AI generation. OpenAI and Perplexity keys are used only for AI Visibility brand checks. SEO/B2B keys are stored as provided. Empty fields never overwrite saved keys.
                 </p>
               </div>
 
@@ -3339,12 +3325,17 @@ export const AdminView: React.FC = () => {
                     type="password"
                     value={groqKeyInput}
                     onChange={(e) => setGroqKeyInput(e.target.value)}
-                    placeholder="gsk_... (Empty = Uses server key)"
+                    placeholder="gsk_... (leave empty to keep saved key)"
                     className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
                   />
                   <p className="text-[10px] text-slate-400">
                     Powers Meta Llama 3.3 70B & 3.1 8B on high-speed LPUs (300+ t/s).
                   </p>
+                  {savedKeyHints.groq && (
+                    <p className={`text-[10px] font-mono font-bold ${savedKeyHints.groq.configured ? 'text-emerald-700' : 'text-slate-400'}`}>
+                      {savedKeyHints.groq.configured ? `Saved: ${savedKeyHints.groq.hint}` : 'No key saved — paste to add'}
+                    </p>
+                  )}
                 </div>
 
                 {/* 2. Anthropic Claude */}
@@ -3361,13 +3352,74 @@ export const AdminView: React.FC = () => {
                     type="password"
                     value={claudeKeyInput}
                     onChange={(e) => setClaudeKeyInput(e.target.value)}
-                    placeholder="sk-ant-... (Empty = Uses server key)"
+                    placeholder="sk-ant-... (leave empty to keep saved key)"
                     className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
                   />
                   <p className="text-[10px] text-slate-400">
                     Powers Claude 3.7 Sonnet, Claude 3.5 Sonnet & Claude 3.5 Haiku.
                   </p>
+                  {savedKeyHints.anthropic && (
+                    <p className={`text-[10px] font-mono font-bold ${savedKeyHints.anthropic.configured ? 'text-emerald-700' : 'text-slate-400'}`}>
+                      {savedKeyHints.anthropic.configured ? `Saved: ${savedKeyHints.anthropic.hint}` : 'No key saved — paste to add'}
+                    </p>
+                  )}
                 </div>
+
+                {/* 3. OpenAI — used for AI Visibility brand checks (ChatGPT mentions) */}
+                <div className="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800">
+                      OpenAI API Key <span className="font-normal text-slate-500">(AI Visibility)</span>
+                    </label>
+                    <span className="text-[10px] font-mono text-slate-500 font-bold">
+                      OPENAI_API_KEY
+                    </span>
+                  </div>
+                  <input
+                    type="password"
+                    value={openaiKeyInput}
+                    onChange={(e) => setOpenaiKeyInput(e.target.value)}
+                    placeholder="sk-... (leave empty to keep saved key)"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                  />
+                  <p className="text-[10px] text-slate-400">
+                    Powers AI Visibility checks against ChatGPT. Validated live before saving.
+                  </p>
+                  {savedKeyHints.openai && (
+                    <p className={`text-[10px] font-mono font-bold ${savedKeyHints.openai.configured ? 'text-emerald-700' : 'text-slate-400'}`}>
+                      {savedKeyHints.openai.configured ? `Saved: ${savedKeyHints.openai.hint}` : 'No key saved — paste to add'}
+                    </p>
+                  )}
+                </div>
+
+                {/* 4. Perplexity — used for AI Visibility brand checks (Perplexity mentions) */}
+                <div className="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-800">
+                      Perplexity API Key <span className="font-normal text-slate-500">(AI Visibility)</span>
+                    </label>
+                    <span className="text-[10px] font-mono text-slate-500 font-bold">
+                      PERPLEXITY_API_KEY
+                    </span>
+                  </div>
+                  <input
+                    type="password"
+                    value={perplexityKeyInput}
+                    onChange={(e) => setPerplexityKeyInput(e.target.value)}
+                    placeholder="pplx-... (leave empty to keep saved key)"
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
+                  />
+                  <p className="text-[10px] text-slate-400">
+                    Powers AI Visibility checks against Perplexity. Validated live before saving.
+                  </p>
+                  {savedKeyHints.perplexity && (
+                    <p className={`text-[10px] font-mono font-bold ${savedKeyHints.perplexity.configured ? 'text-emerald-700' : 'text-slate-400'}`}>
+                      {savedKeyHints.perplexity.configured ? `Saved: ${savedKeyHints.perplexity.hint}` : 'No key saved — paste to add'}
+                    </p>
+                  )}
+                </div>
+
+                {/* 5. DeepSeek — REMOVED: no runtime code consumes a DeepSeek key. */}
               </div>
 
               {/* B2B Live Prospecting & Real-Time Data Integrations Section */}
@@ -3636,6 +3688,52 @@ export const AdminView: React.FC = () => {
                     />
                     <p className="text-[10px] text-slate-500">DataForSEO API secret generated from the DataForSEO customer dashboard.</p>
                   </div>
+
+                  {/* SerpApi Key */}
+                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${serpApiKeyInput || aiStats?.apiKeysConfigured?.serpapi ? 'bg-indigo-50/50 border-indigo-300' : 'bg-slate-50/70 border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>SerpApi API Key</span>
+                        {serpApiKeyInput || aiStats?.apiKeysConfigured?.serpapi ? (
+                          <span className="text-[9px] font-mono font-bold text-indigo-800 bg-indigo-100 px-1.5 py-0.2 rounded border border-indigo-300">ACTIVE</span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">OPTIONAL</span>
+                        )}
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500 font-bold">SERPAPI_API_KEY</span>
+                    </div>
+                    <input
+                      type="password"
+                      value={serpApiKeyInput}
+                      onChange={(e) => setSerpApiKeyInput(e.target.value)}
+                      placeholder="SerpApi key from serpapi.com"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <p className="text-[10px] text-slate-500">Powers live Google Maps rank tracking and SERP lookups. Primary provider — checked first.</p>
+                  </div>
+
+                  {/* Serper Key */}
+                  <div className={`p-3.5 rounded-xl space-y-1.5 border transition-all ${serperKeyInput || aiStats?.apiKeysConfigured?.serper ? 'bg-indigo-50/50 border-indigo-300' : 'bg-slate-50/70 border-slate-200'}`}>
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        <span>Serper API Key</span>
+                        {serperKeyInput || aiStats?.apiKeysConfigured?.serper ? (
+                          <span className="text-[9px] font-mono font-bold text-indigo-800 bg-indigo-100 px-1.5 py-0.2 rounded border border-indigo-300">ACTIVE</span>
+                        ) : (
+                          <span className="text-[9px] font-mono font-bold text-slate-500 bg-slate-200 px-1.5 py-0.2 rounded">OPTIONAL</span>
+                        )}
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-500 font-bold">SERPER_API_KEY</span>
+                    </div>
+                    <input
+                      type="password"
+                      value={serperKeyInput}
+                      onChange={(e) => setSerperKeyInput(e.target.value)}
+                      placeholder="Serper key from serper.dev"
+                      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <p className="text-[10px] text-slate-500">Backup provider for live SERP lookups when SerpApi is not configured.</p>
+                  </div>
                 </div>
 
                 <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs text-slate-600">
@@ -3725,7 +3823,8 @@ export const AdminView: React.FC = () => {
                       .filter((u) => u.planTier && u.planTier !== 'free')
                       .map((u, idx) => {
                         const isYearly = u.billingCycle === 'yearly' || u.billingCycle === 'annual';
-                        const rate = u.planTier === 'agency' ? (isYearly ? 39 : 49) : (isYearly ? 15 : 19);
+                        // Canonical pricing: Pro $29/mo ($21/mo yearly), Agency $99/mo ($66/mo yearly)
+                        const rate = u.planTier === 'agency' ? (isYearly ? 66 : 99) : (isYearly ? 21 : 29);
                         return (
                           <tr key={`${u.id || 'sub'}-${u.email || idx}`} className="hover:bg-slate-50">
                             <td className="p-3 font-mono font-bold text-slate-900">{u.email}</td>
@@ -3755,10 +3854,10 @@ export const AdminView: React.FC = () => {
             <div>
               <h3 className="text-sm font-bold font-heading text-slate-900 flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-[#059669]" />
-                <span>Financial Transactions & Payments Dashboard</span>
+                <span>My Workspace Invoices</span>
               </h3>
               <p className="text-xs text-slate-500 font-sans mt-0.5">
-                Review payments received, pending invoices, and cancelled transactions.
+                Invoices in your own admin workspace. Platform-wide revenue lives in the Payments tab.
               </p>
             </div>
 
@@ -4174,23 +4273,26 @@ export const AdminView: React.FC = () => {
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {[
-                { name: 'Contact Us Form', desc: 'Alerts support@locoraai.com & sends instant auto-reply ticket to user', status: 'Active' },
-                { name: 'Sign-up Verification', desc: 'Dispatches welcome & account registration verification with workspace credentials', status: 'Active' },
-                { name: 'Magic Link & Password Reset', desc: 'Sends 1-click magic access links and 6-digit security codes', status: 'Active' },
-                { name: 'Whop Invoices & Receipts', desc: 'Issues real-time payment receipts, invoice PDFs, and plan upgrade confirmations', status: 'Active' },
-                { name: 'Client Invoices Dispatch', desc: 'Allows workspace users to dispatch client invoices & retainers via Brevo', status: 'Active' },
-                { name: 'Weekly Newsletter Pack', desc: 'Delivers weekly AI prompt packs to subscribers table automatically', status: 'Active' },
-              ].map((trigger, idx) => (
+                { name: 'Contact Us Form', desc: 'Alerts support@locoraai.com & sends instant auto-reply ticket to user' },
+                { name: 'Sign-up Verification', desc: 'Dispatches welcome & account registration verification with workspace credentials' },
+                { name: 'Magic Link & Password Reset', desc: 'Sends 1-click magic access links and 6-digit security codes' },
+                { name: 'Whop Invoices & Receipts', desc: 'Issues real-time payment receipts, invoice PDFs, and plan upgrade confirmations' },
+                { name: 'Client Invoices Dispatch', desc: 'Allows workspace users to dispatch client invoices & retainers via Brevo' },
+                { name: 'Weekly Newsletter Pack', desc: 'Delivers weekly AI prompt packs to subscribers table automatically' },
+              ].map((trigger, idx) => {
+                const mailLive = Boolean(emailStatus?.configured);
+                return (
                 <div key={idx} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-start justify-between gap-3">
                   <div>
                     <div className="text-xs font-bold text-slate-900">{trigger.name}</div>
                     <div className="text-[11px] text-slate-500 mt-0.5">{trigger.desc}</div>
                   </div>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    {trigger.status}
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${mailLive ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-amber-100 text-amber-800 border-amber-200'}`}>
+                    {mailLive ? 'Active' : 'No mail credentials'}
                   </span>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

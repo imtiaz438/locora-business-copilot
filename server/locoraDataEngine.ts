@@ -867,7 +867,7 @@ export function deriveDirectoryStatus(
   return 'DISCOVERED';
 }
 
-function normalizeDomain(url?: string): string {
+export function normalizeDomain(url?: string): string {
   if (!url) return '';
   return url.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/.*$/, '').trim();
 }

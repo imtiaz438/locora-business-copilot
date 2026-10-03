@@ -354,11 +354,21 @@ export async function getSerpResults(
 
         const relatedSearches: string[] = (json.related_searches || []).map((r: any) => r.query || r.title || '').filter(Boolean);
 
+        // Google Maps local pack (3-pack) — real positions, never fabricated.
+        const localPack = (json.local_results?.places || json.local_results || []).map((p: any, idx: number) => ({
+          position: p.position || idx + 1,
+          title: p.title || '',
+          address: p.address || '',
+          rating: typeof p.rating === 'number' ? p.rating : undefined,
+          reviews: typeof p.reviews === 'number' ? p.reviews : undefined,
+        }));
+
         return {
           keyword: cleanKeyword,
           results: organicResults,
           peopleAlsoAsk,
           relatedSearches,
+          localPack,
         };
       }
     } catch (err) {
@@ -390,12 +400,20 @@ export async function getSerpResults(
           snippet: p.snippet || '',
         }));
         const relatedSearches = (json.relatedSearches || []).map((r: any) => r.query || '').filter(Boolean);
+        // Serper also returns local pack data under "places".
+        const localPack = (json.places || []).map((p: any, idx: number) => ({
+          position: p.position || idx + 1,
+          title: p.title || '',
+          address: p.address || '',
+          rating: typeof p.rating === 'number' ? p.rating : undefined,
+        }));
 
         return {
           keyword: cleanKeyword,
           results,
           peopleAlsoAsk,
           relatedSearches,
+          localPack,
         };
       }
     } catch (err) {
@@ -409,6 +427,7 @@ export async function getSerpResults(
     results: [],
     peopleAlsoAsk: [],
     relatedSearches: [],
+    localPack: [],
   };
 }
 

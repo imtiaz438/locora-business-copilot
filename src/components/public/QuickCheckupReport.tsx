@@ -1061,10 +1061,10 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
             </div>
             <p className="text-xs text-slate-500">For ambitious local businesses dominating their market.</p>
             <ul className="space-y-1.5 text-xs text-slate-800">
-              <li className="flex items-center gap-1.5">✓ Continuous 24/7 rank & audit monitoring</li>
+              <li className="flex items-center gap-1.5">✓ 250 AI credits/mo for AI fixes & drafts</li>
               <li className="flex items-center gap-1.5">✓ Autonomous AI Manager & content drafts</li>
-              <li className="flex items-center gap-1.5">✓ AI Review response automation</li>
-              <li className="flex items-center gap-1.5">✓ Daily 3-pack local geo-grid tracking</li>
+              <li className="flex items-center gap-1.5">✓ AI-assisted review replies (you approve)</li>
+              <li className="flex items-center gap-1.5">✓ Search Console visibility tracking</li>
             </ul>
           </div>
 
@@ -1075,10 +1075,10 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
             </div>
             <p className="text-xs text-slate-500">For marketing agencies and multi-location franchises.</p>
             <ul className="space-y-1.5 text-xs text-slate-700">
-              <li className="flex items-center gap-1.5">✓ Unlimited client location management</li>
-              <li className="flex items-center gap-1.5">✓ White-label PDF audit reports</li>
-              <li className="flex items-center gap-1.5">✓ Bulk website audit crawler</li>
-              <li className="flex items-center gap-1.5">✓ Multi-user roles & client portals</li>
+              <li className="flex items-center gap-1.5">✓ Unlimited AI credits</li>
+              <li className="flex items-center gap-1.5">✓ Multi-client workspaces (10 businesses)</li>
+              <li className="flex items-center gap-1.5">✓ Agency branding & custom logo</li>
+              <li className="flex items-center gap-1.5">✓ Team member seats included</li>
             </ul>
           </div>
         </div>
@@ -1103,10 +1103,10 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
         <div className="pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
             <span className="text-xs font-bold text-white block font-heading">
-              Ready to claim your business and rank #1?
+              Ready to turn these findings into fixes?
             </span>
             <span className="text-xs text-slate-400 block">
-              Free forever tier • No credit card required • 60-second setup
+              Free plan • No credit card required • Import your audit in one click
             </span>
           </div>
 

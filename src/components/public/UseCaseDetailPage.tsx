@@ -383,8 +383,11 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
       {useCase.caseStudy && (
         <section className="py-8 px-6 max-w-5xl mx-auto space-y-6">
           <h2 className="text-2xl font-extrabold font-heading text-slate-900">
-            Case Study: {useCase.caseStudy.businessName}
+            Illustrative Example
           </h2>
+          <p className="text-xs text-slate-500 font-sans max-w-5xl">
+            An illustrative scenario showing how this use case could play out — not a real customer or verified result.
+          </p>
           <div className="p-6 bg-white border border-slate-200 rounded-3xl space-y-4 shadow-xs">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans text-slate-700">
               <p><strong>Challenge: </strong>{useCase.caseStudy.challenge}</p>

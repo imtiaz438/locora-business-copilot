@@ -257,10 +257,14 @@ export const MonthlyReportView: React.FC = () => {
     }
   };
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     if (!activeSnapshot) return;
-    exportReportToPdf(activeSnapshot);
-    logActivity(`Exported PDF for ${activeSnapshot.reportTitle}`, 'analytics');
+    try {
+      await exportReportToPdf(activeSnapshot);
+      logActivity(`Exported PDF for ${activeSnapshot.reportTitle}`, 'analytics');
+    } catch (e) {
+      console.error('Failed to export PDF:', e);
+    }
   };
 
   const currentTypeDefinition = REPORT_TYPE_DEFINITIONS.find(

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
+import { creditsForPlan, remainingCredits, creditsUsedPercent } from '../lib/credits';
 import { LocoraLogo } from './LocoraLogo';
 import { navigateToMain, navigateToDirectory, getDirectorySiteUrl } from '../utils/domain';
 import {
@@ -321,14 +322,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
                   <span>{user.planTier} Plan</span>
                 </span>
                 <span className="font-mono text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded">
-                  {user.planTier === 'agency' ? 'Unlimited' : `${Math.max(0, (user.monthlyAiCredits || 250) - (user.aiCreditsUsed || 0))} cr`}
+                  {user.planTier === 'agency' ? 'Unlimited' : `${remainingCredits(user.monthlyAiCredits || creditsForPlan(user.planTier, !user.email), user.aiCreditsUsed || 0)} cr`}
                 </span>
               </div>
               <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-[#059669] rounded-full transition-all duration-300"
                   style={{
-                    width: `${user.planTier === 'agency' ? 100 : Math.min(100, Math.round(((user.aiCreditsUsed || 0) / (user.monthlyAiCredits || 250)) * 100))}%`,
+                    width: `${user.planTier === 'agency' ? 100 : creditsUsedPercent(user.monthlyAiCredits || creditsForPlan(user.planTier, !user.email), user.aiCreditsUsed || 0)}%`,
                   }}
                 />
               </div>

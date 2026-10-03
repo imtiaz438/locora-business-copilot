@@ -196,7 +196,7 @@ export const LockedSeoFeatureView: React.FC<LockedSeoFeatureViewProps> = ({
                 <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold">Multi-Model AI Visibility Tracking:</span>
-                  <span className="text-emerald-900/80 ml-1">Automated brand mention checks across ChatGPT, Claude, Gemini, and Perplexity.</span>
+                  <span className="text-emerald-900/80 ml-1">Automated brand mention checks across ChatGPT, Claude, Perplexity, and Groq.</span>
                 </div>
               </li>
               <li className="flex items-start gap-2">

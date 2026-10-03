@@ -952,7 +952,7 @@ export const CRMView: React.FC = () => {
                   <label className="block text-slate-700 font-bold mb-1">Phone</label>
                   <input
                     type="text"
-                    placeholder="(555) 019-2831"
+                    placeholder="(512) 019-2831"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full px-3.5 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#059669]"

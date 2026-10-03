@@ -543,13 +543,13 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
         <section className="py-12 px-6 max-w-5xl mx-auto space-y-8">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-200 text-slate-800 rounded-full text-xs font-bold font-heading uppercase">
-              <span>Verified Case Study</span>
+              <span>Illustrative Example</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900">
-              Real-World Application: {feature.caseStudy.businessName}
+              Example Scenario: {feature.caseStudy.industry}
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 font-sans">
-              {feature.caseStudy.industry} • {feature.caseStudy.location}
+              An illustrative example of how this feature is used — not a real customer or verified result.
             </p>
           </div>
 

@@ -215,7 +215,9 @@ export const AiManagerView: React.FC = () => {
 
     trackAiChatStarted(q, 'ai_manager');
 
-    consumeAiCredit(1);
+    // T-06 fix: do NOT charge upfront. The credit is deducted only after the
+    // backend returns a real deliverable (hasEnoughData === true). Refusals,
+    // errors and timeouts cost the user nothing.
     setInputQuery('');
     setIsProcessing(true);
 
@@ -269,7 +271,9 @@ export const AiManagerView: React.FC = () => {
           return;
         }
 
-        // When verified data exists, render the appropriate card based on the backend verified response
+        // When verified data exists, render the appropriate card based on the backend verified response.
+        // A real deliverable was produced — this is the ONLY point where a credit moves.
+        consumeAiCredit(1);
         const cardType = result.cardType || 'generic';
         setActiveCards((prev) => [
           {
@@ -458,7 +462,13 @@ export const AiManagerView: React.FC = () => {
           projects: projects || [],
           contentRecords: contentRecords || [],
         });
-        exportReportToPdf(snapshot);
+        // White-label for Agency tier: agency brand + logo, zero Locora mentions.
+        const isWhiteLabel = user.planTier === 'agency' || user.planTier === 'elite';
+        await exportReportToPdf(snapshot, {
+          whiteLabel: isWhiteLabel,
+          brandName: isWhiteLabel ? (user.companyName || 'Your Agency') : undefined,
+          logoUrl: (activeBusiness as any)?.logoConfig?.url || (activeBusiness as any)?.logoUrl || undefined,
+        });
       }
     } catch (e) {
       console.error('Failed to generate PDF:', e);
@@ -1102,13 +1112,13 @@ export const AiManagerView: React.FC = () => {
                             <div className="pt-2 border-t border-slate-200/80 space-y-1">
                               <div className="flex items-center justify-between">
                                 <span className="text-[10px] font-bold text-[#059669] uppercase tracking-wider font-heading">
-                                  AI HIPAA-Compliant Reply:
+                                  Suggested Reply (template):
                                 </span>
                                 <button
-                                  onClick={() => handleCopyText(`rev_${rIdx}`, rev.suggestedReply)}
+                                  onClick={() => setActiveTab('reputation')}
                                   className="text-[11px] font-bold text-[#059669] hover:underline flex items-center gap-1 cursor-pointer"
                                 >
-                                  {copiedId === `rev_${rIdx}` ? 'Copied ✓' : 'Copy Reply'}
+                                  ✦ Draft with AI
                                 </button>
                               </div>
                               <p className="text-slate-800 bg-white p-2.5 rounded-xl border border-slate-200">

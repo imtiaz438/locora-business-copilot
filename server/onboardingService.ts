@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { generateCompletion, stripCodeFences } from './aiEngine.ts';
 import { db, schema } from '../src/db/index.ts';
 import { eq, desc } from 'drizzle-orm';
 import { syncDetectedGrowthOpportunities } from './growthDetectorService.ts';
@@ -8,21 +8,6 @@ import { syncBusinessToDirectoryProjection } from '../src/db/directoryService.ts
 import { upsertGoogleReviews } from '../src/db/service.ts';
 import type { DiscoveredBusinessInfo, OnboardingMissingInfoForm } from '../src/types.ts';
 
-// Helper to get GoogleGenAI client
-function getGenAIClient(overrideApiKey?: string) {
-  const apiKey = overrideApiKey || process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY is missing. Please set it in Settings or environment variable.');
-  }
-  return new GoogleGenAI({
-    apiKey,
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
-      },
-    },
-  });
-}
 
 // Clean and normalize website URL
 export function normalizeWebsiteUrl(rawUrl: string): string {
@@ -940,30 +925,24 @@ Return ONLY a single valid JSON object with this exact shape:
   let aiResult: any = null;
 
   try {
-    const ai = getGenAIClient();
-    const candidateModels = ['gemini-3.8-flash', 'gemini-3.6-flash'];
+    // Unified AI engine (Groq primary). Falls back to the rigorous
+    // non-demo baseline below when AI is unavailable.
+    const engineResult = await generateCompletion({
+      messages: [{ role: 'user', content: prompt }],
+      systemInstruction: 'You are an autonomous AI business intelligence engine. You produce rigorous, factual, non-hallucinatory business analyses strictly in JSON format without markdown code blocks.',
+      temperature: 0.3,
+      jsonMode: true,
+      timeoutMs: 20000,
+    });
 
-    for (const modelToUse of candidateModels) {
-      try {
-        const response = await ai.models.generateContent({
-          model: modelToUse,
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          config: {
-            systemInstruction: 'You are an autonomous AI business intelligence engine. You produce rigorous, factual, non-hallucinatory business analyses strictly in JSON format without markdown code blocks.',
-            temperature: 0.3,
-            responseMimeType: 'application/json',
-          },
-        });
-
-        const rawText = response.text || '';
-        const cleanedJson = rawText.replace(/```json\s*/gi, '').replace(/```\s*$/gi, '').trim();
-        aiResult = JSON.parse(cleanedJson);
-        if (aiResult && aiResult.summary && aiResult.swot) {
-          break;
-        }
-      } catch (geminiErr: any) {
-        console.warn(`[Business Brain Creation] Model ${modelToUse} error:`, geminiErr.message);
+    if (engineResult.ok) {
+      const cleanedJson = stripCodeFences(engineResult.text);
+      const parsed = JSON.parse(cleanedJson);
+      if (parsed && parsed.summary && parsed.swot) {
+        aiResult = parsed;
       }
+    } else {
+      console.warn('[Business Brain Creation] AI engine unavailable:', engineResult.errorMessage);
     }
   } catch (err: any) {
     console.warn('[Business Brain Creation] AI synthesis fallback:', err.message);

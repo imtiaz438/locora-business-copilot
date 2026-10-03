@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { creditsForPlan } from '../lib/credits';
 import {
   ShoppingBag,
   Zap,
@@ -28,7 +29,7 @@ export const GrowthStoreModal: React.FC<GrowthStoreModalProps> = ({ isOpen, onCl
     setPurchasedItem(title);
     if (updateUser && user) {
       updateUser({
-        monthlyAiCredits: (user.monthlyAiCredits || 250) + creditsToAdd,
+        monthlyAiCredits: (user.monthlyAiCredits || creditsForPlan(user.planTier, !user.email)) + creditsToAdd,
       });
     }
     logActivity('store_purchase', `Activated ${title}`, `Successfully added ${creditsToAdd} actions to workspace.`);

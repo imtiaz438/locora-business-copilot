@@ -251,7 +251,7 @@ export const RealSeoDashboard: React.FC<RealSeoDashboardProps> = ({
     return (
       <LockedSeoFeatureView
         title="Real SEO Analytics & Multi-Model AI Citations"
-        description="Access DataForSEO Domain Rank metrics, Live Backlink profiles, 700-keyword batch matrices, Google AI Overview verification, and Multi-LLM brand mention benchmarks across ChatGPT, Claude, Gemini, and Perplexity."
+        description="Access DataForSEO Domain Rank metrics, Live Backlink profiles, 700-keyword batch matrices, Google AI Overview verification, and Multi-LLM brand mention benchmarks across ChatGPT, Claude, Perplexity, and Groq."
         badgeLabel="PRO & AGENCY ONLY"
         onUpgradePro={() => {
           if (onUpgradeClick) onUpgradeClick();

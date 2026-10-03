@@ -656,7 +656,7 @@ export const AdminEmailActivityPanel: React.FC<AdminEmailActivityPanelProps> = (
                       <div>Status: <strong>{sendFeedback.details.status}</strong></div>
                       <div>Message ID: <strong>{sendFeedback.details.providerMessageId || 'Generated'}</strong></div>
                       <div>Recipient: <strong>{sendFeedback.details.recipient}</strong></div>
-                      <div>AI Personalization: <strong>{sendFeedback.details.aiPersonalizationUsed ? 'Gemini AI Copy' : 'Deterministic Safety Fallback'}</strong></div>
+                      <div>AI Personalization: <strong>{sendFeedback.details.aiPersonalizationUsed ? 'Groq AI Copy' : 'Deterministic Safety Fallback'}</strong></div>
                       {sendFeedback.details.simulationNotice && (
                         <div className="mt-2 font-sans font-medium text-[11px] p-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-900">
                           {sendFeedback.details.simulationNotice}
@@ -893,7 +893,7 @@ export const AdminEmailActivityPanel: React.FC<AdminEmailActivityPanelProps> = (
                     <div>Location: <strong>{selectedEvent.metadata.city || '—'}</strong></div>
                     <div>GBP Status: <strong>{selectedEvent.metadata.gbpStatus || '—'}</strong></div>
                     <div>Opportunities Discovered: <strong>{selectedEvent.metadata.opportunityCount ?? '—'}</strong></div>
-                    <div>AI Copy Personalized: <strong>{selectedEvent.metadata.isAiGenerated ? 'Yes (Gemini)' : 'Deterministic Safe Fallback'}</strong></div>
+                    <div>AI Copy Personalized: <strong>{selectedEvent.metadata.isAiGenerated ? 'Yes (Groq)' : 'Deterministic Safe Fallback'}</strong></div>
                   </div>
                 </div>
               )}

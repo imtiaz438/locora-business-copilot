@@ -52,6 +52,7 @@ export const ReputationView: React.FC = () => {
     logActivity,
     setActiveTab,
     setIsGbpSyncModalOpen,
+    consumeAiCredit,
   } = useApp();
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -66,6 +67,10 @@ export const ReputationView: React.FC = () => {
   const [responseText, setResponseText] = useState('');
   const [isNegativeConfirmation, setIsNegativeConfirmation] = useState(false);
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  // AI-drafted replies: cached per review id so we generate once, on demand.
+  const [aiDraftCache, setAiDraftCache] = useState<Record<string, string>>({});
+  const [isGeneratingDraft, setIsGeneratingDraft] = useState(false);
+  const [draftError, setDraftError] = useState<string | null>(null);
 
   // Add User-Entered Review Modal State
   const [addReviewModalOpen, setAddReviewModalOpen] = useState(false);
@@ -201,20 +206,57 @@ export const ReputationView: React.FC = () => {
 
   const handleOpenResponse = (rev: UIReview) => {
     setResponseModalReview(rev);
-    setResponseText(rev.suggestedReply);
+    // Prefer a previously AI-generated draft; fall back to the plain template
+    // while the AI draft generates in the background.
+    const cached = aiDraftCache[rev.id];
+    setResponseText(cached || rev.suggestedReply);
+    setDraftError(null);
     setIsNegativeConfirmation(rev.sentiment === 'Negative' || rev.rating <= 2);
+    if (!cached && !rev.response) {
+      generateAiDraft(rev, rev.suggestedReply);
+    }
+  };
+
+  const generateAiDraft = async (rev: UIReview, untouchedTemplate: string, force = false) => {
+    if (!activeBusiness?.id || isGeneratingDraft) return;
+    // Avoid repeat spend when a draft is already cached (unless regenerating).
+    if (!force && aiDraftCache[rev.id]) {
+      setResponseText(aiDraftCache[rev.id]);
+      return;
+    }
+    setIsGeneratingDraft(true);
+    setDraftError(null);
+    try {
+      const result = await reputationService.draftAiReply(activeBusiness.id, rev.id);
+      const draft = (result.draft || '').trim();
+      if (!draft) throw new Error('Empty draft returned');
+      setAiDraftCache((prev) => ({ ...prev, [rev.id]: draft }));
+      // Only auto-replace the text if the user hasn't edited it since opening.
+      setResponseText((current) => (force || current === untouchedTemplate ? draft : current));
+      try { consumeAiCredit?.(); } catch { /* credit UI is best-effort */ }
+    } catch (err: any) {
+      const msg = err?.code === 'CREDITS_EXHAUSTED'
+        ? 'AI credits exhausted — the template reply below is yours to edit, or top up credits to use AI drafts.'
+        : 'AI draft unavailable right now — the template reply below is yours to edit.';
+      setDraftError(msg);
+    } finally {
+      setIsGeneratingDraft(false);
+    }
   };
 
   const handleDirectApprove = (rev: UIReview) => {
+    // Prefer a previously AI-generated draft over the plain template.
+    const draftToUse = aiDraftCache[rev.id] || rev.suggestedReply;
     // CRITICAL MANDATE: Never auto-post negative-review responses without user approval.
     if (rev.sentiment === 'Negative' || rev.rating <= 2) {
       setResponseModalReview(rev);
-      setResponseText(rev.suggestedReply);
+      setResponseText(draftToUse);
+      setDraftError(null);
       setIsNegativeConfirmation(true);
       return;
     }
 
-    publishReply(rev.id, rev.suggestedReply, rev.author);
+    publishReply(rev.id, draftToUse, rev.author);
   };
 
   const publishReply = async (reviewId: string, textToPublish: string, author: string) => {
@@ -1306,13 +1348,35 @@ export const ReputationView: React.FC = () => {
             </div>
 
             <div className="space-y-1.5 text-xs">
-              <label className="font-bold text-slate-800">Review & Edit Reply:</label>
+              <div className="flex items-center justify-between">
+                <label className="font-bold text-slate-800">Review & Edit Reply:</label>
+                <button
+                  type="button"
+                  disabled={isGeneratingDraft}
+                  onClick={() => responseModalReview && generateAiDraft(responseModalReview, responseModalReview.suggestedReply, true)}
+                  className="px-3 py-1.5 rounded-xl text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {isGeneratingDraft ? 'Drafting with AI…' : '✦ Draft with AI'}
+                </button>
+              </div>
+              {draftError && (
+                <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+                  {draftError}
+                </p>
+              )}
               <textarea
                 rows={5}
                 value={responseText}
                 onChange={(e) => setResponseText(e.target.value)}
+                placeholder={isGeneratingDraft ? 'AI is drafting a personalized reply…' : undefined}
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:border-[#059669] focus:outline-none leading-relaxed"
               />
+              <p className="text-[10px] text-slate-400">
+                {aiDraftCache[responseModalReview.id]
+                  ? '✦ AI-drafted — review and edit before posting.'
+                  : 'Template reply — use “✦ Draft with AI” for a personalized draft (1 credit).'}
+              </p>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">

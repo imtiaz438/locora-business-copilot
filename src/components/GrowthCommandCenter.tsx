@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { FixItModal } from './FixItModal';
+import { FirstSessionChecklist } from './FirstSessionChecklist';
+import { HealthScansCard } from './HealthScansCard';
 import { MultiLocationSection } from './MultiLocationSection';
 import { PriorityAction } from '../types';
 import { DataProvenanceBadge } from './common/DataProvenanceBadge';
@@ -291,6 +293,14 @@ export const GrowthCommandCenter: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto font-sans text-slate-900 pb-16">
+      {/* 0. FIRST-SESSION CHECKLIST: profile → GBP → first Fix-It (auto-hides when complete) */}
+      <FirstSessionChecklist />
+
+      {/* 0b. AUTOMATED HEALTH SCANS: weekly on Pro/Agency, manual on all plans */}
+      {activeBusiness?.id && (
+        <HealthScansCard businessId={activeBusiness.id} businessName={activeBusiness.name || businessName || 'this business'} />
+      )}
+
       {/* 1. UNIFIED WORKFLOW STATUS BAR: DIAGNOSE → PRIORITIZE → ACT → MEASURE */}
       <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-2xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -365,14 +375,22 @@ export const GrowthCommandCenter: React.FC = () => {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-1.5 max-w-2xl">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Locora Certified Directory
-              </span>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                Verified Public Listing
-              </span>
+              {activeBusiness?.isPublishedInDirectory ? (
+                <>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Locora Certified Directory
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    Verified Public Listing
+                  </span>
+                </>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
+                  Not Published
+                </span>
+              )}
               {(dirAnalytics?.totalLeads ?? 0) > 0 && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-500 text-white shadow-2xs">
                   <Zap className="w-3.5 h-3.5" />
@@ -381,27 +399,49 @@ export const GrowthCommandCenter: React.FC = () => {
               )}
             </div>
             <h3 className="text-base sm:text-lg font-bold font-heading text-slate-900">
-              {businessName || 'Your Business'} is Live on Locora Local Directory
+              {activeBusiness?.isPublishedInDirectory
+                ? `${businessName || 'Your Business'} is Live on Locora Local Directory`
+                : 'Your directory listing isn\u2019t live yet'}
             </h3>
             <p className="text-xs text-slate-600 leading-relaxed max-w-xl font-sans">
-              Local customers searching in {businessCity || 'your local area'} discover your business, inspect verified Google reviews, and submit quote requests delivered directly into your CRM.
+              {activeBusiness?.isPublishedInDirectory ? (
+                <>Local customers searching in {businessCity || 'your local area'} discover your business, inspect verified Google reviews, and submit quote requests delivered directly into your CRM.</>
+              ) : (
+                <>Not published yet — {!activeBusiness?.phone && !activeBusiness?.website
+                  ? 'add your phone number and website'
+                  : !activeBusiness?.phone
+                    ? 'add your phone number'
+                    : !activeBusiness?.website
+                      ? 'add your website'
+                      : 'complete your profile'} to publish your verified listing and start receiving inbound quote requests.</>
+              )}
             </p>
           </div>
 
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 shrink-0 w-full md:w-auto">
-            <a
-              href={getDirectoryBusinessUrl(
-                (activeBusiness?.slug && !activeBusiness.slug.startsWith('biz_') && !activeBusiness.slug.includes('@'))
-                  ? activeBusiness.slug
-                  : (businessName ? businessName.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') : 'locora')
-              )}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer font-sans"
-            >
-              <span>View Public Listing</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </a>
+            {activeBusiness?.isPublishedInDirectory ? (
+              <a
+                href={getDirectoryBusinessUrl(
+                  (activeBusiness?.slug && !activeBusiness.slug.startsWith('biz_') && !activeBusiness.slug.includes('@'))
+                    ? activeBusiness.slug
+                    : (businessName ? businessName.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') : 'locora')
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer font-sans"
+              >
+                <span>View Public Listing</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </a>
+            ) : (
+              <button
+                onClick={() => setActiveTab('settings')}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer font-sans"
+              >
+                <span>Complete Profile to Publish</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
             <button
               onClick={() => {
                 sessionStorage.setItem('locora_visibility_subtab', 'directory_leads');
@@ -897,7 +937,7 @@ export const GrowthCommandCenter: React.FC = () => {
       </section>
 
       {/* 3. PRIORITY ACTION CARDS: TOP 3 THINGS TO FIX THIS WEEK */}
-      <section className="space-y-4">
+      <section id="fixit-actions" className="space-y-4 scroll-mt-24">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
             <div className="w-3 h-3 rounded-full bg-rose-500 animate-pulse" />
@@ -925,12 +965,25 @@ export const GrowthCommandCenter: React.FC = () => {
             <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
               <ShieldCheck className="w-6 h-6 text-[#059669]" />
             </div>
-            <h3 className="text-base font-bold text-slate-900 font-heading">
-              All Systems Healthy — Zero Open Issues Detected
-            </h3>
-            <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
-              Google Business Profile is synchronized, review response rate is healthy, and technical schema is verified. In accordance with operating standards, no opportunities are generated solely to fill the UI.
-            </p>
+            {!isGoogleConnected ? (
+              <>
+                <h3 className="text-base font-bold text-slate-900 font-heading">
+                  Not enough data yet
+                </h3>
+                <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
+                  Connect your Google Business Profile to calculate your health score. We never report a clean bill of health without real data.
+                </p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-base font-bold text-slate-900 font-heading">
+                  All Systems Healthy — Zero Open Issues Detected
+                </h3>
+                <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
+                  Google Business Profile is synchronized, review response rate is healthy, and technical schema is verified. In accordance with operating standards, no opportunities are generated solely to fill the UI.
+                </p>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -973,7 +1026,7 @@ export const GrowthCommandCenter: React.FC = () => {
                       </div>
                       {action.isFixed ? (
                         <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <Check className="w-3 h-3" /> Deployed
+                          <Check className="w-3 h-3" /> Draft saved
                         </span>
                       ) : (
                         <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
@@ -1072,7 +1125,7 @@ export const GrowthCommandCenter: React.FC = () => {
                     {action.isFixed ? (
                       <>
                         <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                        <span>Fixed ✓ Review Draft</span>
+                        <span>Draft saved — Review Draft</span>
                       </>
                     ) : (
                       <>

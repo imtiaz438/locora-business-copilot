@@ -1,4 +1,5 @@
 import React from 'react';
+import { creditsForPlan } from '../lib/credits';
 import { 
   CheckCircle2, 
   Sparkles, 
@@ -30,7 +31,7 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
   const whopCustomerLoginUrl = 'https://whop.com/login?redirect_to=%2Fhub%2Forders';
 
   const planName = user.planTier === 'agency' ? 'Agency Unlimited' : 'Pro Growth';
-  const creditsAmount = user.planTier === 'agency' ? 'Unlimited' : (user.monthlyAiCredits || 250);
+  const creditsAmount = user.planTier === 'agency' ? 'Unlimited' : (user.monthlyAiCredits || creditsForPlan(user.planTier, !user.email));
 
   return (
     <div 

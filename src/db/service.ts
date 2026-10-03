@@ -3030,37 +3030,101 @@ export async function scanVisibilityNow(businessId: string) {
 
   if (keywords.length === 0) {
     return {
+      success: false,
+      reason: 'no_keywords',
       updatedCount: 0,
       snapshots: [],
       message: 'No tracked keywords configured yet. Add keywords to scan visibility.',
     };
   }
 
+  // REAL DATA ONLY: derive positions from connected Google Search Console queries.
+  // We never invent rank positions — without a live source the scan reports
+  // honestly instead of writing fabricated snapshots.
+  //
+  // Provider honesty: only the GSC feed has a live implementation. The
+  // "Locora SERP Tracker" and "BrightLocal / DataForSEO" options have no live
+  // rank-feed behind them, so selecting them yields an honest unavailable
+  // message rather than simulated positions.
+  const connections = await db
+    .select()
+    .from(schema.dataConnectionsTable)
+    .where(eq(schema.dataConnectionsTable.businessId, businessId))
+    .catch(() => []);
+  const rankingConn = connections.find(
+    (c: any) => ['locora_serp_tracker', 'google_search_console', 'brightlocal'].includes(c.provider) && c.status === 'connected'
+  );
+  const provider = (rankingConn as any)?.provider || 'google_search_console';
+
+  if (provider === 'locora_serp_tracker' || provider === 'brightlocal') {
+    return {
+      success: false,
+      reason: 'provider_not_live',
+      updatedCount: 0,
+      snapshots: [],
+      keywordsTotal: keywords.length,
+      keywordsWithData: 0,
+      message:
+        'The selected ranking provider has no live data feed connected yet, so no rescan was run. Switch the observation provider to Google Search Console API, or record search observations manually — Locora will not simulate rankings.',
+    };
+  }
+
+  const gscQueries = await getSearchConsoleQueries(businessId).catch(() => []);
+  const normalize = (s: string) => (s || '').toLowerCase().trim();
+
+  const realPositions: Array<{ keywordId: string; position: number; impressions: number }> = [];
+  for (const kw of keywords) {
+    const kwNorm = normalize((kw as any).keyword || (kw as any).term || '');
+    if (!kwNorm) continue;
+    const matches = gscQueries.filter((q: any) => {
+      const qNorm = normalize(q.query);
+      return qNorm && (qNorm.includes(kwNorm) || kwNorm.includes(qNorm)) && (q.position || 0) > 0;
+    });
+    if (matches.length === 0) continue;
+    const totalImpr = matches.reduce((acc: number, q: any) => acc + (q.impressions || 0), 0);
+    const weightedPos = totalImpr > 0
+      ? matches.reduce((acc: number, q: any) => acc + q.position * (q.impressions || 0), 0) / totalImpr
+      : matches.reduce((acc: number, q: any) => acc + q.position, 0) / matches.length;
+    realPositions.push({ keywordId: (kw as any).id, position: weightedPos, impressions: totalImpr });
+  }
+
+  if (realPositions.length === 0) {
+    return {
+      success: false,
+      reason: 'no_source',
+      updatedCount: 0,
+      snapshots: [],
+      keywordsTotal: keywords.length,
+      keywordsWithData: 0,
+      message:
+        'No live ranking source connected. Connect Google Search Console to enable real visibility rescans — Locora will not invent ranking data.',
+    };
+  }
+
   const todayStr = new Date().toISOString().split('T')[0];
   const updatedRanks: any[] = [];
 
-  for (const kw of keywords) {
-    const baseRank = kw.intent === 'navigational' ? 1 : (kw.searchVolume && kw.searchVolume > 3000 ? 3 : 4);
+  for (const rp of realPositions) {
     const existingSnap = await db
       .select()
       .from(schema.rankSnapshotsTable)
-      .where(and(eq(schema.rankSnapshotsTable.businessId, businessId), eq(schema.rankSnapshotsTable.keywordId, kw.id)))
+      .where(and(eq(schema.rankSnapshotsTable.businessId, businessId), eq(schema.rankSnapshotsTable.keywordId, rp.keywordId)))
       .orderBy(desc(schema.rankSnapshotsTable.snapshotDate))
       .limit(1);
 
-    const prevPos = existingSnap[0]?.rankPosition || (baseRank + 1);
-    const currentPos = Math.max(1, Math.min(10, baseRank));
+    const prevPos = existingSnap[0]?.rankPosition ?? null;
+    const currentPos = Math.max(1, Math.round(rp.position));
 
     const [snapshot] = await db
       .insert(schema.rankSnapshotsTable)
       .values({
         id: `rs_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         businessId,
-        keywordId: kw.id,
+        keywordId: rp.keywordId,
         rankPosition: currentPos,
         previousPosition: prevPos,
-        searchEngine: 'Google Local 3-Pack',
-        device: 'desktop',
+        searchEngine: 'Google Search Console',
+        device: 'all',
         snapshotDate: todayStr,
       })
       .returning();
@@ -3068,7 +3132,8 @@ export async function scanVisibilityNow(businessId: string) {
     updatedRanks.push(snapshot);
   }
 
-  const avgRank = updatedRanks.reduce((acc, r) => acc + r.rankPosition, 0) / (updatedRanks.length || 1);
+  // Aggregate ONLY from keywords with real observed positions.
+  const avgRank = updatedRanks.reduce((acc, r) => acc + r.rankPosition, 0) / updatedRanks.length;
   const calculatedScore = Math.round(Math.max(10, 100 - (avgRank - 1) * 11));
   const [vis] = await db
     .insert(schema.visibilitySnapshotsTable)
@@ -3085,7 +3150,20 @@ export async function scanVisibilityNow(businessId: string) {
     .returning();
 
   const status = await getRankingTrackingStatus(businessId);
-  return { success: true, visibility: vis, ranks: updatedRanks, status };
+  return {
+    success: true,
+    visibility: vis,
+    ranks: updatedRanks,
+    status,
+    updatedCount: updatedRanks.length,
+    keywordsTotal: keywords.length,
+    keywordsWithData: realPositions.length,
+    source: 'google_search_console',
+    message:
+      realPositions.length < keywords.length
+        ? `Rescan complete from Google Search Console — real positions found for ${realPositions.length} of ${keywords.length} keywords.`
+        : `Rescan complete from Google Search Console — ${realPositions.length} keywords updated.`,
+  };
 }
 
 export async function recordWebsiteAuditCrawl(

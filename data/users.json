@@ -57,21 +57,6 @@
     "nextBillingDate": "2026-09-15T12:02:37.780Z"
   },
   {
-    "id": "usr_soc_1786884906503_ib4bl",
-    "name": "Sarah Connor",
-    "email": "sarah.connor@example.com",
-    "companyName": "Sarah Connor's Business Workspace",
-    "role": "customer",
-    "planTier": "free",
-    "subscriptionStatus": "active",
-    "billingCycle": "monthly",
-    "monthlyAiCredits": 25,
-    "aiCreditsUsed": 0,
-    "invoicesCreatedCount": 0,
-    "memberSince": "2026-08-16T12:55:06.503Z",
-    "nextBillingDate": "2026-09-15T12:55:06.503Z"
-  },
-  {
     "id": "usr_admin_support",
     "name": "System Admin",
     "email": "support@locoraai.com",
@@ -99,52 +84,5 @@
     "aiCreditsUsed": 0,
     "memberSince": "2026-07-30T08:07:25.213Z",
     "nextBillingDate": "2026-09-30T09:41:50.597Z"
-  },
-  {
-    "id": "usr_1785413894028_hydcw",
-    "name": "Test",
-    "email": "imtiazbloch2023@gmail.com",
-    "companyName": "test Locora",
-    "role": "customer",
-    "planTier": "free",
-    "subscriptionStatus": "active",
-    "billingCycle": "monthly",
-    "monthlyAiCredits": 25,
-    "aiCreditsUsed": 0,
-    "memberSince": "2026-07-30T12:18:14.217Z",
-    "nextBillingDate": "2026-09-30T09:41:50.597Z"
-  },
-  {
-    "id": "usr_1785494712634_dhugb",
-    "name": "Sarah Connor",
-    "email": "sarah.connor@cyberdyne-test.com",
-    "companyName": "Resistance Marketing",
-    "role": "customer",
-    "planTier": "free",
-    "subscriptionStatus": "active",
-    "billingCycle": "monthly",
-    "monthlyAiCredits": 25,
-    "aiCreditsUsed": 0,
-    "memberSince": "2026-07-31T10:45:16.057Z",
-    "nextBillingDate": "2026-09-30T09:41:50.597Z"
-  },
-  {
-    "id": "usr_1789473955770_8ipbv",
-    "name": "Real Test",
-    "email": "real@smilesolution.com",
-    "companyName": "Smile solutions",
-    "role": "customer",
-    "planTier": "free",
-    "subscriptionStatus": "active",
-    "billingCycle": "monthly",
-    "monthlyAiCredits": 25,
-    "aiCreditsUsed": 6,
-    "memberSince": "2026-09-15T12:05:55.770Z",
-    "nextBillingDate": "2026-10-15T12:05:55.770Z",
-    "passwordHash": "Smile@123",
-    "freeAuditedDomain": "smilesolutions.com.au",
-    "freeAuditedDomains": [
-      "smilesolutions.com.au"
-    ]
   }
 ]

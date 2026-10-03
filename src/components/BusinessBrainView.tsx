@@ -509,7 +509,7 @@ export const BusinessBrainView: React.FC = () => {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     className="w-full p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[#059669] bg-slate-50"
-                    placeholder="(555) 000-0000"
+                    placeholder="(512) 000-0000"
                   />
                 </div>
                 <div>

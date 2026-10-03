@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Lock,
   Key,
@@ -53,20 +53,26 @@ export const ProviderAccessGate: React.FC<ProviderAccessGateProps> = ({
 
   const def = PROVIDER_FEATURE_REGISTRY[featureId];
 
-  // Resolve configuration from user settings if not explicitly passed
+  // Resolve configuration from the live provider-status endpoint (booleans only,
+  // no secrets). Falls back to the explicit prop when provided.
+  const [liveKeyStatus, setLiveKeyStatus] = useState<Record<string, boolean> | null>(null);
+  useEffect(() => {
+    if (isConfigured !== undefined) return;
+    if (!def?.requiresApiKey) return;
+    fetch('/api/provider-status', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && d.configured) setLiveKeyStatus(d.configured);
+      })
+      .catch(() => {});
+  }, [featureId]);
+
   let resolvedIsConfigured = isConfigured;
   if (resolvedIsConfigured === undefined) {
-    if (featureId === 'dataforseo' || featureId === 'advanced_serp') {
-      // DataForSEO requires credentials
-      resolvedIsConfigured = Boolean(
-        (window as any).__DATAFORSEO_CONFIGURED__ ||
-        Boolean(localStorage.getItem('dataforseo_configured'))
-      );
-    } else if (featureId === 'low_cost_serp') {
-      resolvedIsConfigured = Boolean(
-        Boolean(localStorage.getItem('serp_configured')) ||
-        (window as any).__SERP_CONFIGURED__
-      );
+    if (featureId === 'dataforseo') {
+      resolvedIsConfigured = liveKeyStatus ? Boolean(liveKeyStatus.dataforseo) : undefined;
+    } else if (featureId === 'low_cost_serp' || featureId === 'advanced_serp') {
+      resolvedIsConfigured = liveKeyStatus ? Boolean(liveKeyStatus.serp) : undefined;
     } else {
       resolvedIsConfigured = true;
     }

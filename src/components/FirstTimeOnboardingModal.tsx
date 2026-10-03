@@ -108,7 +108,7 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
   const [isSavingRecord, setIsSavingRecord] = useState<boolean>(false);
   const [isSynthesizingBrain, setIsSynthesizingBrain] = useState<boolean>(false);
   const [brainResult, setBrainResult] = useState<any | null>(null);
-  const [brainSynthesisStage, setBrainSynthesisStage] = useState<string>('Synthesizing verified Business Brain with Gemini AI...');
+  const [brainSynthesisStage, setBrainSynthesisStage] = useState<string>('Synthesizing your verified Business Brain...');
 
   // Automatically pre-populate discovered information from claimed Public Quick Checkup
   useEffect(() => {
@@ -360,7 +360,7 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
       const confirmedBizId = saveJson.businessId || savedBusinessId;
       setSavedBusinessId(confirmedBizId);
 
-      setBrainSynthesisStage('Synthesizing verified Business Brain with Gemini AI...');
+      setBrainSynthesisStage('Synthesizing your verified Business Brain...');
 
       // Step 2: Synthesize Business Brain
       const brainRes = await fetch('/api/onboarding/create-brain', {
@@ -448,8 +448,9 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
     if (user?.email) {
       fetch('/api/account/onboarding-complete', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userEmail: user.email }),
+        body: JSON.stringify({}),
       }).catch(() => {});
     }
     setActiveTab('dashboard');
@@ -465,8 +466,9 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
     if (user?.email) {
       fetch('/api/account/onboarding-complete', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userEmail: user.email }),
+        body: JSON.stringify({}),
       }).catch(() => {});
     }
     onClose();
@@ -873,7 +875,7 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
                     <input
                       id="form-phone"
                       type="text"
-                      placeholder="e.g. (512) 555-0199"
+                      placeholder="e.g. (512) 512-0199"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"

@@ -37,6 +37,7 @@ import { resolveRouteFromPath, resolvePathFromTab, PATH_TO_TAB, TAB_TO_PATH } fr
 import { dashboardService } from '../services/dashboardService';
 import type { NormalizedDashboardData } from '../types/production';
 import { trackBusinessAdded, trackSubscriptionStarted, initUtmAttribution } from '../lib/analytics';
+import { creditsForPlan, remainingCredits, DEMO_GUEST_CREDITS } from '../lib/credits';
 
 interface AppContextType {
   // Production Data Architecture
@@ -137,6 +138,7 @@ interface AppContextType {
   setPriorityActions: React.Dispatch<React.SetStateAction<PriorityAction[]>>;
   fixItAction: (actionId: string, draftData?: Partial<FixItDraft>) => void;
   publishDraft: (actionId: string) => void;
+  discardDraft: (actionId: string) => void;
   rightAiPanelOpen: boolean;
   setRightAiPanelOpen: (open: boolean) => void;
   toggleRightAiPanel: () => void;
@@ -266,7 +268,7 @@ const DEFAULT_USER: UserProfile = {
   planTier: 'free',
   subscriptionStatus: 'active',
   billingCycle: 'monthly',
-  monthlyAiCredits: 15,
+  monthlyAiCredits: DEMO_GUEST_CREDITS, // guest default; see src/lib/credits.ts
   aiCreditsUsed: 0,
   invoicesCreatedCount: 0,
   memberSince: new Date().toISOString(),
@@ -427,7 +429,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             ...data.user,
             role: isSuperAdminEmail ? 'admin' : (data.user.role || 'customer'),
             planTier: isSuperAdminEmail ? 'agency' : (data.user.planTier || 'free'),
-            monthlyAiCredits: isSuperAdminEmail ? 9999 : (data.user.monthlyAiCredits || 250),
+            // Canonical credit fallback: backend value wins; otherwise plan allocation (never a hardcoded 250).
+            monthlyAiCredits: isSuperAdminEmail ? 9999 : (data.user.monthlyAiCredits ?? creditsForPlan(data.user.planTier || 'free', false)),
             isAuthenticated: true,
           });
 
@@ -635,11 +638,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // Ensure monthlyAiCredits aligns with current planTier (25/mo for Starter, 15 for Demo Guest, 250 for Pro, 9999 for Agency)
+  // Ensure monthlyAiCredits aligns with current planTier (canonical map in src/lib/credits.ts)
   useEffect(() => {
     const isDemo = user.email?.toLowerCase() === 'free.user@starterbiz.com' || !user.email;
-    const creditsMap: Record<UserPlan, number> = { free: isDemo ? 15 : 25, pro: 250, agency: 9999, elite: 9999 };
-    const expected = creditsMap[user.planTier || 'free'] || 25;
+    const expected = creditsForPlan(user.planTier || 'free', isDemo);
     if (!user.monthlyAiCredits || (user.planTier === 'free' && user.monthlyAiCredits !== expected)) {
       setUser((prev) => ({
         ...prev,
@@ -699,7 +701,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const isProOrAgency = plan === 'pro' || plan === 'agency';
     const userEmail = (email || 'user@example.com').toLowerCase().trim();
     const isDemoAccount = userEmail === 'free.user@starterbiz.com' || userEmail === 'usr_guest' || !userEmail;
-    const credits = plan === 'agency' ? 9999 : plan === 'pro' ? 250 : isDemoAccount ? 15 : 25;
+    const credits = creditsForPlan(plan, plan === 'free' && isDemoAccount); // canonical: src/lib/credits.ts
     const isDemo = userEmail === 'alex@apexdigitalsolutions.com' || userEmail === 'agency.owner@locoramarketing.com';
     const companyName = company || (name ? `${name}'s Business` : 'My Business Workspace');
 
@@ -774,11 +776,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         (localStorage.getItem('locora_onboarding_completed') === 'true' ||
           localStorage.getItem('locora_onboarding_done') === 'true');
 
+      // Claim any pending public checkup audit BEFORE hydrating, so the claimed
+      // business is included in the list below. Runs for new AND returning
+      // users, same-origin (localStorage) or cross-origin (?auditId= bridged by
+      // AuthView). Never blocks login: failures leave the audit staged for retry.
+      const readPendingPublicAudit = (): any => {
+        try {
+          const raw = typeof window !== 'undefined' ? localStorage.getItem('locora_pending_public_audit') : null;
+          return raw ? JSON.parse(raw) : null;
+        } catch {
+          return null;
+        }
+      };
+      const pendingPublicAudit = readPendingPublicAudit();
+      const claimPendingAudit: Promise<void> = (async () => {
+        if (!pendingPublicAudit?.auditId) return;
+        try {
+          await fetch('/api/public/claim-audit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              auditId: pendingPublicAudit.auditId,
+              userEmail,
+              businessId: pendingPublicAudit.businessId,
+            }),
+          });
+        } catch {
+          return; // keep the audit staged for the next login
+        }
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('locora_pending_public_audit');
+        }
+      })();
+
       // Hydrate user's authentic businesses from PostgreSQL database
-      fetch(`/api/production/businesses?email=${encodeURIComponent(userEmail)}`, {
-        credentials: 'include',
-        headers: { 'x-user-email': userEmail },
-      })
+      claimPendingAudit
+        .catch(() => {})
+        .then(() =>
+          fetch(`/api/production/businesses?email=${encodeURIComponent(userEmail)}`, {
+            credentials: 'include',
+            headers: { 'x-user-email': userEmail },
+          })
+        )
         .then((res) => (res.ok ? res.json() : null))
         .then((list) => {
           if (Array.isArray(list) && list.length > 0) {
@@ -851,17 +890,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               localStorage.setItem('locora_active_business_id', activeId);
               localStorage.setItem('locora_onboarding_completed', 'true');
               localStorage.setItem('locora_onboarding_done', 'true');
-              localStorage.removeItem('locora_pending_public_audit');
+              // NOTE: pending public audit is claimed (or left staged for retry)
+              // by claimPendingAudit before hydration — never discard it here.
             }
           } else {
-            // First-time user with no business in DB yet
-            let pendingAuditData: any = null;
+            // First-time user with no business in DB yet.
+            // pendingPublicAudit was already read (and claimed server-side, or
+            // left staged for retry) before hydration — reuse it, don't re-read.
+            const pendingAuditData: any = pendingPublicAudit;
             let pendingDirectoryClaimData: any = null;
             if (typeof window !== 'undefined') {
-              try {
-                const raw = localStorage.getItem('locora_pending_public_audit');
-                if (raw) pendingAuditData = JSON.parse(raw);
-              } catch {}
               try {
                 const rawClaim = localStorage.getItem('locora_pending_directory_claim');
                 if (rawClaim) pendingDirectoryClaimData = JSON.parse(rawClaim);
@@ -893,17 +931,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               updatedAt: new Date().toISOString(),
             }));
 
-            if (pendingAuditData?.auditId) {
-              fetch('/api/public/claim-audit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  auditId: pendingAuditData.auditId,
-                  userEmail,
-                  businessId: pendingDirectoryClaimData?.businessId || pendingAuditData.businessId,
-                }),
-              }).catch(() => {});
-            }
+            // NOTE: the public-audit claim already ran (claimPendingAudit) before
+            // hydration; no duplicate claim POST here.
 
             const hasInitialBusiness = !!(
               pendingDirectoryClaimData?.businessName ||
@@ -1127,14 +1156,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     billingCycle: BillingCycle = 'monthly',
     paymentDetails?: { cardLast4: string; cardBrand: string; expDate: string }
   ) => {
-    const creditsMap: Record<UserPlan, number> = {
-      free: 25,
-      pro: 250,
-      agency: 9999,
-      elite: 9999,
-    };
-    const priceMapMonthly: Record<UserPlan, number> = { free: 0, pro: 19, agency: 49, elite: 99 };
-    const priceMapYearly: Record<UserPlan, number> = { free: 0, pro: 15 * 12, agency: 39 * 12, elite: 79 * 12 };
+    // Credit allocation comes from the canonical map in src/lib/credits.ts
+    // Prices match the customer-facing PricingView and the plan guide: Pro $29/mo, Agency $99/mo.
+    const priceMapMonthly: Record<UserPlan, number> = { free: 0, pro: 29, agency: 99, elite: 99 };
+    const priceMapYearly: Record<UserPlan, number> = { free: 0, pro: 21 * 12, agency: 66 * 12, elite: 79 * 12 };
 
     const amount = billingCycle === 'yearly' ? priceMapYearly[plan] : priceMapMonthly[plan];
 
@@ -1143,7 +1168,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     setUser((prev) => {
-      const newCredits = creditsMap[plan] || 25;
+      const newCredits = creditsForPlan(plan, false);
       const updatedUser: UserProfile = {
         ...prev,
         planTier: plan,
@@ -1192,7 +1217,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const hasEnoughCredits = (amount = 1): boolean => {
     if (user.planTier === 'agency') return true;
-    const limit = user.monthlyAiCredits || (user.email ? 25 : 15);
+    const limit = user.monthlyAiCredits || creditsForPlan(user.planTier, !user.email);
     const used = user.aiCreditsUsed || 0;
     if (used + amount > limit) {
       setCheckoutModalPlan(user.planTier === 'free' ? 'pro' : 'agency');
@@ -1720,10 +1745,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }).catch(() => {});
   }, [activeBusinessId, user.email]);
 
-  const fixItAction = useCallback((actionId: string) => {
+  const fixItAction = useCallback((actionId: string, draftData?: Partial<FixItDraft>) => {
     setPriorityActions((prev) => {
       const next = prev.map((act) => {
         if (act.id !== actionId) return act;
+        // When draft data is supplied, persist it as an unpublished draft.
+        // This does NOT mark the action fixed — publishing does that.
+        if (draftData) {
+          const existingDraft = act.draft || {
+            id: `draft_${Date.now()}`,
+            actionId,
+            title: `${act.recommendationTitle} Draft`,
+            slug: `/content/${actionId}`,
+            seoTitle: `${act.recommendationTitle}`,
+            metaDescription: act.whyItMatters,
+            schemaType: 'LocalBusiness',
+            schemaJson: '{}',
+            headings: act.itemsToCreate || [],
+            bodyCopy: '',
+            faqs: [],
+            internalLinks: [],
+            status: 'draft' as const,
+            createdAt: new Date().toISOString(),
+          };
+          return {
+            ...act,
+            draft: {
+              ...existingDraft,
+              ...draftData,
+              status: (draftData?.status || 'draft') as any,
+            },
+          };
+        }
         return {
           ...act,
           isFixed: true,
@@ -1737,42 +1790,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   }, []);
 
-  const updateActionDraft = useCallback((actionId: string, draftData?: any) => {
-    setPriorityActions((prev) => {
-      const next = prev.map((act) => {
-        if (act.id !== actionId) return act;
-        const existingDraft = act.draft || {
-          id: `draft_${Date.now()}`,
-          actionId,
-          title: `${act.recommendationTitle} Draft`,
-          slug: `/content/${actionId}`,
-          seoTitle: `${act.recommendationTitle} | ${businessProfile.name}`,
-          metaDescription: act.whyItMatters,
-          schemaType: 'LocalBusiness',
-          schemaJson: '{}',
-          headings: act.itemsToCreate || [],
-          bodyCopy: 'Draft generated by Locora AI Business Manager.',
-          faqs: [],
-          internalLinks: [],
-          status: 'draft' as const,
-          createdAt: new Date().toISOString(),
-        };
-        return {
-          ...act,
-          draft: {
-            ...existingDraft,
-            ...draftData,
-            status: (draftData?.status || 'draft') as any,
-          },
-        };
-      });
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('locora_priority_actions', JSON.stringify(next));
-      }
-      return next;
-    });
-  }, [businessProfile.name]);
-
   const publishDraft = useCallback((actionId: string) => {
     setPriorityActions((prev) => {
       const next = prev.map((act) => {
@@ -1782,6 +1799,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           isFixed: true,
           fixedAt: new Date().toISOString(),
           draft: act.draft ? { ...act.draft, status: 'published' as const } : undefined,
+        };
+      });
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('locora_priority_actions', JSON.stringify(next));
+      }
+      return next;
+    });
+  }, []);
+
+  const discardDraft = useCallback((actionId: string) => {
+    setPriorityActions((prev) => {
+      const next = prev.map((act) => {
+        if (act.id !== actionId) return act;
+        return {
+          ...act,
+          isFixed: false,
+          fixedAt: undefined,
+          draft: undefined,
         };
       });
       if (typeof window !== 'undefined') {
@@ -2939,6 +2974,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setPriorityActions,
         fixItAction,
         publishDraft,
+        discardDraft,
         rightAiPanelOpen,
         setRightAiPanelOpen,
         toggleRightAiPanel,

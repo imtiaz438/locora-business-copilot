@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { WebsiteAuditResult, PublicCheckupResult } from '../../types';
 import { LocoraLogo } from '../LocoraLogo';
 import { QuickCheckupReport } from './QuickCheckupReport';
-import { navigateToDirectory } from '../../utils/domain';
+import { navigateToDirectory, navigateToApp } from '../../utils/domain';
 import { trackCtaClick } from '../../lib/analytics';
 import {
   Sparkles,
@@ -234,7 +234,15 @@ export const HomeView: React.FC = () => {
       }
       setActiveTab(featureHint || 'dashboard');
     } else {
-      setActiveTab('signup');
+      // Cross-domain safe handoff: localStorage does not cross from
+      // locoraai.com to app.locoraai.com, so carry the auditId in the URL.
+      // AuthView bridges it back into localStorage on the app domain so the
+      // post-signup claim still fires.
+      const auditId = publicAudit?.auditId;
+      const signupPath = auditId
+        ? `/login?mode=signup&auditId=${encodeURIComponent(auditId)}`
+        : '/login?mode=signup';
+      navigateToApp(signupPath, () => setActiveTab('signup'));
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -1807,11 +1815,11 @@ export const HomeView: React.FC = () => {
                   <span>View Directory Profile</span>
                 </button>
                 <a
-                  href="tel:8622034648"
+                  href="/checkup"
                   className="px-4 py-2.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 font-sans"
                 >
                   <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Call Direct: (862) 203-4648</span>
+                  <span>Prefer to talk? Run the free checkup first</span>
                 </a>
                 <a
                   href="https://www.gothamenterprisesltd.com/"

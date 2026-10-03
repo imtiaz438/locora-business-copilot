@@ -25,7 +25,19 @@ interface FixItModalProps {
 }
 
 export const FixItModal: React.FC<FixItModalProps> = ({ action, onClose }) => {
-  const { businessProfile, activeBusiness, fixItAction, publishDraft, consumeAiCredit } = useApp();
+  const { businessProfile, activeBusiness, fixItAction, publishDraft, discardDraft, consumeAiCredit } = useApp();
+
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+
+  const handleDiscard = () => {
+    if (!confirmDiscard) {
+      setConfirmDiscard(true);
+      return;
+    }
+    discardDraft(action.id);
+    setConfirmDiscard(false);
+    onClose();
+  };
 
   const [step, setStep] = useState<'recommendation' | 'generating' | 'draft_review' | 'published'>('recommendation');
   const [activeViewTab, setActiveViewTab] = useState<'preview' | 'edit' | 'schema'>('preview');
@@ -60,7 +72,7 @@ export const FixItModal: React.FC<FixItModalProps> = ({ action, onClose }) => {
       setDraftSeoTitle(`${action.recommendationTitle} | ${businessProfile.name}`);
       setDraftMetaDesc(action.whyItMatters);
       setDraftHeadings(action.itemsToCreate || ['Service Overview', 'Why Choose Us', 'Core Capabilities', 'Client FAQs']);
-      setDraftBodyCopy(`Locora AI has generated the comprehensive content blueprint for ${action.recommendationTitle} at ${businessProfile.name || 'our business'}${businessProfile.city ? ` in ${businessProfile.city}, ${businessProfile.state}` : ''}.\n\nClients seeking dependable, high-quality service can call our direct line at ${businessProfile.phone || '(555) 019-2831'} for immediate assistance and priority scheduling.\n\nOur team is committed to prompt response times, transparent pricing, and professional service execution tailored to your specific requirements.`);
+      setDraftBodyCopy(`Locora AI has generated the comprehensive content blueprint for ${action.recommendationTitle} at ${businessProfile.name || 'our business'}${businessProfile.city ? ` in ${businessProfile.city}, ${businessProfile.state}` : ''}.\n\nClients seeking dependable, high-quality service can call our direct line${businessProfile.phone ? ` at ${businessProfile.phone}` : ''} for immediate assistance and priority scheduling.\n\nOur team is committed to prompt response times, transparent pricing, and professional service execution tailored to your specific requirements.`);
       setDraftSchemaJson(
         JSON.stringify(
           {
@@ -501,7 +513,7 @@ export const FixItModal: React.FC<FixItModalProps> = ({ action, onClose }) => {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-slate-900 font-heading">
-                  Action Successfully Deployed & Published!
+                  Draft saved!
                 </h3>
                 <p className="text-xs text-slate-600 max-w-md mt-1">
                   The {action.recommendationTitle} has been saved to your active content repository and synchronized with your business growth profile.
@@ -538,6 +550,20 @@ export const FixItModal: React.FC<FixItModalProps> = ({ action, onClose }) => {
 
             {step === 'draft_review' && (
               <>
+                {action.draft && (
+                  <button
+                    type="button"
+                    onClick={handleDiscard}
+                    onBlur={() => setConfirmDiscard(false)}
+                    className={`px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer ${
+                      confirmDiscard
+                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                        : 'text-red-700 bg-red-50 hover:bg-red-100 border border-red-200'
+                    }`}
+                  >
+                    {confirmDiscard ? 'Confirm discard?' : 'Discard draft'}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {

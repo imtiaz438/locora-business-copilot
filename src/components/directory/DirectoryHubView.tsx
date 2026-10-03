@@ -631,7 +631,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                       required
                       value={quoteForm.phone}
                       onChange={(e) => setQuoteForm({ ...quoteForm, phone: e.target.value })}
-                      placeholder="(555) 000-0000"
+                      placeholder="(512) 000-0000"
                       className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>

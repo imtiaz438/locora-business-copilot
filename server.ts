@@ -4,13 +4,14 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
-import { GoogleGenAI } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
 import Stripe from 'stripe';
 import nodemailer from 'nodemailer';
 import dns from 'dns';
 import { promisify } from 'util';
 import net from 'net';
+import * as healthScans from './server/healthScans.ts';
+import * as rankTracking from './server/rankTracking.ts';
 
 const resolveMxAsync = promisify(dns.resolveMx);
 import { resolveRouteMetadata, injectMetadataIntoHtml } from './src/utils/seoMetadata.ts';
@@ -19,6 +20,8 @@ import * as dbService from './src/db/service.ts';
 import * as onboardingService from './server/onboardingService.ts';
 import * as businessTruthService from './server/businessTruthService.ts';
 import * as aiManagerService from './server/aiManagerService.ts';
+import { generateCompletion, stripCodeFences, AI_NOT_CONFIGURED_NOTICE, getAiLanes } from './server/aiEngine.ts';
+import { creditsForPlan, DEMO_GUEST_CREDITS, PLAN_AI_CREDITS, remainingCredits, isUnlimitedTier } from './src/lib/credits.ts';
 import * as growthDetectorService from './server/growthDetectorService.ts';
 import * as directoryService from './src/db/directoryService.ts';
 import { geocodeAddress } from './src/utils/geocoder.ts';
@@ -64,6 +67,8 @@ import {
   getAllBusinessRecordsFromLocoraDb,
   getBusinessesForUser,
   createOrGetBusinessForUser,
+  createCleanBusinessRecordForUser,
+  normalizeDomain,
   saveBusinessRecordToLocoraDb,
   executeOwnCrawler,
   normalizeAndValidateRecord,
@@ -306,6 +311,20 @@ app.use(express.json({
   },
 }));
 app.use(cookieParser());
+
+// ---- Session auth enforcement ----
+// Every private API surface requires a valid session token. Identity is
+// resolved ONLY from the session — client-supplied emails are never trusted.
+// Public surfaces (login, checkups, webhooks, health) stay open.
+app.use('/api/admin', requireAuth);
+app.use('/api/workspace', requireAuth);
+app.use('/api/production', requireAuth);
+app.use('/api/data-engine', requireAuth);
+app.use('/api/account', requireAuth);
+app.use('/api/email/send-test', requireAuth);
+app.use('/api/newsletter/send-weekly-dispatch', requireAuth);
+app.use('/api/health-scans', requireAuth);
+app.use('/api/rank-tracking', requireAuth);
 
 // Dynamic Base URL Resolver for OAuth, Stripe & Email Links
 function getRequestBaseUrl(req: express.Request): string {
@@ -575,17 +594,16 @@ BODY PREVIEW: ${text ? text.slice(0, 140) : html.replace(/<[^>]+>/g, '').slice(0
     to,
     subject,
     provider: 'simulated_local',
-    success: true,
-    messageId: `brevo_sim_${Date.now()}`,
+    success: false,
     error: 'Brevo credentials not configured in environment. Provide BREVO_SMTP_USER & BREVO_SMTP_PASS to send live emails.',
     timestamp: new Date().toISOString(),
   });
 
+  // Honest failure: nothing was sent. Callers must surface this, not a fake message ID.
   return {
-    success: true,
+    success: false,
     provider: 'simulated_local',
-    messageId: `brevo_sim_${Date.now()}`,
-    error: 'Brevo credentials not set in environment. Set BREVO_SMTP_USER & BREVO_SMTP_PASS in .env to activate live dispatch.',
+    error: 'Email not sent: Brevo credentials not configured. Set BREVO_SMTP_USER & BREVO_SMTP_PASS in .env to activate live dispatch.',
   };
 }
 
@@ -1372,11 +1390,27 @@ async function discoverProviderModels(provider: string, apiKey: string): Promise
     }
 
     if (prov === 'perplexity') {
+      // Real validation: Perplexity's /models endpoint rejects bad keys with 401.
+      const res = await fetch('https://api.perplexity.ai/models', {
+        headers: { Authorization: `Bearer ${trimmed}` },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (!res.ok) {
+        return {
+          valid: false,
+          provider: 'perplexity',
+          detectedModel: '',
+          accessibleModels: [],
+          isAutoDetected: false,
+          isManaged: true,
+          error: `Perplexity rejected the key (HTTP ${res.status}). Key was NOT saved.`,
+        };
+      }
       const accessibleModels: DetectedModelVariant[] = [
         { id: 'sonar-pro', name: 'Sonar Pro Search', description: 'Deep web search grounding with multi-source verification', badge: 'Deep Web', isAutoSelected: true },
         { id: 'sonar', name: 'Sonar Fast Search', description: 'Fast online search grounding for real-time market queries', badge: 'Fast' },
       ];
-      clearTimeout(timeoutId);
       return {
         valid: true,
         provider: 'perplexity',
@@ -1558,9 +1592,14 @@ function updateModelQuotasFromValidation() {
 }
 
 async function validateAllConfiguredKeys(): Promise<void> {
+  // Tests every configured LLM key with a real provider call. SEO/B2B keys
+  // have no cheap validation endpoint — they are reported as stored, not validated.
+  // Exception: SerpApi/Serper power rank tracking, so they get a cheap live probe.
   const providersToTest = [
     { provider: 'anthropic', envVar: 'ANTHROPIC_API_KEY', label: 'Anthropic Claude' },
     { provider: 'groq', envVar: 'GROQ_API_KEY', label: 'Groq LPU' },
+    { provider: 'openai', envVar: 'OPENAI_API_KEY', label: 'OpenAI' },
+    { provider: 'perplexity', envVar: 'PERPLEXITY_API_KEY', label: 'Perplexity' },
   ];
 
   for (const item of providersToTest) {
@@ -1587,20 +1626,50 @@ async function validateAllConfiguredKeys(): Promise<void> {
     }
   }
 
+  // SerpApi: free account endpoint (no search credits consumed).
+  const serpApiKey = (process.env.SERPAPI_API_KEY || '').trim();
+  if (serpApiKey) {
+    try {
+      const res = await fetch(`https://serpapi.com/account?api_key=${encodeURIComponent(serpApiKey)}`);
+      const ok = res.ok;
+      providerKeyValidationStatus.set('serpapi', {
+        valid: ok,
+        error: ok ? undefined : `HTTP ${res.status} from SerpApi account endpoint.`,
+        testedAt: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      providerKeyValidationStatus.set('serpapi', { valid: false, error: err.message, testedAt: new Date().toISOString() });
+    }
+  } else {
+    providerKeyValidationStatus.delete('serpapi');
+  }
+
+  // Serper: minimal search probe (costs 1 credit, only on manual Test All).
+  const serperKey = (process.env.SERPER_API_KEY || '').trim();
+  if (serperKey) {
+    try {
+      const res = await fetch('https://google.serper.dev/search', {
+        method: 'POST',
+        headers: { 'X-API-KEY': serperKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ q: 'test', num: 1 }),
+      });
+      providerKeyValidationStatus.set('serper', {
+        valid: res.ok,
+        error: res.ok ? undefined : `HTTP ${res.status} from Serper.`,
+        testedAt: new Date().toISOString(),
+      });
+    } catch (err: any) {
+      providerKeyValidationStatus.set('serper', { valid: false, error: err.message, testedAt: new Date().toISOString() });
+    }
+  } else {
+    providerKeyValidationStatus.delete('serper');
+  }
+
   updateModelQuotasFromValidation();
 }
 
 function syncProviderKeysToEnv(keys: any) {
   if (!keys || typeof keys !== 'object') return;
-  if (keys.gemini !== undefined) {
-    if (keys.gemini && typeof keys.gemini === 'string' && keys.gemini.trim()) {
-      process.env.GEMINI_API_KEY = keys.gemini.trim();
-    } else if (SYSTEM_ENV_BACKUPS.GEMINI_API_KEY) {
-      process.env.GEMINI_API_KEY = SYSTEM_ENV_BACKUPS.GEMINI_API_KEY;
-    } else {
-      delete process.env.GEMINI_API_KEY;
-    }
-  }
   if (keys.openai !== undefined) {
     if (keys.openai && typeof keys.openai === 'string' && keys.openai.trim()) {
       process.env.OPENAI_API_KEY = keys.openai.trim();
@@ -1830,7 +1899,7 @@ const seedDefaultUsers = () => {
       planTier: 'free',
       subscriptionStatus: 'active',
       billingCycle: 'monthly',
-      monthlyAiCredits: 15,
+      monthlyAiCredits: DEMO_GUEST_CREDITS, // guest workspace allocation (canonical: src/lib/credits.ts)
       aiCreditsUsed: 0,
       seoLookupsPerMonth: 10,
       seoLookupsUsed: 0,
@@ -2138,7 +2207,7 @@ async function findUserByEmail(email: string): Promise<UserRecord | null> {
         planTier: (foundSql.planTier as any) || 'free',
         subscriptionStatus: 'active',
         billingCycle: 'monthly',
-        monthlyAiCredits: foundSql.planTier === 'agency' ? 9999 : foundSql.planTier === 'pro' ? 250 : 25,
+        monthlyAiCredits: creditsForPlan(foundSql.planTier || 'free', false), // canonical: src/lib/credits.ts
         aiCreditsUsed: 0,
         memberSince: foundSql.createdAt ? new Date(foundSql.createdAt).toISOString() : new Date().toISOString(),
         nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
@@ -2214,7 +2283,7 @@ async function syncSqlDatabase() {
               planTier: (u.planTier as any) || 'free',
               subscriptionStatus: 'active',
               billingCycle: 'monthly',
-              monthlyAiCredits: u.planTier === 'agency' ? 9999 : u.planTier === 'pro' ? 250 : 25,
+              monthlyAiCredits: creditsForPlan(u.planTier || 'free', false), // canonical: src/lib/credits.ts
               aiCreditsUsed: 0,
               memberSince: u.createdAt ? new Date(u.createdAt).toISOString() : new Date().toISOString(),
               nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
@@ -2359,7 +2428,7 @@ const deductUserCredit = (userEmail?: string, amount: number = 1) => {
     usersDb.set(lookupKey, user);
     saveUserToSql(user).catch(() => {});
   }
-  return { used: user.aiCreditsUsed, remaining: user.planTier === 'agency' ? 9999 : Math.max(0, user.monthlyAiCredits - user.aiCreditsUsed) };
+  return { used: user.aiCreditsUsed, remaining: isUnlimitedTier(user.planTier) ? PLAN_AI_CREDITS.agency : remainingCredits(user.monthlyAiCredits, user.aiCreditsUsed) };
 };
 
 const deductSeoLookup = (userEmail?: string, cost: number = 1) => {
@@ -2486,7 +2555,7 @@ const getUserCreditStats = (userEmail?: string) => {
 
   return {
     used: user.aiCreditsUsed,
-    remaining: user.planTier === 'agency' ? 9999 : Math.max(0, user.monthlyAiCredits - user.aiCreditsUsed),
+    remaining: isUnlimitedTier(user.planTier) ? PLAN_AI_CREDITS.agency : remainingCredits(user.monthlyAiCredits, user.aiCreditsUsed),
     seoLookupsUsed: user.seoLookupsUsed || 0,
     seoLookupsLimit: user.seoLookupsPerMonth || 10,
     seoLookupsRemaining: user.role === 'admin' ? 9999 : Math.max(0, (user.seoLookupsPerMonth || 10) - (user.seoLookupsUsed || 0)),
@@ -2494,22 +2563,6 @@ const getUserCreditStats = (userEmail?: string) => {
     aiVisibilityRunsLimit: user.aiVisibilityRunsPerMonth || 1,
     aiVisibilityRunsRemaining: user.role === 'admin' ? 999 : Math.max(0, (user.aiVisibilityRunsPerMonth || 1) - (user.aiVisibilityRunsUsed || 0)),
   };
-};
-
-// Initialize GoogleGenAI Client
-const getGenAIClient = (overrideApiKey?: string) => {
-  const apiKey = overrideApiKey || process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY is missing. Please set it in Settings or environment variable.');
-  }
-  return new GoogleGenAI({
-    apiKey,
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
-      },
-    },
-  });
 };
 
 // Email Validation Helper to enforce real, valid email addresses
@@ -2813,7 +2866,9 @@ app.post('/api/auth/register', async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000,
       path: '/',
     });
-    res.json({ user: newUser, token: `tok_${Date.now()}` });
+    const regSessionToken = createSession(normalizedEmail);
+    setSessionCookie(res, regSessionToken);
+    res.json({ user: newUser, token: regSessionToken });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Registration failed' });
   }
@@ -2867,7 +2922,10 @@ app.post('/api/auth/login', async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000,
       path: '/',
     });
-    res.json({ user, token: `tok_${Date.now()}` });
+    // Cryptographic session token — the ONLY trusted identity for API calls
+    const sessionToken = createSession(normalizedEmail);
+    setSessionCookie(res, sessionToken);
+    res.json({ user, token: sessionToken });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Login failed' });
   }
@@ -2876,10 +2934,8 @@ app.post('/api/auth/login', async (req, res) => {
 // GET Current Session User (/api/auth/me)
 app.get('/api/auth/me', async (req, res) => {
   try {
-    const cookieEmail = req.cookies?.auth_email;
-    const headerEmail = req.headers['x-user-email'] as string;
-    const queryEmail = (req.query.email as string) || '';
-    const email = (queryEmail || headerEmail || cookieEmail || '').toLowerCase().trim();
+    // Identity ONLY from the validated session token.
+    const email = getSessionEmail(req);
     if (!email) {
       return res.status(401).json({ error: 'No active session' });
     }
@@ -2911,6 +2967,8 @@ app.get('/api/auth/me', async (req, res) => {
 
 // Logout Route (/api/auth/logout)
 app.post('/api/auth/logout', async (req, res) => {
+  destroySessionToken(req.cookies?.locora_session as string);
+  res.clearCookie('locora_session', { path: '/' });
   res.clearCookie('auth_email', { path: '/' });
   res.json({ success: true, message: 'Logged out successfully' });
 });
@@ -2923,6 +2981,105 @@ interface MagicTokenRecord {
   resetCode?: string;
 }
 const activeMagicTokens = new Map<string, MagicTokenRecord>();
+
+// ============ SESSION AUTHENTICATION ============
+// Identity is derived ONLY from a cryptographically random session token
+// (httpOnly cookie `locora_session` or `Authorization: Bearer <token>`).
+// Client-supplied email headers / query params / body fields are NEVER
+// trusted as identity — this is what enforces per-user data isolation.
+const SESSIONS_FILE = path.resolve(process.cwd(), 'data', 'sessions.json');
+const sessions = new Map<string, { email: string; createdAt: number }>();
+const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function loadSessionsFromDisk() {
+  try {
+    if (fs.existsSync(SESSIONS_FILE)) {
+      const list = JSON.parse(fs.readFileSync(SESSIONS_FILE, 'utf-8')) as Array<{ token: string; email: string; createdAt: number }>;
+      const now = Date.now();
+      list.forEach((s) => {
+        if (s.token && s.email && now - s.createdAt < SESSION_TTL_MS) sessions.set(s.token, { email: s.email, createdAt: s.createdAt });
+      });
+    }
+  } catch (e: any) {
+    console.error('[Auth] Failed to load sessions:', e.message);
+  }
+}
+
+function saveSessionsToDisk() {
+  try {
+    const list = Array.from(sessions.entries()).map(([token, s]) => ({ token, email: s.email, createdAt: s.createdAt }));
+    fs.writeFileSync(SESSIONS_FILE, JSON.stringify(list), 'utf-8');
+  } catch (e: any) {
+    console.error('[Auth] Failed to save sessions:', e.message);
+  }
+}
+
+function createSession(email: string): string {
+  const token = crypto.randomBytes(32).toString('hex');
+  sessions.set(token, { email: email.toLowerCase().trim(), createdAt: Date.now() });
+  saveSessionsToDisk();
+  return token;
+}
+
+function destroySessionToken(token: string) {
+  if (token && sessions.delete(token)) saveSessionsToDisk();
+}
+
+function getSessionEmail(req: express.Request): string {
+  const cookieToken = req.cookies?.locora_session as string;
+  const authHeader = req.headers['authorization'] as string;
+  const bearer = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  const token = cookieToken || bearer;
+  if (!token) return '';
+  const s = sessions.get(token);
+  if (!s) return '';
+  if (Date.now() - s.createdAt > SESSION_TTL_MS) {
+    sessions.delete(token);
+    saveSessionsToDisk();
+    return '';
+  }
+  return s.email;
+}
+
+function setSessionCookie(res: express.Response, token: string) {
+  res.cookie('locora_session', token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: SESSION_TTL_MS,
+    path: '/',
+  });
+}
+
+/** Session-derived identity for this request. Empty string = unauthenticated. */
+function reqEmail(req: express.Request): string {
+  return (((req as any).authEmail as string) || '').toLowerCase().trim();
+}
+
+/** Express middleware: require a valid session, attach req.authEmail. */
+function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const email = getSessionEmail(req);
+  if (!email) {
+    return res.status(401).json({ error: 'Not authenticated. Please sign in.' });
+  }
+  (req as any).authEmail = email;
+  next();
+}
+
+/** Express middleware: attach req.authEmail when a session exists (public-safe). */
+function attachAuth(req: express.Request, _res: express.Response, next: express.NextFunction) {
+  (req as any).authEmail = getSessionEmail(req);
+  next();
+}
+
+loadSessionsFromDisk();
+
+// Masked key hint for admin UI — never ships plaintext secrets to the browser.
+function maskKey(v: string): { configured: boolean; hint: string } {
+  const s = (v || '').trim();
+  if (!s) return { configured: false, hint: 'Not configured' };
+  return { configured: true, hint: `••••••••${s.slice(-4)} (saved)` };
+}
 
 // Forgot Password Route - Generates a secure Magic Reset Link & Token
 app.post('/api/auth/forgot-password', async (req, res) => {
@@ -3051,6 +3208,10 @@ app.post('/api/auth/verify-magic-token', async (req, res) => {
 // Dedicated Test Email Endpoint (Brevo SMTP & API Verification)
 app.post('/api/email/send-test', async (req, res) => {
   try {
+    // Admin-only: prevents unauthenticated visitors from triggering outbound email.
+    if (!(await verifyAdminAccessAsync(req))) {
+      return res.status(403).json({ error: 'Admin access required.' });
+    }
     const { to, subject, body } = req.body;
     if (!to || !to.includes('@')) {
       return res.status(400).json({ error: 'Please enter a valid recipient email address.' });
@@ -3077,6 +3238,10 @@ app.post('/api/email/send-test', async (req, res) => {
       `,
     });
 
+    // Honest result: report failure when nothing was actually sent (e.g. no credentials).
+    if (!emailResult.success) {
+      return res.status(502).json({ success: false, error: emailResult.error || 'Email was not sent.', emailResult });
+    }
     res.json({ success: true, emailResult });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Failed to dispatch test email.' });
@@ -3209,7 +3374,7 @@ app.post('/api/auth/social', async (req, res) => {
         planTier: planTier === 'pro' || planTier === 'agency' ? planTier : 'free',
         subscriptionStatus: 'active',
         billingCycle: 'monthly',
-        monthlyAiCredits: planTier === 'agency' ? 9999 : planTier === 'pro' ? 250 : 25,
+        monthlyAiCredits: creditsForPlan(planTier, false), // canonical: src/lib/credits.ts
         aiCreditsUsed: 0,
         invoicesCreatedCount: 0,
         memberSince: new Date().toISOString(),
@@ -3288,7 +3453,9 @@ app.post('/api/auth/social', async (req, res) => {
       secure: process.env.NODE_ENV === 'production',
       path: '/',
     });
-    res.json({ user, token: `tok_soc_${Date.now()}` });
+    const socSessionToken = createSession(userEmail);
+    setSessionCookie(res, socSessionToken);
+    res.json({ user, token: socSessionToken });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Social auth failed' });
   }
@@ -3617,14 +3784,45 @@ app.post('/api/public/claim-audit', async (req, res) => {
     }
     const cleanEmail = (userEmail || '').toLowerCase().trim();
     const targetBizId = businessId || (audit as any).businessId;
-    const biz = createOrGetBusinessForUser(
-      cleanEmail,
-      audit.businessName,
-      audit.url,
-      'Local Services',
-      audit.businessLocation || '',
-      targetBizId
-    );
+
+    // Resolve the business for THIS audit's domain — never attach a checkup
+    // to an unrelated business the user already owns.
+    const bizWebsite = (b: any): string => b?.website || b?.identity?.website || '';
+    let biz: any = null;
+    if (targetBizId) {
+      const byId = getBusinessRecordFromLocoraDb(targetBizId);
+      // Only honor the explicit ID if it isn't someone else's claimed business.
+      if (byId && (!byId.userEmail || byId.userEmail === cleanEmail || !byId.isClaimed)) {
+        biz = byId;
+      }
+    }
+    if (!biz) {
+      const auditDomain = normalizeDomain(audit.url || (audit as any).domain || '');
+      if (auditDomain) {
+        biz = getBusinessesForUser(cleanEmail).find(
+          (b: any) => normalizeDomain(bizWebsite(b)) === auditDomain
+        ) || null;
+      }
+    }
+    if (!biz) {
+      // Fresh business for the audited domain. createOrGetBusinessForUser is
+      // intentionally bypassed: its "return the user's first business" shortcut
+      // would attach this checkup to an unrelated business, and its businessId
+      // parameter sits in a different argument position.
+      const newId = targetBizId || `biz_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const created = createCleanBusinessRecordForUser(
+        newId,
+        audit.businessName || (audit as any).domain || 'My Business',
+        audit.url || (audit as any).domain || '',
+        'Local Services',
+        audit.businessLocation || '',
+        'free',
+        cleanEmail
+      );
+      created.isClaimed = true;
+      created.claimedByEmail = cleanEmail;
+      biz = saveBusinessRecordToLocoraDb(created);
+    }
     if (biz) {
       claimPublicAuditRecord(auditId, cleanEmail, biz.id);
       biz.websiteAudit = {
@@ -3722,12 +3920,7 @@ app.get('/api/data-engine/business/:id', (req, res) => {
 // Get All Business Records (Scoring & Multi-Location & Agency Elite)
 app.get('/api/data-engine/businesses', async (req, res) => {
   try {
-    const userEmail = (
-      (req.query.email as string) ||
-      (req.headers['x-user-email'] as string) ||
-      req.cookies?.auth_email ||
-      ''
-    ).toLowerCase().trim();
+    const userEmail = reqEmail(req);
     const isSuper = verifyAdminAccess(req) || SUPER_ADMIN_EMAILS.has(userEmail);
     const returnAll = req.query.all === 'true' && isSuper;
     let businesses: any[] = [];
@@ -4063,11 +4256,8 @@ export class AuthorizationError extends Error {
 const SUPER_ADMIN_EMAILS = new Set(['admin@locora.ai', 'superadmin@locora.ai', 'imtiazbaloch3322@gmail.com', 'support@locoraai.com']);
 
 async function resolveAuthenticatedBusiness(req: any, targetBizId?: string) {
-  const cookieEmail = req.cookies?.auth_email;
-  const headerEmail = req.headers['x-user-email'] as string;
-  const queryEmail = (req.query?.email as string) || (req.query?.userEmail as string);
-  const bodyEmail = (req.body?.userEmail as string) || (req.body?.email as string);
-  const callerEmail = (cookieEmail || headerEmail || queryEmail || bodyEmail || '').toLowerCase().trim();
+  // Caller identity ONLY from the validated session token.
+  const callerEmail = reqEmail(req);
   const effectiveEmail = callerEmail;
   const isSuperAdmin = callerEmail ? SUPER_ADMIN_EMAILS.has(callerEmail) : false;
 
@@ -4246,12 +4436,7 @@ app.get('/api/production/dashboard/:businessId?', async (req, res) => {
 // 2. Businesses List (Strictly Multi-Tenant: Scoped by Authenticated Account)
 app.get('/api/production/businesses', async (req, res) => {
   try {
-    const email = (
-      (req.query.email as string) ||
-      (req.headers['x-user-email'] as string) ||
-      req.cookies?.auth_email ||
-      ''
-    ).toLowerCase().trim();
+    const email = reqEmail(req);
 
     if (!email) {
       return res.json([]);
@@ -4361,6 +4546,103 @@ app.get('/api/production/business/:businessId', async (req, res) => {
     res.json(business);
   } catch (err: any) {
     res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
+// AUTO-DETECT + GENERATE: grounded business description.
+//
+// Runs the Business Brain auto-detection against the business's website,
+// then drafts a description with the AI engine using ONLY detected facts.
+// Never invents services, locations, credentials, or claims — if detection
+// finds nothing, the draft says so instead of fabricating.
+// Returns a draft; the caller saves it via PATCH /api/production/business/:businessId.
+app.post('/api/production/business/:businessId/generate-description', async (req, res) => {
+  try {
+    const { business, ownerEmail } = await resolveAuthenticatedBusiness(req, req.params.businessId);
+
+    const creditCheck = checkUserCredits(ownerEmail, undefined, 1);
+    if (!creditCheck.allowed) {
+      return res.status(403).json({ success: false, error: 'CREDITS_EXHAUSTED', message: creditCheck.error });
+    }
+    const refundCredit = () => {
+      try {
+        const key = (ownerEmail || '').toLowerCase().trim() || 'usr_guest';
+        const u = usersDb.get(key);
+        if (u && u.planTier !== 'agency') {
+          u.aiCreditsUsed = Math.max(0, (u.aiCreditsUsed || 1) - 1);
+          usersDb.set(key, u);
+          saveUserToSql(u).catch(() => {});
+        }
+      } catch { /* refund is best-effort */ }
+    };
+
+    const website = (business as any).website || '';
+    let detected: any = null;
+    if (website) {
+      try {
+        const { discoverBusiness } = await import('./server/onboardingService.ts');
+        detected = await discoverBusiness({
+          websiteUrl: website,
+          businessName: business.name,
+          userEmail: ownerEmail,
+        });
+      } catch (detErr) {
+        console.warn('[GenerateDescription] auto-detect failed:', (detErr as any)?.message);
+      }
+    }
+
+    const facts: string[] = [];
+    const push = (label: string, value: any) => {
+      const v = Array.isArray(value) ? value.filter(Boolean).join(', ') : String(value || '').trim();
+      if (v) facts.push(`${label}: ${v}`);
+    };
+    push('Business name', detected?.businessName || business.name);
+    push('Category', detected?.businessCategory || (business as any).category);
+    push('Website says', detected?.description);
+    push('Services', detected?.services || (business as any).services);
+    push('Location', [detected?.city || (business as any).city, detected?.state || (business as any).state].filter(Boolean).join(', '));
+    push('Hours', detected?.hours);
+
+    if (facts.length <= 1) {
+      refundCredit();
+      return res.status(422).json({
+        success: false,
+        error: 'NOT_ENOUGH_FACTS',
+        message: 'Could not detect enough verified facts about this business to write an honest description. Add a website or business details first.',
+      });
+    }
+
+    const engineResult = await generateCompletion({
+      messages: [
+        {
+          role: 'user',
+          content:
+            `Write a concise, professional business description (2-3 sentences, under 400 characters) for a business directory profile.\n\n` +
+            `VERIFIED FACTS (use only these — never add anything not listed):\n${facts.map((f) => `- ${f}`).join('\n')}\n\n` +
+            `Rules:\n` +
+            `- Use only the verified facts above. Do not invent services, locations, credentials, awards, years in business, or customer claims.\n` +
+            `- Plain text, no placeholders, no marketing superlatives that aren't in the facts.\n` +
+            `- Output ONLY the description, nothing else.`,
+        },
+      ],
+      systemInstruction:
+        'You write honest, factual business descriptions for local business directories. You never fabricate details.',
+      temperature: 0.5,
+      timeoutMs: 15000,
+    });
+
+    if (!engineResult.ok || !engineResult.text?.trim()) {
+      refundCredit();
+      return res.status(502).json({
+        success: false,
+        error: 'AI_DRAFT_FAILED',
+        message: engineResult.errorMessage || 'The AI could not draft a description right now. Please try again.',
+      });
+    }
+
+    res.json({ success: true, draft: engineResult.text.trim(), factsDetected: facts.length, sources: detected?.sourcesList || [] });
+  } catch (err: any) {
+    res.status(err.status || 500).json({ success: false, error: err.message });
   }
 });
 
@@ -4499,12 +4781,7 @@ app.put('/api/production/business/:businessId', async (req, res) => {
 
 app.get(['/api/workspace/business-limit', '/api/account/business-limit'], async (req, res) => {
   try {
-    const email = (
-      (req.headers['x-user-email'] as string) ||
-      (req.query.email as string) ||
-      req.cookies?.auth_email ||
-      ''
-    ).toLowerCase().trim();
+    const email = reqEmail(req);
 
     if (!email) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -4533,12 +4810,7 @@ app.get(['/api/workspace/business-limit', '/api/account/business-limit'], async 
 // Returns the single account-level onboarding status. Once completed, onboarding must never appear again.
 app.get('/api/account/onboarding-status', async (req, res) => {
   try {
-    const email = (
-      (req.headers['x-user-email'] as string) ||
-      (req.query.email as string) ||
-      req.cookies?.auth_email ||
-      ''
-    ).toLowerCase().trim();
+    const email = reqEmail(req);
 
     if (!email) {
       return res.json({
@@ -4569,13 +4841,7 @@ app.get('/api/account/onboarding-status', async (req, res) => {
 // Explicitly marks the account onboarding as completed
 app.post('/api/account/onboarding-complete', async (req, res) => {
   try {
-    const email = (
-      req.body?.userEmail ||
-      req.body?.email ||
-      (req.headers['x-user-email'] as string) ||
-      req.cookies?.auth_email ||
-      ''
-    ).toLowerCase().trim();
+    const email = reqEmail(req);
 
     if (!email) {
       return res.status(400).json({ error: 'User email is required to complete onboarding' });
@@ -4596,9 +4862,10 @@ app.post('/api/account/onboarding-complete', async (req, res) => {
 
 app.post(['/api/workspace/businesses', '/api/production/businesses'], async (req, res) => {
   try {
-    const email = (req.headers['x-user-email'] as string || req.body.ownerEmail || req.body.email || req.body.userEmail || req.query.email || '').toLowerCase().trim();
+    // New businesses are always owned by the authenticated caller — never by a client-supplied email.
+    const email = reqEmail(req);
     if (!email) {
-      return res.status(401).json({ error: 'User email required to register business' });
+      return res.status(401).json({ error: 'Sign in required to register a business' });
     }
 
     const userRec = usersDb.get(email);
@@ -4778,10 +5045,7 @@ app.delete('/api/workspace/businesses/:businessId', async (req, res) => {
 
 app.delete('/api/admin/businesses/:businessId', async (req, res) => {
   try {
-    const cookieEmail = req.cookies?.auth_email;
-    const headerEmail = req.headers['x-user-email'] as string;
-    const queryEmail = (req.query?.email as string) || (req.query?.userEmail as string);
-    const email = (cookieEmail || headerEmail || queryEmail || '').toLowerCase().trim();
+    const email = reqEmail(req);
     const isAdmin = SUPER_ADMIN_EMAILS.has(email) || (await verifyAdminAccessAsync(req));
     if (!isAdmin) {
       return res.status(403).json({ error: 'System administrator authorization required.' });
@@ -5058,9 +5322,9 @@ app.post('/api/reports/explain', async (req, res) => {
     // Strict requirement: AI must NEVER create the underlying metrics. Metrics are calculated from real stored data.
     // AI only explains: What changed, Why it matters, What should happen next.
     let explanation = null;
-    if (process.env.GEMINI_API_KEY) {
+    {
+      // Unified AI engine (Groq primary). Deterministic baseline below when unavailable.
       try {
-        const ai = getGenAIClient();
         const prompt = `You are Locora's Executive Report Explanation Engine.
 You are explaining real, calculated performance metrics for "${businessName}" located in "${city || 'target market'}".
 Report Type: ${reportType}
@@ -5084,19 +5348,19 @@ STRICT RULES:
 3. Do NOT use buzzwords or hype. Be objective, precise, and authoritative.
 4. Return strict JSON format with keys: "overview", "whatChanged", "whyItMatters", "whatShouldHappenNext".`;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.8-flash',
-          contents: prompt,
-          config: {
-            responseMimeType: 'application/json',
-          },
+        const engineResult = await generateCompletion({
+          messages: [{ role: 'user', content: prompt }],
+          jsonMode: true,
+          timeoutMs: 15000,
         });
 
-        if (response && response.text) {
-          explanation = JSON.parse(response.text);
+        if (engineResult.ok && engineResult.text) {
+          explanation = JSON.parse(stripCodeFences(engineResult.text));
+        } else if (!engineResult.ok) {
+          console.warn('[Server] AI explanation unavailable:', engineResult.errorMessage);
         }
       } catch (aiErr) {
-        console.warn('[Server] Gemini explanation failed, falling back to deterministic:', aiErr);
+        console.warn('[Server] AI explanation failed, falling back to deterministic:', aiErr);
       }
     }
 
@@ -5493,6 +5757,83 @@ app.delete('/api/production/reputation/:businessId/reviews/:reviewId', async (re
   }
 });
 
+// AI-DRAFTED REVIEW REPLY (on demand — never a hardcoded template).
+// Generates a personalized reply draft with the consolidated AI engine.
+// T-06: 1 credit checked upfront; refunded if the engine fails so failed
+// generations cost nothing.
+app.post('/api/production/reputation/:businessId/reviews/:reviewId/draft-reply', async (req, res) => {
+  try {
+    const { business, ownerEmail } = await resolveAuthenticatedBusiness(req, req.params.businessId);
+
+    const creditCheck = checkUserCredits(ownerEmail, undefined, 1);
+    if (!creditCheck.allowed) {
+      return res.status(403).json({ success: false, error: 'CREDITS_EXHAUSTED', message: creditCheck.error });
+    }
+    const refundCredit = () => {
+      try {
+        const key = (ownerEmail || '').toLowerCase().trim() || 'usr_guest';
+        const u = usersDb.get(key);
+        if (u && u.planTier !== 'agency') {
+          u.aiCreditsUsed = Math.max(0, (u.aiCreditsUsed || 1) - 1);
+          usersDb.set(key, u);
+          saveUserToSql(u).catch(() => {});
+        }
+      } catch { /* refund is best-effort */ }
+    };
+
+    const reviews = await dbService.getGoogleReviews(business.id);
+    const review = (reviews || []).find((r: any) => r.id === req.params.reviewId);
+    if (!review) {
+      refundCredit();
+      return res.status(404).json({ success: false, error: 'Review not found' });
+    }
+
+    const bizName = business.name || 'our team';
+    const author = review.authorName || 'Valued customer';
+    const rating = Number(review.rating) || 0;
+    const reviewText = (review.text || '').trim() || '(No written comment left)';
+    const tone = rating <= 2
+      ? 'Empathetic and de-escalating. Acknowledge the concern sincerely, apologize for the experience, invite them to contact you directly to make it right. Never be defensive.'
+      : rating === 3
+        ? 'Gracious and constructive. Thank them, acknowledge the mixed feedback, note the specific improvement you will make.'
+        : 'Warm and appreciative. Thank them by name, reference something specific from their review, invite them back.';
+
+    const engineResult = await generateCompletion({
+      messages: [
+        {
+          role: 'user',
+          content:
+            `Write a professional public reply to a customer review for the business "${bizName}".\n` +
+            `Reviewer: ${author}\nRating: ${rating}/5\nReview text: "${reviewText}"\n\n` +
+            `Tone guidance: ${tone}\n\n` +
+            `Rules:\n` +
+            `- Keep it under 80 words, plain text, no placeholders.\n` +
+            `- Sign off as the ${bizName} team.\n` +
+            `- Never invent facts about the business, the reviewer, or what happened.\n` +
+            `- Output ONLY the reply text, nothing else.`,
+        },
+      ],
+      systemInstruction:
+        'You draft short, genuine public replies to customer reviews for local businesses. Be human, specific, and honest. Never fabricate details.',
+      temperature: 0.7,
+      timeoutMs: 15000,
+    });
+
+    if (!engineResult.ok || !engineResult.text?.trim()) {
+      refundCredit();
+      return res.status(502).json({
+        success: false,
+        error: 'AI_DRAFT_FAILED',
+        message: engineResult.errorMessage || 'The AI could not draft a reply right now. Please try again.',
+      });
+    }
+
+    res.json({ success: true, draft: engineResult.text.trim() });
+  } catch (err: any) {
+    res.status(err.status || 500).json({ success: false, error: err.message });
+  }
+});
+
 app.get('/api/production/reputation/:businessId/sources', async (req, res) => {
   try {
     const { business } = await resolveAuthenticatedBusiness(req, req.params.businessId);
@@ -5777,6 +6118,14 @@ app.post('/api/ai-manager/query', async (req, res) => {
     const { business, ownerEmail } = await resolveAuthenticatedBusiness(req, targetBizId || undefined);
     const effectiveBizId = business.id;
     const effectiveUserEmail = userEmail || ownerEmail;
+
+    // T-06: enforce credits server-side before spending shared AI quota.
+    // The client deducts the credit only after a real deliverable arrives;
+    // this guard stops zero-credit accounts from consuming quota at all.
+    const creditCheck = checkUserCredits(effectiveUserEmail, undefined, 1);
+    if (!creditCheck.allowed) {
+      return res.status(403).json({ success: false, error: 'CREDITS_EXHAUSTED', message: creditCheck.error });
+    }
 
     const result = await aiManagerService.processAiManagerQuery({
       businessId: effectiveBizId,
@@ -8621,7 +8970,7 @@ app.get(['/auth/callback', '/auth/callback/'], async (req, res) => {
       planTier: 'free',
       subscriptionStatus: 'active',
       billingCycle: 'monthly',
-      monthlyAiCredits: 25,
+      monthlyAiCredits: creditsForPlan('free', false), // canonical: src/lib/credits.ts
       aiCreditsUsed: 0,
       invoicesCreatedCount: 0,
       memberSince: new Date().toISOString(),
@@ -8806,7 +9155,7 @@ app.get('/api/stripe/verify-session', async (req, res) => {
       if (user) {
         user.planTier = plan;
         user.billingCycle = isYearly ? 'yearly' : 'monthly';
-        user.monthlyAiCredits = plan === 'agency' ? 9999 : 250;
+        user.monthlyAiCredits = creditsForPlan(plan, false); // canonical: src/lib/credits.ts
         if (user.role !== 'admin') {
           user.role = 'subscriber';
         }
@@ -8926,7 +9275,7 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
         let user = await findUserByEmail(email);
         if (user) {
           user.planTier = plan as any;
-          user.monthlyAiCredits = plan === 'agency' ? 9999 : 250;
+          user.monthlyAiCredits = creditsForPlan(plan, false); // canonical: src/lib/credits.ts
           if (user.role !== 'admin') user.role = 'subscriber';
           usersDb.set(email, user);
           await saveUserToSql(user);
@@ -9370,7 +9719,7 @@ app.post('/api/whop/create-checkout', async (req, res) => {
         planTier: 'free',
         subscriptionStatus: 'active',
         billingCycle: 'monthly',
-        monthlyAiCredits: 25,
+        monthlyAiCredits: creditsForPlan('free', false), // canonical: src/lib/credits.ts
         aiCreditsUsed: 0,
         memberSince: nowIso,
         nextBillingDate: nextMonthIso,
@@ -10677,7 +11026,7 @@ app.get(['/api/whop/verify-session', '/api/whop/sync-payment'], async (req: any,
 
     if (user) {
       const planTier = planParam === 'agency' ? 'agency' : 'pro';
-      const creditAllowance = planTier === 'agency' ? 9999 : 250;
+      const creditAllowance = creditsForPlan(planTier, false); // canonical: src/lib/credits.ts
 
       user.planTier = planTier;
       user.subscriptionStatus = 'active';
@@ -10939,7 +11288,7 @@ app.post('/api/whop/webhook', async (req: any, res) => {
         user.planTier = plan;
         user.subscriptionStatus = 'active';
         user.billingCycle = isYearly ? 'yearly' : 'monthly';
-        user.monthlyAiCredits = plan === 'agency' ? 9999 : 250;
+        user.monthlyAiCredits = creditsForPlan(plan, false); // canonical: src/lib/credits.ts
         user.autoRenew = true;
         user.cancelAtPeriodEnd = false;
         user.paymentProvider = 'whop';
@@ -11360,7 +11709,7 @@ app.post('/api/checkout/process-card', async (req, res) => {
         billingCycle: isYearly ? 'yearly' : 'monthly',
         autoRenew: true,
         cancelAtPeriodEnd: false,
-        monthlyAiCredits: plan === 'agency' ? 9999 : 250,
+        monthlyAiCredits: creditsForPlan(plan, false), // canonical: src/lib/credits.ts
         aiCreditsUsed: 0,
         memberSince: nowIso,
         nextBillingDate: nextBillingIso,
@@ -11376,7 +11725,7 @@ app.post('/api/checkout/process-card', async (req, res) => {
       user.billingCycle = isYearly ? 'yearly' : 'monthly';
       user.autoRenew = true;
       user.cancelAtPeriodEnd = false;
-      user.monthlyAiCredits = plan === 'agency' ? 9999 : 250;
+      user.monthlyAiCredits = creditsForPlan(plan, false); // canonical: src/lib/credits.ts
       user.aiCreditsUsed = 0;
       if (user.role !== 'admin' && user.role !== 'owner') {
         user.role = 'subscriber';
@@ -11722,52 +12071,12 @@ app.post('/api/admin/transactions/refund', async (req, res) => {
       return res.status(403).json({ error: 'Access Denied. Admin key required.' });
     }
 
-    const { transactionId, refundAmount, reason } = req.body;
-    if (!transactionId) {
-      return res.status(400).json({ error: 'Transaction ID is required.' });
-    }
-
-    const transaction = transactionsDb.get(transactionId);
-    if (!transaction) {
-      return res.status(404).json({ error: 'Transaction not found.' });
-    }
-
-    const parsedRefundAmount = typeof refundAmount === 'number' ? refundAmount : transaction.amount;
-    transaction.status = 'refunded';
-    transaction.refundedAmount = parsedRefundAmount;
-    transaction.refundReason = reason || 'Customer requested refund processed by System Administrator';
-    transaction.refundedAt = new Date().toISOString();
-    transaction.updatedAt = new Date().toISOString();
-
-    transactionsDb.set(transactionId, transaction);
-    saveTransactionsToDisk();
-    await dbService.saveTransaction(transaction).catch(() => {});
-
-    // Send refund receipt email to customer
-    if (transaction.userEmail) {
-      sendEmail({
-        to: transaction.userEmail,
-        subject: `💳 Refund Processed - Locora AI ($${parsedRefundAmount.toFixed(2)})`,
-        text: `Your refund of $${parsedRefundAmount.toFixed(2)} for transaction ${transactionId} has been successfully processed. Reason: ${transaction.refundReason}`,
-        html: `
-          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 540px; margin: 0 auto; padding: 28px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px;">
-            <h2 style="color: #0f172a; margin-top: 0;">Refund Confirmation</h2>
-            <p style="color: #475569; font-size: 14px; line-height: 1.6;">
-              A refund of <strong>$${parsedRefundAmount.toFixed(2)} USD</strong> for transaction <code>${transactionId}</code> has been issued to your original payment method.
-            </p>
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin: 20px 0;">
-              <p style="margin: 0; font-size: 13px; color: #334155;"><strong>Reason:</strong> ${transaction.refundReason}</p>
-              <p style="margin: 6px 0 0; font-size: 12px; color: #64748b;">Funds typically appear on your statement within 3–5 business days depending on your bank.</p>
-            </div>
-          </div>
-        `,
-      }).catch(() => {});
-    }
-
-    res.json({
-      success: true,
-      message: `Transaction ${transactionId} has been successfully marked as refunded ($${parsedRefundAmount.toFixed(2)}).`,
-      transaction,
+    // DISABLED: this endpoint marked transactions refunded and emailed customers
+    // "issued to your original payment method" WITHOUT any payment-gateway refund call.
+    // Refunds must be issued in the Whop dashboard; this endpoint stays disabled
+    // until a real Whop refund API integration is built.
+    return res.status(410).json({
+      error: 'Refunds are processed in the Whop merchant dashboard. This endpoint is disabled to prevent false refund records.',
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Failed to process refund.' });
@@ -11801,7 +12110,7 @@ app.post('/api/admin/transactions/update-status', async (req, res) => {
       if (user) {
         user.planTier = transaction.planTier || 'pro';
         user.subscriptionStatus = 'active';
-        user.monthlyAiCredits = user.planTier === 'agency' ? 9999 : 250;
+        user.monthlyAiCredits = creditsForPlan(user.planTier, false); // canonical: src/lib/credits.ts
         if (user.role !== 'admin') user.role = 'subscriber';
         usersDb.set(transaction.userEmail.toLowerCase().trim(), user);
         saveUsersToDisk();
@@ -12030,656 +12339,69 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
   realApiExecuted: boolean;
   warning?: string;
 }> {
+  // Unified AI engine (Oct 2026 consolidation):
+  //   PRIMARY: Groq (free, global) — single default for every AI feature.
+  //   PREMIUM: Claude — only when explicitly selected AND a funded key exists.
+  //   REMOVED: Gemini (region restrictions), OpenAI/Perplexity/DeepSeek branches
+  //   (dead code — provider was coerced to groq/claude before they could run).
+  // Callers deduct credits ONLY when realApiExecuted === true.
   const cleanEmail = (options.userEmail || '').toLowerCase().trim();
   const userSettings = cleanEmail ? getUserSettingsDiskStore(cleanEmail) : null;
 
-  // Locora AI uses Claude and Groq models exclusively as specified
-  const rawProvider = (options.provider || userSettings?.activeProvider || 'groq').toLowerCase();
-  const effectiveProvider: string = (rawProvider === 'claude' || rawProvider === 'anthropic') ? 'claude' : 'groq';
-  const adminKey = (storedAppSettings?.providerKeys as any)?.[effectiveProvider] ||
-    (effectiveProvider === 'claude' ? ((storedAppSettings?.providerKeys as any)?.claude || (storedAppSettings?.providerKeys as any)?.anthropic) : undefined) ||
-    (effectiveProvider === 'groq' ? (storedAppSettings?.providerKeys as any)?.groq : undefined) || '';
-  const customKey = options.providerKey || userSettings?.providerKeys?.[effectiveProvider] || adminKey || '';
+  const rawProvider = (options.provider || (userSettings as any)?.activeProvider || 'groq').toLowerCase();
+  const providerOverride = (rawProvider === 'claude' || rawProvider === 'anthropic') ? ('claude' as const) : undefined;
+
+  const customKey =
+    options.providerKey ||
+    (userSettings as any)?.providerKeys?.[providerOverride || 'groq'] ||
+    '';
   const isCustomKey = !!(customKey && customKey.trim().length > 0);
 
-  const selectedModel = options.modelVersion || userSettings?.providerModels?.[effectiveProvider] || userSettings?.activeModelVersion || (
-    effectiveProvider === 'claude' ? 'claude-3-7-sonnet-20250219' : 'llama-3.3-70b-versatile'
-  );
-
-  const providerDisplayNames: Record<string, string> = {
-    claude: 'Anthropic Claude (3.7 Sonnet / 3.5 Sonnet)',
-    anthropic: 'Anthropic Claude (3.7 Sonnet / 3.5 Sonnet)',
-    groq: 'Groq LPU (Llama 3.3 70B / 8B)',
-  };
-
-  let text = '';
-  let providerUsed = effectiveProvider;
-  let modelUsed = selectedModel;
-  let tokensUsed = 0;
-  let warning: string | undefined;
-  let isFallback = false;
-  let realApiExecuted = false;
-
-  if (effectiveProvider === 'gemini') {
-    let targetModel = (selectedModel && !selectedModel.includes('2.5') && !selectedModel.includes('3.6') && !selectedModel.includes('1.5') && !selectedModel.includes('2.0'))
-      ? selectedModel
-      : 'gemini-3.7-flash';
-    modelUsed = targetModel;
-    const apiKey = customKey || process.env.GEMINI_API_KEY;
-    if (!apiKey || !apiKey.trim()) {
-      if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Google Gemini');
-        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-        return {
-          text: text.trim(),
-          providerUsed: 'gemini (offline-resilient)',
-          modelUsed: targetModel,
-          isCustomKey: false,
-          tokensUsed,
-          isFallback: true,
-          realApiExecuted: false,
-          warning: 'No custom Gemini API key configured. Output generated with offline resilient engine (0 credits deducted).',
-        };
-      }
-      throw new Error(`No Google Gemini API key configured. Please enter your Gemini API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
+  const msgs: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [];
+  if (options.systemInstruction) msgs.push({ role: 'system', content: options.systemInstruction });
+  if (options.messages && options.messages.length > 0) {
+    for (const m of options.messages) {
+      const role = m.sender === 'user' || m.role === 'user' ? 'user' : 'assistant';
+      msgs.push({ role: role as 'user' | 'assistant', content: m.text || m.content || '' });
     }
-
-    try {
-      const ai = getGenAIClient(apiKey.trim());
-
-      let contents: any[] = [];
-      if (options.messages && options.messages.length > 0) {
-        contents = options.messages.map((m: any) => ({
-          role: m.sender === 'user' || m.role === 'user' ? 'user' : 'model',
-          parts: [{ text: m.text || m.content || '' }],
-        }));
-      } else {
-        contents = [{ role: 'user', parts: [{ text: options.prompt || 'Hello' }] }];
-      }
-
-      // Prioritize modern available models
-      const candidateModels = Array.from(new Set([
-        targetModel,
-        'gemini-3.7-flash',
-        'gemini-3.6-flash',
-        'gemini-3.1-flash-lite',
-        'gemini-flash-latest',
-        'gemini-3.1-pro-preview',
-      ])).filter((m) => Boolean(m && !m.includes('2.5') && !m.includes('1.5') && !m.includes('2.0')));
-
-      let successfulModel = '';
-      let lastGeminiErr: any = null;
-
-      for (const modelToTry of candidateModels) {
-        try {
-          const response = await ai.models.generateContent({
-            model: modelToTry,
-            contents: contents.length > 0 ? contents : [{ role: 'user', parts: [{ text: 'Hello' }] }],
-            config: {
-              systemInstruction: options.systemInstruction,
-              temperature: options.temperature ?? 0.7,
-            },
-          });
-
-          if (response && response.text) {
-            text = response.text;
-            successfulModel = modelToTry;
-            const meta = (response as any)?.usageMetadata;
-            const actualTokens = meta?.totalTokenCount || ((meta?.promptTokenCount || 0) + (meta?.candidatesTokenCount || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
-            tokensUsed = actualTokens;
-            recordRealModelTokenUsage(successfulModel, actualTokens);
-            isFallback = false;
-            realApiExecuted = true;
-            break;
-          }
-        } catch (genErr: any) {
-          lastGeminiErr = genErr;
-        }
-      }
-
-      if (!text) {
-        throw lastGeminiErr || new Error('Google Gemini returned an empty response. Please verify your prompt or model status.');
-      }
-
-      modelUsed = successfulModel || targetModel;
-    } catch (err: any) {
-      const errMsg = err?.message || err?.toString() || 'Unknown Google Gemini Error';
-      if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Google Gemini');
-        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-        return {
-          text: text.trim(),
-          providerUsed: 'gemini (offline-resilient)',
-          modelUsed: targetModel,
-          isCustomKey,
-          tokensUsed,
-          isFallback: true,
-          realApiExecuted: false,
-          warning: `Google Gemini notice: ${errMsg}. Generated output with local resilient engine (0 credits deducted).`,
-        };
-      }
-      throw new Error(`Google Gemini Error: ${errMsg}`);
-    }
-  } else if (effectiveProvider === 'openai') {
-    const apiKey = customKey || process.env.OPENAI_API_KEY;
-    if (!apiKey || !apiKey.trim()) {
-      if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'OpenAI');
-        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-        return {
-          text: text.trim(),
-          providerUsed: 'openai (offline-resilient)',
-          modelUsed: selectedModel || 'gpt-4o',
-          isCustomKey: false,
-          tokensUsed,
-          isFallback: true,
-          realApiExecuted: false,
-          warning: 'No custom OpenAI API key configured. Output generated with offline resilient engine (0 credits deducted).',
-        };
-      }
-      throw new Error(`No OpenAI API key configured. Please enter your OpenAI API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
-    }
-    const targetModel = selectedModel || 'gpt-4o';
-    modelUsed = targetModel;
-
-    const msgs: any[] = [];
-    if (options.systemInstruction) {
-      msgs.push({ role: 'system', content: options.systemInstruction });
-    }
-    if (options.messages && options.messages.length > 0) {
-      options.messages.forEach((m: any) => {
-        msgs.push({
-          role: m.sender === 'user' || m.role === 'user' ? 'user' : 'assistant',
-          content: m.text || m.content || '',
-        });
-      });
-    } else {
-      msgs.push({ role: 'user', content: options.prompt || 'Hello' });
-    }
-
-    try {
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
-        body: JSON.stringify({
-          model: targetModel,
-          messages: msgs,
-          temperature: options.temperature ?? 0.7,
-        }),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
-        if (options.fallbackType) {
-          text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'OpenAI');
-          tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-          providerUsed = 'openai (offline-resilient)';
-          warning = `OpenAI notice: ${msg}. Generated output with local resilient business engine.`;
-          isFallback = true;
-          realApiExecuted = false;
-        } else {
-          throw new Error(`OpenAI API Error: ${msg}`);
-        }
-      } else {
-        const data = await res.json();
-        text = data.choices?.[0]?.message?.content || '';
-        if (!text) {
-          throw new Error('OpenAI returned an empty completion.');
-        }
-        tokensUsed = data.usage?.total_tokens || ((data.usage?.prompt_tokens || 0) + (data.usage?.completion_tokens || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
-        recordRealModelTokenUsage(targetModel, tokensUsed);
-        isFallback = false;
-        realApiExecuted = true;
-      }
-    } catch (err: any) {
-      if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'OpenAI');
-        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-        return {
-          text: text.trim(),
-          providerUsed: 'openai (offline-resilient)',
-          modelUsed: targetModel,
-          isCustomKey,
-          tokensUsed,
-          isFallback: true,
-          realApiExecuted: false,
-          warning: `OpenAI connection notice: ${err?.message || err}. Generated output with local resilient engine (0 credits deducted).`,
-        };
-      }
-      throw err;
-    }
-  } else if (effectiveProvider === 'claude' || effectiveProvider === 'anthropic') {
-    const apiKey = customKey || process.env.ANTHROPIC_API_KEY;
-    if (!apiKey || !apiKey.trim()) {
-      if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Anthropic Claude');
-        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-        return {
-          text: text.trim(),
-          providerUsed: 'claude (offline-resilient)',
-          modelUsed: selectedModel || 'claude-3-7-sonnet-20250219',
-          isCustomKey: false,
-          tokensUsed,
-          isFallback: true,
-          realApiExecuted: false,
-          warning: 'No custom Claude API key configured. Output generated with offline resilient engine (0 credits deducted).',
-        };
-      }
-      throw new Error(`No Anthropic Claude API key configured. Please enter your Claude API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
-    }
-    const targetModel = selectedModel || 'claude-3-7-sonnet-20250219';
-    modelUsed = targetModel;
-
-    const msgs: any[] = [];
-    if (options.messages && options.messages.length > 0) {
-      options.messages.forEach((m: any) => {
-        msgs.push({
-          role: m.sender === 'user' || m.role === 'user' ? 'user' : 'assistant',
-          content: m.text || m.content || '',
-        });
-      });
-    } else {
-      msgs.push({ role: 'user', content: options.prompt || 'Hello' });
-    }
-
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey.trim(),
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: targetModel,
-          max_tokens: 4096,
-          system: options.systemInstruction,
-          messages: msgs,
-          temperature: options.temperature ?? 0.7,
-        }),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
-        if (options.fallbackType) {
-          text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Anthropic Claude');
-          tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-          providerUsed = 'claude (offline-resilient)';
-          warning = `Claude notice: ${msg}. Generated output with local resilient business engine.`;
-          isFallback = true;
-          realApiExecuted = false;
-        } else {
-          throw new Error(`Anthropic Claude API Error: ${msg}`);
-        }
-      } else {
-        const data = await res.json();
-        text = data.content?.[0]?.text || '';
-        if (!text) {
-          throw new Error('Anthropic Claude returned an empty response.');
-        }
-        tokensUsed = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0) || Math.max(1, Math.ceil(text.length / 3.8));
-        recordRealModelTokenUsage(targetModel, tokensUsed);
-        isFallback = false;
-        realApiExecuted = true;
-      }
-    } catch (err: any) {
-      if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Anthropic Claude');
-        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-        return {
-          text: text.trim(),
-          providerUsed: 'claude (offline-resilient)',
-          modelUsed: targetModel,
-          isCustomKey,
-          tokensUsed,
-          isFallback: true,
-          realApiExecuted: false,
-          warning: `Claude connection notice: ${err?.message || err}. Generated output with local resilient engine (0 credits deducted).`,
-        };
-      }
-      throw err;
-    }
-  } else if (effectiveProvider === 'perplexity') {
-    const apiKey = customKey || process.env.PERPLEXITY_API_KEY;
-    if (!apiKey || !apiKey.trim()) {
-      if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Perplexity');
-        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-        return {
-          text: text.trim(),
-          providerUsed: 'perplexity (offline-resilient)',
-          modelUsed: selectedModel || 'sonar-pro',
-          isCustomKey: false,
-          tokensUsed,
-          isFallback: true,
-          realApiExecuted: false,
-          warning: 'No custom Perplexity API key configured. Output generated with offline resilient engine (0 credits deducted).',
-        };
-      }
-      throw new Error(`No Perplexity API key configured. Please enter your Perplexity API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
-    }
-    const targetModel = selectedModel || 'sonar-pro';
-    modelUsed = targetModel;
-
-    const msgs: any[] = [];
-    if (options.systemInstruction) msgs.push({ role: 'system', content: options.systemInstruction });
-    if (options.messages && options.messages.length > 0) {
-      options.messages.forEach((m: any) => {
-        msgs.push({ role: m.sender === 'user' || m.role === 'user' ? 'user' : 'assistant', content: m.text || m.content || '' });
-      });
-    } else {
-      msgs.push({ role: 'user', content: options.prompt || 'Hello' });
-    }
-
-    try {
-      const res = await fetch('https://api.perplexity.ai/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
-        body: JSON.stringify({ model: targetModel, messages: msgs }),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
-        if (options.fallbackType) {
-          text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Perplexity');
-          tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-          providerUsed = 'perplexity (offline-resilient)';
-          warning = `Perplexity notice: ${msg}. Generated output with local resilient business engine.`;
-          isFallback = true;
-          realApiExecuted = false;
-        } else {
-          throw new Error(`Perplexity API Error: ${msg}`);
-        }
-      } else {
-        const data = await res.json();
-        text = data.choices?.[0]?.message?.content || '';
-        if (!text) {
-          throw new Error('Perplexity returned an empty completion.');
-        }
-        tokensUsed = data.usage?.total_tokens || ((data.usage?.prompt_tokens || 0) + (data.usage?.completion_tokens || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
-        recordRealModelTokenUsage(targetModel, tokensUsed);
-        isFallback = false;
-        realApiExecuted = true;
-      }
-    } catch (err: any) {
-      if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Perplexity');
-        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-        return {
-          text: text.trim(),
-          providerUsed: 'perplexity (offline-resilient)',
-          modelUsed: targetModel,
-          isCustomKey,
-          tokensUsed,
-          isFallback: true,
-          realApiExecuted: false,
-          warning: `Perplexity connection notice: ${err?.message || err}. Generated output with local resilient engine (0 credits deducted).`,
-        };
-      }
-      throw err;
-    }
-  } else if (effectiveProvider === 'deepseek') {
-    const apiKey = customKey || process.env.DEEPSEEK_API_KEY;
-    if (!apiKey || !apiKey.trim()) {
-      if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'DeepSeek');
-        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-        return {
-          text: text.trim(),
-          providerUsed: 'deepseek (offline-resilient)',
-          modelUsed: selectedModel || 'deepseek-chat',
-          isCustomKey: false,
-          tokensUsed,
-          isFallback: true,
-          realApiExecuted: false,
-          warning: 'No custom DeepSeek API key configured. Output generated with offline resilient engine (0 credits deducted).',
-        };
-      }
-      throw new Error(`No DeepSeek API key configured. Please enter your DeepSeek API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
-    }
-    const targetModel = selectedModel || 'deepseek-chat';
-    modelUsed = targetModel;
-
-    const msgs: any[] = [];
-    if (options.systemInstruction) msgs.push({ role: 'system', content: options.systemInstruction });
-    if (options.messages && options.messages.length > 0) {
-      options.messages.forEach((m: any) => {
-        msgs.push({ role: m.sender === 'user' || m.role === 'user' ? 'user' : 'assistant', content: m.text || m.content || '' });
-      });
-    } else {
-      msgs.push({ role: 'user', content: options.prompt || 'Hello' });
-    }
-
-    try {
-      const res = await fetch('https://api.deepseek.com/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
-        body: JSON.stringify({ model: targetModel, messages: msgs }),
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        const msg = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
-        if (options.fallbackType) {
-          text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'DeepSeek');
-          tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-          providerUsed = 'deepseek (offline-resilient)';
-          warning = `DeepSeek notice: ${msg}. Generated output with local resilient business engine.`;
-          isFallback = true;
-          realApiExecuted = false;
-        } else {
-          throw new Error(`DeepSeek API Error: ${msg}`);
-        }
-      } else {
-        const data = await res.json();
-        text = data.choices?.[0]?.message?.content || '';
-        if (!text) {
-          throw new Error('DeepSeek returned an empty completion.');
-        }
-        tokensUsed = data.usage?.total_tokens || ((data.usage?.prompt_tokens || 0) + (data.usage?.completion_tokens || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
-        recordRealModelTokenUsage(targetModel, tokensUsed);
-        isFallback = false;
-        realApiExecuted = true;
-      }
-    } catch (err: any) {
-      if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'DeepSeek');
-        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-        return {
-          text: text.trim(),
-          providerUsed: 'deepseek (offline-resilient)',
-          modelUsed: targetModel,
-          isCustomKey,
-          tokensUsed,
-          isFallback: true,
-          realApiExecuted: false,
-          warning: `DeepSeek connection notice: ${err?.message || err}. Generated output with local resilient engine (0 credits deducted).`,
-        };
-      }
-      throw err;
-    }
-  } else if (effectiveProvider === 'groq') {
-    const apiKey = customKey || process.env.GROQ_API_KEY;
-    if (!apiKey || !apiKey.trim()) {
-      if (process.env.GEMINI_API_KEY) {
-        try {
-          const ai = getGenAIClient(process.env.GEMINI_API_KEY.trim());
-          let contents: any[] = [];
-          if (options.messages && options.messages.length > 0) {
-            contents = options.messages.map((m: any) => ({
-              role: m.sender === 'user' || m.role === 'user' ? 'user' : 'model',
-              parts: [{ text: m.text || m.content || '' }],
-            }));
-          } else {
-            contents = [{ role: 'user', parts: [{ text: options.prompt || 'Hello' }] }];
-          }
-
-          const fallbackCandidates = ['gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest'];
-          for (const cand of fallbackCandidates) {
-            try {
-              const response = await ai.models.generateContent({
-                model: cand,
-                contents: contents.length > 0 ? contents : [{ role: 'user', parts: [{ text: 'Hello' }] }],
-                config: {
-                  systemInstruction: options.systemInstruction,
-                  temperature: options.temperature ?? 0.7,
-                },
-              });
-
-              if (response && response.text) {
-                text = response.text;
-                tokensUsed = Math.max(1, Math.ceil(text.length / 3.8));
-                return {
-                  text: text.trim(),
-                  providerUsed: 'groq (via Google Gemini system engine)',
-                  modelUsed: cand,
-                  isCustomKey: false,
-                  tokensUsed,
-                  isFallback: false,
-                  realApiExecuted: true,
-                };
-              }
-            } catch (_) {}
-          }
-        } catch (_) {}
-      }
-
-      if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Groq');
-        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-        providerUsed = 'groq (offline-resilient)';
-        warning = 'No custom Groq API key is configured. Output generated seamlessly via offline intelligence engine (0 credits deducted). Add your Groq key in Settings for live cloud LPU inference.';
-        return {
-          text: text.trim(),
-          providerUsed,
-          modelUsed: selectedModel || 'llama-3.3-70b-versatile',
-          isCustomKey: false,
-          tokensUsed,
-          isFallback: true,
-          realApiExecuted: false,
-          warning,
-        };
-      }
-      throw new Error(`No Groq API key configured. Please enter your Groq API key in Settings > AI & Model Integrations or ask an admin to configure it in the Admin Portal.`);
-    }
-
-    const trimmedKey = apiKey.trim();
-
-    // Determine prioritized candidate list of models
-    let candidateModels: string[] = [
-      selectedModel,
-      'llama-3.3-70b-versatile',
-      'llama-3.1-8b-instant',
-      'llama-3.2-3b-preview',
-      'llama-3.2-1b-preview',
-      'llama-3.2-11b-vision-preview',
-      'llama3-70b-8192',
-      'llama3-8b-8192',
-      'mixtral-8x7b-32768',
-      'gemma2-9b-it',
-      'qwen-2.5-32b',
-      'deepseek-r1-distill-llama-70b',
-    ].filter(Boolean) as string[];
-
-    // Dynamically discover all active models on this specific Groq API key
-    try {
-      const modelsRes = await fetch('https://api.groq.com/openai/v1/models', {
-        headers: { Authorization: `Bearer ${trimmedKey}` },
-      });
-      if (modelsRes.ok) {
-        const mData = await modelsRes.json();
-        if (Array.isArray(mData?.data)) {
-          const liveIds = mData.data
-            .map((m: any) => m.id)
-            .filter((id: string) => !id.includes('whisper') && !id.includes('guard'));
-          if (liveIds.length > 0) {
-            candidateModels = Array.from(new Set([selectedModel, ...liveIds, ...candidateModels])).filter(Boolean) as string[];
-          }
-        }
-      }
-    } catch (_) {}
-
-    const msgs: any[] = [];
-    if (options.systemInstruction) msgs.push({ role: 'system', content: options.systemInstruction });
-    if (options.messages && options.messages.length > 0) {
-      options.messages.forEach((m: any) => {
-        msgs.push({ role: m.sender === 'user' || m.role === 'user' ? 'user' : 'assistant', content: m.text || m.content || '' });
-      });
-    } else {
-      msgs.push({ role: 'user', content: options.prompt || 'Hello' });
-    }
-
-    let lastGroqError = '';
-    let success = false;
-    let successfulModel = '';
-
-    for (const modelToTry of candidateModels) {
-      try {
-        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${trimmedKey}` },
-          body: JSON.stringify({
-            model: modelToTry,
-            messages: msgs,
-            temperature: options.temperature ?? 0.7,
-          }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          text = data.choices?.[0]?.message?.content || '';
-          if (text) {
-            successfulModel = modelToTry;
-            tokensUsed = data.usage?.total_tokens || ((data.usage?.prompt_tokens || 0) + (data.usage?.completion_tokens || 0)) || Math.max(1, Math.ceil(text.length / 3.8));
-            recordRealModelTokenUsage(successfulModel, tokensUsed);
-            success = true;
-            break;
-          }
-        } else {
-          const errJson = await res.json().catch(() => ({}));
-          lastGroqError = errJson?.error?.message || `HTTP ${res.status} (${res.statusText})`;
-          if (res.status === 401 || lastGroqError.includes('Invalid API Key') || lastGroqError.includes('Incorrect API key')) {
-            break;
-          }
-        }
-      } catch (err: any) {
-        lastGroqError = err?.message || 'Network error connecting to Groq';
-      }
-    }
-
-    if (!success) {
-      if (options.fallbackType) {
-        text = generateIntelligentFallback(options.fallbackType, options.fallbackPayload || {}, 'Groq');
-        tokensUsed = Math.max(80, Math.ceil(text.length / 3.8));
-        providerUsed = 'groq (offline-resilient)';
-        warning = `Groq service notice: ${lastGroqError || 'Model unavailable on key'}. Generated output with local resilient business engine (0 credits deducted).`;
-        isFallback = true;
-        realApiExecuted = false;
-      } else {
-        throw new Error(`Groq API Error: ${lastGroqError || 'Failed to complete request on Groq models.'}`);
-      }
-    } else {
-      isFallback = false;
-      realApiExecuted = true;
-    }
-
-    modelUsed = successfulModel || selectedModel || 'llama-3.3-70b-versatile';
   } else {
-    throw new Error(`Unsupported AI Provider: "${effectiveProvider}". Supported providers are Gemini, OpenAI, Claude, DeepSeek, Groq, and Perplexity.`);
+    msgs.push({ role: 'user', content: options.prompt || 'Hello' });
   }
 
+  const result = await generateCompletion({
+    messages: msgs,
+    temperature: options.temperature ?? 0.7,
+    providerOverride,
+    providerKey: options.providerKey,
+    modelOverride: options.modelVersion,
+    timeoutMs: 25000,
+  });
+
+  if (result.ok) {
+    try { recordRealModelTokenUsage(result.modelUsed, result.tokensUsed); } catch { /* telemetry only */ }
+    return {
+      text: result.text.trim(),
+      providerUsed: result.providerUsed === 'claude' ? 'Anthropic Claude (3.7 Sonnet)' : 'Groq LPU (Llama 3.3 70B)',
+      modelUsed: result.modelUsed,
+      isCustomKey,
+      tokensUsed: result.tokensUsed,
+      isFallback: false,
+      realApiExecuted: true,
+    };
+  }
+
+  // Honest failure: no fabricated "offline" content. The notice tells the user
+  // exactly how to enable the feature. No credits are ever deducted here.
+  const notice = result.errorMessage || AI_NOT_CONFIGURED_NOTICE;
   return {
-    text: text.trim(),
-    providerUsed,
-    modelUsed,
+    text: notice,
+    providerUsed: result.providerUsed,
+    modelUsed: result.modelUsed,
     isCustomKey,
-    tokensUsed,
-    isFallback,
-    realApiExecuted,
-    warning,
+    tokensUsed: 0,
+    isFallback: false,
+    realApiExecuted: false,
+    warning: notice,
   };
 }
 
@@ -15062,6 +14784,17 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', app: 'Locora AI - Business Copilot 3.0 Engine' });
 });
 
+// AI provider lanes + live health. Cached 60s server-side; ?refresh=1 forces
+// a fresh probe. Never exposes key values — only configured booleans.
+app.get('/api/ai/health', async (req, res) => {
+  try {
+    const lanes = await getAiLanes(req.query.refresh === '1');
+    res.json({ success: true, lanes });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Health check failed' });
+  }
+});
+
 // Weekly Newsletter Subscription & Automated Dispatch Engine
 
 const SUBSCRIBERS_FILE = path.join(process.cwd(), 'subscribers.json');
@@ -15330,6 +15063,10 @@ app.get('/api/newsletter/status', (req, res) => {
 
 app.all('/api/newsletter/send-weekly-dispatch', async (req, res) => {
   try {
+    // Admin-only: mass email must never be triggerable by a non-admin session.
+    if (!(await verifyAdminAccessAsync(req))) {
+      return res.status(403).json({ error: 'Admin access required.' });
+    }
     const protocol = req.headers['x-forwarded-proto'] || 'http';
     const host = `${protocol}://${req.headers.host}`;
     const result = await executeWeeklyNewsletterDispatch(host);
@@ -15342,13 +15079,9 @@ app.all('/api/newsletter/send-weekly-dispatch', async (req, res) => {
 
 // Admin Verification Helper
 async function verifyAdminAccessAsync(req: express.Request): Promise<boolean> {
-  const userEmail = (
-    (req.headers['x-user-email'] as string) ||
-    (req.query.userEmail as string) ||
-    (req.body && req.body.userEmail) ||
-    (req.cookies?.auth_email as string) ||
-    ''
-  ).toLowerCase().trim();
+  // Identity comes ONLY from the validated session token — never from
+  // client-supplied email headers, query params, or body fields.
+  const userEmail = reqEmail(req);
 
   if (!userEmail) {
     return false;
@@ -15370,13 +15103,9 @@ async function verifyAdminAccessAsync(req: express.Request): Promise<boolean> {
 }
 
 function verifyAdminAccess(req: express.Request): boolean {
-  const userEmail = (
-    (req.headers['x-user-email'] as string) ||
-    (req.query.userEmail as string) ||
-    (req.body && req.body.userEmail) ||
-    (req.cookies?.auth_email as string) ||
-    ''
-  ).toLowerCase().trim();
+  // Identity comes ONLY from the validated session token — never from
+  // client-supplied email headers, query params, or body fields.
+  const userEmail = reqEmail(req);
 
   if (!userEmail) {
     return false;
@@ -15581,7 +15310,7 @@ app.get('/api/admin/database-tables', async (req, res) => {
           subscriptionStatus: 'active',
           billingCycle: 'monthly',
           autoRenew: true,
-          monthlyAiCredits: su.planTier === 'agency' ? 9999 : su.planTier === 'pro' ? 250 : 25,
+          monthlyAiCredits: creditsForPlan(su.planTier || 'free', false), // canonical: src/lib/credits.ts
           aiCreditsUsed: 0,
           memberSince: su.createdAt ? new Date(su.createdAt).toISOString() : new Date().toISOString(),
           nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
@@ -15643,11 +15372,15 @@ app.post('/api/admin/update-user-plan', async (req, res) => {
       return res.status(403).json({ error: 'Access Denied. Admin key required.' });
     }
 
-    const { email, planTier, role, setCreditsUsed, autoRenew, billingCycle, subscriptionStatus, monthlyAiCredits } = req.body;
+    const { email, planTier, role, setCreditsUsed, autoRenew, billingCycle, subscriptionStatus, monthlyAiCredits, createIfMissing } = req.body;
     if (!email) return res.status(400).json({ error: 'Target user email is required.' });
 
     const normalizedEmail = email.toLowerCase().trim();
     let user = await findUserByEmail(normalizedEmail);
+
+    if (!user && !createIfMissing) {
+      return res.status(404).json({ error: `No account found for ${normalizedEmail}. Tick "create if missing" to create one explicitly.` });
+    }
 
     if (!user) {
       const fallbackName = normalizedEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
@@ -15661,7 +15394,7 @@ app.post('/api/admin/update-user-plan', async (req, res) => {
         subscriptionStatus: 'active',
         billingCycle: 'monthly',
         autoRenew: true,
-        monthlyAiCredits: 25,
+        monthlyAiCredits: creditsForPlan('free', false), // canonical: src/lib/credits.ts
         aiCreditsUsed: 0,
         memberSince: new Date().toISOString(),
         nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
@@ -15769,6 +15502,159 @@ function recordRealModelTokenUsage(modelId: string, tokensConsumed: number) {
 }
 
 // Admin API to fetch AI Tokens and Model Monitoring Stats
+// ============ AUTOMATED HEALTH SCANS ============
+// Real scheduled health evaluation. Pro: weekly per owned business.
+// Agency: weekly per client business. Free: manual scans only (1/hour).
+app.get('/api/health-scans/:businessId', async (req, res) => {
+  try {
+    const { business } = await resolveAuthenticatedBusiness(req, req.params.businessId);
+    res.json({ success: true, scans: healthScans.getHealthScans(business.id) });
+  } catch (err: any) {
+    const status = err?.name === 'AuthorizationError' ? 403 : 500;
+    res.status(status).json({ error: err.message || 'Failed to load health scans.' });
+  }
+});
+
+app.post('/api/health-scans/:businessId/run', async (req, res) => {
+  try {
+    const { business } = await resolveAuthenticatedBusiness(req, req.params.businessId);
+    if (!healthScans.isManualScanAllowed(business.id)) {
+      return res.status(429).json({ error: 'A scan already ran within the last hour. Please wait before re-scanning.' });
+    }
+    const scan = await healthScans.runHealthScan(business.id, 'manual');
+    res.json({ success: true, scan });
+  } catch (err: any) {
+    const status = err?.name === 'AuthorizationError' ? 403 : 500;
+    res.status(status).json({ error: err.message || 'Health scan failed.' });
+  }
+});
+
+// Weekly automated scan scheduler. Runs hourly, scans each eligible business
+// at most once per 7 days. Sends the owner an email when regressions are found.
+setInterval(async () => {
+  try {
+    const businesses = await db.select().from(schema.businessesTable).catch(() => []);
+    for (const biz of businesses as any[]) {
+      try {
+        if (!healthScans.isScheduledScanDue(biz.id)) continue;
+        const owner = await findUserByEmail((biz.ownerEmail || '').toLowerCase());
+        const plan = (owner as any)?.planTier || 'free';
+        // Automated scans are a Pro/Agency feature; Free gets manual scans only.
+        if (plan !== 'pro' && plan !== 'agency' && plan !== 'elite') continue;
+        const scan = await healthScans.runHealthScan(biz.id, 'scheduled');
+        if (scan.regressions.length > 0 && biz.ownerEmail) {
+          await sendEmail({
+            to: biz.ownerEmail,
+            subject: `⚠️ Health alert: ${scan.businessName} dropped to ${scan.score}/100`,
+            html: `
+              <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
+                <h2 style="color: #b91c1c;">Automated Health Scan Alert</h2>
+                <p>Your scheduled health scan for <strong>${scan.businessName}</strong> found regressions:</p>
+                <ul>${scan.regressions.map((r) => `<li>${r}</li>`).join('')}</ul>
+                <p>Score: <strong>${scan.score}/100</strong> (previous: see dashboard)</p>
+                <p style="color: #64748b; font-size: 12px;">This is an automated scan from Locora AI. Scans run weekly for Pro and Agency workspaces.</p>
+              </div>`,
+          }).catch(() => {});
+        }
+      } catch (bizErr) {
+        console.warn('[HealthScans] Scheduled scan failed for business:', (biz as any)?.id, (bizErr as any)?.message);
+      }
+    }
+  } catch (err: any) {
+    console.warn('[HealthScans] Scheduler tick failed:', err.message);
+  }
+}, 60 * 60 * 1000);
+
+// ============ MAPS RANK TRACKING ============
+// Real SERP-based position monitoring. Pro/Agency only, metered by SEO units.
+app.get('/api/rank-tracking/:businessId', async (req, res) => {
+  try {
+    const { business } = await resolveAuthenticatedBusiness(req, req.params.businessId);
+    const history = await rankTracking.getRankHistory(business.id, req.query.keywordId as string);
+    res.json({ success: true, history });
+  } catch (err: any) {
+    const status = err?.name === 'AuthorizationError' ? 403 : 500;
+    res.status(status).json({ error: err.message || 'Failed to load rank history.' });
+  }
+});
+
+app.post('/api/rank-tracking/:businessId/check', async (req, res) => {
+  try {
+    const { business } = await resolveAuthenticatedBusiness(req, req.params.businessId);
+    const owner = await findUserByEmail((business.ownerEmail || '').toLowerCase());
+    const plan = (owner as any)?.planTier || 'free';
+    const kwRows = await db.select().from(schema.trackedKeywordsTable).where(
+      and(eq(schema.trackedKeywordsTable.businessId, business.id), eq(schema.trackedKeywordsTable.isActive, true))
+    ).catch(() => []);
+    const quota = rankTracking.checkRankQuota(business.ownerEmail || '', plan, kwRows.length);
+    if (!quota.allowed) {
+      return res.status(402).json({ error: quota.reason });
+    }
+    const result = await rankTracking.checkBusinessRanks(business.id);
+    rankTracking.recordRankUsage(business.ownerEmail || '', result.unitsUsed);
+    res.json({ success: true, ...result });
+  } catch (err: any) {
+    const status = err?.name === 'AuthorizationError' ? 403 : 500;
+    res.status(status).json({ error: err.message || 'Rank check failed.' });
+  }
+});
+
+// Weekly rank-tracking scheduler (hourly tick, at most weekly per business).
+setInterval(async () => {
+  try {
+    const businesses = await db.select().from(schema.businessesTable).catch(() => []);
+    for (const biz of businesses as any[]) {
+      try {
+        const owner = await findUserByEmail((biz.ownerEmail || '').toLowerCase());
+        const plan = ((owner as any)?.planTier || 'free').toLowerCase();
+        if (plan !== 'pro' && plan !== 'agency' && plan !== 'elite') continue;
+        const kwRows = await db.select().from(schema.trackedKeywordsTable).where(
+          and(eq(schema.trackedKeywordsTable.businessId, biz.id), eq(schema.trackedKeywordsTable.isActive, true))
+        ).catch(() => []);
+        if (kwRows.length === 0) continue;
+        const lastRows = await rankTracking.getRankHistory(biz.id, undefined, 1);
+        const lastAt = (lastRows[0] as any)?.snapshotDate ? new Date((lastRows[0] as any).snapshotDate).toISOString() : null;
+        if (!rankTracking.isRankCheckDue(lastAt)) continue;
+        const quota = rankTracking.checkRankQuota(biz.ownerEmail || '', plan, kwRows.length);
+        if (!quota.allowed) continue;
+        const result = await rankTracking.checkBusinessRanks(biz.id);
+        rankTracking.recordRankUsage(biz.ownerEmail || '', result.unitsUsed);
+      } catch (bizErr) {
+        console.warn('[RankTracking] Scheduled check failed for business:', (biz as any)?.id, (bizErr as any)?.message);
+      }
+    }
+  } catch (err: any) {
+    console.warn('[RankTracking] Scheduler tick failed:', err.message);
+  }
+}, 60 * 60 * 1000);
+
+// Public (authenticated) provider key presence — booleans only, never secrets.
+// Single source of truth for feature gating ("is this provider actually configured?").
+app.get('/api/provider-status', attachAuth, (req, res) => {
+  try {
+    if (!reqEmail(req)) {
+      return res.status(401).json({ error: 'Not authenticated.' });
+    }
+    const pk = storedAppSettings?.providerKeys || {};
+    const has = (v: any) => Boolean(v && String(v).trim());
+    res.json({
+      success: true,
+      configured: {
+        groq: has(pk.groq || process.env.GROQ_API_KEY),
+        anthropic: has(pk.claude || pk.anthropic || process.env.ANTHROPIC_API_KEY),
+        openai: has(pk.openai || process.env.OPENAI_API_KEY),
+        perplexity: has(pk.perplexity || process.env.PERPLEXITY_API_KEY),
+        deepseek: has(pk.deepseek || process.env.DEEPSEEK_API_KEY),
+        dataforseo: has((pk.dataforseo_login || pk.dataforseoLogin || process.env.DATAFORSEO_LOGIN) && (pk.dataforseo_password || pk.dataforseoPassword || process.env.DATAFORSEO_PASSWORD)),
+        serp: has(pk.serper || process.env.SERPER_API_KEY || pk.serpapi || process.env.SERPAPI_API_KEY || pk.scaleserp || process.env.SCALESERP_API_KEY || pk.valueserp || process.env.VALUESERP_API_KEY),
+        googleMaps: has(pk.google_maps || pk.googleMaps || process.env.GOOGLE_MAPS_API_KEY),
+      },
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/admin/ai-tokens/stats', (req, res) => {
   try {
     if (!verifyAdminAccess(req)) {
@@ -15788,6 +15674,29 @@ app.get('/api/admin/ai-tokens/stats', (req, res) => {
       }
     });
 
+    // SECURITY: never ship plaintext secrets to the browser. The UI shows only
+    // masked hints (•••• + last 4); key inputs stay empty unless the admin types a new key.
+    const pk = storedAppSettings?.providerKeys || {};
+    const savedKeyHints = {
+      openai: maskKey(pk.openai || process.env.OPENAI_API_KEY || ''),
+      anthropic: maskKey(pk.claude || pk.anthropic || process.env.ANTHROPIC_API_KEY || ''),
+      perplexity: maskKey(pk.perplexity || process.env.PERPLEXITY_API_KEY || ''),
+      groq: maskKey(pk.groq || process.env.GROQ_API_KEY || ''),
+      googleMaps: maskKey(pk.google_maps || pk.googleMaps || process.env.GOOGLE_MAPS_API_KEY || ''),
+      pageSpeed: maskKey(pk.pagespeed || pk.pageSpeed || process.env.PAGESPEED_API_KEY || ''),
+      hunter: maskKey(pk.hunter || process.env.HUNTER_API_KEY || ''),
+      apollo: maskKey(pk.apollo || process.env.APOLLO_API_KEY || ''),
+      millionverifier: maskKey(pk.millionverifier || pk.millionVerifier || process.env.MILLIONVERIFIER_API_KEY || ''),
+      serper: maskKey(pk.serper || process.env.SERPER_API_KEY || ''),
+      serpapi: maskKey(pk.serpapi || process.env.SERPAPI_API_KEY || ''),
+      dataforseoLogin: maskKey(pk.dataforseo_login || pk.dataforseoLogin || process.env.DATAFORSEO_LOGIN || ''),
+      dataforseoPassword: maskKey(pk.dataforseo_password || pk.dataforseoPassword || process.env.DATAFORSEO_PASSWORD || ''),
+      googleSearchApiKey: maskKey(pk.google_search_api_key || pk.googleSearchApiKey || process.env.GOOGLE_SEARCH_API_KEY || ''),
+      googleSearchCx: maskKey(pk.google_search_cx || pk.googleSearchCx || process.env.GOOGLE_SEARCH_CX || ''),
+      scaleserp: maskKey(pk.scaleserp || process.env.SCALESERP_API_KEY || ''),
+      valueserp: maskKey(pk.valueserp || process.env.VALUESERP_API_KEY || ''),
+    };
+
     res.json({
       success: true,
       summary: {
@@ -15799,27 +15708,7 @@ app.get('/api/admin/ai-tokens/stats', (req, res) => {
       },
       models: modelsList,
       validationStatus: Object.fromEntries(providerKeyValidationStatus.entries()),
-      savedKeys: {
-        gemini: storedAppSettings?.providerKeys?.gemini !== undefined ? storedAppSettings.providerKeys.gemini : (process.env.GEMINI_API_KEY || ''),
-        openai: storedAppSettings?.providerKeys?.openai !== undefined ? storedAppSettings.providerKeys.openai : (process.env.OPENAI_API_KEY || ''),
-        anthropic: (storedAppSettings?.providerKeys?.claude !== undefined ? storedAppSettings.providerKeys.claude : (storedAppSettings?.providerKeys?.anthropic !== undefined ? storedAppSettings.providerKeys.anthropic : (process.env.ANTHROPIC_API_KEY || ''))),
-        perplexity: storedAppSettings?.providerKeys?.perplexity !== undefined ? storedAppSettings.providerKeys.perplexity : (process.env.PERPLEXITY_API_KEY || ''),
-        deepseek: storedAppSettings?.providerKeys?.deepseek !== undefined ? storedAppSettings.providerKeys.deepseek : (process.env.DEEPSEEK_API_KEY || ''),
-        groq: storedAppSettings?.providerKeys?.groq !== undefined ? storedAppSettings.providerKeys.groq : (process.env.GROQ_API_KEY || ''),
-        googleMaps: storedAppSettings?.providerKeys?.google_maps || storedAppSettings?.providerKeys?.googleMaps || process.env.GOOGLE_MAPS_API_KEY || '',
-        pageSpeed: storedAppSettings?.providerKeys?.pagespeed || storedAppSettings?.providerKeys?.pageSpeed || process.env.PAGESPEED_API_KEY || '',
-        hunter: storedAppSettings?.providerKeys?.hunter || process.env.HUNTER_API_KEY || '',
-        apollo: storedAppSettings?.providerKeys?.apollo || process.env.APOLLO_API_KEY || '',
-        millionverifier: storedAppSettings?.providerKeys?.millionverifier || storedAppSettings?.providerKeys?.millionVerifier || process.env.MILLIONVERIFIER_API_KEY || '',
-        serper: storedAppSettings?.providerKeys?.serper || process.env.SERPER_API_KEY || '',
-        serpapi: storedAppSettings?.providerKeys?.serpapi || process.env.SERPAPI_API_KEY || '',
-        dataforseoLogin: storedAppSettings?.providerKeys?.dataforseo_login || storedAppSettings?.providerKeys?.dataforseoLogin || process.env.DATAFORSEO_LOGIN || '',
-        dataforseoPassword: storedAppSettings?.providerKeys?.dataforseo_password || storedAppSettings?.providerKeys?.dataforseoPassword || process.env.DATAFORSEO_PASSWORD || '',
-        googleSearchApiKey: storedAppSettings?.providerKeys?.google_search_api_key || storedAppSettings?.providerKeys?.googleSearchApiKey || process.env.GOOGLE_SEARCH_API_KEY || '',
-        googleSearchCx: storedAppSettings?.providerKeys?.google_search_cx || storedAppSettings?.providerKeys?.googleSearchCx || process.env.GOOGLE_SEARCH_CX || '',
-        scaleserp: storedAppSettings?.providerKeys?.scaleserp || process.env.SCALESERP_API_KEY || '',
-        valueserp: storedAppSettings?.providerKeys?.valueserp || process.env.VALUESERP_API_KEY || '',
-      },
+      savedKeys: savedKeyHints,
       apiKeysConfigured: {
         gemini: hasEnvKeyForModel('GEMINI_API_KEY'),
         openai: hasEnvKeyForModel('OPENAI_API_KEY'),
@@ -15855,7 +15744,7 @@ app.post('/api/admin/ai-tokens/validate-all', async (req, res) => {
     await validateAllConfiguredKeys();
     res.json({
       success: true,
-      message: 'Validated all configured model API keys against live provider endpoints.',
+      message: 'Live-validated all configured provider keys (Groq, Anthropic, OpenAI, Perplexity, SerpApi, Serper). Other SEO/B2B keys are stored as provided and not live-validated.',
       validationStatus: Object.fromEntries(providerKeyValidationStatus.entries()),
       models: Array.from(aiModelQuotas.values()),
     });
@@ -15943,24 +15832,27 @@ app.post('/api/admin/ai-tokens/update-keys', async (req, res) => {
     }
 
     const {
-      geminiKey, openaiKey, anthropicKey, perplexityKey, deepseekKey, groqKey,
+      openaiKey, anthropicKey, perplexityKey, groqKey,
       googleMapsKey, pageSpeedKey, hunterKey, apolloKey, millionverifierKey, millionVerifierKey,
       serperKey, serpApiKey, dataforseoLogin, dataforseoPassword,
       googleSearchApiKey, googleSearchCx, scaleserpKey, valueserpKey
     } = req.body;
 
-    // Validate non-empty provided keys against provider endpoints
+    // Only non-empty submitted keys are validated and stored. Empty/missing
+    // fields NEVER overwrite stored keys — this prevents accidental wipes.
+    // NOTE: DeepSeek was removed — no runtime code consumes a DeepSeek key.
+    const nonEmpty = (v: any) => typeof v === 'string' && v.trim().length > 0;
+
+    // Validate non-empty LLM keys against live provider endpoints
     const keyValidations = [
-      { provider: 'gemini', key: geminiKey, label: 'Google Gemini' },
       { provider: 'openai', key: openaiKey, label: 'OpenAI (GPT-5.6 / 4o)' },
       { provider: 'anthropic', key: anthropicKey, label: 'Anthropic Claude (3.7 / Opus / Haiku)' },
       { provider: 'perplexity', key: perplexityKey, label: 'Perplexity AI' },
-      { provider: 'deepseek', key: deepseekKey, label: 'DeepSeek' },
       { provider: 'groq', key: groqKey, label: 'Groq LPU' },
     ];
 
     for (const item of keyValidations) {
-      if (item.key && typeof item.key === 'string' && item.key.trim().length > 0) {
+      if (nonEmpty(item.key)) {
         const result = await validateApiKey(item.provider, item.key.trim());
         if (!result.valid) {
           return res.status(400).json({
@@ -15970,29 +15862,27 @@ app.post('/api/admin/ai-tokens/update-keys', async (req, res) => {
       }
     }
 
-    const resolvedMillionVerifier = millionverifierKey !== undefined ? millionverifierKey : millionVerifierKey;
+    const resolvedMillionVerifier = nonEmpty(millionverifierKey) ? millionverifierKey : (nonEmpty(millionVerifierKey) ? millionVerifierKey : undefined);
 
     const newKeys = {
       ...(storedAppSettings?.providerKeys || {}),
-      ...(geminiKey !== undefined ? { gemini: geminiKey.trim() } : {}),
-      ...(openaiKey !== undefined ? { openai: openaiKey.trim() } : {}),
-      ...(anthropicKey !== undefined ? { claude: anthropicKey.trim(), anthropic: anthropicKey.trim() } : {}),
-      ...(perplexityKey !== undefined ? { perplexity: perplexityKey.trim() } : {}),
-      ...(deepseekKey !== undefined ? { deepseek: deepseekKey.trim() } : {}),
-      ...(groqKey !== undefined ? { groq: groqKey.trim() } : {}),
-      ...(googleMapsKey !== undefined ? { google_maps: googleMapsKey.trim(), googleMaps: googleMapsKey.trim() } : {}),
-      ...(pageSpeedKey !== undefined ? { pagespeed: pageSpeedKey.trim(), pageSpeed: pageSpeedKey.trim() } : {}),
-      ...(hunterKey !== undefined ? { hunter: hunterKey.trim() } : {}),
-      ...(apolloKey !== undefined ? { apollo: apolloKey.trim() } : {}),
-      ...(resolvedMillionVerifier !== undefined ? { millionverifier: resolvedMillionVerifier.trim(), millionVerifier: resolvedMillionVerifier.trim() } : {}),
-      ...(serperKey !== undefined ? { serper: serperKey.trim(), serperKey: serperKey.trim() } : {}),
-      ...(serpApiKey !== undefined ? { serpapi: serpApiKey.trim(), serpApiKey: serpApiKey.trim() } : {}),
-      ...(dataforseoLogin !== undefined ? { dataforseo_login: dataforseoLogin.trim(), dataforseoLogin: dataforseoLogin.trim() } : {}),
-      ...(dataforseoPassword !== undefined ? { dataforseo_password: dataforseoPassword.trim(), dataforseoPassword: dataforseoPassword.trim() } : {}),
-      ...(googleSearchApiKey !== undefined ? { google_search_api_key: googleSearchApiKey.trim(), googleSearchApiKey: googleSearchApiKey.trim() } : {}),
-      ...(googleSearchCx !== undefined ? { google_search_cx: googleSearchCx.trim(), googleSearchCx: googleSearchCx.trim() } : {}),
-      ...(scaleserpKey !== undefined ? { scaleserp: scaleserpKey.trim(), scaleSerpKey: scaleserpKey.trim() } : {}),
-      ...(valueserpKey !== undefined ? { valueserp: valueserpKey.trim(), valueSerpKey: valueserpKey.trim() } : {}),
+      ...(nonEmpty(openaiKey) ? { openai: openaiKey.trim() } : {}),
+      ...(nonEmpty(anthropicKey) ? { claude: anthropicKey.trim(), anthropic: anthropicKey.trim() } : {}),
+      ...(nonEmpty(perplexityKey) ? { perplexity: perplexityKey.trim() } : {}),
+      ...(nonEmpty(groqKey) ? { groq: groqKey.trim() } : {}),
+      ...(nonEmpty(googleMapsKey) ? { google_maps: googleMapsKey.trim(), googleMaps: googleMapsKey.trim() } : {}),
+      ...(nonEmpty(pageSpeedKey) ? { pagespeed: pageSpeedKey.trim(), pageSpeed: pageSpeedKey.trim() } : {}),
+      ...(nonEmpty(hunterKey) ? { hunter: hunterKey.trim() } : {}),
+      ...(nonEmpty(apolloKey) ? { apollo: apolloKey.trim() } : {}),
+      ...(resolvedMillionVerifier ? { millionverifier: resolvedMillionVerifier.trim(), millionVerifier: resolvedMillionVerifier.trim() } : {}),
+      ...(nonEmpty(serperKey) ? { serper: serperKey.trim(), serperKey: serperKey.trim() } : {}),
+      ...(nonEmpty(serpApiKey) ? { serpapi: serpApiKey.trim(), serpApiKey: serpApiKey.trim() } : {}),
+      ...(nonEmpty(dataforseoLogin) ? { dataforseo_login: dataforseoLogin.trim(), dataforseoLogin: dataforseoLogin.trim() } : {}),
+      ...(nonEmpty(dataforseoPassword) ? { dataforseo_password: dataforseoPassword.trim(), dataforseoPassword: dataforseoPassword.trim() } : {}),
+      ...(nonEmpty(googleSearchApiKey) ? { google_search_api_key: googleSearchApiKey.trim(), googleSearchApiKey: googleSearchApiKey.trim() } : {}),
+      ...(nonEmpty(googleSearchCx) ? { google_search_cx: googleSearchCx.trim(), googleSearchCx: googleSearchCx.trim() } : {}),
+      ...(nonEmpty(scaleserpKey) ? { scaleserp: scaleserpKey.trim(), scaleSerpKey: scaleserpKey.trim() } : {}),
+      ...(nonEmpty(valueserpKey) ? { valueserp: valueserpKey.trim(), valueSerpKey: valueserpKey.trim() } : {}),
     };
 
     storedAppSettings = {
@@ -16006,27 +15896,25 @@ app.post('/api/admin/ai-tokens/update-keys', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Successfully validated live AI and SEO intelligence credentials!',
+      message: 'Keys saved. LLM keys were validated live; SEO/B2B keys are stored as provided (not live-validated).',
       savedKeys: {
-        gemini: storedAppSettings?.providerKeys?.gemini || '',
-        openai: storedAppSettings?.providerKeys?.openai || '',
-        anthropic: storedAppSettings?.providerKeys?.claude || storedAppSettings?.providerKeys?.anthropic || '',
-        perplexity: storedAppSettings?.providerKeys?.perplexity || '',
-        deepseek: storedAppSettings?.providerKeys?.deepseek || '',
-        groq: storedAppSettings?.providerKeys?.groq || '',
-        googleMaps: storedAppSettings?.providerKeys?.google_maps || storedAppSettings?.providerKeys?.googleMaps || '',
-        pageSpeed: storedAppSettings?.providerKeys?.pagespeed || storedAppSettings?.providerKeys?.pageSpeed || '',
-        hunter: storedAppSettings?.providerKeys?.hunter || '',
-        apollo: storedAppSettings?.providerKeys?.apollo || '',
-        millionverifier: storedAppSettings?.providerKeys?.millionverifier || storedAppSettings?.providerKeys?.millionVerifier || '',
-        serper: storedAppSettings?.providerKeys?.serper || '',
-        serpapi: storedAppSettings?.providerKeys?.serpapi || '',
-        dataforseoLogin: storedAppSettings?.providerKeys?.dataforseo_login || storedAppSettings?.providerKeys?.dataforseoLogin || '',
-        dataforseoPassword: storedAppSettings?.providerKeys?.dataforseo_password || storedAppSettings?.providerKeys?.dataforseoPassword || '',
-        googleSearchApiKey: storedAppSettings?.providerKeys?.google_search_api_key || storedAppSettings?.providerKeys?.googleSearchApiKey || '',
-        googleSearchCx: storedAppSettings?.providerKeys?.google_search_cx || storedAppSettings?.providerKeys?.googleSearchCx || '',
-        scaleserp: storedAppSettings?.providerKeys?.scaleserp || '',
-        valueserp: storedAppSettings?.providerKeys?.valueserp || '',
+        openai: maskKey(storedAppSettings?.providerKeys?.openai || ''),
+        anthropic: maskKey(storedAppSettings?.providerKeys?.claude || storedAppSettings?.providerKeys?.anthropic || ''),
+        perplexity: maskKey(storedAppSettings?.providerKeys?.perplexity || ''),
+        groq: maskKey(storedAppSettings?.providerKeys?.groq || ''),
+        googleMaps: maskKey(storedAppSettings?.providerKeys?.google_maps || storedAppSettings?.providerKeys?.googleMaps || ''),
+        pageSpeed: maskKey(storedAppSettings?.providerKeys?.pagespeed || storedAppSettings?.providerKeys?.pageSpeed || ''),
+        hunter: maskKey(storedAppSettings?.providerKeys?.hunter || ''),
+        apollo: maskKey(storedAppSettings?.providerKeys?.apollo || ''),
+        millionverifier: maskKey(storedAppSettings?.providerKeys?.millionverifier || storedAppSettings?.providerKeys?.millionVerifier || ''),
+        serper: maskKey(storedAppSettings?.providerKeys?.serper || ''),
+        serpapi: maskKey(storedAppSettings?.providerKeys?.serpapi || ''),
+        dataforseoLogin: maskKey(storedAppSettings?.providerKeys?.dataforseo_login || storedAppSettings?.providerKeys?.dataforseoLogin || ''),
+        dataforseoPassword: maskKey(storedAppSettings?.providerKeys?.dataforseo_password || storedAppSettings?.providerKeys?.dataforseoPassword || ''),
+        googleSearchApiKey: maskKey(storedAppSettings?.providerKeys?.google_search_api_key || storedAppSettings?.providerKeys?.googleSearchApiKey || ''),
+        googleSearchCx: maskKey(storedAppSettings?.providerKeys?.google_search_cx || storedAppSettings?.providerKeys?.googleSearchCx || ''),
+        scaleserp: maskKey(storedAppSettings?.providerKeys?.scaleserp || ''),
+        valueserp: maskKey(storedAppSettings?.providerKeys?.valueserp || ''),
       },
       apiKeysConfigured: {
         gemini: hasEnvKeyForModel('GEMINI_API_KEY'),
@@ -16066,6 +15954,12 @@ app.post('/api/admin/delete-subscriber', async (req, res) => {
     const normalizedEmail = email.toLowerCase().trim();
     newsletterSubscribersDb.delete(normalizedEmail);
     saveSubscribers(newsletterSubscribersDb);
+    // Also remove the Postgres row so a re-sync can't resurrect the subscriber.
+    try {
+      await db.delete(schema.newsletterSubscribersTable).where(eq(schema.newsletterSubscribersTable.email, normalizedEmail));
+    } catch (e) {
+      console.warn('[Admin] Failed to delete subscriber Postgres row:', (e as any)?.message);
+    }
 
     res.json({ success: true, message: `Removed subscriber ${normalizedEmail}` });
   } catch (err: any) {
@@ -16824,11 +16718,8 @@ app.get(['/api/directory/business/:slugOrId', '/api/directory/biz/:slugOrId'], a
 
     // STRICT DIRECTORY ACCESS CONTROL:
     // Only published listings are visible to the public. If unpublished, only the business owner can preview.
-    const userEmail = (
-      (req.headers['x-user-email'] as string) ||
-      (req.query.userEmail as string) ||
-      ''
-    ).toLowerCase().trim();
+    // Identity from the session token when present; anonymous visitors simply aren't owners.
+    const userEmail = getSessionEmail(req);
 
     const listingAny = listing as any;
     const isOwner = Boolean(

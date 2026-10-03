@@ -48,7 +48,7 @@ export type ProviderFeatureId =
   // Agency Elite Sources
   | 'dataforseo'
   | 'advanced_serp'
-  | 'advanced_local_tracking'
+
   | 'bulk_client_processing';
 
 export interface ProviderFeatureDefinition {
@@ -133,7 +133,7 @@ export const PROVIDER_FEATURE_REGISTRY: Record<ProviderFeatureId, ProviderFeatur
     category: 'core',
     requiredPlan: 'free',
     requiredPlanLabel: 'Free Plan',
-    providerName: 'Google Gemini Basic Engine',
+    providerName: 'Groq LPU Engine',
     providerKey: 'basic_ai',
     description: 'Single-business content recommendations and review reply suggestions.',
     requiresApiKey: false,
@@ -161,9 +161,9 @@ export const PROVIDER_FEATURE_REGISTRY: Record<ProviderFeatureId, ProviderFeatur
     requiredPlanLabel: 'Pro Plan',
     providerName: 'Locora Multi-Location Engine',
     providerKey: 'expanded_monitoring',
-    description: 'Multi-location synchronization, scheduled health audits, and recurring issue monitoring.',
+    description: 'Multi-location business management with per-location visibility tracking.',
     requiresApiKey: false,
-    upgradeBenefit: 'Manage multi-location networks and automated recurring audits.',
+    upgradeBenefit: 'Manage multi-location networks from one workspace.',
   },
   low_cost_serp: {
     id: 'low_cost_serp',
@@ -176,7 +176,7 @@ export const PROVIDER_FEATURE_REGISTRY: Record<ProviderFeatureId, ProviderFeatur
     description: 'Live search engine results observation where API credentials are configured.',
     requiresApiKey: true,
     configKeyLabel: 'Serper.dev or SerpApi API Key',
-    upgradeBenefit: 'Stream live Google 3-Pack and organic search ranking snapshots.',
+    upgradeBenefit: 'On-demand live SERP snapshots via SerpApi where your key is configured.',
   },
   competitor_monitoring: {
     id: 'competitor_monitoring',
@@ -213,22 +213,10 @@ export const PROVIDER_FEATURE_REGISTRY: Record<ProviderFeatureId, ProviderFeatur
     requiredPlanLabel: 'Agency Elite',
     providerName: 'DataForSEO & Global SERP Matrix',
     providerKey: 'advanced_serp',
-    description: 'Multi-device SERP tracking, featured snippet tracking, and deep SERP position crawls.',
+    description: 'On-demand SERP result lookups via SerpApi and DataForSEO where credentials are configured.',
     requiresApiKey: true,
     configKeyLabel: 'DataForSEO Credentials',
-    upgradeBenefit: 'Deep SERP position tracking across mobile, desktop, and local algorithms.',
-  },
-  advanced_local_tracking: {
-    id: 'advanced_local_tracking',
-    name: 'Geo-Coordinate Local Grid Matrix',
-    category: 'serp',
-    requiredPlan: 'agency_elite',
-    requiredPlanLabel: 'Agency Elite',
-    providerName: 'Locora Local Grid & DataForSEO',
-    providerKey: 'local_rankings',
-    description: 'Multi-pin geofenced grid ranking verification across custom service radii.',
-    requiresApiKey: false,
-    upgradeBenefit: 'Pinpoint local 3-pack rankings across exact mile-by-mile coordinate radii.',
+    upgradeBenefit: 'On-demand SERP snapshots for tracked keywords via your API keys.',
   },
   bulk_client_processing: {
     id: 'bulk_client_processing',
@@ -238,9 +226,9 @@ export const PROVIDER_FEATURE_REGISTRY: Record<ProviderFeatureId, ProviderFeatur
     requiredPlanLabel: 'Agency Elite',
     providerName: 'Locora Agency Batch Processor',
     providerKey: 'bulk_client_processing',
-    description: 'Batch process multiple client domains, automated bulk crawls, and white-label client PDF generation.',
+    description: 'Multi-client workspaces (up to 10 businesses) with agency branding and team member seats.',
     requiresApiKey: false,
-    upgradeBenefit: 'Process hundreds of client accounts simultaneously with white-label client deliverables.',
+    upgradeBenefit: 'Run up to 10 client businesses from one agency workspace.',
   },
 };
 

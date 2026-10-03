@@ -1,7 +1,7 @@
 import { db, schema } from '../src/db/index.ts';
 import { eq, desc } from 'drizzle-orm';
 import { getBusinessTruth } from './businessTruthService.ts';
-import { GoogleGenAI } from '@google/genai';
+import { generateCompletion } from './aiEngine.ts';
 import type { BusinessTruth } from '../src/types.ts';
 import {
   getDirectoryListingBySlug,
@@ -1725,42 +1725,25 @@ CRITICAL MANDATORY INSTRUCTIONS:
 5. Keep answers concise, executive, formatted with clear markdown headings and bullet points.`;
 
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY environment variable is not configured');
-    }
-
-    const ai = new GoogleGenAI({
-      apiKey,
-      httpOptions: { headers: { 'User-Agent': 'aistudio-build' } },
-    });
-
-    // Call Gemini 3.6 Flash with a 10s race timeout
-    const geminiPromise = ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: [
+    // Unified AI engine: Groq primary (free), Claude opt-in. Gemini removed
+    // (region restrictions produced user-incomprehensible failures).
+    const engineResult = await generateCompletion({
+      messages: [
         {
           role: 'user',
-          parts: [
-            {
-              text: `${verifiedFactsContext}\n\n[USER QUESTION]\n${cleanQuery}`,
-            },
-          ],
+          content: `${verifiedFactsContext}\n\n[USER QUESTION]\n${cleanQuery}`,
         },
       ],
-      config: {
-        systemInstruction: geminiSystemInstruction,
-        temperature: 0.2, // Low temperature for high factual precision
-      },
+      systemInstruction: geminiSystemInstruction,
+      temperature: 0.2, // Low temperature for high factual precision
+      timeoutMs: 10000,
     });
 
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('AI generation timed out')), 10000)
-    );
+    if (!engineResult.ok) {
+      throw new Error(engineResult.errorMessage || 'AI generation failed');
+    }
 
-    const response: any = await Promise.race([geminiPromise, timeoutPromise]);
-
-    let generatedText = (response.text || '').trim();
+    let generatedText = (engineResult.text || '').trim();
 
     // Guardrail check: If model tried to hallucinate or if unavailable was triggered
     const modelSaysUnavailable = generatedText.toLowerCase().includes("don't have enough verified data") ||
@@ -1774,7 +1757,7 @@ CRITICAL MANDATORY INSTRUCTIONS:
       sourcesUsed,
     };
   } catch (err: any) {
-    console.warn('[AI Manager Service] Gemini call fallback:', err.message);
+    console.warn('[AI Manager Service] AI engine fallback:', err.message);
 
     // If query asks for business facts and we have verified truth, provide grounded factual answer directly
     const servicesList = truth.services?.join(', ') || 'Local Services';
@@ -1787,8 +1770,8 @@ CRITICAL MANDATORY INSTRUCTIONS:
       `- **Verified Services**: ${servicesList}\n` +
       (truth.website ? `- **Website**: ${truth.website}\n` : '') +
       (truth.phone ? `- **Direct Phone**: ${truth.phone}\n` : '') +
-      `- **Business Health Score**: ${brain?.score || 73} / 100\n` +
-      `- **AI Readiness Score**: ${brain?.readinessScore || 81}% Verified\n\n` +
+      `- **Business Health Score**: ${brain?.score != null ? `${brain.score} / 100` : 'not calculated yet — connect your data sources'}\n` +
+      `- **AI Readiness Score**: ${brain?.readinessScore != null ? `${brain.readinessScore}% Verified` : 'not calculated yet'}\n\n` +
       `*(Locora verified database ground truth)*`;
 
     return {

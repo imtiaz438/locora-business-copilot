@@ -60,7 +60,7 @@ export const SecurityOverviewView: React.FC = () => {
             </div>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1">
               <Globe className="w-6 h-6 text-amber-600 mx-auto" />
-              <p className="text-xs font-bold text-slate-900">99.9% Uptime SLA</p>
+              <p className="text-xs font-bold text-slate-900">Cloud Hosted</p>
               <p className="text-[10px] text-slate-500">Google Cloud Infra</p>
             </div>
           </div>

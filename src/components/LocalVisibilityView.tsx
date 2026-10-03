@@ -39,6 +39,8 @@ export const LocalVisibilityView: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [isScanningVisibility, setIsScanningVisibility] = useState(false);
+  const [isCheckingRanks, setIsCheckingRanks] = useState(false);
+  const [scanMessage, setScanMessage] = useState<{ type: 'success' | 'info' | 'error'; text: string } | null>(null);
   const [trackingStatus, setTrackingStatus] = useState<{
     isConfigured: boolean;
     provider: string | null;
@@ -128,21 +130,58 @@ export const LocalVisibilityView: React.FC = () => {
   const handleScanVisibility = async () => {
     if (!activeBusiness?.id || isScanningVisibility) return;
     setIsScanningVisibility(true);
+    setScanMessage(null);
     trackVisibilityCheck(activeBusiness.id, activeBusiness.name);
     try {
       const res = await fetch(`/api/production/seo/${activeBusiness.id}/scan-visibility`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
-      if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
         await loadVisibilityData();
         await refreshProductionDashboard(activeBusiness.id);
-        logActivity('seo', 'Re-scanned Local Visibility', `Refreshed ranking grid for ${activeBusiness.name}`);
+        logActivity('seo', 'Re-scanned Local Visibility', data.message || `Refreshed ranking grid for ${activeBusiness.name}`);
+        setScanMessage({ type: 'success', text: data.message || 'Visibility rescan complete.' });
+      } else {
+        // Honest failure: no fabricated data, show the real reason.
+        const text = data.message || data.error || 'Visibility rescan failed. Please try again.';
+        setScanMessage({ type: ['no_source', 'no_keywords', 'provider_not_live'].includes(data.reason) ? 'info' : 'error', text });
+        logActivity('seo', 'Visibility rescan unavailable', text);
       }
     } catch (err) {
       console.error('Failed to run visibility scan:', err);
+      setScanMessage({ type: 'error', text: 'Visibility rescan failed — please check your connection and try again.' });
     } finally {
       setIsScanningVisibility(false);
+    }
+  };
+
+  const handleCheckRanks = async () => {
+    if (!activeBusiness?.id || isCheckingRanks) return;
+    setIsCheckingRanks(true);
+    setScanMessage(null);
+    try {
+      const res = await fetch(`/api/rank-tracking/${activeBusiness.id}/check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        await loadVisibilityData();
+        const ranked = (data.snapshots || []).filter((s: any) => s.mapsRank || s.organicRank).length;
+        setScanMessage({
+          type: 'success',
+          text: `Live rank check complete: ${data.snapshots?.length || 0} keyword(s) checked via ${data.snapshots?.[0]?.provider || 'SERP'}, ${ranked} ranking. ${data.skipped?.length ? `Skipped: ${data.skipped.length}.` : ''}`,
+        });
+        logActivity('seo', 'Live rank check', `Checked ${(data.snapshots || []).length} keywords for ${activeBusiness.name}`);
+      } else {
+        setScanMessage({ type: res.status === 402 ? 'info' : 'error', text: data.error || 'Rank check failed. A SERP API key (SerpApi or Serper) is required.' });
+      }
+    } catch (err) {
+      setScanMessage({ type: 'error', text: 'Rank check failed — please check your connection and try again.' });
+    } finally {
+      setIsCheckingRanks(false);
     }
   };
 
@@ -150,14 +189,17 @@ export const LocalVisibilityView: React.FC = () => {
     loadVisibilityData();
   }, [activeBusiness.id]);
 
-  // Actual search observations mapped to tracked keywords
+  // Actual search observations mapped to tracked keywords — Maps pack and organic shown separately.
   const observedKeywordRows = useMemo(() => {
     return trackedKeywords.map((kw) => {
-      // Find latest rank snapshot for this keyword
-      const latestSnapshot = rankSnapshots.find((s) => s.keywordId === kw.id);
+      const mapsSnap = rankSnapshots.find((s) => s.keywordId === kw.id && s.searchEngine === 'google_maps_pack');
+      const orgSnap = rankSnapshots.find((s) => s.keywordId === kw.id && s.searchEngine === 'google_organic');
+      const latest = [mapsSnap, orgSnap].filter(Boolean).sort((a, b) => (b?.snapshotDate || '').localeCompare(a?.snapshotDate || ''))[0];
       return {
         keyword: kw,
-        observation: latestSnapshot || null,
+        observation: latest || null,
+        mapsSnap: mapsSnap || null,
+        orgSnap: orgSnap || null,
       };
     });
   }, [trackedKeywords, rankSnapshots]);
@@ -300,6 +342,16 @@ export const LocalVisibilityView: React.FC = () => {
           <div className="flex items-center gap-3 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-700/60">
             <button
               type="button"
+              onClick={handleCheckRanks}
+              disabled={isCheckingRanks}
+              title="Check live Google Maps & organic positions for tracked keywords (uses SERP API, 1 SEO unit per keyword)"
+              className="px-5 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+            >
+              <MapPin className={`w-4 h-4 ${isCheckingRanks ? 'animate-pulse' : ''}`} />
+              <span>{isCheckingRanks ? 'Checking live ranks...' : 'Check Live Ranks'}</span>
+            </button>
+            <button
+              type="button"
               onClick={handleScanVisibility}
               disabled={isScanningVisibility}
               className="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
@@ -307,12 +359,25 @@ export const LocalVisibilityView: React.FC = () => {
               <RefreshCw className={`w-4 h-4 ${isScanningVisibility ? 'animate-spin' : ''}`} />
               <span>
                 {isScanningVisibility
-                  ? 'Scanning Visibility & SERP...'
+                  ? 'Reading Search Console data...'
                   : `Re-scan Visibility for ${activeBusiness.name}`}
               </span>
             </button>
           </div>
         </div>
+        {scanMessage && (
+          <div
+            className={`rounded-xl border px-4 py-3 text-xs leading-relaxed ${
+              scanMessage.type === 'success'
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                : scanMessage.type === 'info'
+                  ? 'bg-sky-50 border-sky-200 text-sky-800'
+                  : 'bg-red-50 border-red-200 text-red-800'
+            }`}
+          >
+            {scanMessage.text}
+          </div>
+        )}
       </div>
 
       {/* 1. HEADER */}
@@ -569,14 +634,14 @@ export const LocalVisibilityView: React.FC = () => {
                       <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase text-[10px]">
                         <th className="py-2.5 px-3">Tracked Keyword</th>
                         <th className="py-2.5 px-3">Target Location</th>
-                        <th className="py-2.5 px-3">Observed Rank</th>
-                        <th className="py-2.5 px-3">Search Engine / Surface</th>
+                        <th className="py-2.5 px-3">Maps Pack</th>
+                        <th className="py-2.5 px-3">Organic</th>
                         <th className="py-2.5 px-3">Observation Date</th>
                         <th className="py-2.5 px-3 text-right">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {observedKeywordRows.map(({ keyword, observation }, idx) => (
+                      {observedKeywordRows.map(({ keyword, observation, mapsSnap, orgSnap }, idx) => (
                         <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
                           <td className="py-3 px-3 font-bold text-slate-900">
                             {keyword.keyword}
@@ -585,23 +650,25 @@ export const LocalVisibilityView: React.FC = () => {
                             {keyword.targetLocation || activeBusiness.city || 'Local Area'}
                           </td>
                           <td className="py-3 px-3">
-                            {observation ? (
-                              <span className="font-extrabold font-mono text-emerald-950 bg-emerald-100/90 px-2 py-0.5 rounded border border-emerald-300">
-                                #{observation.rankPosition}
+                            {mapsSnap && mapsSnap.rankPosition > 0 ? (
+                              <span className="font-extrabold font-mono text-emerald-950 bg-emerald-100/90 px-2 py-0.5 rounded border border-emerald-300" title="Position in the Google Maps 3-pack (live SERP)">
+                                #{mapsSnap.rankPosition}
                               </span>
+                            ) : mapsSnap ? (
+                              <span className="text-slate-400 font-mono italic text-[11px]">Not in pack</span>
                             ) : (
-                              <span className="text-slate-400 font-mono italic">
-                                Pending Observation
-                              </span>
+                              <span className="text-slate-400 font-mono italic">Pending</span>
                             )}
                           </td>
-                          <td className="py-3 px-3 text-slate-600">
-                            {observation ? (
-                              <span>
-                                {observation.searchEngine} ({observation.device})
+                          <td className="py-3 px-3">
+                            {orgSnap && orgSnap.rankPosition > 0 ? (
+                              <span className="font-extrabold font-mono text-blue-950 bg-blue-100/90 px-2 py-0.5 rounded border border-blue-300" title="Organic Google position (live SERP)">
+                                #{orgSnap.rankPosition}
                               </span>
+                            ) : orgSnap ? (
+                              <span className="text-slate-400 font-mono italic text-[11px]">Not ranked</span>
                             ) : (
-                              <span className="text-slate-400">—</span>
+                              <span className="text-slate-400 font-mono italic">Pending</span>
                             )}
                           </td>
                           <td className="py-3 px-3 text-slate-500 font-mono text-[11px]">
@@ -610,7 +677,7 @@ export const LocalVisibilityView: React.FC = () => {
                           <td className="py-3 px-3 text-right">
                             {observation ? (
                               <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[10px] font-bold">
-                                <Check className="w-3 h-3" /> Observed
+                                <Check className="w-3 h-3" /> Live SERP
                               </span>
                             ) : (
                               <span className="text-slate-400 text-[10px]">Queued</span>

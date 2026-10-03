@@ -92,6 +92,24 @@ class ReputationService {
     return res.json();
   }
 
+  async draftAiReply(businessId: string, reviewId: string): Promise<{ success: boolean; draft?: string; error?: string; message?: string }> {
+    const res = await fetch(
+      `/api/production/reputation/${encodeURIComponent(businessId)}/reviews/${encodeURIComponent(reviewId)}/draft-reply`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err: any = new Error(data.message || data.error || `HTTP ${res.status}`);
+      err.code = data.error;
+      throw err;
+    }
+    return data;
+  }
+
   async connectProvider(
     businessId: string,
     provider: string,

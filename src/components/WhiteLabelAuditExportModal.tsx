@@ -93,7 +93,7 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
     businessProfile.email || user.email || 'growth@locora.ai'
   );
   const [agencyPhone, setAgencyPhone] = useState(
-    businessProfile.phone || '+1 (555) 019-2831'
+    businessProfile.phone || ''
   );
 
   // Custom Agency Logo (Upload or URL)
@@ -111,7 +111,7 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
       : 'Target Client Business'
   );
   const [customExecutiveNote, setCustomExecutiveNote] = useState(
-    'This comprehensive 40-point technical, SEO, and performance evaluation was executed on live production assets. Immediate remediation of critical issues will protect search rankings, improve mobile conversions, and eliminate estimated monthly revenue leakage.'
+    'This comprehensive 40-point technical, SEO, and performance evaluation was executed on live production assets. Immediate remediation of critical issues will protect search rankings and improve mobile conversions.'
   );
   const [proposalRetainerQuote, setProposalRetainerQuote] = useState('$2,250/month');
   const [includePricingPitch, setIncludePricingPitch] = useState(true);
@@ -494,7 +494,7 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Quick Metrics Bar: Overall Score & Revenue Loss */}
+          {/* Quick Metrics Bar: Overall Score */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Overall Health Score */}
             <div className="bg-slate-900 text-white rounded-2xl p-5 shadow-xs flex items-center gap-4">
@@ -523,56 +523,6 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
                   {auditEvaluation.passedCount} passed · {auditEvaluation.warningCount} warnings · {auditEvaluation.failedCount} failures
                 </p>
               </div>
-            </div>
-
-            {/* Est. Client Monthly Revenue Leak */}
-            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-5 flex flex-col justify-between">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-rose-800 uppercase tracking-wider">
-                  Est. Client Monthly Loss
-                </span>
-                <TrendingDown className="w-4 h-4 text-rose-600" />
-              </div>
-              <div className="flex items-baseline gap-1 my-1">
-                <span className="text-2xl sm:text-3xl font-black font-heading text-rose-900">
-                  ${auditEvaluation.estMonthlyRevenueLoss.toLocaleString()}
-                </span>
-                <span className="text-xs text-rose-700 font-bold">/ month</span>
-              </div>
-              <p className="text-[11px] text-rose-700">
-                Calculated directly from {auditEvaluation.failedCount} critical failures & conversion gaps
-              </p>
-            </div>
-
-            {/* Est. Annual Opportunity */}
-            <div
-              className="rounded-2xl p-5 border flex flex-col justify-between"
-              style={{
-                backgroundColor: `${agencyBrandColor}0d`,
-                borderColor: `${agencyBrandColor}33`,
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <span
-                  className="text-[11px] font-bold uppercase tracking-wider"
-                  style={{ color: agencyBrandColor }}
-                >
-                  Est. Annual Revenue Gap
-                </span>
-                <DollarSign className="w-4 h-4" style={{ color: agencyBrandColor }} />
-              </div>
-              <div className="flex items-baseline gap-1 my-1">
-                <span
-                  className="text-2xl sm:text-3xl font-black font-heading"
-                  style={{ color: agencyBrandColor }}
-                >
-                  ${auditEvaluation.estAnnualRevenueLoss.toLocaleString()}
-                </span>
-                <span className="text-xs font-bold text-slate-600">/ year</span>
-              </div>
-              <p className="text-[11px] text-slate-600">
-                Justifies a {proposalRetainerQuote} implementation retainer
-              </p>
             </div>
           </div>
 
@@ -760,7 +710,7 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
                       value={agencyPhone}
                       onChange={(e) => setAgencyPhone(e.target.value)}
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:border-indigo-500"
-                      placeholder="+1 (555) 000-0000"
+                      placeholder="+1 (512) 000-0000"
                     />
                   </div>
                 </div>
@@ -883,7 +833,7 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
                   White-Label Client Audit Report Locked
                 </h3>
                 <p className="text-xs text-slate-600 max-w-lg mb-6 leading-relaxed">
-                  This complete 40-point technical audit, itemized client revenue leak diagnostics, turnkey Scope of Work (SOW), and unbranded agency deliverable are strictly locked. Access will remain completely protected until purchased.
+                  This complete 40-point technical audit, turnkey Scope of Work (SOW), and unbranded agency deliverable are strictly locked. Access will remain completely protected until purchased.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
                   <button
@@ -951,11 +901,6 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
                         <div className="text-slate-500 font-medium truncate">
                           <span className="font-bold text-slate-700">Target:</span> {item.targetMetric}
                         </div>
-                        {item.clientLossMonthly > 0 && (
-                          <span className="font-bold text-rose-700 shrink-0">
-                            -${item.clientLossMonthly}/mo leak
-                          </span>
-                        )}
                       </div>
                     </div>
                   ))}
@@ -1082,30 +1027,6 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
                 ))}
               </div>
 
-              {/* Revenue Loss Callout Box */}
-              <div className="bg-rose-50 border-2 border-rose-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="space-y-0.5">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-rose-800">
-                    Estimated Revenue At Risk
-                  </span>
-                  <h4 className="text-sm font-bold font-heading text-rose-950">
-                    Calculated Monthly Digital Leaks from Technical Flaws
-                  </h4>
-                  <p className="text-xs text-rose-700">
-                    Unoptimized mobile speed, missing schema, and broken call links directly suppress inquiries.
-                  </p>
-                </div>
-                <div className="text-center sm:text-right shrink-0 bg-white border border-rose-200 px-4 py-2.5 rounded-xl shadow-2xs">
-                  <span className="text-2xl font-black font-heading text-rose-900 block">
-                    ${auditEvaluation.estMonthlyRevenueLoss.toLocaleString()}
-                    <span className="text-xs font-bold text-rose-700">/mo</span>
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-semibold">
-                    (${auditEvaluation.estAnnualRevenueLoss.toLocaleString()} / year)
-                  </span>
-                </div>
-              </div>
-
               {/* Printable 40 Points Summary Table */}
               <div className="space-y-2 relative">
                 <div className="flex items-center justify-between">
@@ -1150,11 +1071,6 @@ export const WhiteLabelAuditExportModal: React.FC<Props> = ({
                         >
                           {pt.status === 'pass' ? 'PASS' : pt.status === 'warning' ? 'WARNING' : 'FAIL'}
                         </span>
-                        {pt.clientLossMonthly > 0 && (
-                          <div className="text-[10px] font-bold text-rose-600 mt-1">
-                            -${pt.clientLossMonthly}/mo
-                          </div>
-                        )}
                       </div>
                     </div>
                   ))}

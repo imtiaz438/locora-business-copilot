@@ -65,4 +65,23 @@ export const INITIAL_PRIORITY_ACTIONS: PriorityAction[] = [
     ],
     isFixed: false,
   },
+  {
+    id: 'act_missed_call_protection',
+    urgency: 'opportunity',
+    urgencyLabel: 'ADVISORY',
+    title: 'Missed-Call Lead Protection',
+    problem: 'Since October 1, 2026, Google\u2019s Local Services Ads treats a missed business-hours call as a billable lead when the caller waits more than 20 seconds.',
+    whyItMatters: 'A phone that rings out doesn\u2019t just lose the job anymore \u2014 it can also cost you the lead fee, and missed-call volume can drag your ad ranking.',
+    evidence: 'Advisory: Locora cannot detect your call-answering behavior automatically \u2014 please confirm your own business-hours coverage.',
+    expectedImpact: 'Avoid paying lead fees for calls nobody answered; protect your ad ranking.',
+    actionType: 'custom',
+    actionLabel: 'Review Call Coverage',
+    recommendationTitle: 'Missed-Call Lead Protection',
+    itemsToCreate: [
+      'Answer business-hours calls within ~20 seconds',
+      'Add call forwarding or after-hours coverage',
+      'Review charged LSA leads each month',
+    ],
+    isFixed: false,
+  },
 ];

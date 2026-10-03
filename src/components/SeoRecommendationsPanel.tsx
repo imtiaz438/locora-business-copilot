@@ -189,7 +189,7 @@ export const SeoRecommendationsPanel: React.FC<SeoRecommendationsPanelProps> = (
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-400 font-semibold">Audit Resolution:</span>
               <span className="font-mono font-bold text-emerald-400">
-                {resolvedCount} / {recommendations.length} Fixed ({progressPercent}%)
+                {resolvedCount} of {recommendations.length} checks passing ({progressPercent}%)
               </span>
             </div>
             <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">

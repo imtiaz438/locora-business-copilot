@@ -153,31 +153,31 @@ export function generateAuditPdf(options: GeneratePdfOptions): void {
   doc.setTextColor(100, 116, 139);
   doc.text('Requiring immediate fix', margin + colW + 10, y + 56);
 
-  // Metric 3: Est. Monthly Revenue Leak
+  // Metric 3: Passed Checks
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(100, 116, 139);
-  doc.text('EST. MONTHLY LEAK', margin + colW * 2 + 10, y + 18);
+  doc.text('CHECKS PASSED', margin + colW * 2 + 10, y + 18);
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(225, 29, 72);
-  doc.text(`$${evaluation.estMonthlyRevenueLoss.toLocaleString()}`, margin + colW * 2 + 10, y + 42);
+  doc.setTextColor(5, 150, 105);
+  doc.text(`${evaluation.passedCount} Points`, margin + colW * 2 + 10, y + 42);
   doc.setFontSize(8);
   doc.setTextColor(100, 116, 139);
-  doc.text('/ month loss', margin + colW * 2 + 10, y + 56);
+  doc.text('of 40 evaluated', margin + colW * 2 + 10, y + 56);
 
-  // Metric 4: Est. Annual Gap
+  // Metric 4: Warnings
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(100, 116, 139);
-  doc.text('ANNUAL OPPORTUNITY', margin + colW * 3 + 10, y + 18);
+  doc.text('WARNINGS', margin + colW * 3 + 10, y + 18);
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(brandRgb.r, brandRgb.g, brandRgb.b);
-  doc.text(`$${evaluation.estAnnualRevenueLoss.toLocaleString()}`, margin + colW * 3 + 10, y + 42);
+  doc.setTextColor(217, 119, 6);
+  doc.text(`${evaluation.warningCount} Points`, margin + colW * 3 + 10, y + 42);
   doc.setFontSize(8);
   doc.setTextColor(100, 116, 139);
-  doc.text(`Retainer: ${proposalRetainerQuote}`, margin + colW * 3 + 10, y + 56);
+  doc.text('need attention', margin + colW * 3 + 10, y + 56);
 
   y += 82;
 

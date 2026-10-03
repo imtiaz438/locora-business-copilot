@@ -61,7 +61,7 @@ export const SEO_INDUSTRIES_DATABASE: Record<string, SeoIndustryItem> = {
       gbpBio: 'Apex Dental Care is a premier cosmetic & family dental practice in San Francisco. Led by Dr. Emily Watson, DDS, we specialize in painless dental implants, Invisalign clear aligners, same-day crowns, and emergency dental care.',
       reviewReply: 'Thank you for the wonderful 5-star review, Sarah! Dr. Watson and our entire dental team are delighted that your dental implant consultation was smooth and comfortable. We look forward to seeing you at your next visit!',
       schemaType: 'Dentist',
-      jsonLdSnippet: '{\n  "@context": "https://schema.org",\n  "@type": "Dentist",\n  "name": "Apex Dental Care",\n  "medicalSpecialty": "Dentistry",\n  "priceRange": "$$",\n  "telephone": "+1-415-555-0192"\n}'
+      jsonLdSnippet: '{\n  "@context": "https://schema.org",\n  "@type": "Dentist",\n  "name": "Apex Dental Care",\n  "medicalSpecialty": "Dentistry",\n  "priceRange": "$$",\n  "telephone": "YOUR_BUSINESS_PHONE"\n}'
     },
     roiBenchmark: {
       avgTicket: 3800,
@@ -155,7 +155,7 @@ export const SEO_INDUSTRIES_DATABASE: Record<string, SeoIndustryItem> = {
       gbpBio: 'Vance Plumbing & Rooter is Austin’s trusted 24/7 emergency plumbing team. Specializing in burst pipe repairs, tankless water heater installations, hydro-jetting, and trenchless sewer replacements with upfront pricing.',
       reviewReply: 'Thank you for the 5-star review, Jason! We are glad Mike was able to arrive within 30 minutes and fix your emergency water heater leak in North Austin. We appreciate your recommendation!',
       schemaType: 'PlumbingService',
-      jsonLdSnippet: '{\n  "@context": "https://schema.org",\n  "@type": "PlumbingService",\n  "name": "Vance Plumbing & Rooter",\n  "telephone": "+1-512-555-0188",\n  "openingHours": "Mo-Su 00:00-23:59"\n}'
+      jsonLdSnippet: '{\n  "@context": "https://schema.org",\n  "@type": "PlumbingService",\n  "name": "Vance Plumbing & Rooter",\n  "telephone": "YOUR_BUSINESS_PHONE",\n  "openingHours": "Mo-Su 00:00-23:59"\n}'
     },
     roiBenchmark: {
       avgTicket: 1450,
@@ -249,7 +249,7 @@ export const SEO_INDUSTRIES_DATABASE: Record<string, SeoIndustryItem> = {
       gbpBio: 'Beacon Legal Group is a premier Denver personal injury and commercial litigation law firm. With over 25 years of courtroom experience, our attorneys fight tirelessly for accident victims and corporate clients across Colorado.',
       reviewReply: 'Thank you for your review, Robert. Our legal team is grateful we could guide you through the settlement process and secure full recovery for your damages. We wish you and your family all the best!',
       schemaType: 'Attorney',
-      jsonLdSnippet: '{\n  "@context": "https://schema.org",\n  "@type": "Attorney",\n  "name": "Beacon Legal Group",\n  "telephone": "+1-303-555-0144",\n  "priceRange": "$$$$"\n}'
+      jsonLdSnippet: '{\n  "@context": "https://schema.org",\n  "@type": "Attorney",\n  "name": "Beacon Legal Group",\n  "telephone": "YOUR_BUSINESS_PHONE",\n  "priceRange": "$$$$"\n}'
     },
     roiBenchmark: {
       avgTicket: 8500,
@@ -343,7 +343,7 @@ export const SEO_INDUSTRIES_DATABASE: Record<string, SeoIndustryItem> = {
       gbpBio: 'Pro-Craft Roofing & Solar is Dallas-Fort Worth’s certified master roofing contractor. Specializing in hail damage restoration, Class 4 impact-resistant shingles, metal roofing, and emergency leak repairs with 100% financing.',
       reviewReply: 'Thank you for the review, David! We are thrilled our roofing crew could complete your full roof replacement in Plano in just one day with zero cleanup mess. Enjoy the new Class 4 architectural shingles!',
       schemaType: 'RoofingContractor',
-      jsonLdSnippet: '{\n  "@context": "https://schema.org",\n  "@type": "RoofingContractor",\n  "name": "Pro-Craft Roofing & Solar",\n  "telephone": "+1-214-555-0177",\n  "priceRange": "$$$"\n}'
+      jsonLdSnippet: '{\n  "@context": "https://schema.org",\n  "@type": "RoofingContractor",\n  "name": "Pro-Craft Roofing & Solar",\n  "telephone": "YOUR_BUSINESS_PHONE",\n  "priceRange": "$$$"\n}'
     },
     roiBenchmark: {
       avgTicket: 11800,

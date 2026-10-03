@@ -377,8 +377,8 @@ export const LeadProspectorView: React.FC = () => {
       lead.rating || 4.0,
       lead.reviewsCount || 0,
       lead.seoScore || 70,
-      lead.estAnnualRevenue || 500000,
-      lead.estRevenueGap || 3500,
+      lead.estAnnualRevenue || '',
+      lead.estRevenueGap || '',
       `"${lead.primaryIssue || 'Technical SEO Flaw'}"`,
       `"${enrichedExecutive?.name || 'Managing Director'}"`,
       `"${enrichedExecutive?.title || 'Owner'}"`,
@@ -410,12 +410,12 @@ export const LeadProspectorView: React.FC = () => {
       name: contactName,
       company: safeCompanyName,
       email: contactEmail,
-      phone: lead.phone || '(555) 000-0000',
+      phone: lead.phone || '',
       address: lead.address || `${lead.city || city}`,
       status: 'lead',
-      value: lead.estRevenueGap || 3500,
+      value: lead.estRevenueGap || 0,
       tags: [lead.industry || industry, 'B2B Prospect', lead.primaryIssue || 'SEO Gap'],
-      notes: `Identified Audit Flaw: ${lead.primaryIssue || 'Digital Opportunity'}\nEst. Revenue Gap: $${(lead.estRevenueGap || 3500).toLocaleString()}/yr\nPitch Hook: ${lead.coldPitchHook || ''}\nRecommended Solution: ${lead.recommendedService || ''}`,
+      notes: `Identified Audit Flaw: ${lead.primaryIssue || 'Digital Opportunity'}\n${lead.estRevenueGap ? `Est. Revenue Gap: $${lead.estRevenueGap.toLocaleString()}/yr\n` : ''}Pitch Hook: ${lead.coldPitchHook || ''}\nRecommended Solution: ${lead.recommendedService || ''}`,
     });
 
     setCrmAddedIds((prev) => new Set([...prev, lead.id]));
@@ -653,7 +653,7 @@ export const LeadProspectorView: React.FC = () => {
 
                         <td className="py-3 px-3">
                           <span className="font-bold text-rose-600 font-mono">
-                            -${(((lead.estRevenueGap || 3500)) / 1000).toFixed(0)}k/yr
+                            {lead.estRevenueGap ? `-$${(lead.estRevenueGap / 1000).toFixed(0)}k/yr` : '—'}
                           </span>
                         </td>
 
@@ -739,7 +739,7 @@ export const LeadProspectorView: React.FC = () => {
                   </span>
                   <span className="text-[11px] font-bold text-rose-600 flex items-center gap-1 font-heading">
                     <DollarSign className="w-3.5 h-3.5" />
-                    <span>Est. Loss: ${selectedLead.estRevenueGap.toLocaleString()}/yr</span>
+                    <span>Est. Loss: {selectedLead.estRevenueGap ? `$${selectedLead.estRevenueGap.toLocaleString()}/yr` : 'not estimated'}</span>
                   </span>
                 </div>
                 <h3 className="text-lg font-black font-heading text-slate-900 mt-2">

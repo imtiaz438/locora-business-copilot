@@ -42,6 +42,8 @@ export interface SerpOverviewData {
   results: SerpResultItem[];
   peopleAlsoAsk: Array<{ question: string; snippet?: string }>;
   relatedSearches: string[];
+  /** Google Maps local pack entries (from SerpApi local_results), in pack order. */
+  localPack: Array<{ position: number; title: string; address?: string; rating?: number; reviews?: number }>;
 }
 
 export interface AiOverviewPresenceData {

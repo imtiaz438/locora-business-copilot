@@ -110,7 +110,7 @@ export const PublicFooter: React.FC = () => {
               Get Weekly AI Local Business Strategies & SEO Prompts
             </h3>
             <p className="text-xs text-slate-600 leading-relaxed max-w-xl font-sans">
-              Join 12,000+ agency owners and service entrepreneurs receiving our weekly teardowns on closing enterprise local retainers with AI.
+              Join agency owners and service entrepreneurs receiving our weekly teardowns on closing local retainers with AI.
             </p>
           </div>
 
@@ -229,10 +229,7 @@ export const PublicFooter: React.FC = () => {
 
             <div className="flex flex-col gap-2 text-xs text-slate-600 pt-1 font-sans">
               <span className="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" /> SOC2 Compliant
-              </span>
-              <span className="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
-                <Globe className="w-4 h-4 text-indigo-600" /> 99.9% Uptime SLA
+                <ShieldCheck className="w-4 h-4 text-emerald-600" /> Security & privacy are core to our platform
               </span>
             </div>
           </div>

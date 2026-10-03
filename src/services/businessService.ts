@@ -35,6 +35,21 @@ class BusinessService {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   }
+
+  async generateDescription(businessId: string): Promise<{ success: boolean; draft?: string; error?: string; message?: string }> {
+    const res = await fetch(`/api/production/business/${encodeURIComponent(businessId)}/generate-description`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err: any = new Error(data.message || data.error || `HTTP ${res.status}`);
+      err.code = data.error;
+      throw err;
+    }
+    return data;
+  }
 }
 
 export const businessService = new BusinessService();

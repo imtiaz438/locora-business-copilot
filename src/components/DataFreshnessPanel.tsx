@@ -46,19 +46,21 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
   const [isRefreshingAll, setIsRefreshingAll] = useState(false);
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'connected' | 'not_connected'>('all');
-  const [customDatasets, setCustomDatasets] = useState<Record<string, Partial<ExternalDataset>>>({});
+  // lastCheckedAt per dataset — records WHEN the admin last reviewed the real
+  // connection state. Never overrides the actual status (no fabricated syncs).
+  const [lastCheckedAt, setLastCheckedAt] = useState<Record<string, string>>({});
 
-  // Resolve current business datasets
+  // Resolve current business datasets — status always derives from real state
+  // (AppContext: activeBusiness, businessTruth, latestWebsiteAudit).
   const rawDatasets = resolveBusinessDatasets({
     activeBusiness,
     businessTruth,
     latestWebsiteAudit,
   });
 
-  // Apply any optimistic local updates
+  // Status is never overridden locally; only the "last checked" timestamp is recorded.
   const datasets: ExternalDataset[] = rawDatasets.map((ds) => ({
     ...ds,
-    ...(customDatasets[ds.id] || {}),
   }));
 
   const connectedCount = datasets.filter((d) => d.status === 'connected').length;
@@ -80,17 +82,14 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
         return;
       }
 
-      // Simulate real refresh / trigger API
-      await new Promise((res) => setTimeout(res, 800));
-
-      setCustomDatasets((prev) => ({
-        ...prev,
-        [dataset.id]: {
-          status: 'connected',
-          last_synced_at: new Date().toISOString(),
-          error: null,
-        },
-      }));
+      // Honest re-check: re-derive the dataset's real status from current
+      // connection state. Never marks a dataset connected unless it truly is.
+      const fresh = resolveBusinessDatasets({ activeBusiness, businessTruth, latestWebsiteAudit });
+      const live = fresh.find((d) => d.id === dataset.id);
+      setLastCheckedAt((prev) => ({ ...prev, [dataset.id]: new Date().toISOString() }));
+      if (live && live.status !== 'connected') {
+        // Status stays as derived — the UI shows the real state with a Connect action.
+      }
     } finally {
       setSyncingId(null);
     }
@@ -99,18 +98,13 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
   const handleRefreshAll = async () => {
     setIsRefreshingAll(true);
     try {
-      await new Promise((res) => setTimeout(res, 1000));
+      // Re-derive real statuses; record when the review happened. No fake pings.
+      resolveBusinessDatasets({ activeBusiness, businessTruth, latestWebsiteAudit });
       const now = new Date().toISOString();
-      setCustomDatasets((prev) => {
+      setLastCheckedAt((prev) => {
         const next = { ...prev };
         datasets.forEach((ds) => {
-          if (ds.status === 'connected') {
-            next[ds.id] = {
-              status: 'connected',
-              last_synced_at: now,
-              error: null,
-            };
-          }
+          next[ds.id] = now;
         });
         return next;
       });
@@ -170,7 +164,7 @@ export const DataFreshnessPanel: React.FC<DataFreshnessPanelProps> = ({
             onClick={handleRefreshAll}
             disabled={isRefreshingAll}
             className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-            title="Ping all connected APIs to re-verify timestamps"
+            title="Re-check all dataset statuses against live connection state"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingAll ? 'animate-spin text-emerald-700' : 'text-slate-600'}`} />
             <span>{isRefreshingAll ? 'Refreshing Feeds...' : 'Refresh All'}</span>

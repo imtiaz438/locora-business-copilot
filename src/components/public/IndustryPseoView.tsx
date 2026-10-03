@@ -1103,7 +1103,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
               Calculate Projected Revenue Lift for {currentIndustry.name}
             </h2>
           </div>
-          <span className="text-xs text-slate-500 font-mono">Based on average client results</span>
+          <span className="text-xs text-slate-500 font-mono">Illustrative estimate — based on your inputs and an assumed lift</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
@@ -1144,41 +1144,20 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
 
           {/* Results Summary Box */}
           <div className="lg:col-span-6 p-6 bg-slate-900 text-white rounded-2xl space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-1">
-                <span className="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Projected New Revenue</span>
+                <span className="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Illustrative Revenue Estimate*</span>
                 <div className="text-2xl sm:text-3xl font-extrabold font-heading text-emerald-400">
                   +${projectedExtraRevenue.toLocaleString()}
                   <span className="text-xs text-slate-300 font-normal"> /mo</span>
                 </div>
               </div>
-              <div className="space-y-1">
-                <span className="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Admin Hours Saved</span>
-                <div className="text-2xl sm:text-3xl font-extrabold font-heading text-white">
-                  ~{hoursSavedPerMonth} hrs
-                  <span className="text-xs text-slate-300 font-normal"> /mo</span>
-                </div>
-              </div>
             </div>
             <p className="text-xs text-slate-300 border-t border-slate-800 pt-3">
-              Automated Local SEO map pack rankings (+35% conversion) combined with rapid proposals and instant PDF invoicing.
+              *Illustrative projection assuming a 35% conversion lift from improved local SEO and faster proposals. Enter your own numbers — actual results vary by market and execution.
             </p>
           </div>
         </div>
-      </div>
-
-      {/* ROI Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-        {currentIndustry.stats.map((stat, index) => (
-          <div
-            key={index}
-            className="p-6 bg-white border border-slate-200 rounded-2xl shadow-xs text-center space-y-2 hover:border-emerald-300 transition-colors"
-          >
-            <div className="text-3xl sm:text-4xl font-black text-[#059669] font-heading">{stat.value}</div>
-            <div className="text-sm font-bold text-slate-800">{stat.label}</div>
-            <p className="text-xs text-slate-500">{stat.detail}</p>
-          </div>
-        ))}
       </div>
 
       {/* Interactive Live Deliverables Playground */}

@@ -40,7 +40,7 @@ export const LocalSeoView: React.FC = () => {
     e.preventDefault();
 
     if (activeTask === 'schema' && user.planTier !== 'agency') {
-      alert('JSON-LD Schema Generator is exclusive to Agency Elite ($49/mo) plan. Please upgrade your workspace.');
+      alert('JSON-LD Schema Generator is exclusive to Agency Elite ($99/mo) plan. Please upgrade your workspace.');
       return;
     }
 
@@ -146,7 +146,7 @@ export const LocalSeoView: React.FC = () => {
       <LockedFeature
         requiredPlan="pro"
         featureTitle="Local SEO & Google Business Assistant"
-        featureDescription="Google Business Profile optimization, Review Responder, Local Landing Pages, and Schema JSON-LD require a Pro Growth ($19/mo) or Agency Elite plan."
+        featureDescription="Google Business Profile optimization, Review Responder, Local Landing Pages, and Schema JSON-LD require a Pro Growth ($29/mo) or Agency Elite plan."
       >
         <div className="space-y-6">
           {/* Task Selector Tabs */}

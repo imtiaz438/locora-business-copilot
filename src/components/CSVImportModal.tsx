@@ -161,7 +161,7 @@ export const CSVImportModal: React.FC<CSVImportModalProps> = ({ onClose, onImpor
                 <label className="block font-bold text-slate-700 mb-1">Paste CSV Data</label>
                 <textarea
                   rows={6}
-                  placeholder={`Name, Email, Phone, Company, Service, Value\nJohn Doe, john@example.com, (555) 019-2831, Acme Corp, Consulting, 1200\nJane Smith, jane@example.com, (555) 018-9921, Smith LLC, Design, 850`}
+                  placeholder={`Name, Email, Phone, Company, Service, Value\nJohn Doe, john@example.com, (512) 019-2831, Acme Corp, Consulting, 1200\nJane Smith, jane@example.com, (512) 018-9921, Smith LLC, Design, 850`}
                   value={csvText}
                   onChange={(e) => setCsvText(e.target.value)}
                   className="w-full p-3 font-mono text-[11px] border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#059669]/20 focus:outline-none focus:border-[#059669]"

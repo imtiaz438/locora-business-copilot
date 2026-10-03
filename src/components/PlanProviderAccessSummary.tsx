@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ShieldCheck,
   CheckCircle2,
@@ -34,6 +34,26 @@ export const PlanProviderAccessSummary: React.FC<PlanProviderAccessSummaryProps>
   const { user, setCheckoutModalPlan, setActiveTab } = useApp();
   const currentPlan = normalizePlanTier(user?.planTier);
 
+  // Real provider-key presence (booleans only, no secrets) — badges reflect
+  // actual configuration, never assumed "Unlocked".
+  const [keyStatus, setKeyStatus] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    fetch('/api/provider-status', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && d.configured) setKeyStatus(d.configured);
+      })
+      .catch(() => {});
+  }, []);
+
+  const isFeatureConfigured = (featureId: ProviderFeatureId): boolean => {
+    const def = PROVIDER_FEATURE_REGISTRY[featureId];
+    if (!def || !def.requiresApiKey) return true;
+    if (featureId === 'dataforseo') return Boolean(keyStatus.dataforseo);
+    if (featureId === 'low_cost_serp' || featureId === 'advanced_serp') return Boolean(keyStatus.serp);
+    return false;
+  };
+
   const planBadges: Record<string, { label: string; bg: string; text: string; border: string }> = {
     free: { label: 'FREE TIER', bg: 'bg-slate-100', text: 'text-slate-800', border: 'border-slate-300' },
     pro: { label: 'PRO TIER', bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-300' },
@@ -61,7 +81,6 @@ export const PlanProviderAccessSummary: React.FC<PlanProviderAccessSummaryProps>
   const agencyFeatures: ProviderFeatureId[] = [
     'dataforseo',
     'advanced_serp',
-    'advanced_local_tracking',
     'bulk_client_processing',
   ];
 
@@ -73,6 +92,7 @@ export const PlanProviderAccessSummary: React.FC<PlanProviderAccessSummaryProps>
       featureId,
       userPlanTier: user?.planTier,
       userRole: user?.role,
+      isConfigured: isFeatureConfigured(featureId),
     });
 
     let icon = <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />;

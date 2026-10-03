@@ -1182,7 +1182,7 @@ export const TopBusinessSelector: React.FC = () => {
                         type="text"
                         value={newBizPhone}
                         onChange={(e) => setNewBizPhone(e.target.value)}
-                        placeholder="e.g. (512) 555-0199"
+                        placeholder="e.g. (512) 512-0199"
                         className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:outline-none transition-colors"
                       />
                     </div>
@@ -1290,7 +1290,7 @@ export const TopBusinessSelector: React.FC = () => {
                         type="text"
                         value={confirmedPhone}
                         onChange={(e) => setConfirmedPhone(e.target.value)}
-                        placeholder="(555) 000-0000"
+                        placeholder="(512) 000-0000"
                         className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:outline-none"
                       />
                     </div>
@@ -1565,7 +1565,7 @@ export const TopBusinessSelector: React.FC = () => {
                       type="text"
                       value={newLocPhone}
                       onChange={(e) => setNewLocPhone(e.target.value)}
-                      placeholder="e.g. (512) 555-0244"
+                      placeholder="e.g. (512) 512-0244"
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:outline-none transition-colors"
                     />
                   </div>
@@ -1739,7 +1739,7 @@ export const TopBusinessSelector: React.FC = () => {
                       type="text"
                       value={editBizPhone}
                       onChange={(e) => setEditBizPhone(e.target.value)}
-                      placeholder="e.g. (512) 555-0199"
+                      placeholder="e.g. (512) 512-0199"
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:outline-none transition-colors"
                     />
                   </div>

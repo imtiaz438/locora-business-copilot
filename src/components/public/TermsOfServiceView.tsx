@@ -59,7 +59,7 @@ export const TermsOfServiceView: React.FC = () => {
             <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
               <ShieldCheck className="w-5 h-5 text-sky-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-bold text-slate-900">99.9% Service SLA</p>
+                <p className="text-xs font-bold text-slate-900">Reliable Service</p>
                 <p className="text-[11px] text-slate-500">Reliable Cloud infrastructure engineered for business continuity.</p>
               </div>
             </div>
