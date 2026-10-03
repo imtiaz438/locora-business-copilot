@@ -8262,21 +8262,27 @@ Official Description: ${description}
 Brand Voice: ${brandVoice}
 Target Customers: ${targetCustomers}
 Strategic Goals: ${goals}
-Contact Phone: ${phone || '[Phone on file]'}
+Contact Phone: ${phone || 'NOT PROVIDED — do not invent or guess a phone number; write the call-to-action without any phone number'}
 Official Website: ${website || '[Website on file]'}
 Active Offers: ${offers || '[Standard business rates apply]'}
 
+=== HOW TO USE THE REQUEST ===
+The "Target Focus" in the user message below is EXPLICIT USER INPUT for this specific piece of content — it is authoritative. You MUST feature the target service, target location, and target keyword prominently and naturally. This is not hallucination; the user asked for exactly this.
+The Verified Business Truth above is background context: do not contradict it, and do not invent additional services, locations, prices, awards, staff, or hours beyond what is listed here plus the user's Target Focus.
+
 === ABSOLUTE ZERO-HALLUCINATION GUARDRAILS ===
-1. Generate content ONLY from this verified Business Truth.
+1. Generate content ONLY from the verified Business Truth plus the user's Target Focus.
 2. NEVER invent:
-   - Fake services not in verified services list
-   - Fake locations or cities not in verified service areas
+   - Fake services beyond the Target Focus service and verified services list
+   - Fake locations or cities beyond the Target Focus location and verified service areas
    - Fake pricing (e.g. do not invent "$49 special" unless explicitly stated in Active Offers)
    - Fake awards, fake ratings, or fake accreditations
    - Fake staff members, years in business, or false guarantees
    - Fake opening hours or unverified claims
+   - A phone number when none is provided above
 3. If specific pricing, guarantees, or certifications are not in the Business Truth, instruct readers to call or visit the verified website for a personalized quote.
-4. Output must be natural, engaging, and in the specified Brand Voice.`;
+4. Output must be natural, engaging, and in the specified Brand Voice.
+5. Do not repeat or duplicate paragraphs — say each point once.`;
 
     const userPrompt = `Generate a high-converting ${contentType.replace(/_/g, ' ')} for ${bizName}.
 

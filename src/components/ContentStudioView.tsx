@@ -115,14 +115,22 @@ export const ContentStudioView: React.FC = () => {
 
   const availableLocations = useMemo(() => {
     const list: string[] = [];
+    const GENERIC_NAMES = ['main location', 'primary location', 'headquarters', 'default'];
+    // Prefer the business city first so the generator defaults to a real place,
+    // never a generic location label like "Main Location".
+    if (activeBusiness.city && !list.includes(activeBusiness.city)) {
+      list.push(activeBusiness.city);
+    }
     if (Array.isArray(activeBusiness.locations)) {
       activeBusiness.locations.forEach((loc) => {
         if (loc.city && !list.includes(loc.city)) list.push(loc.city);
-        else if (loc.name && !list.includes(loc.name)) list.push(loc.name);
+        else if (
+          loc.name &&
+          !GENERIC_NAMES.includes(loc.name.trim().toLowerCase()) &&
+          !list.includes(loc.name)
+        )
+          list.push(loc.name);
       });
-    }
-    if (activeBusiness.city && !list.includes(activeBusiness.city)) {
-      list.push(activeBusiness.city);
     }
     return list;
   }, [activeBusiness.locations, activeBusiness.city]);

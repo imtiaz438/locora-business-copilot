@@ -109,9 +109,9 @@ export const FixItModal: React.FC<FixItModalProps> = ({ action, onClose }) => {
     }
   }, [action, businessProfile]);
 
-  if (!action) return null;
-
   const [genError, setGenError] = useState<string | null>(null);
+
+  if (!action) return null;
 
   const handleGenerateDraft = async () => {
     setGenError(null);
