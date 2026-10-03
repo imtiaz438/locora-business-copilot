@@ -69,23 +69,23 @@ export const FixItModal: React.FC<FixItModalProps> = ({ action, onClose }) => {
     } else {
       setDraftTitle(action.recommendationTitle);
       setDraftSlug(`/services/${action.id.replace('act_', '').replace('_', '-')}`);
-      setDraftSeoTitle(`${action.recommendationTitle} | ${businessProfile.name}`);
+      setDraftSeoTitle(`${action.recommendationTitle} | ${activeBusiness.name || businessProfile.name}`);
       setDraftMetaDesc(action.whyItMatters);
       setDraftHeadings(action.itemsToCreate || ['Service Overview', 'Why Choose Us', 'Core Capabilities', 'Client FAQs']);
-      setDraftBodyCopy(`Locora AI has generated the comprehensive content blueprint for ${action.recommendationTitle} at ${businessProfile.name || 'our business'}${businessProfile.city ? ` in ${businessProfile.city}, ${businessProfile.state}` : ''}.\n\nClients seeking dependable, high-quality service can call our direct line${businessProfile.phone ? ` at ${businessProfile.phone}` : ''} for immediate assistance and priority scheduling.\n\nOur team is committed to prompt response times, transparent pricing, and professional service execution tailored to your specific requirements.`);
+      setDraftBodyCopy(`Locora AI has generated the comprehensive content blueprint for ${action.recommendationTitle} at ${activeBusiness.name || businessProfile.name || 'our business'}${(activeBusiness.city || businessProfile.city) ? ` in ${activeBusiness.city || businessProfile.city}, ${activeBusiness.state || businessProfile.state}` : ''}.\n\nClients seeking dependable, high-quality service can call our direct line${(activeBusiness.phone || businessProfile.phone) ? ` at ${activeBusiness.phone || businessProfile.phone}` : ''} for immediate assistance and priority scheduling.\n\nOur team is committed to prompt response times, transparent pricing, and professional service execution tailored to your specific requirements.`);
       setDraftSchemaJson(
         JSON.stringify(
           {
             '@context': 'https://schema.org',
             '@type': 'LocalBusiness',
-            'name': `${businessProfile.name || 'Business'} - ${action.recommendationTitle}`,
-            'telephone': businessProfile.phone || '',
+            'name': `${activeBusiness.name || businessProfile.name || 'Business'} - ${action.recommendationTitle}`,
+            'telephone': activeBusiness.phone || businessProfile.phone || '',
             'address': {
               '@type': 'PostalAddress',
-              'streetAddress': businessProfile.address || '',
-              'addressLocality': businessProfile.city || '',
-              'addressRegion': businessProfile.state || '',
-              'postalCode': businessProfile.zip || '',
+              'streetAddress': activeBusiness.address || businessProfile.address || '',
+              'addressLocality': activeBusiness.city || businessProfile.city || '',
+              'addressRegion': activeBusiness.state || businessProfile.state || '',
+              'postalCode': activeBusiness.zip || businessProfile.zip || '',
               'addressCountry': 'US',
             },
             'openingHours': 'Mo-Fr 08:00-18:00',
@@ -97,12 +97,12 @@ export const FixItModal: React.FC<FixItModalProps> = ({ action, onClose }) => {
       );
       setDraftFaqs([
         {
-          question: `How quickly can I schedule an appointment with ${businessProfile.name || 'your team'}?`,
-          answer: `Yes, ${businessProfile.name || 'our team'} offers priority scheduling and fast consultation for immediate service inquiries.`,
+          question: `How quickly can I schedule an appointment with ${activeBusiness.name || businessProfile.name || 'your team'}?`,
+          answer: `Yes, ${activeBusiness.name || businessProfile.name || 'our team'} offers priority scheduling and fast consultation for immediate service inquiries.`,
         },
         {
           question: 'Are quotes and estimates provided upfront?',
-          answer: `Yes, we provide transparent estimates and clear scopes of work before starting any engagement. Contact our office directly at ${businessProfile.phone || 'our primary line'}.`,
+          answer: `Yes, we provide transparent estimates and clear scopes of work before starting any engagement. Contact our office directly at ${activeBusiness.phone || businessProfile.phone || 'our primary line'}.`,
         },
       ]);
       setStep('recommendation');
@@ -111,25 +111,97 @@ export const FixItModal: React.FC<FixItModalProps> = ({ action, onClose }) => {
 
   if (!action) return null;
 
-  const handleGenerateDraft = () => {
-    consumeAiCredit(1);
+  const [genError, setGenError] = useState<string | null>(null);
+
+  const handleGenerateDraft = async () => {
+    setGenError(null);
     setStep('generating');
-    setTimeout(() => {
-      const generatedDraft: Partial<FixItDraft> = {
-        title: draftTitle,
-        slug: draftSlug,
-        seoTitle: draftSeoTitle,
-        metaDescription: draftMetaDesc,
-        headings: draftHeadings,
-        bodyCopy: draftBodyCopy,
-        schemaType: 'LocalBusiness',
-        schemaJson: draftSchemaJson,
-        faqs: draftFaqs,
-        status: 'draft',
-      };
-      fixItAction(action.id, generatedDraft);
+
+    const bizName = activeBusiness.name || businessProfile.name || 'our business';
+    const bizCategory = activeBusiness.category || businessProfile.industry || 'local business';
+    const bizCity = activeBusiness.city || businessProfile.city || '';
+    const bizPhone = activeBusiness.phone || businessProfile.phone || '';
+    const bizWebsite = activeBusiness.website || businessProfile.website || '';
+
+    const prompt = `You are drafting website/service-page content for a local business fix-it action.
+
+Business: ${bizName}
+Category: ${bizCategory}
+City: ${bizCity}
+Phone: ${bizPhone}
+Website: ${bizWebsite}
+
+Fix-it action: ${action.recommendationTitle}
+Problem: ${action.problem || ''}
+Why it matters: ${action.whyItMatters || ''}
+
+Write a JSON object (and ONLY the JSON object, no markdown fences, no commentary) with these keys:
+{
+  "seoTitle": "SEO title under 60 chars mentioning the business and city",
+  "metaDescription": "meta description under 160 chars",
+  "bodyCopy": "2-3 short paragraphs of ready-to-publish page copy in a professional, trustworthy tone. Use the real business name, city, and phone. Never invent awards, ratings, statistics, or claims.",
+  "faqs": [{"question": "...", "answer": "..."}, {"question": "...", "answer": "..."}, {"question": "...", "answer": "..."}]
+}`;
+
+    const useTemplateFallback = (reason: string) => {
+      // Template draft was pre-built when the modal opened; keep it, charge nothing.
+      setGenError(reason);
       setStep('draft_review');
-    }, 1200);
+    };
+
+    try {
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: prompt,
+          businessProfile: {
+            id: activeBusiness.id,
+            name: bizName,
+            industry: bizCategory,
+            website: bizWebsite,
+            phone: bizPhone,
+          },
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      const text = (data.reply || data.text || '') as string;
+      const engineOk = res.ok && !!text && (data as any).realApiExecuted !== false;
+
+      if (engineOk) {
+        // Extract the JSON object from the response (tolerate surrounding prose).
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            const parsed = JSON.parse(jsonMatch[0]);
+            if (parsed.seoTitle) setDraftSeoTitle(String(parsed.seoTitle));
+            if (parsed.metaDescription) setDraftMetaDesc(String(parsed.metaDescription));
+            if (parsed.bodyCopy) setDraftBodyCopy(String(parsed.bodyCopy));
+            if (Array.isArray(parsed.faqs) && parsed.faqs.length > 0) {
+              setDraftFaqs(
+                parsed.faqs.slice(0, 5).map((f: any) => ({
+                  question: String(f.question || ''),
+                  answer: String(f.answer || ''),
+                }))
+              );
+            }
+            // A real AI deliverable was produced — the ONLY point where a credit moves.
+            consumeAiCredit(1);
+            setStep('draft_review');
+            return;
+          } catch {
+            // fall through to template fallback
+          }
+        }
+      }
+      useTemplateFallback(
+        'AI drafting was unavailable, so a template draft was prepared instead. No credit was used.'
+      );
+    } catch {
+      useTemplateFallback(
+        'AI drafting was unavailable, so a template draft was prepared instead. No credit was used.'
+      );
+    }
   };
 
   const handlePublish = () => {
@@ -327,6 +399,11 @@ export const FixItModal: React.FC<FixItModalProps> = ({ action, onClose }) => {
           {/* STEP 2: DRAFT REVIEW & PREVIEW */}
           {step === 'draft_review' && (
             <div className="space-y-4">
+              {genError && (
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+                  {genError}
+                </div>
+              )}
               {/* Draft Review Navigation Tabs */}
               <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                 <div className="flex items-center gap-2">

@@ -73,6 +73,7 @@ export const ContentStudioView: React.FC = () => {
     logActivity,
     user,
     setActiveTab,
+    consumeAiCredit,
   } = useApp();
 
   const brandVoice = businessProfile?.brandVoice || businessProfile?.toneOfVoice || (activeBusiness as any)?.brandVoice || 'Professional & Consultative';
@@ -210,6 +211,9 @@ export const ContentStudioView: React.FC = () => {
       }
 
       await addContentRecord(data.record);
+      // A real AI deliverable was produced — deduct the advertised 1 credit.
+      // Failures throw above before reaching this point, so they cost nothing.
+      consumeAiCredit(1);
       setIsGeneratorOpen(false);
       setActiveEditingRecord(data.record);
       logActivity('content', `Draft Generated: ${data.record.title}`, `Grounded in Business Brain for ${data.record.target_service}`);

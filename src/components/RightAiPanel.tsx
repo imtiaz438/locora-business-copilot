@@ -110,12 +110,22 @@ export const RightAiPanel: React.FC = () => {
     setIsTyping(true);
 
     try {
-      // Send query to local backend AI proxy
+      // Send query to local backend AI proxy — include the business ID so the
+      // request takes the business-scoped AI Manager path (Business Brain
+      // grounding) instead of the generic context-free path.
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text,
+          businessId: activeBusiness.id,
+          businessProfile: {
+            id: activeBusiness.id,
+            name: activeBusiness.name,
+            industry: activeBusiness.category,
+            website: activeBusiness.website,
+            phone: activeBusiness.phone,
+          },
           businessContext: {
             name: activeBusiness.name,
             category: activeBusiness.category,
@@ -136,22 +146,24 @@ export const RightAiPanel: React.FC = () => {
       });
 
       let aiReply = '';
-      let realAiSucceeded = false;
       if (res.ok) {
         const data = await res.json();
         aiReply = data.reply || data.text || '';
-        // realApiExecuted=false means the engine returned an error notice, not a real answer.
-        realAiSucceeded = !!aiReply && (data as any).realApiExecuted !== false;
-      }
-
-      if (realAiSucceeded) {
-        // A real deliverable was produced — this is the ONLY point where a credit moves.
-        consumeAiCredit(1);
+        const engineOk = (data as any).realApiExecuted !== false;
+        const grounded = (data as any).hasEnoughData !== false;
+        if (!aiReply || !engineOk) {
+          // Honest failure: no credit consumed, no fabricated statistics.
+          aiReply =
+            'The AI assistant is temporarily unavailable. No credit was used for this attempt — please try again in a moment.';
+        } else if (grounded) {
+          // A real, grounded deliverable was produced — the ONLY point where a credit moves.
+          consumeAiCredit(1);
+        }
+        // else: backend returned an honest "not enough verified data" message —
+        // show it, but don't charge for it.
       } else {
-        // Honest failure: no credit consumed, no fabricated statistics.
-        aiReply = res.ok
-          ? 'The AI assistant is temporarily unavailable. No credit was used for this attempt — please try again in a moment.'
-          : 'The AI assistant returned an error. No credit was used for this attempt — please try again in a moment.';
+        aiReply =
+          'The AI assistant returned an error. No credit was used for this attempt — please try again in a moment.';
       }
 
       setMessages((prev) => [
