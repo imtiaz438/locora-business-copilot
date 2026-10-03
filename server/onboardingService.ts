@@ -1,4 +1,5 @@
 import { generateCompletion, stripCodeFences } from './aiEngine.ts';
+import { sanitizePhoneForStorage } from './phoneIntegrity.ts';
 import { db, schema } from '../src/db/index.ts';
 import { eq, desc } from 'drizzle-orm';
 import { syncDetectedGrowthOpportunities } from './growthDetectorService.ts';
@@ -553,7 +554,7 @@ export async function confirmAndSaveBusiness(
         category: cleanCategory,
         industry: cleanCategory,
         website: cleanWebsite,
-        phone: cleanPhone,
+        phone: sanitizePhoneForStorage(cleanPhone),
         email: cleanEmail,
         description: formData.description?.trim() || null,
         targetAudience: formData.targetCustomers?.trim() || null,
@@ -591,7 +592,7 @@ export async function confirmAndSaveBusiness(
         category: cleanCategory,
         industry: cleanCategory,
         website: cleanWebsite,
-        phone: cleanPhone,
+        phone: sanitizePhoneForStorage(cleanPhone),
         email: cleanEmail,
         description: formData.description?.trim() || null,
         targetAudience: formData.targetCustomers?.trim() || null,
@@ -625,7 +626,7 @@ export async function confirmAndSaveBusiness(
         state: cleanState,
         zip: cleanZip,
         country: cleanCountry,
-        phone: cleanPhone,
+        phone: sanitizePhoneForStorage(cleanPhone),
         hours: cleanHours ? [cleanHours] : [],
         updatedAt: new Date(),
       })
@@ -641,7 +642,7 @@ export async function confirmAndSaveBusiness(
       state: cleanState,
       zip: cleanZip,
       country: cleanCountry,
-      phone: cleanPhone,
+      phone: sanitizePhoneForStorage(cleanPhone),
       hours: cleanHours ? [cleanHours] : [],
     });
   }
@@ -693,7 +694,7 @@ export async function confirmAndSaveBusiness(
         name: cleanName,
         industry: cleanCategory,
         website: cleanWebsite,
-        phone: cleanPhone,
+        phone: sanitizePhoneForStorage(cleanPhone),
         email: cleanEmail,
         address: cleanAddress,
         city: cleanCity,
@@ -711,7 +712,7 @@ export async function confirmAndSaveBusiness(
           name: cleanName,
           industry: cleanCategory,
           website: cleanWebsite,
-          phone: cleanPhone,
+          phone: sanitizePhoneForStorage(cleanPhone),
           email: cleanEmail,
           address: cleanAddress,
           city: cleanCity,
@@ -739,7 +740,7 @@ export async function confirmAndSaveBusiness(
         name: cleanName,
         industry: cleanCategory,
         category: cleanCategory,
-        phone: cleanPhone,
+        phone: sanitizePhoneForStorage(cleanPhone),
         website: cleanWebsite,
         email: cleanEmail,
         address: cleanAddress,
@@ -758,7 +759,7 @@ export async function confirmAndSaveBusiness(
           state: cleanState,
           zip: cleanZip,
           country: cleanCountry,
-          phone: cleanPhone,
+          phone: sanitizePhoneForStorage(cleanPhone),
         },
       ],
       services: cleanServices,

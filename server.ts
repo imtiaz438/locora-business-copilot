@@ -21,6 +21,7 @@ import * as onboardingService from './server/onboardingService.ts';
 import * as businessTruthService from './server/businessTruthService.ts';
 import * as aiManagerService from './server/aiManagerService.ts';
 import { generateCompletion, stripCodeFences, AI_NOT_CONFIGURED_NOTICE, getAiLanes } from './server/aiEngine.ts';
+import { sanitizePhoneForStorage, stripFakePhones } from './server/phoneIntegrity.ts';
 import { creditsForPlan, DEMO_GUEST_CREDITS, PLAN_AI_CREDITS, remainingCredits, isUnlimitedTier } from './src/lib/credits.ts';
 import * as growthDetectorService from './server/growthDetectorService.ts';
 import * as directoryService from './src/db/directoryService.ts';
@@ -4640,19 +4641,6 @@ app.post('/api/production/business/:businessId/generate-description', async (req
   }
 });
 
-// ---- Placeholder phone sanitizer ----
-// Strips fabricated/placeholder phone numbers from AI-generated copy:
-// all-zero placeholders (+1 000-000-0000, (000) 000-0000, ...) and the
-// fictional 555-01XX range. Real numbers are never touched.
-const FAKE_PHONE_PATTERN = String.raw`(?:\+?1[\s\-.]?)?(?:\(?000\)?[\s\-.]?000[\s\-.]?0{4}|\(?555\)?[\s\-.]?01\d[\s\-.]?\d{4})`;
-function stripFakePhones(text: string, realPhone?: string): string {
-  if (!text) return text;
-  const connectors = String.raw`\s+(?:at|on)\s+` + FAKE_PHONE_PATTERN + String.raw`|\s*:\s*` + FAKE_PHONE_PATTERN;
-  let out = text.replace(new RegExp(connectors, 'gi'), realPhone ? ' ' + realPhone : '');
-  out = out.replace(new RegExp(FAKE_PHONE_PATTERN, 'g'), realPhone || '');
-  return out;
-}
-
 // POST /api/production/business/:businessId/fixit/generate-draft
 // Generates a real AI draft for a Fix-It action via the consolidated engine.
 // Credits are deducted by the CLIENT only after it verifies success (same
@@ -4674,7 +4662,7 @@ app.post('/api/production/business/:businessId/fixit/generate-draft', async (req
     const bizCity = biz.cityName || serviceAreas[0] || '';
     const bizState = biz.stateCode || '';
     const bizCityState = [bizCity, bizState].filter(Boolean).join(', ');
-    const bizPhone = biz.phone || '';
+    const bizPhone = sanitizePhoneForStorage(biz.phone || '');
     const bizWebsite = biz.website || '';
 
     const systemInstruction = `You are drafting website/service-page content for a local business fix-it action. Output a JSON object and ONLY the JSON object (no markdown fences, no commentary) with these keys: "seoTitle" (under 60 chars, mentions the business and city), "metaDescription" (under 160 chars), "bodyCopy" (2-3 short paragraphs of ready-to-publish page copy in a professional, trustworthy tone), "faqs" (array of 3 objects with "question" and "answer"). Use the real business name and city${bizPhone ? ' and phone' : ''}. NEVER invent awards, ratings, statistics, claims, or a phone number${bizPhone ? '' : ' — write every call-to-action WITHOUT any phone number'}. Do not repeat paragraphs.`;
@@ -4729,7 +4717,7 @@ app.patch('/api/production/business/:businessId', async (req, res) => {
     if (body.category !== undefined) bizUpdates.category = body.category;
     if (body.industry !== undefined) bizUpdates.industry = body.industry;
     if (body.website !== undefined) bizUpdates.website = body.website;
-    if (body.phone !== undefined) bizUpdates.phone = body.phone;
+    if (body.phone !== undefined) bizUpdates.phone = sanitizePhoneForStorage(body.phone);
     if (body.email !== undefined) bizUpdates.email = body.email;
     if (body.description !== undefined) bizUpdates.description = body.description;
     if (body.targetAudience !== undefined) bizUpdates.targetAudience = body.targetAudience;
@@ -4750,7 +4738,7 @@ app.patch('/api/production/business/:businessId', async (req, res) => {
     if (body.state !== undefined) locUpdates.state = body.state;
     if (body.zip !== undefined) locUpdates.zip = body.zip;
     if (body.country !== undefined) locUpdates.country = body.country;
-    if (body.phone !== undefined) locUpdates.phone = body.phone;
+    if (body.phone !== undefined) locUpdates.phone = sanitizePhoneForStorage(body.phone);
     if (body.hours !== undefined) locUpdates.hours = body.hours;
     if (body.latitude !== undefined || body.lat !== undefined) locUpdates.lat = Number(body.latitude ?? body.lat);
     if (body.longitude !== undefined || body.lng !== undefined) locUpdates.lng = Number(body.longitude ?? body.lng);
@@ -5058,7 +5046,7 @@ app.post('/api/production/business/:businessId/locations', async (req, res) => {
         country: body.country || 'United States',
         lat: locLat,
         lng: locLng,
-        phone: body.phone || business.phone || '',
+        phone: sanitizePhoneForStorage(body.phone || business.phone || ''),
         hours: body.hours || [],
       } as any)
       .returning();
@@ -8308,7 +8296,7 @@ app.post('/api/content/generate', async (req, res) => {
     const brandVoice = truth.brandVoice || 'Professional, trustworthy, and consultative';
     const targetCustomers = truth.targetCustomers || 'Local residential and commercial clients';
     const goals = Array.isArray(truth.goals) ? truth.goals.join(', ') : targetGoal || 'Local customer acquisition';
-    const phone = truth.phone || '';
+    const phone = sanitizePhoneForStorage(truth.phone || '');
     const website = truth.website || '';
     const offers = truth.offers || '';
 
