@@ -535,7 +535,6 @@ export const LocalVisibilityView: React.FC = () => {
       {activeSubTab === 'visibility' && (
         <ProviderAccessGate
           featureId="low_cost_serp"
-          isConfigured={isTrackingActive}
           title="Live Search Engine Position Tracking"
           description="Live Google Local 3-Pack and organic search ranking verification require a Pro or Agency Elite subscription. Zero fake rankings or simulated positions are generated."
           onConfigureClick={() => setIsConfigModalOpen(true)}
