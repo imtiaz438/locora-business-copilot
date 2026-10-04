@@ -352,8 +352,13 @@ export async function generateCompletion(req: AiEngineRequest): Promise<AiEngine
   // Report real usage for every successful call, regardless of caller.
   if (result.ok && tokenUsageReporter) {
     try {
+      console.log(`[token-tracker] reporting ${result.tokensUsed} tokens for model ${result.modelUsed}`);
       tokenUsageReporter(result.modelUsed, result.tokensUsed);
-    } catch { /* telemetry only — never break the AI call */ }
+    } catch (err: any) {
+      console.warn('[token-tracker] reporter failed:', err?.message);
+    }
+  } else if (result.ok && !tokenUsageReporter) {
+    console.warn('[token-tracker] WARNING: no reporter registered — usage not tracked');
   }
   return result;
 }

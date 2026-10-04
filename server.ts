@@ -15529,6 +15529,7 @@ app.post('/api/admin/delete-user', async (req, res) => {
 
 
 function recordRealModelTokenUsage(modelId: string, tokensConsumed: number) {
+  console.log(`[token-tracker] recordRealModelTokenUsage: model=${modelId} tokens=${tokensConsumed} mapSize=${aiModelQuotas.size}`);
   let target = aiModelQuotas.get(modelId);
   if (!target) {
     for (const [id, model] of aiModelQuotas.entries()) {
