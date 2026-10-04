@@ -61,7 +61,21 @@ export interface AiEngineResult {
 }
 
 export const AI_NOT_CONFIGURED_NOTICE =
-  'AI generation is not configured yet. Add a free Groq API key (console.groq.com) in Settings → AI Providers to enable this feature.';
+  'AI is temporarily unavailable right now. Please try again in a moment.';
+
+/**
+ * Central platform Groq key registry.
+ * The platform key is the SINGLE source of AI for every tier and every feature —
+ * users never supply keys. server.ts pushes the live key here on boot and on
+ * every admin key update, so the engine always sees it even if env sync lags.
+ */
+let platformGroqKey = '';
+export function setPlatformGroqKey(key: string) {
+  platformGroqKey = (key || '').trim();
+}
+export function getPlatformGroqKey(): string {
+  return platformGroqKey || (process.env.GROQ_API_KEY || '').trim();
+}
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
@@ -116,7 +130,7 @@ function resolveProvider(req: AiEngineRequest): ResolvedProvider {
     return { provider: 'claude', key, model: pickModel('claude', req.modelOverride), isCustomKey: !!userKey };
   }
 
-  const key = userKey || (process.env.GROQ_API_KEY || '').trim();
+  const key = userKey || getPlatformGroqKey();
   if (!key) {
     return {
       provider: 'groq', key: '', model: GROQ_DEFAULT_MODEL, isCustomKey: false,

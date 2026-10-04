@@ -2985,7 +2985,7 @@ export const AdminView: React.FC = () => {
                   Live AI Models & Token Monitoring System
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5 font-sans">
-                  Real-time token allocation, utilization tracking, and live API key management for Anthropic Claude and Groq (gpt-oss-120b).
+                  Real tracked token usage, admin-set budgets, and live API key status for Anthropic Claude and Groq (gpt-oss-120b).
                 </p>
               </div>
 
@@ -3012,11 +3012,11 @@ export const AdminView: React.FC = () => {
             {/* Metrics Breakdown */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
               <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4">
-                <p className="text-[11px] text-slate-400">Total Purchased Quotas</p>
+                <p className="text-[11px] text-slate-400">Total Budget Set</p>
                 <p className="text-2xl font-bold font-heading text-white mt-1">
-                  {aiStats?.summary ? (aiStats.summary.totalAllocatedTokens / 1000000).toFixed(1) + 'M' : '150.0M'}
+                  {aiStats?.summary ? (aiStats.summary.totalAllocatedTokens / 1000000).toFixed(1) + 'M' : '0.0M'}
                 </p>
-                <span className="text-[10px] text-slate-500">Allocated Token Pool</span>
+                <span className="text-[10px] text-slate-500">Admin budget pool (0 = unlimited)</span>
               </div>
 
               <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4">
@@ -3024,15 +3024,15 @@ export const AdminView: React.FC = () => {
                 <p className="text-2xl font-bold font-heading text-indigo-400 mt-1">
                   {aiStats?.summary ? (aiStats.summary.totalUsedTokens / 1000000).toFixed(2) + 'M' : '0.00M'}
                 </p>
-                <span className="text-[10px] text-slate-500">Live Consumed Tokens</span>
+                <span className="text-[10px] text-slate-500">Real tracked consumption</span>
               </div>
 
               <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4">
-                <p className="text-[11px] text-slate-400">Remaining Available</p>
+                <p className="text-[11px] text-slate-400">Budget Remaining</p>
                 <p className="text-2xl font-bold font-heading text-emerald-400 mt-1">
-                  {aiStats?.summary ? (aiStats.summary.totalRemainingTokens / 1000000).toFixed(1) + 'M' : '150.0M'}
+                  {aiStats?.summary ? (aiStats.summary.totalRemainingTokens / 1000000).toFixed(1) + 'M' : '0.0M'}
                 </p>
-                <span className="text-[10px] text-slate-500">Active Token Balance</span>
+                <span className="text-[10px] text-slate-500">Budget minus real usage</span>
               </div>
 
               <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4">
@@ -3046,9 +3046,9 @@ export const AdminView: React.FC = () => {
               <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4 col-span-2 sm:col-span-1">
                 <p className="text-[11px] text-slate-400">Active Models</p>
                 <p className="text-2xl font-bold font-heading text-amber-300 mt-1">
-                  {(aiStats?.models || []).filter((m: any) => m.hasCustomKey && m.allocatedTokens > 0).length} / {(aiStats?.models || []).length}
+                  {(aiStats?.models || []).filter((m: any) => m.hasCustomKey && m.status !== 'invalid_key').length} / {(aiStats?.models || []).length}
                 </p>
-                <span className="text-[10px] text-slate-500">Ready in Production</span>
+                <span className="text-[10px] text-slate-500">Keys live & valid</span>
               </div>
             </div>
           </div>
@@ -3118,11 +3118,15 @@ export const AdminView: React.FC = () => {
                   return matchProvider && matchSearch;
                 })
                 .map((m: any) => {
-                  const isActive = m.hasCustomKey && m.allocatedTokens > 0;
-                  const isDepleted = isActive && m.remainingTokens <= 0;
-                  const isLow = isActive && m.remainingTokens > 0 && (m.remainingTokens / m.allocatedTokens) < 0.15;
-                  const usedPct = m.allocatedTokens > 0 ? ((m.usedTokens / m.allocatedTokens) * 100).toFixed(1) : '0.0';
+                  // Active = key present & valid. Budget 0 = unlimited (honest:
+                  // providers don't sell lump-sum quotas; the budget is the admin's own guardrail).
+                  const hasBudget = (m.allocatedTokens || 0) > 0;
+                  const isActive = m.hasCustomKey && m.status !== 'invalid_key';
+                  const isDepleted = isActive && hasBudget && m.remainingTokens <= 0;
+                  const isLow = isActive && hasBudget && m.remainingTokens > 0 && (m.remainingTokens / m.allocatedTokens) < 0.15;
+                  const usedPct = hasBudget ? ((m.usedTokens / m.allocatedTokens) * 100).toFixed(1) : '0.0';
                   const isEditingThisQuota = editingQuotaModelId === m.id;
+                  const lastUsed = m.lastUsedAt ? new Date(m.lastUsedAt).toLocaleString() : null;
 
                   return (
                     <div
@@ -3187,9 +3191,9 @@ export const AdminView: React.FC = () => {
                         {/* Token Bar & Stats */}
                         <div className="space-y-1.5 pt-1">
                           <div className="flex items-center justify-between text-[11px] font-mono">
-                            <span className="text-slate-500">Remaining Pool</span>
+                            <span className="text-slate-500">{hasBudget ? 'Budget Remaining' : 'Usage Budget'}</span>
                             <span className="font-bold text-slate-900">
-                              {isActive ? `${(m.remainingTokens / 1000000).toFixed(2)}M Tokens` : '0.00M Tokens'}
+                              {isActive ? (hasBudget ? `${(m.remainingTokens / 1000000).toFixed(2)}M Tokens` : 'Unlimited') : '—'}
                             </span>
                           </div>
                           <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
@@ -3203,33 +3207,38 @@ export const AdminView: React.FC = () => {
                                   ? 'bg-[#059669]'
                                   : 'bg-slate-300'
                               }`}
-                              style={{ width: isActive ? `${Math.max(0, 100 - parseFloat(usedPct))}%` : '0%' }}
+                              style={{ width: isActive && hasBudget ? `${Math.max(0, 100 - parseFloat(usedPct))}%` : isActive ? '100%' : '0%' }}
                             />
                           </div>
                           <div className="flex justify-between text-[10px] text-slate-400 font-sans">
                             {isActive ? (
                               <>
-                                <span>Used: {(m.usedTokens / 1000000).toFixed(2)}M ({usedPct}%)</span>
-                                <span>Quota: {(m.allocatedTokens / 1000000).toFixed(1)}M</span>
+                                <span>Used: {(m.usedTokens / 1000000).toFixed(2)}M{hasBudget ? ` (${usedPct}%)` : ' (real)'}</span>
+                                <span>{hasBudget ? `Budget: ${(m.allocatedTokens / 1000000).toFixed(1)}M` : 'No cap set'}</span>
                               </>
                             ) : m.status === 'invalid_key' ? (
                               <span className="text-rose-700 font-medium">Authentication failed with provider</span>
                             ) : (
-                              <span className="text-amber-700 font-medium">Add API key below to activate tokens</span>
+                              <span className="text-amber-700 font-medium">Add API key below to activate</span>
                             )}
                           </div>
+                          {lastUsed && (
+                            <div className="text-[10px] text-slate-400 font-sans">
+                              Last used: {lastUsed}
+                            </div>
+                          )}
                         </div>
 
                         {/* Custom Quota Inline Editor */}
                         {isEditingThisQuota && (
                           <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-xs">
-                            <label className="block text-[11px] font-bold text-slate-700">Set Exact Token Quota (in Millions)</label>
+                            <label className="block text-[11px] font-bold text-slate-700">Set Spending Budget (in Millions, 0 = unlimited)</label>
                             <div className="flex items-center gap-1.5">
                               <input
                                 type="number"
                                 step="1"
-                                min="1"
-                                placeholder="e.g. 50"
+                                min="0"
+                                placeholder="e.g. 50 (0 = unlimited)"
                                 value={customQuotaInput}
                                 onChange={(e) => setCustomQuotaInput(e.target.value)}
                                 className="flex-1 px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-mono focus:outline-none focus:border-[#059669]"
@@ -3239,7 +3248,7 @@ export const AdminView: React.FC = () => {
                                 type="button"
                                 onClick={() => {
                                   const num = parseFloat(String(customQuotaInput));
-                                  if (!isNaN(num) && num > 0) {
+                                  if (!isNaN(num) && num >= 0) {
                                     handleUpdateQuota(m.id, Math.round(num * 1000000));
                                   }
                                 }}

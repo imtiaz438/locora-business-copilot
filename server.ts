@@ -20,7 +20,7 @@ import * as dbService from './src/db/service.ts';
 import * as onboardingService from './server/onboardingService.ts';
 import * as businessTruthService from './server/businessTruthService.ts';
 import * as aiManagerService from './server/aiManagerService.ts';
-import { generateCompletion, stripCodeFences, AI_NOT_CONFIGURED_NOTICE, getAiLanes } from './server/aiEngine.ts';
+import { generateCompletion, stripCodeFences, AI_NOT_CONFIGURED_NOTICE, getAiLanes, setPlatformGroqKey } from './server/aiEngine.ts';
 import { sanitizePhoneForStorage, stripFakePhones } from './server/phoneIntegrity.ts';
 import { creditsForPlan, DEMO_GUEST_CREDITS, PLAN_AI_CREDITS, remainingCredits, isUnlimitedTier } from './src/lib/credits.ts';
 import * as growthDetectorService from './server/growthDetectorService.ts';
@@ -993,7 +993,10 @@ interface AiModelTokenQuota {
   id: string;
   name: string;
   provider: string;
+  /** Admin-set spending budget (0 = unlimited). NOT a provider quota — providers
+   *  don't expose lump-sum quotas; this is the admin's own guardrail. */
   allocatedTokens: number;
+  /** Real tracked consumption from API responses. */
   usedTokens: number;
   remainingTokens: number;
   apiKeyEnvVar: string;
@@ -1001,6 +1004,8 @@ interface AiModelTokenQuota {
   status: 'active' | 'warning' | 'exhausted' | 'inactive' | 'invalid_key';
   validationError?: string;
   lastValidated?: string;
+  /** ISO timestamp of last real token consumption. */
+  lastUsedAt?: string;
   badge?: string;
 }
 
@@ -1009,14 +1014,16 @@ function hasEnvKeyForModel(envVar: string): boolean {
 }
 
 const DEFAULT_MODEL_POOLS: Record<string, { name: string; provider: string; envVar: string; defaultQuota: number; badge?: string }> = {
+  // Budgets default to 0 = unlimited. Providers don't sell lump-sum token pools;
+  // the admin sets a budget guardrail per model if desired. Usage is always real.
   // Anthropic Claude Models
-  'claude-3-7-sonnet': { name: 'Claude 3.7 Sonnet', provider: 'Anthropic', envVar: 'ANTHROPIC_API_KEY', defaultQuota: 25000000, badge: 'Latest Flagship' },
-  'claude-3-5-sonnet': { name: 'Claude 3.5 Sonnet', provider: 'Anthropic', envVar: 'ANTHROPIC_API_KEY', defaultQuota: 20000000, badge: 'Proven Quality' },
-  'claude-3-5-haiku': { name: 'Claude 3.5 Haiku', provider: 'Anthropic', envVar: 'ANTHROPIC_API_KEY', defaultQuota: 35000000, badge: 'High-Speed Thinking' },
+  'claude-3-7-sonnet': { name: 'Claude 3.7 Sonnet', provider: 'Anthropic', envVar: 'ANTHROPIC_API_KEY', defaultQuota: 0, badge: 'Latest Flagship' },
+  'claude-3-5-sonnet': { name: 'Claude 3.5 Sonnet', provider: 'Anthropic', envVar: 'ANTHROPIC_API_KEY', defaultQuota: 0, badge: 'Proven Quality' },
+  'claude-3-5-haiku': { name: 'Claude 3.5 Haiku', provider: 'Anthropic', envVar: 'ANTHROPIC_API_KEY', defaultQuota: 0, badge: 'High-Speed Thinking' },
 
   // Groq LPU Models (Ultra Fast & Global Access) — verified Oct 2026
-  'openai/gpt-oss-120b': { name: 'gpt-oss-120b (Groq)', provider: 'Groq', envVar: 'GROQ_API_KEY', defaultQuota: 45000000, badge: 'Flagship LPU' },
-  'openai/gpt-oss-20b': { name: 'gpt-oss-20b (Groq)', provider: 'Groq', envVar: 'GROQ_API_KEY', defaultQuota: 50000000, badge: 'Fastest Free' },
+  'openai/gpt-oss-120b': { name: 'gpt-oss-120b (Groq)', provider: 'Groq', envVar: 'GROQ_API_KEY', defaultQuota: 0, badge: 'Flagship LPU' },
+  'openai/gpt-oss-20b': { name: 'gpt-oss-20b (Groq)', provider: 'Groq', envVar: 'GROQ_API_KEY', defaultQuota: 0, badge: 'Fastest Free' },
 };
 
 const aiModelQuotas = new Map<string, AiModelTokenQuota>();
@@ -1557,8 +1564,8 @@ function updateModelQuotasFromValidation() {
       model.validationError = undefined;
     } else if (valStatus && !valStatus.valid) {
       model.hasCustomKey = false;
-      model.allocatedTokens = 0;
-      model.remainingTokens = 0;
+      // Keep the admin's budget intact — only the key status changes.
+      model.remainingTokens = model.allocatedTokens > 0 ? Math.max(0, model.allocatedTokens - model.usedTokens) : 0;
       model.status = 'invalid_key';
       model.validationError = valStatus.error || 'API Key verification failed with provider.';
       model.lastValidated = valStatus.testedAt;
@@ -1567,8 +1574,14 @@ function updateModelQuotasFromValidation() {
       if (model.allocatedTokens === 0) {
         model.allocatedTokens = meta.defaultQuota;
       }
-      model.remainingTokens = Math.max(0, model.allocatedTokens - model.usedTokens);
-      model.status = model.remainingTokens <= 0 ? 'exhausted' : model.remainingTokens < model.allocatedTokens * 0.1 ? 'warning' : 'active';
+      // Budget 0 = unlimited → always active. Otherwise real usage vs budget.
+      if (model.allocatedTokens <= 0) {
+        model.remainingTokens = 0;
+        model.status = 'active';
+      } else {
+        model.remainingTokens = Math.max(0, model.allocatedTokens - model.usedTokens);
+        model.status = model.remainingTokens <= 0 ? 'exhausted' : model.remainingTokens < model.allocatedTokens * 0.1 ? 'warning' : 'active';
+      }
       model.validationError = undefined;
       model.lastValidated = valStatus.testedAt;
     } else {
@@ -1577,7 +1590,7 @@ function updateModelQuotasFromValidation() {
       if (model.allocatedTokens === 0) {
         model.allocatedTokens = meta.defaultQuota;
       }
-      model.remainingTokens = Math.max(0, model.allocatedTokens - model.usedTokens);
+      model.remainingTokens = model.allocatedTokens > 0 ? Math.max(0, model.allocatedTokens - model.usedTokens) : 0;
       model.status = 'active';
     }
 
@@ -1705,10 +1718,13 @@ function syncProviderKeysToEnv(keys: any) {
   if (keys.groq !== undefined) {
     if (keys.groq && typeof keys.groq === 'string' && keys.groq.trim()) {
       process.env.GROQ_API_KEY = keys.groq.trim();
+      setPlatformGroqKey(keys.groq.trim());
     } else if (SYSTEM_ENV_BACKUPS.GROQ_API_KEY) {
       process.env.GROQ_API_KEY = SYSTEM_ENV_BACKUPS.GROQ_API_KEY;
+      setPlatformGroqKey(SYSTEM_ENV_BACKUPS.GROQ_API_KEY);
     } else {
       delete process.env.GROQ_API_KEY;
+      setPlatformGroqKey('');
     }
   }
   if (keys.google_maps !== undefined || keys.googleMaps !== undefined) {
@@ -1848,6 +1864,8 @@ function loadWorkspaceStateFromDisk() {
       if (storedAppSettings?.providerKeys) {
         syncProviderKeysToEnv(storedAppSettings.providerKeys);
       }
+      // Central platform key: push live into the AI engine registry.
+      setPlatformGroqKey(storedAppSettings?.providerKeys?.groq || '');
     } catch (e: any) {
       console.error('[Database] Failed to load settings from disk:', e.message);
     }
@@ -1978,7 +1996,9 @@ async function saveUserToSql(user: UserRecord) {
       user.seoLookupsPerMonth,
       user.seoLookupsUsed,
       user.aiVisibilityRunsPerMonth,
-      user.aiVisibilityRunsUsed
+      user.aiVisibilityRunsUsed,
+      user.monthlyAiCredits,
+      user.aiCreditsUsed
     ).catch((e) => {
       console.warn('[Cloud SQL] User sync warning:', e?.message || e);
     });
@@ -2202,8 +2222,8 @@ async function findUserByEmail(email: string): Promise<UserRecord | null> {
         planTier: (foundSql.planTier as any) || 'free',
         subscriptionStatus: 'active',
         billingCycle: 'monthly',
-        monthlyAiCredits: creditsForPlan(foundSql.planTier || 'free', false), // canonical: src/lib/credits.ts
-        aiCreditsUsed: 0,
+        monthlyAiCredits: (foundSql as any).monthlyAiCredits ?? creditsForPlan(foundSql.planTier || 'free', false), // canonical: src/lib/credits.ts
+        aiCreditsUsed: (foundSql as any).aiCreditsUsed ?? 0,
         memberSince: foundSql.createdAt ? new Date(foundSql.createdAt).toISOString() : new Date().toISOString(),
         nextBillingDate: new Date(Date.now() + 30 * 86400000).toISOString(),
       };
@@ -2242,6 +2262,8 @@ async function syncSqlDatabase() {
         syncProviderKeysToEnv(storedAppSettings.providerKeys);
       }
       saveSettingsToDisk(storedAppSettings);
+      // Keep the central AI engine registry in sync after the DB merge.
+      setPlatformGroqKey(storedAppSettings?.providerKeys?.groq || '');
       console.log('🔑 [Database Engine] Loaded and synchronized API provider keys from PostgreSQL.');
     }
 
@@ -15518,13 +15540,21 @@ function recordRealModelTokenUsage(modelId: string, tokensConsumed: number) {
 
   if (target) {
     target.usedTokens += tokensConsumed;
-    target.remainingTokens = Math.max(0, target.allocatedTokens - target.usedTokens);
+    target.lastUsedAt = new Date().toISOString();
+    // Budget semantics: 0 = unlimited (always active). Otherwise warn/exhaust
+    // against the admin-set budget using REAL tracked usage.
     if (target.allocatedTokens > 0) {
+      target.remainingTokens = Math.max(0, target.allocatedTokens - target.usedTokens);
       if (target.remainingTokens <= 0) {
         target.status = 'exhausted';
       } else if (target.remainingTokens < target.allocatedTokens * 0.1) {
         target.status = 'warning';
       } else if (target.status !== 'invalid_key') {
+        target.status = 'active';
+      }
+    } else {
+      target.remainingTokens = 0;
+      if (target.status !== 'invalid_key') {
         target.status = 'active';
       }
     }

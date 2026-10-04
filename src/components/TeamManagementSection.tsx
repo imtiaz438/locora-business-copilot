@@ -7,23 +7,13 @@ export const TeamManagementSection: React.FC = () => {
 
   const [teamMembers, setTeamMembers] = useState([
     { id: 'tm_1', name: user.name || 'Business Owner', email: user.email, role: 'Owner', status: 'Active' },
-    { id: 'tm_2', name: 'Alex Rivera', email: 'alex@company.com', role: 'SEO Manager', status: 'Active' },
   ]);
 
-  const [copiedLink, setCopiedLink] = useState(false);
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberRole, setNewMemberRole] = useState('Member');
 
   const maxSeats = user.planTier === 'agency' ? 5 : 1;
-  const inviteUrl = `${window.location.origin}/join/${user.companyName ? encodeURIComponent(user.companyName) : 'workspace'}`;
-
-  const handleCopyInviteLink = () => {
-    navigator.clipboard.writeText(inviteUrl);
-    setCopiedLink(true);
-    logActivity('team', 'Copied Team Invite Link', 'Generated team invitation link');
-    setTimeout(() => setCopiedLink(false), 2000);
-  };
 
   const handleAddMember = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,26 +67,7 @@ export const TeamManagementSection: React.FC = () => {
           </div>
         </div>
 
-        {/* Copy Invite Link Box */}
-        <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-          <label className="text-xs font-bold text-slate-700 block">Unique Shareable Team Invite Link</label>
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              readOnly
-              value={inviteUrl}
-              className="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-mono text-slate-700 focus:outline-none"
-            />
-            <button
-              onClick={handleCopyInviteLink}
-              className="px-4 py-2 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
-            >
-              {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copiedLink ? 'Link Copied!' : 'Copy Invite Link'}</span>
-            </button>
-          </div>
-          <p className="text-[11px] text-slate-500">Teammates opening this link join your workspace instantly without email setup delay.</p>
-        </div>
+        {/* Team invites are sent by email from the form below. */}
 
         {/* Add Member Form (if seats available) */}
         {teamMembers.length < maxSeats ? (

@@ -14,6 +14,8 @@ export const users = pgTable('users', {
   aiVisibilityRunsPerMonth: integer('ai_visibility_runs_per_month').default(1),
   aiVisibilityRunsUsed: integer('ai_visibility_runs_used').default(0),
   aiVisibilityResetAt: timestamp('ai_visibility_reset_at'),
+  monthlyAiCredits: integer('monthly_ai_credits').default(25),
+  aiCreditsUsed: integer('ai_credits_used').default(0),
   createdAt: timestamp('created_at').defaultNow(),
 });
 

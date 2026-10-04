@@ -12,7 +12,9 @@ export async function getOrCreateUser(
   seoLookupsPerMonth?: number,
   seoLookupsUsed?: number,
   aiVisibilityRunsPerMonth?: number,
-  aiVisibilityRunsUsed?: number
+  aiVisibilityRunsUsed?: number,
+  monthlyAiCredits?: number,
+  aiCreditsUsed?: number
 ) {
   try {
     const result = await db
@@ -28,6 +30,8 @@ export async function getOrCreateUser(
         seoLookupsUsed: seoLookupsUsed ?? 0,
         aiVisibilityRunsPerMonth: aiVisibilityRunsPerMonth ?? 1,
         aiVisibilityRunsUsed: aiVisibilityRunsUsed ?? 0,
+        monthlyAiCredits: monthlyAiCredits ?? 25,
+        aiCreditsUsed: aiCreditsUsed ?? 0,
       })
       .onConflictDoUpdate({
         target: users.uid,
@@ -37,6 +41,8 @@ export async function getOrCreateUser(
           companyName: companyName || 'My Business',
           role: role || 'customer',
           planTier,
+          monthlyAiCredits: monthlyAiCredits ?? 25,
+          aiCreditsUsed: aiCreditsUsed ?? 0,
         },
       })
       .returning();

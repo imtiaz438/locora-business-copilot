@@ -55,6 +55,10 @@ import {
   Calendar,
   Phone,
   Mail,
+  SearchCheck,
+  Wrench,
+  Rocket,
+  Route,
 } from 'lucide-react';
 
 export const HomeView: React.FC = () => {
@@ -1692,6 +1696,82 @@ export const HomeView: React.FC = () => {
             <span>Explore All Products</span>
             <ArrowRight className="w-4 h-4" />
           </button>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS — the complete Locora flow */}
+      <section id="how-it-works" className="max-w-6xl mx-auto px-6 space-y-10">
+        <div className="text-center space-y-3 max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider">
+            <Route className="w-3.5 h-3.5" />
+            <span>How It Works</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-slate-900 tracking-tight">
+            From Checkup to Growth in Five Steps
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600 font-sans leading-relaxed">
+            No guesswork, no fake numbers. Every step is powered by your real business data.
+          </p>
+        </div>
+
+        <div className="relative">
+          <div className="hidden md:block absolute left-0 right-0 top-8 h-0.5 bg-gradient-to-r from-emerald-100 via-emerald-300 to-emerald-100" />
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            {[
+              {
+                step: '1',
+                icon: SearchCheck,
+                title: 'Run Your Free Checkup',
+                desc: 'Enter your business name and website. We crawl your site, check your Google presence, and scan how AI search engines see you.',
+              },
+              {
+                step: '2',
+                icon: Brain,
+                title: 'Get Your Business Brain',
+                desc: 'Our AI builds a living profile of your business — services, locations, strengths, gaps — grounded in verified real data.',
+              },
+              {
+                step: '3',
+                icon: Wrench,
+                title: 'Fix What Matters',
+                desc: 'The Fix-It engine turns findings into prioritized actions. Generate content drafts, reply to reviews, and close the gaps.',
+              },
+              {
+                step: '4',
+                icon: TrendingUp,
+                title: 'Track Your Growth',
+                desc: 'Live rank tracking, review monitoring, and weekly health scans show exactly what is improving — with honest data only.',
+              },
+              {
+                step: '5',
+                icon: Rocket,
+                title: 'Scale on Autopilot',
+                desc: 'Pro and Agency unlock more AI credits, white-label client reports, and multi-business management for teams and agencies.',
+              },
+            ].map((s) => (
+              <div key={s.step} className="relative bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-3 hover:shadow-md hover:border-emerald-200 transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#059669]">
+                    <s.icon className="w-6 h-6" />
+                  </div>
+                  <span className="text-4xl font-extrabold font-heading text-emerald-100">{s.step}</span>
+                </div>
+                <h3 className="text-sm font-bold font-heading text-slate-900">{s.title}</h3>
+                <p className="text-xs text-slate-600 font-sans leading-relaxed">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="text-center">
+          <button
+            onClick={() => onNavigate && onNavigate('checkup')}
+            className="px-8 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-2xl shadow-lg transition-all inline-flex items-center gap-2 cursor-pointer font-heading uppercase tracking-wider"
+          >
+            <span>Start Your Free Checkup</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+          <p className="text-[11px] text-slate-500 font-sans mt-3">Free forever plan · No credit card required · Real data from minute one</p>
         </div>
       </section>
 

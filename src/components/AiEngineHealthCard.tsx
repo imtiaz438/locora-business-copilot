@@ -104,7 +104,7 @@ export const AiEngineHealthCard: React.FC = () => {
                       ? (h.error || 'Provider is not responding right now.')
                       : lane.lane === 'paid'
                         ? 'Optional. Add a funded Anthropic key to enable Claude.'
-                        : 'Add a free Groq API key to enable AI features.'}
+                        : 'AI is temporarily unavailable — please try again in a moment.'}
                   </p>
                 )}
                 {ok && h.latencyMs !== null && (

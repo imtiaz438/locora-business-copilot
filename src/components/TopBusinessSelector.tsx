@@ -364,10 +364,28 @@ export const TopBusinessSelector: React.FC = () => {
       setConfirmedCategory(discovered.category || newBizCategory.trim() || 'Local Business');
       setConfirmedWebsite(discovered.website || newBizWebsite.trim());
       setConfirmedPhone(discovered.phone || newBizPhone.trim());
-      setConfirmedAddress(discovered.address || newBizAddress.trim());
-      setConfirmedCity(discovered.city || newBizCity.trim());
-      setConfirmedState(discovered.state || newBizState.trim());
-      setConfirmedZip(discovered.postalCode || newBizZip.trim());
+      // Location sanity: if discovery returns a city/state that contradicts what the
+      // user typed, prefer the user's input and flag it — never silently corrupt.
+      const userCity = newBizCity.trim().toLowerCase();
+      const userState = newBizState.trim().toLowerCase();
+      const discCity = (discovered.city || '').toLowerCase();
+      const discState = (discovered.state || '').toLowerCase();
+      const cityMismatch = userCity && discCity && userCity !== discCity;
+      const stateMismatch = userState && discState && userState !== discState && !discState.startsWith(userState) && !userState.startsWith(discState);
+      if (cityMismatch || stateMismatch) {
+        setConfirmedAddress(newBizAddress.trim());
+        setConfirmedCity(newBizCity.trim());
+        setConfirmedState(newBizState.trim());
+        setConfirmedZip(newBizZip.trim());
+        setDiscoveryError(
+          `We found a different location (${discovered.city || ''} ${discovered.state || ''}) than what you entered. We've kept your input — please verify the address below.`
+        );
+      } else {
+        setConfirmedAddress(discovered.address || newBizAddress.trim());
+        setConfirmedCity(discovered.city || newBizCity.trim());
+        setConfirmedState(discovered.state || newBizState.trim());
+        setConfirmedZip(discovered.postalCode || newBizZip.trim());
+      }
       setConfirmedDescription(discovered.description || '');
       setConfirmedServices(Array.isArray(discovered.services) && discovered.services.length > 0 ? discovered.services : []);
       setDiscoveredSources(Array.isArray(discovered.sourcesList) ? discovered.sourcesList : ['User Input']);

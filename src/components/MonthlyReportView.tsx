@@ -65,6 +65,7 @@ export const MonthlyReportView: React.FC = () => {
   const [selectedReportType, setSelectedReportType] = useState<ReportType>('business_health');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('Last 30 Days');
   const [activeSnapshot, setActiveSnapshot] = useState<ReportSnapshot | null>(null);
+  const [pdfFeedback, setPdfFeedback] = useState<string | null>(null);
   const [historicalSnapshots, setHistoricalSnapshots] = useState<ReportSnapshot[]>([]);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
@@ -262,8 +263,12 @@ export const MonthlyReportView: React.FC = () => {
     try {
       await exportReportToPdf(activeSnapshot);
       logActivity(`Exported PDF for ${activeSnapshot.reportTitle}`, 'analytics');
-    } catch (e) {
+      setPdfFeedback('PDF downloaded');
+    } catch (e: any) {
       console.error('Failed to export PDF:', e);
+      setPdfFeedback(`PDF export failed: ${e?.message || 'please try again'}`);
+    } finally {
+      setTimeout(() => setPdfFeedback(null), 4000);
     }
   };
 
@@ -335,6 +340,11 @@ export const MonthlyReportView: React.FC = () => {
             <Download className="w-3.5 h-3.5 text-slate-500" />
             <span>Export PDF</span>
           </button>
+          {pdfFeedback && (
+            <span className="text-xs font-medium text-slate-600 bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1.5">
+              {pdfFeedback}
+            </span>
+          )}
 
           {/* Share */}
           <button
