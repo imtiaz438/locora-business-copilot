@@ -305,6 +305,12 @@ export async function updateCustomer(id: string, data: any, userEmail?: string, 
       .where(eq(schema.customersTable.id, id))
       .returning();
 
+    if (result.length === 0) {
+      // No existing row: the client pre-generates ids for new records, so a "create"
+      // arrives here as an update. Insert it instead of silently dropping the record.
+      return createCustomer({ ...data, id }, userEmail, businessId);
+    }
+
     if (cleanBizId && cleanData.status !== undefined) {
       await logCustomerActivity({
         businessId: cleanBizId,
@@ -815,6 +821,12 @@ export async function updateProject(id: string, data: any, userEmail?: string) {
       .where(eq(schema.projectsTable.id, id))
       .returning();
 
+    if (result.length === 0) {
+      // No existing row: the client pre-generates ids for new records, so a "create"
+      // arrives here as an update. Insert it instead of silently dropping the record.
+      return createProject({ ...data, id }, userEmail);
+    }
+
     await logActivity('project', `Project Updated: ${data.name || data.title || id}`, `Updated project milestone/status`, { projectId: id }, undefined, cleanEmail);
     return result[0];
   } catch (err) {
@@ -1048,6 +1060,12 @@ export async function updateInvoice(id: string, data: any, userEmail?: string) {
       .where(eq(schema.invoicesTable.id, id))
       .returning();
 
+    if (result.length === 0) {
+      // No existing row: the client pre-generates ids for new records, so a "create"
+      // arrives here as an update. Insert it instead of silently dropping the record.
+      return createInvoice({ ...data, id }, userEmail);
+    }
+
     return result[0];
   } catch (err) {
     console.error('Error updating invoice:', err);
@@ -1154,6 +1172,12 @@ export async function updateProposal(id: string, data: any, userEmail?: string) 
       .set(updatePayload)
       .where(eq(schema.proposalsTable.id, id))
       .returning();
+
+    if (result.length === 0) {
+      // No existing row: the client pre-generates ids for new records, so a "create"
+      // arrives here as an update. Insert it instead of silently dropping the record.
+      return createProposal({ ...data, id }, userEmail);
+    }
 
     return result[0];
   } catch (err) {
