@@ -3022,9 +3022,9 @@ export const AdminView: React.FC = () => {
               <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4">
                 <p className="text-[11px] text-slate-400">Total Budget Set</p>
                 <p className="text-2xl font-bold font-heading text-white mt-1">
-                  {aiStats?.summary ? (aiStats.summary.totalAllocatedTokens / 1000000).toFixed(1) + 'M' : '0.0M'}
+                  {aiStats?.summary ? (aiStats.summary.totalAllocatedTokens > 0 ? (aiStats.summary.totalAllocatedTokens / 1000000).toFixed(1) + 'M' : 'Unlimited') : 'Unlimited'}
                 </p>
-                <span className="text-[10px] text-slate-500">Admin budget pool (0 = unlimited)</span>
+                <span className="text-[10px] text-slate-500">Admin budget pool — set per-model below</span>
               </div>
 
               <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4">
@@ -3038,9 +3038,9 @@ export const AdminView: React.FC = () => {
               <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4">
                 <p className="text-[11px] text-slate-400">Budget Remaining</p>
                 <p className="text-2xl font-bold font-heading text-emerald-400 mt-1">
-                  {aiStats?.summary ? (aiStats.summary.totalRemainingTokens / 1000000).toFixed(1) + 'M' : '0.0M'}
+                  {aiStats?.summary ? (aiStats.summary.totalAllocatedTokens > 0 ? (aiStats.summary.totalRemainingTokens / 1000000).toFixed(1) + 'M' : '∞') : '∞'}
                 </p>
-                <span className="text-[10px] text-slate-500">Budget minus real usage</span>
+                <span className="text-[10px] text-slate-500">{aiStats?.summary && aiStats.summary.totalAllocatedTokens > 0 ? 'Budget minus real usage' : 'No cap set — unlimited'}</span>
               </div>
 
               <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4">
