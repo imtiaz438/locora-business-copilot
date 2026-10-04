@@ -16,6 +16,15 @@ import type { BusinessTruth } from '../types.ts';
 const truthCache = new Map<string, { data: BusinessTruth; timestamp: number }>();
 const CACHE_TTL_MS = 60 * 1000; // 1 minute fresh cache
 
+/**
+ * Clears all cached business-truth data. Must be called on sign-out and whenever the
+ * signed-in account changes, so a stale entry can never surface the previous
+ * account's business data.
+ */
+export function clearBusinessTruthCache(): void {
+  truthCache.clear();
+}
+
 export async function getBusinessTruth(businessId: string, forceFresh = false): Promise<BusinessTruth | null> {
   const cleanId = (businessId || '').trim();
   if (!cleanId) {

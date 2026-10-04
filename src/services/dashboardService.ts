@@ -19,6 +19,16 @@ class DashboardService {
   private readonly CACHE_TTL_MS = 60 * 1000; // 1 minute local freshness window
 
   /**
+   * Clears all cached dashboard data. Must be called on sign-out and whenever the
+   * signed-in account changes: the cache is keyed by business id (or 'active'),
+   * which is meaningless across accounts — a stale entry would show the previous
+   * account's business data to the new account.
+   */
+  clearCache(): void {
+    this.cache.clear();
+  }
+
+  /**
    * Retrieves full normalized dashboard data for the authenticated business
    */
   async getDashboard(businessId?: string, forceRefresh = false): Promise<NormalizedDashboardData> {

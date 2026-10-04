@@ -30,7 +30,7 @@ import {
   AIAction,
   BusinessTruth,
 } from '../types';
-import { getBusinessTruth, invalidateBusinessTruth } from '../services/businessTruthService';
+import { getBusinessTruth, invalidateBusinessTruth, clearBusinessTruthCache } from '../services/businessTruthService';
 import { INITIAL_BUSINESSES, INITIAL_PRIORITY_ACTIONS } from '../data/initialBusinesses';
 import { isAppSubdomain } from '../utils/domain';
 import { resolveRouteFromPath, resolvePathFromTab, PATH_TO_TAB, TAB_TO_PATH } from '../utils/routeUtils';
@@ -68,6 +68,14 @@ function purgeAccountScopedCaches(): void {
       localStorage.removeItem(k);
     } catch {}
   });
+  // In-memory service caches are keyed by business id (or 'active') with no account
+  // context — they must not survive an account switch either.
+  try {
+    dashboardService.clearCache();
+  } catch {}
+  try {
+    clearBusinessTruthCache();
+  } catch {}
 }
 
 /**
@@ -1174,11 +1182,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const logout = () => {
+    // Full purge: localStorage account caches + in-memory service caches, so no
+    // trace of this account's business can leak into the next session in this tab.
+    purgeAccountScopedCaches();
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('locora_active_session');
       sessionStorage.removeItem('locora_last_active');
       localStorage.removeItem('locora_auth_email');
-      localStorage.removeItem('locora_active_business_id');
     }
     fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
     setUser(DEFAULT_USER);
