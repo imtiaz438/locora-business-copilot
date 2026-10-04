@@ -63,6 +63,14 @@ import { DataFreshnessPanel } from './DataFreshnessPanel';
 import { DirectoryAdminPanel } from './admin/DirectoryAdminPanel';
 import { AdminEmailActivityPanel } from './admin/AdminEmailActivityPanel';
 
+/** Smart token formatting: exact counts for small values, M for large. */
+function formatTokens(n: number): string {
+  const v = Math.round(n || 0);
+  if (v < 10000) return v.toLocaleString();
+  if (v < 1000000) return (v / 1000).toFixed(1) + 'K';
+  return (v / 1000000).toFixed(2) + 'M';
+}
+
 export const AdminView: React.FC = () => {
   const {
     user,
@@ -3022,7 +3030,7 @@ export const AdminView: React.FC = () => {
               <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4">
                 <p className="text-[11px] text-slate-400">Total Utilized Tokens</p>
                 <p className="text-2xl font-bold font-heading text-indigo-400 mt-1">
-                  {aiStats?.summary ? (aiStats.summary.totalUsedTokens / 1000000).toFixed(2) + 'M' : '0.00M'}
+                  {aiStats?.summary ? formatTokens(aiStats.summary.totalUsedTokens) : '0'}
                 </p>
                 <span className="text-[10px] text-slate-500">Real tracked consumption</span>
               </div>
@@ -3213,7 +3221,7 @@ export const AdminView: React.FC = () => {
                           <div className="flex justify-between text-[10px] text-slate-400 font-sans">
                             {isActive ? (
                               <>
-                                <span>Used: {(m.usedTokens / 1000000).toFixed(2)}M{hasBudget ? ` (${usedPct}%)` : ' (real)'}</span>
+                                <span>Used: {formatTokens(m.usedTokens)}{hasBudget ? ` (${usedPct}%)` : ' (real)'}</span>
                                 <span>{hasBudget ? `Budget: ${(m.allocatedTokens / 1000000).toFixed(1)}M` : 'No cap set'}</span>
                               </>
                             ) : m.status === 'invalid_key' ? (
