@@ -39,6 +39,47 @@ import type { NormalizedDashboardData } from '../types/production';
 import { trackBusinessAdded, trackSubscriptionStarted, initUtmAttribution } from '../lib/analytics';
 import { creditsForPlan, remainingCredits, DEMO_GUEST_CREDITS } from '../lib/credits';
 
+/**
+ * Account-scoped localStorage caches. When the signed-in account changes without a
+ * clean logout (shared device, session replaced, cookie cleared by the browser), these
+ * must be purged — otherwise the new account can briefly display or query the previous
+ * account's business (stale `locora_active_business_id` caused wrong-business display
+ * and "Forbidden" API errors in QA).
+ */
+const ACCOUNT_SCOPED_CACHE_KEYS = [
+  'locora_active_business_id',
+  'locora_business_profile',
+  'locora_business_profile_logo',
+  'locora_site_logo',
+  'locora_site_logo_config',
+  'locora_priority_actions',
+  'locora_content_records',
+  'locora_notifications',
+  'locora_canonical',
+  'locora_ai_actions',
+  'locora_onboarding_completed',
+  'locora_onboarding_done',
+];
+
+function purgeAccountScopedCaches(): void {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  ACCOUNT_SCOPED_CACHE_KEYS.forEach((k) => {
+    try {
+      localStorage.removeItem(k);
+    } catch {}
+  });
+}
+
+/**
+ * Returns true when `nextEmail` belongs to a different account than the one whose
+ * caches are currently stored. A null/empty previous email means first run — no purge.
+ */
+function isAccountSwitch(previousEmail: string | null, nextEmail: string): boolean {
+  const prev = (previousEmail || '').toLowerCase().trim();
+  const next = (nextEmail || '').toLowerCase().trim();
+  return !!prev && !!next && prev !== next;
+}
+
 interface AppContextType {
   // Production Data Architecture
   productionDashboard: NormalizedDashboardData | null;
@@ -420,6 +461,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (data && data.user && data.user.email) {
           const normalizedEmailToFetch = data.user.email.toLowerCase().trim();
           if (typeof window !== 'undefined') {
+            // Account switch without a clean logout (shared device / replaced session):
+            // drop the previous account's cached business selection so we never
+            // display or query another account's business.
+            if (isAccountSwitch(storedAuthEmail, normalizedEmailToFetch)) {
+              purgeAccountScopedCaches();
+              setActiveBusinessId('');
+            }
             localStorage.setItem('locora_auth_email', normalizedEmailToFetch);
             sessionStorage.setItem('locora_active_session', 'true');
             sessionStorage.setItem('locora_last_active', String(Date.now()));
@@ -766,6 +814,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .catch(() => {});
 
     if (typeof window !== 'undefined') {
+      const previousAuthEmail = localStorage.getItem('locora_auth_email');
+      // Signing in as a different account: drop the previous account's cached
+      // business selection before hydrating, so stale ids never leak across accounts.
+      if (isAccountSwitch(previousAuthEmail, userEmail)) {
+        purgeAccountScopedCaches();
+        setActiveBusinessId('');
+      }
       localStorage.setItem('locora_auth_email', userEmail);
     }
 
