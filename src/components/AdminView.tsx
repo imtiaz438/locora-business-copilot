@@ -3709,6 +3709,11 @@ export const AdminView: React.FC = () => {
                       placeholder="SerpApi key from serpapi.com"
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
+                    {savedKeyHints.serpapi && (
+                      <p className={`text-[10px] font-mono font-bold ${savedKeyHints.serpapi.configured ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {savedKeyHints.serpapi.configured ? `Saved: ${savedKeyHints.serpapi.hint}` : 'No key saved — paste to add'}
+                      </p>
+                    )}
                     <p className="text-[10px] text-slate-500">Powers live Google Maps rank tracking and SERP lookups. Primary provider — checked first.</p>
                   </div>
 
@@ -3732,6 +3737,11 @@ export const AdminView: React.FC = () => {
                       placeholder="Serper key from serper.dev"
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
+                    {savedKeyHints.serper && (
+                      <p className={`text-[10px] font-mono font-bold ${savedKeyHints.serper.configured ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {savedKeyHints.serper.configured ? `Saved: ${savedKeyHints.serper.hint}` : 'No key saved — paste to add'}
+                      </p>
+                    )}
                     <p className="text-[10px] text-slate-500">Backup provider for live SERP lookups when SerpApi is not configured.</p>
                   </div>
                 </div>
