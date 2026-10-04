@@ -15529,7 +15529,7 @@ app.post('/api/admin/delete-user', async (req, res) => {
 
 
 function recordRealModelTokenUsage(modelId: string, tokensConsumed: number) {
-  console.log(`[token-tracker] recordRealModelTokenUsage: model=${modelId} tokens=${tokensConsumed} mapSize=${aiModelQuotas.size}`);
+  console.log(`[token-tracker] recordRealModelTokenUsage: model=${modelId} tokens=${tokensConsumed} mapSize=${aiModelQuotas.size} keys=[${Array.from(aiModelQuotas.keys()).join(',')}]`);
   let target = aiModelQuotas.get(modelId);
   if (!target) {
     for (const [id, model] of aiModelQuotas.entries()) {
@@ -15562,6 +15562,9 @@ function recordRealModelTokenUsage(modelId: string, tokensConsumed: number) {
     }
     aiModelQuotas.set(target.id, target);
     saveModelQuotasToDisk();
+    console.log(`[token-tracker] recorded: ${target.id} usedTokens now=${target.usedTokens}`);
+  } else {
+    console.warn(`[token-tracker] NO MATCH for model ${modelId} — usage NOT recorded`);
   }
 }
 
