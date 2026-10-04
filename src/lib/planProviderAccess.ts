@@ -330,7 +330,7 @@ export function evaluateProviderAccess(params: {
       requiredPlan: def.requiredPlan,
       requiredPlanLabel: def.requiredPlanLabel,
       currentPlan,
-      reason: `${def.providerName} credentials are not configured in your workspace. Connect your ${def.configKeyLabel || 'API credentials'} in Settings to stream authentic live metrics.`,
+      reason: `${def.providerName} feed has not been connected yet. It is activated automatically with your plan — no setup needed on your end.`,
       canUpgrade: false,
       canConfigure: true,
       configKeyLabel: def.configKeyLabel,
