@@ -1765,7 +1765,7 @@ export const HomeView: React.FC = () => {
 
         <div className="text-center">
           <button
-            onClick={() => onNavigate && onNavigate('checkup')}
+            onClick={() => { setActiveTab('checkup'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
             className="px-8 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-2xl shadow-lg transition-all inline-flex items-center gap-2 cursor-pointer font-heading uppercase tracking-wider"
           >
             <span>Start Your Free Checkup</span>
