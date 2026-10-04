@@ -97,14 +97,6 @@ export const ProviderAccessGate: React.FC<ProviderAccessGateProps> = ({
     setCheckoutModalPlan(target as any);
   };
 
-  const handleSettingsClick = () => {
-    if (onConfigureClick) {
-      onConfigureClick();
-    } else {
-      setActiveTab('settings');
-    }
-  };
-
   // 1. COMPACT INLINE GATING
   if (compact) {
     if (evaluation.state === 'upgrade_required') {
@@ -132,6 +124,11 @@ export const ProviderAccessGate: React.FC<ProviderAccessGateProps> = ({
     }
 
     if (evaluation.state === 'not_configured') {
+      const isAdminUser =
+        user?.role === 'admin' ||
+        user?.role === 'owner' ||
+        user?.email === 'imtiazbaloch3322@gmail.com' ||
+        user?.email === 'support@locoraai.com';
       return (
         <div className={`p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200 text-blue-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${className}`}>
           <div className="flex items-center gap-2.5 min-w-0">
@@ -141,16 +138,21 @@ export const ProviderAccessGate: React.FC<ProviderAccessGateProps> = ({
             <div className="min-w-0">
               <span className="font-bold">{def?.providerName || 'Provider'}:</span>{' '}
               <span className="text-blue-800">{evaluation.reason}</span>
+              {!isAdminUser && (
+                <span className="text-blue-700"> Connected automatically for your plan — no setup needed.</span>
+              )}
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleSettingsClick}
-            className="px-3 py-1.5 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-xl text-xs shrink-0 inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
-          >
-            <Settings className="w-3.5 h-3.5" />
-            <span>Connect Provider</span>
-          </button>
+          {isAdminUser && (
+            <button
+              type="button"
+              onClick={() => (onConfigureClick ? onConfigureClick() : setActiveTab('admin'))}
+              className="px-3 py-1.5 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-xl text-xs shrink-0 inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+            >
+              <Settings className="w-3.5 h-3.5" />
+              <span>Connect in Admin Panel</span>
+            </button>
+          )}
         </div>
       );
     }
@@ -227,7 +229,16 @@ export const ProviderAccessGate: React.FC<ProviderAccessGateProps> = ({
   }
 
   // State: NOT CONFIGURED (User has plan, but provider credentials missing)
+  // Provider keys are platform-managed (Admin panel) — regular users have no
+  // key settings, so never send them to a dead-end "Settings" button. Admins
+  // get routed to the Admin Control Panel; everyone else gets an honest
+  // no-action-needed message.
   if (evaluation.state === 'not_configured') {
+    const isAdminUser =
+      user?.role === 'admin' ||
+      user?.role === 'owner' ||
+      user?.email === 'imtiazbaloch3322@gmail.com' ||
+      user?.email === 'support@locoraai.com';
     return (
       <div
         className={`rounded-3xl border border-blue-200/90 bg-gradient-to-b from-blue-50/40 via-white to-slate-50/30 p-8 sm:p-12 text-center space-y-6 shadow-xs ${className}`}
@@ -248,19 +259,26 @@ export const ProviderAccessGate: React.FC<ProviderAccessGateProps> = ({
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-sans">
             {description || evaluation.reason}
           </p>
+          {!isAdminUser && (
+            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-sans">
+              This feed is connected automatically for your plan — no setup needed from you.
+            </p>
+          )}
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-          <button
-            type="button"
-            onClick={handleSettingsClick}
-            className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Settings className="w-4 h-4" />
-            <span>Connect {def?.providerName || 'Provider'} in Settings</span>
-            <ArrowRight className="w-4 h-4 text-blue-200" />
-          </button>
-        </div>
+        {isAdminUser && (
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => (onConfigureClick ? onConfigureClick() : setActiveTab('admin'))}
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Settings className="w-4 h-4" />
+              <span>Connect {def?.providerName || 'Provider'} in Admin Panel</span>
+              <ArrowRight className="w-4 h-4 text-blue-200" />
+            </button>
+          </div>
+        )}
 
         <div className="pt-4 border-t border-blue-100/80 flex items-center justify-center gap-2 text-[11px] text-slate-500 font-medium">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
