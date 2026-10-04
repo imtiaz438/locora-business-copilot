@@ -402,6 +402,19 @@ export const AdminView: React.FC = () => {
   // only masked hints (•••• + last 4); typing a key + Save replaces the stored one.
   const [aiStats, setAiStats] = useState<any>(null);
   const [savedKeyHints, setSavedKeyHints] = useState<Record<string, { configured: boolean; hint: string }>>({});
+  const [keyValidationStatus, setKeyValidationStatus] = useState<Record<string, { valid: boolean; error?: string; testedAt?: string }>>({});
+
+  // Renders the live-validation result for a provider key (from "Test All Live Keys").
+  // Only shown after a validation run — null until testedAt exists.
+  const renderKeyValidation = (provider: string) => {
+    const v = keyValidationStatus[provider];
+    if (!v || !v.testedAt) return null;
+    return (
+      <p className={`text-[10px] font-mono font-bold ${v.valid ? 'text-emerald-700' : 'text-red-600'}`}>
+        {v.valid ? '✓ Live-validated — key works' : `✗ Validation failed${v.error ? `: ${v.error}` : ''}`}
+      </p>
+    );
+  };
   const [openaiKeyInput, setOpenaiKeyInput] = useState('');
   const [claudeKeyInput, setClaudeKeyInput] = useState('');
   const [perplexityKeyInput, setPerplexityKeyInput] = useState('');
@@ -635,6 +648,9 @@ export const AdminView: React.FC = () => {
         // Masked hints only — inputs stay empty so secrets never sit in the DOM.
         if (data.savedKeys) {
           setSavedKeyHints(data.savedKeys);
+        }
+        if (data.validationStatus) {
+          setKeyValidationStatus(data.validationStatus);
         }
       }
     } catch (err) {
@@ -892,6 +908,9 @@ export const AdminView: React.FC = () => {
       const data = await res.json();
       if (res.ok && data.success) {
         setActionSuccessMsg('Completed real-time validation across all AI providers!');
+        if (data.validationStatus) {
+          setKeyValidationStatus(data.validationStatus);
+        }
         fetchAiTokenStats();
       } else {
         setActionErrorMsg(data.error || 'Failed to validate API keys.');
@@ -3336,6 +3355,7 @@ export const AdminView: React.FC = () => {
                       {savedKeyHints.groq.configured ? `Saved: ${savedKeyHints.groq.hint}` : 'No key saved — paste to add'}
                     </p>
                   )}
+                  {renderKeyValidation('groq')}
                 </div>
 
                 {/* 2. Anthropic Claude */}
@@ -3363,6 +3383,7 @@ export const AdminView: React.FC = () => {
                       {savedKeyHints.anthropic.configured ? `Saved: ${savedKeyHints.anthropic.hint}` : 'No key saved — paste to add'}
                     </p>
                   )}
+                  {renderKeyValidation('anthropic')}
                 </div>
 
                 {/* 3. OpenAI — used for AI Visibility brand checks (ChatGPT mentions) */}
@@ -3390,6 +3411,7 @@ export const AdminView: React.FC = () => {
                       {savedKeyHints.openai.configured ? `Saved: ${savedKeyHints.openai.hint}` : 'No key saved — paste to add'}
                     </p>
                   )}
+                  {renderKeyValidation('openai')}
                 </div>
 
                 {/* 4. Perplexity — used for AI Visibility brand checks (Perplexity mentions) */}
@@ -3417,6 +3439,7 @@ export const AdminView: React.FC = () => {
                       {savedKeyHints.perplexity.configured ? `Saved: ${savedKeyHints.perplexity.hint}` : 'No key saved — paste to add'}
                     </p>
                   )}
+                  {renderKeyValidation('perplexity')}
                 </div>
 
                 {/* 5. DeepSeek — REMOVED: no runtime code consumes a DeepSeek key. */}
@@ -3462,6 +3485,11 @@ export const AdminView: React.FC = () => {
                       placeholder="AIzaSy... (Real-time live Google Places feed)"
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
                     />
+                    {savedKeyHints.googleMaps && (
+                      <p className={`text-[10px] font-mono font-bold ${savedKeyHints.googleMaps.configured ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {savedKeyHints.googleMaps.configured ? `Saved: ${savedKeyHints.googleMaps.hint}` : 'No key saved — paste to add'}
+                      </p>
+                    )}
                     <p className="text-[10px] text-slate-500">
                       Streams real-time live local businesses, addresses, verified phone numbers, websites, and review counts.
                     </p>
@@ -3492,6 +3520,11 @@ export const AdminView: React.FC = () => {
                       placeholder="AIzaSy... (Free Google Lighthouse API Key)"
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
                     />
+                    {savedKeyHints.pageSpeed && (
+                      <p className={`text-[10px] font-mono font-bold ${savedKeyHints.pageSpeed.configured ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {savedKeyHints.pageSpeed.configured ? `Saved: ${savedKeyHints.pageSpeed.hint}` : 'No key saved — paste to add'}
+                      </p>
+                    )}
                     <p className="text-[10px] text-slate-500">
                       Powers live Lighthouse technical performance, SEO, mobile responsiveness, and Core Web Vitals audit.
                     </p>
@@ -3519,6 +3552,11 @@ export const AdminView: React.FC = () => {
                       placeholder="apollo_... (Verified Decision-Maker, LinkedIn & Email)"
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
                     />
+                    {savedKeyHints.apollo && (
+                      <p className={`text-[10px] font-mono font-bold ${savedKeyHints.apollo.configured ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {savedKeyHints.apollo.configured ? `Saved: ${savedKeyHints.apollo.hint}` : 'No key saved — paste to add'}
+                      </p>
+                    )}
                     <p className="text-[10px] text-slate-500">
                       <strong>Single Source of Truth:</strong> Automatically provides verified Owner/Executive identities, verified business emails, LinkedIn profile URLs, and direct phone numbers in one call.
                     </p>
@@ -3546,6 +3584,11 @@ export const AdminView: React.FC = () => {
                       placeholder="mv_... (MillionVerifier API Key)"
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
                     />
+                    {savedKeyHints.millionverifier && (
+                      <p className={`text-[10px] font-mono font-bold ${savedKeyHints.millionverifier.configured ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {savedKeyHints.millionverifier.configured ? `Saved: ${savedKeyHints.millionverifier.hint}` : 'No key saved — paste to add'}
+                      </p>
+                    )}
                     <p className="text-[10px] text-slate-500">
                       Performs deep live SMTP deliverability tests, MX checks, and catch-all filtering to ensure 100% verified non-fake emails.
                     </p>
@@ -3573,6 +3616,11 @@ export const AdminView: React.FC = () => {
                       placeholder="hunter_... (Domain email search)"
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]"
                     />
+                    {savedKeyHints.hunter && (
+                      <p className={`text-[10px] font-mono font-bold ${savedKeyHints.hunter.configured ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {savedKeyHints.hunter.configured ? `Saved: ${savedKeyHints.hunter.hint}` : 'No key saved — paste to add'}
+                      </p>
+                    )}
                     <p className="text-[10px] text-slate-500">
                       Enriches domain leads with verified decision-maker email addresses and deliverability confidence scores.
                     </p>
@@ -3617,6 +3665,11 @@ export const AdminView: React.FC = () => {
                       placeholder="AIzaSy... (Google Cloud Console)"
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+                    {savedKeyHints.googleSearchApiKey && (
+                      <p className={`text-[10px] font-mono font-bold ${savedKeyHints.googleSearchApiKey.configured ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {savedKeyHints.googleSearchApiKey.configured ? `Saved: ${savedKeyHints.googleSearchApiKey.hint}` : 'No key saved — paste to add'}
+                      </p>
+                    )}
                     <p className="text-[10px] text-slate-500">Official Google Custom Search JSON API key for real-time site indexation and SERP inspection.</p>
                   </div>
 
@@ -3640,6 +3693,11 @@ export const AdminView: React.FC = () => {
                       placeholder="e.g. 017576662... or search engine ID"
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+                    {savedKeyHints.googleSearchCx && (
+                      <p className={`text-[10px] font-mono font-bold ${savedKeyHints.googleSearchCx.configured ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {savedKeyHints.googleSearchCx.configured ? `Saved: ${savedKeyHints.googleSearchCx.hint}` : 'No key saved — paste to add'}
+                      </p>
+                    )}
                     <p className="text-[10px] text-slate-500">Programmable Search Engine CX identifier from Google Programmable Search Engine control panel.</p>
                   </div>
 
@@ -3663,6 +3721,11 @@ export const AdminView: React.FC = () => {
                       placeholder="your-email@domain.com (DataForSEO account email)"
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
+                    {savedKeyHints.dataforseoLogin && (
+                      <p className={`text-[10px] font-mono font-bold ${savedKeyHints.dataforseoLogin.configured ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {savedKeyHints.dataforseoLogin.configured ? `Saved: ${savedKeyHints.dataforseoLogin.hint}` : 'No key saved — paste to add'}
+                      </p>
+                    )}
                     <p className="text-[10px] text-slate-500">DataForSEO enterprise login email for live Google Domain Rank Overview, Backlinks Summary & Keyword Rankings.</p>
                   </div>
 
@@ -3686,6 +3749,11 @@ export const AdminView: React.FC = () => {
                       placeholder="DataForSEO API Secret Key"
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
+                    {savedKeyHints.dataforseoPassword && (
+                      <p className={`text-[10px] font-mono font-bold ${savedKeyHints.dataforseoPassword.configured ? 'text-emerald-700' : 'text-slate-400'}`}>
+                        {savedKeyHints.dataforseoPassword.configured ? `Saved: ${savedKeyHints.dataforseoPassword.hint}` : 'No key saved — paste to add'}
+                      </p>
+                    )}
                     <p className="text-[10px] text-slate-500">DataForSEO API secret generated from the DataForSEO customer dashboard.</p>
                   </div>
 
@@ -3714,6 +3782,7 @@ export const AdminView: React.FC = () => {
                         {savedKeyHints.serpapi.configured ? `Saved: ${savedKeyHints.serpapi.hint}` : 'No key saved — paste to add'}
                       </p>
                     )}
+                    {renderKeyValidation('serpapi')}
                     <p className="text-[10px] text-slate-500">Powers live Google Maps rank tracking and SERP lookups. Primary provider — checked first.</p>
                   </div>
 
@@ -3742,6 +3811,7 @@ export const AdminView: React.FC = () => {
                         {savedKeyHints.serper.configured ? `Saved: ${savedKeyHints.serper.hint}` : 'No key saved — paste to add'}
                       </p>
                     )}
+                    {renderKeyValidation('serper')}
                     <p className="text-[10px] text-slate-500">Backup provider for live SERP lookups when SerpApi is not configured.</p>
                   </div>
                 </div>
