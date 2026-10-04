@@ -20,7 +20,7 @@ import * as dbService from './src/db/service.ts';
 import * as onboardingService from './server/onboardingService.ts';
 import * as businessTruthService from './server/businessTruthService.ts';
 import * as aiManagerService from './server/aiManagerService.ts';
-import { generateCompletion, stripCodeFences, AI_NOT_CONFIGURED_NOTICE, getAiLanes, setPlatformGroqKey } from './server/aiEngine.ts';
+import { generateCompletion, stripCodeFences, AI_NOT_CONFIGURED_NOTICE, getAiLanes, setPlatformGroqKey, setTokenUsageReporter } from './server/aiEngine.ts';
 import { sanitizePhoneForStorage, stripFakePhones } from './server/phoneIntegrity.ts';
 import { creditsForPlan, DEMO_GUEST_CREDITS, PLAN_AI_CREDITS, remainingCredits, isUnlimitedTier } from './src/lib/credits.ts';
 import * as growthDetectorService from './server/growthDetectorService.ts';
@@ -12432,7 +12432,8 @@ async function executeAICompletion(options: AICompletionOptions): Promise<{
   });
 
   if (result.ok) {
-    try { recordRealModelTokenUsage(result.modelUsed, result.tokensUsed); } catch { /* telemetry only */ }
+    // Usage is reported by the engine's token reporter (setTokenUsageReporter)
+    // for every successful call — no per-caller recording needed.
     return {
       text: result.text.trim(),
       providerUsed: result.providerUsed === 'claude' ? 'Anthropic Claude (3.7 Sonnet)' : 'Groq (gpt-oss-120b)',
@@ -15562,6 +15563,11 @@ function recordRealModelTokenUsage(modelId: string, tokensConsumed: number) {
     saveModelQuotasToDisk();
   }
 }
+
+// Every successful engine call reports real token usage, no matter the feature.
+setTokenUsageReporter((modelId, tokens) => {
+  try { recordRealModelTokenUsage(modelId, tokens); } catch { /* telemetry only */ }
+});
 
 // Admin API to fetch AI Tokens and Model Monitoring Stats
 // ============ AUTOMATED HEALTH SCANS ============

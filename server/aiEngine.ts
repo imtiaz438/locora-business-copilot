@@ -320,6 +320,17 @@ async function callClaude(
  * Generate text with the unified engine. Never throws for provider problems —
  * those come back as ok:false. Never fabricates content.
  */
+/**
+ * Token-usage reporter hook. server.ts registers its recorder here so that
+ * EVERY successful AI call — no matter which feature or code path invoked the
+ * engine — reports real token consumption. Without this, paths calling
+ * generateCompletion directly would silently skip usage tracking.
+ */
+let tokenUsageReporter: ((modelId: string, tokensUsed: number) => void) | null = null;
+export function setTokenUsageReporter(fn: (modelId: string, tokensUsed: number) => void) {
+  tokenUsageReporter = fn;
+}
+
 export async function generateCompletion(req: AiEngineRequest): Promise<AiEngineResult> {
   const timeoutMs = req.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const resolved = resolveProvider(req);
@@ -335,10 +346,16 @@ export async function generateCompletion(req: AiEngineRequest): Promise<AiEngine
       errorMessage: resolved.error.message,
     };
   }
-  if (resolved.provider === 'claude') {
-    return callClaude(resolved, req, timeoutMs);
+  const result = resolved.provider === 'claude'
+    ? await callClaude(resolved, req, timeoutMs)
+    : await callGroq(resolved, req, timeoutMs);
+  // Report real usage for every successful call, regardless of caller.
+  if (result.ok && tokenUsageReporter) {
+    try {
+      tokenUsageReporter(result.modelUsed, result.tokensUsed);
+    } catch { /* telemetry only — never break the AI call */ }
   }
-  return callGroq(resolved, req, timeoutMs);
+  return result;
 }
 
 /** Strip ```json fences some models add despite jsonMode. Shared by JSON consumers. */
