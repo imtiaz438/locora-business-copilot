@@ -68,6 +68,10 @@ export const MultiLocationSection: React.FC = () => {
       ];
 
   const hasRealScore = typeof activeBusiness.healthScore === 'number' && activeBusiness.healthScore > 0;
+  // HONESTY: calls, forms, bookings, and revenue have NO real data source in the
+  // app (no call tracking / CRM revenue feed). Never invent them with formulas —
+  // show neutral "no data" states. Scores, reviews, and ratings below are real.
+  const NO_DATA = '–';
   const locationsData: LocationMetricData[] = activeLocations.map((loc, idx) => {
     const locScore = hasRealScore ? Math.max(0, Math.min(100, activeBusiness.healthScore - idx * 4)) : 0;
     const status: 'healthy' | 'improving' | 'need_attention' =
@@ -82,17 +86,17 @@ export const MultiLocationSection: React.FC = () => {
       status,
       statusIcon,
       visibility: locScore,
-      calls: hasRealScore ? Math.max(0, 120 - idx * 25) : 0,
-      callsGrowth: hasRealScore ? '+8%' : '0%',
-      forms: hasRealScore ? Math.max(0, 45 - idx * 10) : 0,
-      formsGrowth: hasRealScore ? '+12%' : '0%',
-      bookings: hasRealScore ? Math.max(0, 35 - idx * 8) : 0,
-      bookingsGrowth: hasRealScore ? '+10%' : '0%',
+      calls: 0,
+      callsGrowth: NO_DATA,
+      forms: 0,
+      formsGrowth: NO_DATA,
+      bookings: 0,
+      bookingsGrowth: NO_DATA,
       reviews: activeBusiness.reviewCount || 0,
       rating: activeBusiness.googleRating || 0,
       unansweredReviews: activeBusiness.unansweredReviews || 0,
-      conversionsRate: hasRealScore ? '12.8%' : '0%',
-      conversionRevenue: hasRealScore ? Math.max(0, 32000 - idx * 7000) : 0,
+      conversionsRate: NO_DATA,
+      conversionRevenue: 0,
     };
   });
 
@@ -109,17 +113,17 @@ export const MultiLocationSection: React.FC = () => {
         score: hasRealScore ? Math.round(locationsData.reduce((s, l) => s + l.score, 0) / locationsData.length) : 0,
         statusIcon: hasRealScore ? '🟢' : '⚪',
         visibility: hasRealScore ? Math.round(locationsData.reduce((s, l) => s + l.visibility, 0) / locationsData.length) : 0,
-        calls: locationsData.reduce((s, l) => s + l.calls, 0),
-        callsGrowth: hasRealScore ? '+8%' : '0%',
-        forms: locationsData.reduce((s, l) => s + l.forms, 0),
-        formsGrowth: hasRealScore ? '+11%' : '0%',
-        bookings: locationsData.reduce((s, l) => s + l.bookings, 0),
-        bookingsGrowth: hasRealScore ? '+10%' : '0%',
+        calls: 0,
+        callsGrowth: NO_DATA,
+        forms: 0,
+        formsGrowth: NO_DATA,
+        bookings: 0,
+        bookingsGrowth: NO_DATA,
         reviews: locationsData.reduce((s, l) => s + l.reviews, 0),
         rating: activeBusiness.googleRating || 0,
         unansweredReviews: locationsData.reduce((s, l) => s + l.unansweredReviews, 0),
-        conversionsRate: hasRealScore ? '12.4%' : '0%',
-        conversionRevenue: locationsData.reduce((s, l) => s + l.conversionRevenue, 0),
+        conversionsRate: NO_DATA,
+        conversionRevenue: 0,
       }
     : activeLoc;
 
@@ -261,7 +265,9 @@ export const MultiLocationSection: React.FC = () => {
               className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                 displayMetrics.callsGrowth.startsWith('+')
                   ? 'text-emerald-800 bg-emerald-50'
-                  : 'text-rose-700 bg-rose-50'
+                  : displayMetrics.callsGrowth === '\u2013'
+                    ? 'text-slate-500 bg-slate-100'
+                    : 'text-rose-700 bg-rose-50'
               }`}
             >
               {displayMetrics.callsGrowth}
@@ -283,7 +289,9 @@ export const MultiLocationSection: React.FC = () => {
               className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                 displayMetrics.formsGrowth.startsWith('+')
                   ? 'text-emerald-800 bg-emerald-50'
-                  : 'text-rose-700 bg-rose-50'
+                  : displayMetrics.formsGrowth === '\u2013'
+                    ? 'text-slate-500 bg-slate-100'
+                    : 'text-rose-700 bg-rose-50'
               }`}
             >
               {displayMetrics.formsGrowth}
@@ -305,7 +313,9 @@ export const MultiLocationSection: React.FC = () => {
               className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                 displayMetrics.bookingsGrowth.startsWith('+')
                   ? 'text-emerald-800 bg-emerald-50'
-                  : 'text-rose-700 bg-rose-50'
+                  : displayMetrics.bookingsGrowth === '\u2013'
+                    ? 'text-slate-500 bg-slate-100'
+                    : 'text-rose-700 bg-rose-50'
               }`}
             >
               {displayMetrics.bookingsGrowth}

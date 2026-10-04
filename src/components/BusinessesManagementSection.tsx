@@ -224,22 +224,29 @@ export const BusinessesManagementSection: React.FC<BusinessesManagementSectionPr
     setDiscoveryError(null);
 
     try {
-      const res = await fetch('/api/onboarding/confirm-business', {
+      // Create via the production businesses endpoint (plan limits enforced).
+      // NOTE: /api/onboarding/confirm-business does not exist; and the
+      // idempotent /api/onboarding/confirm-and-save would overwrite the existing
+      // business instead of adding one.
+      const res = await fetch('/api/production/businesses', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': user.email || '',
+        },
         body: JSON.stringify({
-          userEmail: user.email,
-          businessName: confirmedName.trim(),
+          name: confirmedName.trim(),
           legalName: confirmedLegalName.trim() || confirmedName.trim(),
-          businessCategory: confirmedCategory.trim() || 'Local Business',
+          category: confirmedCategory.trim() || 'Local Business',
           address: confirmedAddress.trim() || undefined,
           city: confirmedCity.trim() || undefined,
           state: confirmedState.trim() || undefined,
           country: confirmedCountry.trim() || 'United States',
-          postalCode: confirmedZip.trim() || undefined,
+          zip: confirmedZip.trim() || undefined,
           phone: confirmedPhone.trim() || undefined,
           website: confirmedWebsite.trim() || undefined,
           services: confirmedServices,
+          email: user.email,
         }),
       });
 
@@ -261,8 +268,8 @@ export const BusinessesManagementSection: React.FC<BusinessesManagementSectionPr
       setTimeout(() => setFeedback(null), 4000);
 
       // Reload businesses or switch
-      if (data.business?.id) {
-        switchBusiness(data.business.id);
+      if (data.id || data.business?.id) {
+        switchBusiness(data.id || data.business.id);
       }
       if (refreshBusinessTruth) {
         refreshBusinessTruth();

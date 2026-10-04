@@ -423,19 +423,37 @@ export const TopBusinessSelector: React.FC = () => {
     };
 
     try {
-      // 1. Confirm and save business (backend enforces plan limits via getBusinessLimit)
-      const saveRes = await fetch('/api/onboarding/confirm-and-save', {
+      // Create a genuinely NEW business via the production businesses endpoint
+      // (plan limits enforced server-side). NOTE: do NOT use
+      // /api/onboarding/confirm-and-save here — it is idempotent by design and
+      // would overwrite the existing business instead of adding one (data loss).
+      const saveRes = await fetch('/api/production/businesses', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': user.email || '',
+        },
         body: JSON.stringify({
-          userEmail: user.email,
-          formData,
+          name: confirmedName.trim(),
+          legalName: confirmedLegalName.trim() || confirmedName.trim(),
+          category: confirmedCategory.trim() || 'Local Business',
+          industry: confirmedCategory.trim() || 'Local Business',
+          website: confirmedWebsite.trim(),
+          phone: confirmedPhone.trim(),
+          address: confirmedAddress.trim(),
+          city: confirmedCity.trim(),
+          state: confirmedState.trim(),
+          zip: confirmedZip.trim(),
+          country: newBizCountry.trim() || 'United States',
+          description: confirmedDescription.trim(),
+          services: confirmedServices,
+          email: user.email,
         }),
       });
 
       const saveJson = await saveRes.json();
       if (!saveRes.ok) {
-        if (saveJson.error?.includes('limit') || saveRes.status === 403) {
+        if (saveJson.error?.includes('limit') || saveJson.code === 'BUSINESS_LIMIT_REACHED' || saveRes.status === 403) {
           setShowAddBusinessModal(false);
           setShowLimitReachedModal(true);
           return;
@@ -443,7 +461,7 @@ export const TopBusinessSelector: React.FC = () => {
         throw new Error(saveJson.error || 'Failed to save confirmed business.');
       }
 
-      const newBizId = saveJson.businessId || saveJson.business?.id;
+      const newBizId = saveJson.id || saveJson.businessId || saveJson.business?.id;
 
       // 2. Initialize Business Brain from verified/user data
       if (newBizId) {
