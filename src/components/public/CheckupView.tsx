@@ -669,7 +669,7 @@ export const CheckupView: React.FC = () => {
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
             <h3 className="text-sm font-bold text-slate-900 font-heading">Can a missed phone call really cost me money?</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Since October 1, 2026, Google&apos;s Local Services Ads treats a missed business-hours call as a billable lead when the caller waits more than 20 seconds. A phone that rings out doesn&apos;t just lose the job anymore — it can also cost you the lead fee.
+              Since October 1, 2026, Google&apos;s Local Services Ads treats a missed business-hours call as a billable lead when the caller waits more than 20 seconds. A phone that rings out doesn&apos;t just lose the job anymore — it can also cost you the lead fee. <a href="https://ppc.land/google-lsa-advertisers-face-missed-call-charges-from-october-1/" target="_blank" rel="noopener noreferrer" className="text-emerald-600 underline">Source</a>
             </p>
           </div>
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
