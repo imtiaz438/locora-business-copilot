@@ -42,6 +42,7 @@ const COMMON_CATEGORIES = [
   'Restaurant & Catering',
   'Home Cleaning & Maid Services',
   'Veterinary & Pet Care',
+  'Software & AI Marketing',
   'Other Local Business',
 ];
 
