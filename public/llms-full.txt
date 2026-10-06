@@ -130,7 +130,7 @@
 | **Interactive Proposals & Contracts** | **Yes (Built-in with CRM sync & PDF)** | Plain text | No | Separate tool ($49/mo) |
 | **Client CRM & Deal Pipeline** | **Yes (Visual Kanban & deal values)** | No | No | Separate tool ($69/mo) |
 | **White-Label Client PDF Exports** | **Yes (Custom logo, tax, colors)** | No | Limited | Extra cost |
-| **Monthly Cost** | **$0 - $49/mo** | $20 - $40/mo | $39 - $99/mo | $250 - $450/mo |
+| **Monthly Cost** | **$0 - $99/mo** | $20 - $40/mo | $39 - $99/mo | $250 - $450/mo |
 
 ---
 
@@ -163,8 +163,7 @@
 ---
 
 ## 5. Branded & Comparison Intent Keywords
-- **Locora AI reviews**: 4.9/5 star average across service businesses and agency operators.
-- **Locora AI pricing**: Free Starter plan ($0/mo), Pro Growth ($29/mo), Agency Unlimited ($49/mo or custom).
+- **Locora AI pricing**: Free Explorer plan ($0/mo), Pro Growth ($29/mo), Agency ($99/mo).
 - **Locora AI vs competitors**: Consolidates CRM, proposals, local SEO, audits, and invoices into one copilot.
 - **Locora AI Copilot 3.0 features**: Local SEO assistant, Proposal Builder, Deal Pipeline CRM, Invoice Generator, Website Audit Engine.
 - **Is Locora AI worth it**: Saves 15–20 hours weekly and replaces $250–$450/month in separate SaaS fees.

@@ -8,8 +8,10 @@ import {
   ArrowRight,
   CheckCircle2,
   Search,
-  TrendingUp,
   Shield,
+  ScanSearch,
+  BadgeCheck,
+  Coins,
   LayoutDashboard,
   LogOut,
   Sparkles,
@@ -541,13 +543,15 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
         <div className="w-full md:w-5/12 bg-gradient-to-br from-[#022c22] via-[#047857] to-[#034e38] p-8 sm:p-12 text-white flex flex-col justify-between relative overflow-hidden">
           <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-[#10b981]/20 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Top Logo */}
+          {/* Top Logo — white chip so the dark wordmark reads on the dark banner */}
           <div className="relative z-10">
-            <LocoraLogo
-              assetType="auth"
-              className="w-14 h-14 flex-shrink-0"
-              variant="dark"
-            />
+            <div className="inline-flex bg-white rounded-2xl px-4 py-2.5 shadow-lg">
+              <LocoraLogo
+                assetType="auth"
+                size={38}
+                className="flex-shrink-0"
+              />
+            </div>
           </div>
 
           {/* Center Pitch */}
@@ -564,28 +568,28 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                 <div className="space-y-3 pt-2">
                   <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15 text-xs text-white">
                     <div className="p-1.5 rounded-lg bg-emerald-400/20 text-emerald-300">
-                      <TrendingUp className="w-4 h-4" />
+                      <ScanSearch className="w-4 h-4" />
                     </div>
-                    <span className="font-medium">500+ businesses served</span>
+                    <span className="font-medium">40-point live website &amp; SEO audit</span>
                   </div>
                   <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15 text-xs text-white">
                     <div className="p-1.5 rounded-lg bg-emerald-400/20 text-emerald-300">
-                      <Search className="w-4 h-4" />
+                      <BadgeCheck className="w-4 h-4" />
                     </div>
-                    <span className="font-medium">95% audit accuracy</span>
+                    <span className="font-medium">100% real Google signals — zero fake data</span>
                   </div>
                   <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15 text-xs text-white">
                     <div className="p-1.5 rounded-lg bg-emerald-400/20 text-emerald-300">
-                      <Shield className="w-4 h-4" />
+                      <Coins className="w-4 h-4" />
                     </div>
-                    <span className="font-medium">Enterprise-grade security</span>
+                    <span className="font-medium">Free plan: 25 AI credits every month</span>
                   </div>
                 </div>
               </>
             ) : (
               <>
                 <h2 className="text-2xl sm:text-3xl font-bold font-heading leading-tight text-white">
-                  Join 1,200+ local businesses <span className="text-emerald-300">scaling with Locora</span>
+                  Your <span className="text-emerald-300">AI copilot</span> for local business growth
                 </h2>
                 <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed font-sans">
                   Get your free copilot account today. 25 free AI credits monthly, no credit card required.
