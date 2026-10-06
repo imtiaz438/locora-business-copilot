@@ -126,23 +126,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
 
   const renderNav = (expanded: boolean) => (
     <div className="flex flex-col h-full bg-white border-r border-slate-200 select-none font-sans text-slate-800 overflow-hidden">
-      {/* Brand Header */}
-      <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+      {/* Brand Header — logo pinned at a fixed spot: 200px wide, never shifts when the sidebar collapses */}
+      <div className="relative h-[70px] flex-shrink-0 border-b border-slate-200 overflow-hidden flex items-center">
         <div
           role="button"
           tabIndex={0}
           onClick={() => handleNavClick('dashboard')}
           onKeyDown={(e) => e.key === 'Enter' && handleNavClick('dashboard')}
-          className="flex items-center gap-2.5 text-left group cursor-pointer"
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-left group cursor-pointer"
+          title="Dashboard"
         >
           <LocoraLogo
-            className="w-10 h-10 flex-shrink-0 group-hover:scale-105 transition-transform"
+            style={{ width: '200px', height: 'auto', maxWidth: 'none' }}
+            className="flex-shrink-0 group-hover:scale-105 transition-transform"
           />
         </div>
         {onMobileClose && (
           <button
             onClick={onMobileClose}
-            className="md:hidden p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
+            className="md:hidden absolute right-3 p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
           >
             <X className="w-5 h-5" />
           </button>
