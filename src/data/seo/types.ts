@@ -105,7 +105,6 @@ export interface SeoUseCaseItem {
   prosAndCons: ProsAndCons;
   bestPractices: string[];
   caseStudy: CaseStudy;
-  resultsMetric: { value: string; label: string; subtext: string };
   faqs: Array<{ q: string; a: string }>;
 }
 

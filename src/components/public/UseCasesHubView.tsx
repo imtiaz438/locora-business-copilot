@@ -73,12 +73,9 @@ export const UseCasesHubView: React.FC = () => {
               className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs hover:border-[#059669] hover:shadow-md transition-all flex flex-col justify-between space-y-6 group"
             >
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center">
                   <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full uppercase tracking-wider">
                     {uc.category}
-                  </span>
-                  <span className="text-xs font-extrabold font-mono text-[#059669]">
-                    {uc.resultsMetric.value} Lift
                   </span>
                 </div>
 

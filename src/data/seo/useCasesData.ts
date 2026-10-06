@@ -136,11 +136,6 @@ export const SEO_USE_CASES_DATABASE: Record<string, SeoUseCaseItem> = {
         { label: 'Ad Spend Reduced', value: '$3,200/mo Saved' }
       ]
     },
-    resultsMetric: {
-      value: '+142%',
-      label: 'Average Increase in Inbound Calls',
-      subtext: 'Across 2,400+ local businesses in the first 90 days of local SEO optimization.'
-    },
     faqs: [
       {
         q: 'How long does it take to rank in the Google Maps 3-Pack?',
@@ -278,11 +273,6 @@ export const SEO_USE_CASES_DATABASE: Record<string, SeoUseCaseItem> = {
         { label: 'New Retainers', value: '6 Signed in 30 Days' },
         { label: 'Monthly Recurring Revenue', value: '+$16,500 MRR' }
       ]
-    },
-    resultsMetric: {
-      value: '28%',
-      label: 'Cold Outreach Response Rate',
-      subtext: 'Achieved by agencies using personalized AI diagnostic audit teardowns.'
     },
     faqs: [
       {
@@ -422,11 +412,6 @@ export const SEO_USE_CASES_DATABASE: Record<string, SeoUseCaseItem> = {
         { label: 'Annual Profit Margin', value: '+45% Increase' }
       ]
     },
-    resultsMetric: {
-      value: '22+ Mos',
-      label: 'Average Client Retainer Lifetime',
-      subtext: 'Achieved by agencies implementing structured CRM and deliverable operations.'
-    },
     faqs: [
       {
         q: 'How do I handle clients who constantly ask for out-of-scope work?',
@@ -559,11 +544,6 @@ export const SEO_USE_CASES_DATABASE: Record<string, SeoUseCaseItem> = {
         { label: 'New Reviews', value: '+46 Five-Star Ratings' },
         { label: 'Ad ROI', value: '5.4x Return on Ad Spend' }
       ]
-    },
-    resultsMetric: {
-      value: '4.8x',
-      label: 'Average Marketing Return on Investment',
-      subtext: 'Observed in businesses following phased 30/60/90-day execution roadmaps.'
     },
     faqs: [
       {
@@ -711,11 +691,6 @@ export const SEO_USE_CASES_DATABASE: Record<string, SeoUseCaseItem> = {
         { label: 'Team Efficiency', value: '+30% Billable Hours' }
       ]
     },
-    resultsMetric: {
-      value: '$540/mo',
-      label: 'Average Software Cost Savings',
-      subtext: 'Saved by agencies consolidating fragmented tools into Locora AI.'
-    },
     faqs: [
       {
         q: 'Can Locora AI completely replace tools like PandaDoc and BrightLocal?',
@@ -853,11 +828,6 @@ export const SEO_USE_CASES_DATABASE: Record<string, SeoUseCaseItem> = {
         { label: 'Google Rating', value: '4.9 Stars (180+ Reviews)' },
         { label: 'Annual Practice Revenue', value: '+$340,000 Increase' }
       ]
-    },
-    resultsMetric: {
-      value: '+65%',
-      label: 'Average Revenue Growth',
-      subtext: 'Achieved by local service companies implementing the 4-pillar Locora growth framework.'
     },
     faqs: [
       {

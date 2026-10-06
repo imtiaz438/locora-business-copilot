@@ -8,7 +8,6 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
-  TrendingUp,
   Target,
   BarChart3,
   Layers,
@@ -167,22 +166,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
 
         {/* Results Highlight Card */}
         <div className="pt-4">
-          <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 shrink-0">
-                <TrendingUp className="w-6 h-6" />
-              </div>
-              <div>
-                <span className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900">
-                  {useCase.resultsMetric.value}
-                </span>
-                <p className="text-xs font-bold text-slate-700">{useCase.resultsMetric.label}</p>
-              </div>
-            </div>
-            <p className="text-xs text-slate-500 max-w-xs font-sans">
-              {useCase.resultsMetric.subtext}
-            </p>
-          </div>
+
         </div>
       </section>
 
