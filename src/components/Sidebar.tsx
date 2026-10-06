@@ -61,7 +61,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
       return true;
     }
   });
-  const [hovered, setHovered] = useState(false);
 
   const toggleCollapsed = () => {
     setCollapsed((prev) => {
@@ -71,7 +70,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
       } catch {}
       return next;
     });
-    setHovered(false);
   };
 
   // 11 Simplified Dashboard Modules requested:
@@ -129,7 +127,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
   const renderNav = (expanded: boolean) => (
     <div className="flex flex-col h-full bg-white border-r border-slate-200 select-none font-sans text-slate-800 overflow-hidden">
       {/* Brand Header — logo only, toggle lives on the sidebar edge */}
-      <div className={`p-4 border-b border-slate-200 flex items-center ${expanded ? "justify-start" : "justify-center"}`}>
+      <div className={`px-3 py-3 border-b border-slate-200 flex items-center ${expanded ? "justify-start" : "justify-center"}`}>
         <div
           role="button"
           tabIndex={0}
@@ -139,8 +137,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
           title="Dashboard"
         >
           <LocoraLogo
-            size={34}
-            className="flex-shrink-0 group-hover:scale-105 transition-transform max-w-[52px]"
+            
+            className="flex-shrink-0 group-hover:scale-105 transition-transform max-w-[64px]"
           />
           {expanded && (
             <span className="text-sm font-semibold text-slate-900 tracking-tight whitespace-nowrap">Locora</span>
@@ -454,9 +452,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
     </div>
   );
 
-  const desktopExpanded = !collapsed || hovered;
-  const hoverOverlay = collapsed && hovered;
-
   return (
     <>
       {/* Desktop Sidebar — collapsible icon rail, expands on hover as an overlay */}
@@ -464,30 +459,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
         className={`hidden md:block h-screen sticky top-0 z-40 flex-shrink-0 relative transition-[width] duration-200 ease-in-out ${
           collapsed ? 'w-[68px]' : 'w-64'
         }`}
-        onMouseEnter={() => {
-          if (collapsed) setHovered(true);
-        }}
-        onMouseLeave={() => setHovered(false)}
       >
-        {/* Toggle handle on the sidebar separator line */}
+        {/* Toggle fixed on the separator line — click only, no hover behavior */}
         <button
           onClick={toggleCollapsed}
-          className={`absolute top-[80px] z-[60] w-7 h-7 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-slate-500 hover:text-emerald-700 hover:border-emerald-300 transition-all cursor-pointer ${
-            !collapsed || hoverOverlay ? 'left-[242px]' : 'left-[54px]'
-          }`}
+          className="absolute top-[80px] -right-3.5 z-50 w-7 h-7 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-slate-500 hover:text-emerald-700 hover:border-emerald-300 transition-colors cursor-pointer"
           title={collapsed ? 'Open sidebar' : 'Collapse sidebar'}
           aria-label={collapsed ? 'Open sidebar' : 'Collapse sidebar'}
         >
           <PanelLeft className="w-4 h-4" />
         </button>
-        <div
-          className={
-            hoverOverlay
-              ? 'absolute inset-y-0 left-0 w-64 z-50 shadow-2xl'
-              : 'h-full w-full'
-          }
-        >
-          {renderNav(desktopExpanded)}
+        <div className="h-full w-full">
+          {renderNav(!collapsed)}
         </div>
       </aside>
 
