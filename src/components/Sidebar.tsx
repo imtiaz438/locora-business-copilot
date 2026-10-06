@@ -139,7 +139,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
           title="Dashboard"
         >
           <LocoraLogo
-            className="w-8 h-8 flex-shrink-0 group-hover:scale-105 transition-transform"
+            size={26}
+            className="flex-shrink-0 group-hover:scale-105 transition-transform max-w-[40px]"
           />
           {expanded && (
             <span className="text-sm font-semibold text-slate-900 tracking-tight whitespace-nowrap">Locora</span>
@@ -471,7 +472,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
         {/* Toggle handle on the sidebar separator line */}
         <button
           onClick={toggleCollapsed}
-          className="absolute top-6 -right-3.5 z-[60] w-7 h-7 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-slate-500 hover:text-emerald-700 hover:border-emerald-300 transition-colors cursor-pointer"
+          className={`absolute top-6 z-[60] w-7 h-7 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-slate-500 hover:text-emerald-700 hover:border-emerald-300 transition-all cursor-pointer ${
+            !collapsed || hoverOverlay ? 'left-[242px]' : 'left-[54px]'
+          }`}
           title={collapsed ? 'Open sidebar' : 'Collapse sidebar'}
           aria-label={collapsed ? 'Open sidebar' : 'Collapse sidebar'}
         >
