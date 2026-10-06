@@ -101,7 +101,6 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     activeTab === 'pricing_public' ||
     activeTab === 'about' ||
     activeTab === 'contact' ||
-    activeTab === 'landing_page' ||
     activeTab === 'login' ||
     activeTab === 'signup' ||
     activeTab === 'privacy' ||

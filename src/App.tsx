@@ -36,7 +36,6 @@ import { BusinessHubView } from './components/BusinessHubView';
 import { SettingsView } from './components/SettingsView';
 import { PricingView } from './components/PricingView';
 import { SubscriptionView } from './components/SubscriptionView';
-import { LandingPageView } from './components/LandingPageView';
 import { AdminView } from './components/AdminView';
 import { LeadProspectorView } from './components/LeadProspectorView';
 import { MasterclassKitView } from './components/MasterclassKitView';
@@ -443,7 +442,6 @@ const MainContent: React.FC = () => {
     if (activeTab === 'pricing_public') return <PricingPublicView />;
     if (activeTab === 'about') return <AboutView />;
     if (activeTab === 'contact') return <ContactView />;
-    if (activeTab === 'landing_page') return <LandingPageView />;
     if (activeTab === 'login') return <AuthView initialMode="login" />;
     if (activeTab === 'signup') return <AuthView initialMode="signup" />;
     if (activeTab === 'privacy') return <PrivacyPolicyView />;
@@ -477,7 +475,7 @@ const MainContent: React.FC = () => {
     if (activeTab === 'subscription') return <SubscriptionView />;
     if (activeTab === 'settings') return <SettingsView />;
     if (activeTab === 'admin') {
-      return (user.isAuthenticated && (user.role === 'admin' || user.role === 'owner' || user.email === 'imtiazbaloch3322@gmail.com' || user.email === 'support@locoraai.com'))
+      return (user.isAuthenticated && (user.role === 'admin' || user.role === 'owner'))
         ? <AdminView />
         : <DashboardView />;
     }

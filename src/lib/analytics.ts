@@ -495,7 +495,7 @@ export function trackSubscriptionStarted(planTier: string, billingCycle?: string
     {
       plan_tier: planTier,
       billing_cycle: billingCycle || 'monthly',
-      value: value || (planTier === 'agency' ? (billingCycle === 'yearly' ? 790 : 99) : (billingCycle === 'yearly' ? 290 : 29)),
+      value: value || (planTier === 'agency' ? (billingCycle === 'yearly' ? 790 : 99) : (billingCycle === 'yearly' ? 249 : 29)),
       currency: 'USD',
     },
     `subscription_started_${planTier}_${Date.now()}`

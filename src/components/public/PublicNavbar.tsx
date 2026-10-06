@@ -116,7 +116,7 @@ export const PublicNavbar: React.FC = () => {
           : 'bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4.5 min-h-[84px] sm:min-h-[92px] flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[68px] py-2.5 flex items-center justify-between">
         {/* Brand Logo Lockup */}
         <div
           role="button"
@@ -125,11 +125,12 @@ export const PublicNavbar: React.FC = () => {
           onKeyDown={(e) => e.key === 'Enter' && navigateTo('home', '/')}
           className="flex items-center gap-3 text-left group focus:outline-none cursor-pointer py-1"
         >
-          <LocoraLogo size={52} className="flex-shrink-0 group-hover:scale-105 transition-transform duration-200" />
+          {/* Wide brand lockup (1143x218) renders at ~30px height / ~157px wide */}
+          <LocoraLogo size={30} className="flex-shrink-0 group-hover:scale-105 transition-transform duration-200" />
         </div>
 
         {/* Desktop Navigation Links */}
-        <div className="hidden lg:flex items-center gap-1 bg-slate-100/90 p-1.5 rounded-full border border-slate-200/80">
+        <div className="hidden md:flex items-center gap-1 bg-slate-100/90 p-1.5 rounded-full border border-slate-200/80">
           {/* HOME LINK */}
           <button
             onClick={() => navigateTo('home', '/')}
@@ -272,7 +273,7 @@ export const PublicNavbar: React.FC = () => {
             {openDropdown === 'solutions' && (
               <div className="absolute left-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-2.5 space-y-1 animate-in fade-in-50 zoom-in-95">
                 <button
-                  onClick={() => navigateTo('home', '/', 'small-business')}
+                  onClick={() => navigateTo('usecase_business-growth', '/use-cases/business-growth')}
                   className="w-full text-left p-2.5 rounded-xl hover:bg-emerald-50 transition-colors flex items-start gap-3 cursor-pointer group"
                 >
                   <div className="p-2 bg-emerald-100 rounded-lg text-[#059669] group-hover:bg-[#059669] group-hover:text-white transition-colors">
@@ -285,7 +286,7 @@ export const PublicNavbar: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => navigateTo('home', '/', 'for-agencies')}
+                  onClick={() => navigateTo('usecase_agency-operations', '/use-cases/agency-operations')}
                   className="w-full text-left p-2.5 rounded-xl hover:bg-emerald-50 transition-colors flex items-start gap-3 cursor-pointer group"
                 >
                   <div className="p-2 bg-emerald-100 rounded-lg text-[#059669] group-hover:bg-[#059669] group-hover:text-white transition-colors">
@@ -427,7 +428,7 @@ export const PublicNavbar: React.FC = () => {
         </div>
 
         {/* Mobile Hamburger Toggle */}
-        <div className="flex lg:hidden items-center gap-2">
+        <div className="flex md:hidden items-center gap-2">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-3 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 cursor-pointer transition-colors"
@@ -440,7 +441,7 @@ export const PublicNavbar: React.FC = () => {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-b border-slate-200 px-6 py-5 space-y-3 font-sans">
+        <div className="md:hidden bg-white border-b border-slate-200 px-6 py-5 space-y-3 font-sans">
           <div className="flex flex-col gap-2">
             <button
               onClick={() => navigateTo('home', '/')}

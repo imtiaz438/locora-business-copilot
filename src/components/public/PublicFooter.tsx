@@ -12,9 +12,7 @@ import {
   Loader2,
   Linkedin,
   Facebook,
-  Twitter,
   Youtube,
-  Github,
 } from 'lucide-react';
 import { LocoraLogo } from '../LocoraLogo';
 import {
@@ -51,8 +49,7 @@ export const PublicFooter: React.FC = () => {
       }
     } catch (err) {
       console.error('Newsletter submission error:', err);
-      setSubscribed(true);
-      setNewsletterEmail('');
+      setErrorMsg('Network error. Please check your connection and try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -168,7 +165,7 @@ export const PublicFooter: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 pt-4">
           {/* Brand Info & Social Media */}
           <div className="lg:col-span-1 space-y-4">
-            <LocoraLogo className="w-12 h-12 flex-shrink-0" />
+            <LocoraLogo size={30} className="flex-shrink-0" />
             <p className="text-xs text-slate-600 leading-relaxed font-sans">
               The unified AI Operating System for agencies and local businesses. Automate proposals, local SEO, client CRM, and invoicing.
             </p>
@@ -189,16 +186,7 @@ export const PublicFooter: React.FC = () => {
                   <Linkedin className="w-4 h-4" />
                 </a>
                 <a
-                  href="https://x.com/locoraai"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="X (Twitter)"
-                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-[#059669] hover:border-[#059669] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
-                >
-                  <Twitter className="w-4 h-4" />
-                </a>
-                <a
-                  href="https://www.facebook.com/people/Locora-AI/61593321283379/"
+                  href="https://www.facebook.com/profile.php?id=61593321283379"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"
@@ -207,22 +195,13 @@ export const PublicFooter: React.FC = () => {
                   <Facebook className="w-4 h-4" />
                 </a>
                 <a
-                  href="https://youtube.com/@locoraai"
+                  href="https://www.youtube.com/@LocoraAIHQ"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="YouTube"
                   className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-[#059669] hover:border-[#059669] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
                 >
                   <Youtube className="w-4 h-4" />
-                </a>
-                <a
-                  href="https://github.com/locoraai"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="GitHub"
-                  className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-[#059669] hover:border-[#059669] flex items-center justify-center transition-all shadow-2xs cursor-pointer"
-                >
-                  <Github className="w-4 h-4" />
                 </a>
               </div>
             </div>
@@ -420,37 +399,25 @@ export const PublicFooter: React.FC = () => {
 
           <div className="flex items-center gap-6 flex-wrap">
             <button
-              onClick={() => {
-                setActiveTab('privacy');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+              onClick={() => navigateTo('/privacy', 'privacy')}
               className="hover:text-slate-900 transition-colors cursor-pointer"
             >
               Privacy Policy
             </button>
             <button
-              onClick={() => {
-                setActiveTab('terms');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+              onClick={() => navigateTo('/terms', 'terms')}
               className="hover:text-slate-900 transition-colors cursor-pointer"
             >
               Terms of Service
             </button>
             <button
-              onClick={() => {
-                setActiveTab('refund');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+              onClick={() => navigateTo('/refund', 'refund')}
               className="hover:text-slate-900 transition-colors cursor-pointer"
             >
               Refund Policy
             </button>
             <button
-              onClick={() => {
-                setActiveTab('security');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+              onClick={() => navigateTo('/security', 'security')}
               className="hover:text-slate-900 transition-colors cursor-pointer"
             >
               Security Overview

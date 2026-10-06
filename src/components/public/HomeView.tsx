@@ -45,7 +45,6 @@ import {
   Brain,
   Bot,
   Target,
-  BarChart3,
   Sliders,
   Smartphone,
   Eye,
@@ -333,32 +332,7 @@ export const HomeView: React.FC = () => {
             Audit your business, dominate the Google Maps 3-Pack, and get discovered by local customers and 2026 AI search engines through the Locora Verified Directory.
           </p>
 
-          {/* Primary & Secondary Acquisition CTAs */}
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                trackCtaClick('check_local_visibility', '/', '/checkup');
-                setActiveTab('checkup');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="w-full sm:w-auto px-7 py-3.5 bg-[#059669] hover:bg-[#047857] text-white rounded-full text-sm font-bold transition-all inline-flex items-center justify-center gap-2 cursor-pointer font-heading shadow-lg hover:shadow-xl hover:scale-[1.02]"
-            >
-              <span>Check Your Local Visibility</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => navigateToDirectory()}
-              className="w-full sm:w-auto px-5 py-3 bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-200 hover:text-white rounded-full text-xs font-bold transition-all inline-flex items-center justify-center gap-2 cursor-pointer font-heading shadow-md"
-            >
-              <Building2 className="w-4 h-4 text-[#6ee7b7]" />
-              <span>Explore Verified Business Directory</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Website Input + CTA */}
+          {/* Website Input + CTA (the one conversion action) */}
           <form id="hero-input" onSubmit={handleHeroSubmit} className="max-w-xl mx-auto pt-2 space-y-3">
             <div className="p-2 bg-white border border-emerald-300/30 rounded-2xl sm:rounded-full shadow-2xl flex flex-col sm:flex-row items-center gap-2">
               <div className="relative flex-1 w-full pl-3 pr-2">
@@ -452,44 +426,6 @@ export const HomeView: React.FC = () => {
               <span>100% Real Live Checkup • Zero Fake Data • Deterministic Scoring</span>
             </div>
           </form>
-
-          {/* Popular Directory Categories Quick Jump */}
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-1.5 text-xs text-emerald-100/90">
-            <span className="font-semibold text-[#6ee7b7] mr-1 flex items-center gap-1">
-              <BadgeCheck className="w-3.5 h-3.5" />
-              Verified Directory:
-            </span>
-            {['Dentists', 'HVAC Repair', 'Plumbers', 'Contractors', 'Auto Care', 'Med Spas', 'Law Firms'].map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => navigateToDirectory()}
-                className="px-2.5 py-1 bg-white/10 hover:bg-white/20 border border-white/15 rounded-full text-emerald-100 hover:text-white transition-colors cursor-pointer text-[11px]"
-              >
-                {cat}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => navigateToDirectory()}
-              className="px-2 py-1 text-[#6ee7b7] hover:underline font-bold transition-colors cursor-pointer text-[11px]"
-            >
-              Browse All Categories →
-            </button>
-          </div>
-
-          {/* Capabilities Badge Line */}
-          <div className="pt-3 flex flex-wrap items-center justify-center gap-3 text-xs text-emerald-100/75 font-heading">
-            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> Verified Directory</span>
-            <span>•</span>
-            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> Maps 3-Pack Authority</span>
-            <span>•</span>
-            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> 2026 AI Search (GEO)</span>
-            <span>•</span>
-            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> Zero-Fee Direct Quotes</span>
-            <span>•</span>
-            <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" /> 1-Click Verification</span>
-          </div>
 
           {/* Analyzing Progress State */}
           {isAnalyzing && (
@@ -1500,82 +1436,6 @@ export const HomeView: React.FC = () => {
         </div>
       </section>
 
-      {/* 03 — “HERE'S WHAT LOCORA DOES” (6 CARDS) */}
-      <section className="max-w-6xl mx-auto px-6 space-y-12">
-        <div className="text-center space-y-3 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-semibold font-heading uppercase tracking-wider">
-            <Zap className="w-3.5 h-3.5" />
-            <span>How Locora Works</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-slate-900 tracking-tight">
-            Stop Guessing. Let Your AI Manager Execute.
-          </h2>
-          <p className="text-slate-600 text-sm">
-            Locora connects to your business footprint, determines what needs to be done, and executes it.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[
-            {
-              title: '1. Find',
-              desc: 'Locora continuously scans Google Maps, customer searches, and website health to detect lost revenue opportunities.',
-              icon: Search,
-              tag: 'Discovery Engine',
-            },
-            {
-              title: '2. Understand',
-              desc: 'Your Business Brain analyzes customer reviews, praise, complaints, and competitor moves to uncover the root cause.',
-              icon: Brain,
-              tag: 'Business Intelligence',
-            },
-            {
-              title: '3. Prioritize',
-              desc: 'Rank every single action item by estimated revenue impact so you always know your 3 most critical priorities.',
-              icon: Target,
-              tag: 'Growth Command',
-            },
-            {
-              title: '4. Create',
-              desc: 'Generate localized service landing pages, keyword-optimized review responses, and Google updates in seconds.',
-              icon: Sparkles,
-              tag: 'AI Content Engine',
-            },
-            {
-              title: '5. Automate',
-              desc: 'Deploy review requests, maintain LocalBusiness JSON-LD schemas, and keep profile data synced across directories.',
-              icon: Bot,
-              tag: 'Hands-Off OS',
-            },
-            {
-              title: '6. Measure',
-              desc: 'Track your Google Maps 3-Pack rank velocity, website conversions, customer sentiment, and AI search citations.',
-              icon: BarChart3,
-              tag: 'Verified Outcomes',
-            },
-          ].map((card, i) => {
-            const Icon = card.icon;
-            return (
-              <div
-                key={i}
-                className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 hover:border-emerald-300 hover:shadow-md transition-all flex flex-col justify-between"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#059669] flex items-center justify-center">
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-heading">{card.tag}</span>
-                  </div>
-                  <h3 className="text-lg font-bold font-heading text-slate-900">{card.title}</h3>
-                  <p className="text-xs text-slate-600 leading-relaxed font-sans">{card.desc}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
       {/* 04 — THE PRODUCT SUITE AT A GLANCE */}
       <section id="product-overview" className="max-w-6xl mx-auto px-6 space-y-8">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
@@ -1676,16 +1536,17 @@ export const HomeView: React.FC = () => {
         </div>
 
         {/* Banner to Full Products Page */}
-        <div className="bg-slate-900 text-white rounded-3xl p-8 sm:p-10 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
-          <div className="space-y-2 text-center sm:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold font-heading uppercase tracking-wider">
+        <div className="bg-gradient-to-br from-[#022c22] via-[#044a36] to-[#011a13] text-white rounded-3xl p-8 sm:p-10 border border-emerald-800/60 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-72 h-72 bg-[#10b981]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10 space-y-2 text-center sm:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-[#6ee7b7] text-xs font-bold font-heading uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Dedicated Product Suite</span>
             </div>
             <h3 className="text-xl sm:text-2xl font-bold font-heading text-white">
               Want to see the interactive feature demos and workflow teardowns?
             </h3>
-            <p className="text-xs sm:text-sm text-slate-400 font-sans max-w-xl">
+            <p className="text-xs sm:text-sm text-emerald-100/80 font-sans max-w-xl">
               Explore our dedicated product page for interactive tools, AI business chat consoles, schema previews, and agency management modules.
             </p>
           </div>

@@ -33,7 +33,7 @@ export const BrandedFooter: React.FC<BrandedFooterProps> = ({ className = '' }) 
         </a>
         <span className="text-slate-300">•</span>
         <a
-          href="https://www.facebook.com/people/Locora-AI/61593321283379/"
+          href="https://www.facebook.com/profile.php?id=61593321283379"
           target="_blank"
           rel="noopener noreferrer"
           className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center px-2 text-xs text-slate-500 hover:text-slate-900 transition-colors"

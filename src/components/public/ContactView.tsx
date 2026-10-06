@@ -197,7 +197,7 @@ export const ContactView: React.FC = () => {
                 <Phone className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold text-slate-900">Phone Support (US Toll Free)</p>
-                  <a href="tel:+1 (571) 706-2446" className="text-indigo-600 hover:underline text-[11px] font-semibold block">
+                  <a href="tel:+15717062446" className="text-indigo-600 hover:underline text-[11px] font-semibold block">
                     +1 (571) 706-2446
                   </a>
                   <p className="text-[10px] text-slate-500 pt-0.5">Mon - Fri • 8am - 8pm EST</p>
@@ -227,7 +227,7 @@ export const ContactView: React.FC = () => {
                     <span>LinkedIn</span>
                   </a>
                   <a
-                    href="https://www.facebook.com/people/Locora-AI/61593321283379/"
+                    href="https://www.facebook.com/profile.php?id=61593321283379"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:text-[#1877f2] hover:border-[#1877f2]/30 hover:bg-slate-50 transition-all shadow-2xs"

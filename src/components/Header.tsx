@@ -176,7 +176,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <span>Billing & Subscription</span>
                 </button>
 
-                {(user.role === 'admin' || user.role === 'owner' || user.email === 'imtiazbaloch3322@gmail.com' || user.email === 'support@locoraai.com') && (
+                {(user.role === 'admin' || user.role === 'owner') && (
                   <button
                     type="button"
                     onClick={() => {

@@ -48,17 +48,13 @@
   --color-locora-gold: #f5b800;
   --color-locora-light: #e5e7eb;
 
-  /* Locora brand colors */
-  --color-emerald-50: #ecfdf5;
-  --color-emerald-100: #d1fae5;
-  --color-emerald-200: #a7f3d0;
-  --color-emerald-300: #6ee7b7;
-  --color-emerald-400: #34d399;
-  --color-emerald-500: #129a72;
-  --color-emerald-600: #0b3d2e;
-  --color-emerald-700: #082d22;
-  --color-emerald-800: #06221a;
-  --color-emerald-900: #041711;
+  /*
+   * EMERALD SCALE: intentionally NOT remapped.
+   * The emerald 50-900 scale uses exact Tailwind defaults (bright emerald family,
+   * emerald-600 = #059669) so there is ONE emerald across the public site.
+   * Dark greens must NEVER come from the emerald scale — use the explicit
+   * --color-locora-dark (#0b3d2e) token or its hex instead.
+   */
   --color-gold-50: #fffbeb;
   --color-gold-100: #fef3c7;
   --color-gold-200: #fde68a;
@@ -155,7 +151,8 @@
 
 @layer base {
   html {
-    font-size: 17.5px;
+    /* Standard 16px root — Tailwind's rem scale is honest at this size. */
+    font-size: 16px;
     width: 100%;
     max-width: 100vw;
     overflow-x: clip;
@@ -223,23 +220,10 @@
   }
 }
 
-/* Global utility overrides for high legibility of small text, spans, labels, and body text */
+/* Global utilities — text sizes intentionally use Tailwind's honest scale
+   (text-xs = 0.75rem/12px, text-sm = 0.875rem/14px, text-base = 1rem/16px).
+   Do NOT re-add global text-size inflation overrides here. */
 @layer utilities {
-  .text-xs {
-    font-size: 0.825rem !important; /* ~14.5px */
-    line-height: 1.25rem !important;
-  }
-
-  .text-sm {
-    font-size: 0.95rem !important; /* ~16.6px */
-    line-height: 1.4rem !important;
-  }
-
-  .text-base {
-    font-size: 1.05rem !important; /* ~18.4px */
-    line-height: 1.6rem !important;
-  }
-
   /* Explicit aspect ratios to eliminate layout shifts */
   .aspect-banner {
     aspect-ratio: 16 / 9;

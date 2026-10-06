@@ -24,7 +24,6 @@ import {
   Smartphone,
   Gauge,
   Lock,
-  Star,
   Layers,
   HelpCircle,
   Eye,
@@ -220,8 +219,12 @@ export const CheckupView: React.FC = () => {
     }
   };
 
+  // Real mobile-viewport result from the 40-point scan (point #25: "Mobile Responsive Viewport Tag").
+  // The scan data provides no actual star rating, so none is displayed.
+  const viewportCheckPass = auditResult?.points.find((p) => p.id === 25)?.status === 'pass';
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-emerald-600 selection:text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-[#059669] selection:text-white">
       {/* 01 — HERO & FORM SECTION */}
       <section className="relative bg-gradient-to-br from-[#022c22] via-[#044a36] to-[#011a13] text-white pt-16 pb-20 px-6 sm:px-12 shadow-xl overflow-hidden">
         {/* Soft Ambient Glows */}
@@ -252,7 +255,7 @@ export const CheckupView: React.FC = () => {
                 {/* Business Name */}
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-slate-700">
-                    Business Name <span className="text-emerald-600">*</span>
+                    Business Name <span className="text-[#059669]">*</span>
                   </label>
                   <div className="relative">
                     <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -274,7 +277,7 @@ export const CheckupView: React.FC = () => {
                 {/* Website */}
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-slate-700">
-                    Website URL <span className="text-emerald-600">*</span>
+                    Website URL <span className="text-[#059669]">*</span>
                   </label>
                   <div className="relative">
                     <Globe className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -369,13 +372,13 @@ export const CheckupView: React.FC = () => {
 
               <div className="flex flex-wrap items-center justify-center gap-4 text-slate-500 text-xs pt-2">
                 <span className="flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Free instant scan
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" /> Free instant scan
                 </span>
                 <span className="flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> No credit card required
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" /> No credit card required
                 </span>
                 <span className="flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> 100% Real Google signals
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" /> 100% Real Google signals
                 </span>
               </div>
             </form>
@@ -389,15 +392,15 @@ export const CheckupView: React.FC = () => {
           {/* Header Banner */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold font-mono">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-[#047857] text-xs font-extrabold tabular-nums">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" />
                 <span>Live Website Scan Complete</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
                 {businessName || 'Your Business'} Visibility Summary
               </h2>
               <p className="text-xs sm:text-sm text-slate-500">
-                Audited Website: <span className="font-mono font-medium text-slate-800">{auditResult.cleanDomain}</span>
+                Audited Website: <span className="font-semibold text-slate-800">{auditResult.cleanDomain}</span>
                 {locationCity && <> • Target Location: <span className="font-semibold text-slate-800">{locationCity}</span></>}
               </p>
             </div>
@@ -405,8 +408,8 @@ export const CheckupView: React.FC = () => {
             {/* Overall Score Badge */}
             <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 shrink-0">
               <div className="text-center">
-                <div className={`text-4xl sm:text-5xl font-extrabold font-mono ${
-                  auditResult.overallScore >= 75 ? 'text-emerald-600' : auditResult.overallScore >= 50 ? 'text-amber-600' : 'text-rose-600'
+                <div className={`text-4xl sm:text-5xl font-extrabold tabular-nums ${
+                  auditResult.overallScore >= 75 ? 'text-[#059669]' : auditResult.overallScore >= 50 ? 'text-amber-600' : 'text-rose-600'
                 }`}>
                   {auditResult.overallScore}
                 </div>
@@ -417,7 +420,7 @@ export const CheckupView: React.FC = () => {
 
               <div className="border-l border-slate-200 pl-4 space-y-1 text-xs text-slate-600">
                 <div>
-                  <span className="font-bold text-emerald-600">{auditResult.passedCount}</span> Passed
+                  <span className="font-bold text-[#059669]">{auditResult.passedCount}</span> Passed
                 </div>
                 <div>
                   <span className="font-bold text-amber-600">{auditResult.warningCount}</span> Opportunities
@@ -435,10 +438,10 @@ export const CheckupView: React.FC = () => {
             <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-emerald-600" />
+                  <Eye className="w-4 h-4 text-[#059669]" />
                   <h3 className="text-sm font-bold text-slate-900 font-heading">Google Search Snippet Preview</h3>
                 </div>
-                <span className="text-[10px] font-mono bg-slate-100 text-slate-600 px-2 py-0.5 rounded">Desktop / Mobile</span>
+                <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">Desktop / Mobile</span>
               </div>
 
               {/* Simulated Google Search Result */}
@@ -459,7 +462,7 @@ export const CheckupView: React.FC = () => {
               <div className="text-xs text-slate-500 space-y-1 pt-1">
                 <p className="flex items-center gap-1.5">
                   {auditResult.crawlSummary.title ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#059669] shrink-0" />
                   ) : (
                     <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                   )}
@@ -467,7 +470,7 @@ export const CheckupView: React.FC = () => {
                 </p>
                 <p className="flex items-center gap-1.5">
                   {auditResult.crawlSummary.description ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#059669] shrink-0" />
                   ) : (
                     <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                   )}
@@ -480,10 +483,10 @@ export const CheckupView: React.FC = () => {
             <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-emerald-600" />
+                  <MapPin className="w-4 h-4 text-[#059669]" />
                   <h3 className="text-sm font-bold text-slate-900 font-heading">Google Maps 3-Pack Presence</h3>
                 </div>
-                <span className="text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Local Intent</span>
+                <span className="text-[10px] bg-emerald-100 text-[#047857] px-2 py-0.5 rounded font-bold">Local Intent</span>
               </div>
 
               <div className="p-4 bg-emerald-50/40 rounded-2xl border border-emerald-200 space-y-2">
@@ -492,27 +495,23 @@ export const CheckupView: React.FC = () => {
                     <h4 className="text-sm font-bold text-slate-900">{businessName}</h4>
                     <p className="text-xs text-slate-500">{category} {locationCity && `• ${locationCity}`}</p>
                   </div>
-                  <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-900 text-[11px] font-bold rounded-md">
-                    <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
-                    <span>4.8</span>
-                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs pt-1 text-slate-600">
                   <div className="flex items-center gap-1.5">
-                    <ShieldCheck className={`w-3.5 h-3.5 ${auditResult.crawlSummary.sslActive ? 'text-emerald-600' : 'text-rose-600'}`} />
+                    <ShieldCheck className={`w-3.5 h-3.5 ${auditResult.crawlSummary.sslActive ? 'text-[#059669]' : 'text-rose-600'}`} />
                     <span>SSL Secure: {auditResult.crawlSummary.sslActive ? 'Yes' : 'No'}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Smartphone className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Mobile Ready: Pass</span>
+                    <Smartphone className={`w-3.5 h-3.5 ${viewportCheckPass ? 'text-[#059669]' : 'text-rose-600'}`} />
+                    <span>Mobile Viewport: {viewportCheckPass ? 'Pass' : 'Missing'}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Layers className={`w-3.5 h-3.5 ${auditResult.crawlSummary.hasSchema ? 'text-emerald-600' : 'text-amber-600'}`} />
+                    <Layers className={`w-3.5 h-3.5 ${auditResult.crawlSummary.hasSchema ? 'text-[#059669]' : 'text-amber-600'}`} />
                     <span>Local Schema: {auditResult.crawlSummary.hasSchema ? 'Detected' : 'Missing'}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Gauge className="w-3.5 h-3.5 text-emerald-600" />
+                    <Gauge className="w-3.5 h-3.5 text-[#059669]" />
                     <span>Latency: {auditResult.crawlSummary.latencyMs}ms</span>
                   </div>
                 </div>
@@ -536,8 +535,8 @@ export const CheckupView: React.FC = () => {
                   <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block truncate">
                     {pillar.label}
                   </span>
-                  <span className={`text-2xl font-extrabold font-mono ${
-                    pillar.score >= 75 ? 'text-emerald-600' : pillar.score >= 50 ? 'text-amber-600' : 'text-rose-600'
+                  <span className={`text-2xl font-extrabold tabular-nums ${
+                    pillar.score >= 75 ? 'text-[#059669]' : pillar.score >= 50 ? 'text-amber-600' : 'text-rose-600'
                   }`}>
                     {pillar.score}%
                   </span>
@@ -572,7 +571,7 @@ export const CheckupView: React.FC = () => {
                           </span>
                         </div>
                         <p className="text-slate-600">{item.diagnostic}</p>
-                        <p className="text-emerald-700 font-medium">Recommendation: {item.remediation}</p>
+                        <p className="text-[#047857] font-medium">Recommendation: {item.remediation}</p>
                       </div>
                     </div>
                   ))}
@@ -583,7 +582,7 @@ export const CheckupView: React.FC = () => {
           {/* 03 — UNLOCK YOUR FULL REPORT CTA CARD */}
           <div className="bg-gradient-to-br from-[#022c22] via-[#044a36] to-[#011a13] rounded-3xl p-8 sm:p-10 text-white shadow-2xl space-y-6 text-center border border-emerald-500/30">
             <div className="max-w-2xl mx-auto space-y-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-[#6ee7b7] text-xs font-bold font-mono">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-[#6ee7b7] text-xs font-extrabold">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Complete 40-Point Diagnostic Ready</span>
               </div>
@@ -628,7 +627,7 @@ export const CheckupView: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold">
               <MapPin className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-slate-900 font-heading">Google Maps 3-Pack</h3>
@@ -638,7 +637,7 @@ export const CheckupView: React.FC = () => {
           </div>
 
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold">
               <Sparkles className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-slate-900 font-heading">AI Search Engine Discovery</h3>
@@ -648,7 +647,7 @@ export const CheckupView: React.FC = () => {
           </div>
 
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold text-slate-900 font-heading">Fast Deterministic Remediation</h3>
@@ -670,7 +669,7 @@ export const CheckupView: React.FC = () => {
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
             <h3 className="text-sm font-bold text-slate-900 font-heading">Can a missed phone call really cost me money?</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Since October 1, 2026, Google&apos;s Local Services Ads treats a missed business-hours call as a billable lead when the caller waits more than 20 seconds. A phone that rings out doesn&apos;t just lose the job anymore — it can also cost you the lead fee. <a href="https://ppc.land/google-lsa-advertisers-face-missed-call-charges-from-october-1/" target="_blank" rel="noopener noreferrer" className="text-emerald-600 underline">Source</a>
+              Since October 1, 2026, Google&apos;s Local Services Ads treats a missed business-hours call as a billable lead when the caller waits more than 20 seconds. A phone that rings out doesn&apos;t just lose the job anymore — it can also cost you the lead fee. <a href="https://ppc.land/google-lsa-advertisers-face-missed-call-charges-from-october-1/" target="_blank" rel="noopener noreferrer" className="text-[#059669] underline">Source</a>
             </p>
           </div>
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">

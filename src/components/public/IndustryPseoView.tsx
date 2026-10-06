@@ -1450,7 +1450,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
             href="/pricing"
             onClick={(e) => {
               e.preventDefault();
-              setActiveTab('pricing');
+              setActiveTab('pricing_public');
               window.history.pushState({}, '', '/pricing');
             }}
             className="hover:text-emerald-700 hover:underline font-medium"

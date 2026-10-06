@@ -6,12 +6,81 @@ import { trackPricingViewed } from '../../lib/analytics';
 import {
   Zap,
   CheckCircle2,
-  ShieldCheck,
   ArrowRight,
-  Sparkles,
-  Building,
-  Users,
+  ChevronDown,
 } from 'lucide-react';
+
+const FAQ_ITEMS: { q: string; a: React.ReactNode }[] = [
+  {
+    q: 'How much do I save with annual billing?',
+    a: 'Pro annual is $249/yr instead of $348 (12 × $29) — about 28% off. Agency annual is $790/yr instead of $1,188 (12 × $99) — about 33% off. Free stays $0 forever.',
+  },
+  {
+    q: 'Can I cancel my subscription anytime?',
+    a: 'Yes. Cancel from Account Settings → Billing in your dashboard — no calls or approvals needed. Your plan won’t renew, and you keep full access until the end of your current billing period.',
+  },
+  {
+    q: 'What’s the refund policy?',
+    a: (
+      <>
+        Purchases are final once AI credits have been spent. If you subscribed but never used the platform, you can request a manual billing
+        review within 14 days. Duplicate charges, verified service outages, and fraudulent charges are always refunded. Subscriptions are
+        billed securely through Whop.
+      </>
+    ),
+  },
+  {
+    q: 'Do I need a credit card to start free?',
+    a: 'No. The Free plan is free forever and never asks for a credit card — run your AI Business Checkup and diagnosis to start.',
+  },
+];
+
+const PricingFaqSection: React.FC<{ onOpenRefund: () => void }> = ({ onOpenRefund }) => {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  return (
+    <div className="pt-8 space-y-6">
+      {/* Refund / cancellation note */}
+      <div className="max-w-3xl mx-auto bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex items-start gap-3 text-left">
+        <CheckCircle2 className="w-5 h-5 text-[#059669] flex-shrink-0 mt-0.5" />
+        <div className="text-xs text-slate-700 leading-relaxed">
+          <span className="font-bold text-slate-900">Cancel anytime — no long-term lock-in.</span>{' '}
+          Purchases are final once AI credits are spent; unused plans are eligible for a manual billing review within 14 days.
+          {' '}<button
+            onClick={onOpenRefund}
+            className="text-[#047857] font-bold underline hover:text-[#059669] cursor-pointer"
+          >
+            Read the full Refund Policy
+          </button>
+        </div>
+      </div>
+
+      {/* Compact FAQ */}
+      <div className="max-w-3xl mx-auto space-y-3">
+        <h2 className="text-xl sm:text-2xl font-bold font-heading text-slate-900 text-center">Pricing Questions</h2>
+        <div className="space-y-2">
+          {FAQ_ITEMS.map((item, idx) => {
+            const open = openIndex === idx;
+            return (
+              <div key={idx} className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+                <button
+                  onClick={() => setOpenIndex(open ? null : idx)}
+                  className="w-full flex items-center justify-between gap-3 px-5 py-3.5 text-left cursor-pointer"
+                >
+                  <span className="text-sm font-bold text-slate-900">{item.q}</span>
+                  <ChevronDown className={`w-4 h-4 text-[#059669] flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+                </button>
+                {open && (
+                  <div className="px-5 pb-4 text-xs text-slate-600 leading-relaxed">{item.a}</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const PricingPublicView: React.FC = () => {
   const { setCheckoutModalPlan, setActiveTab, user } = useApp();
@@ -68,7 +137,7 @@ export const PricingPublicView: React.FC = () => {
               Annual Billing
             </span>
             <span className="px-2 py-0.5 bg-emerald-100 text-[#059669] border border-emerald-200 text-[10px] font-extrabold rounded-full">
-              SAVE UP TO 28%
+              SAVE UP TO 33%
             </span>
           </div>
         </div>
@@ -211,7 +280,7 @@ export const PricingPublicView: React.FC = () => {
               onClick={() => handleSelectPlan('pro')}
               className="w-full py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
             >
-              <span>Upgrade to Pro ($29/mo)</span>
+              <span>{billingCycle === 'yearly' ? 'Upgrade to Pro ($249/yr)' : 'Upgrade to Pro ($29/mo)'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -220,7 +289,7 @@ export const PricingPublicView: React.FC = () => {
         {/* AGENCY PLAN ($99) */}
         <div className="bg-white border border-slate-200 rounded-3xl p-8 space-y-6 flex flex-col justify-between hover:shadow-md transition-all">
           <div className="space-y-4">
-            <div className="inline-block px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold font-heading">
+            <div className="inline-block px-3 py-1 bg-locora-gold/15 border border-locora-gold/40 text-amber-900 rounded-lg text-xs font-bold font-heading">
               Agency Elite
             </div>
             <h3 className="text-2xl font-bold font-heading text-slate-900">AI Client Manager</h3>
@@ -238,8 +307,8 @@ export const PricingPublicView: React.FC = () => {
             </div>
 
             <div className="space-y-2.5 pt-4 text-xs font-sans">
-              <div className="flex items-center gap-2 text-indigo-950 font-semibold">
-                <CheckCircle2 className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+              <div className="flex items-center gap-2 text-slate-900 font-semibold">
+                <CheckCircle2 className="w-4 h-4 text-[#059669] flex-shrink-0" />
                 <span>Everything in Pro for 10 Businesses</span>
               </div>
               <div className="flex items-center gap-2 text-slate-700">
@@ -282,7 +351,7 @@ export const PricingPublicView: React.FC = () => {
               onClick={() => handleSelectPlan('agency')}
               className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-all cursor-pointer font-sans flex items-center justify-center gap-2"
             >
-              <span>Get Agency Client Manager ($99/mo)</span>
+              <span>{billingCycle === 'yearly' ? 'Get Agency Client Manager ($790/yr)' : 'Get Agency Client Manager ($99/mo)'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -298,6 +367,9 @@ export const PricingPublicView: React.FC = () => {
       <div className="pt-8">
         <OneTimeOffersSection />
       </div>
+
+      {/* FAQ + refund note */}
+      <PricingFaqSection onOpenRefund={() => setActiveTab('refund')} />
     </div>
   );
 };
