@@ -30,8 +30,7 @@ import {
   Compass,
   Linkedin,
   Facebook,
-  ChevronsLeft,
-  ChevronsRight,
+  PanelLeft,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -48,16 +47,18 @@ interface NavItem {
   requiredPlan?: 'pro' | 'agency';
 }
 
-const SIDEBAR_COLLAPSED_KEY = 'locora.sidebarCollapsed';
+const SIDEBAR_COLLAPSED_KEY = 'locora.sidebarCollapsed.v2';
 
 export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileClose }) => {
   const { activeTab, setActiveTab, activeBusiness, businessProfile, user } = useApp();
 
+  // Default: collapsed icon rail (fresh key so the new default applies to everyone)
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
-      return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1';
+      const v = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+      return v === null ? true : v === '1';
     } catch {
-      return false;
+      return true;
     }
   });
   const [hovered, setHovered] = useState(false);
@@ -127,8 +128,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
 
   const renderNav = (expanded: boolean) => (
     <div className="flex flex-col h-full bg-white border-r border-slate-200 select-none font-sans text-slate-800 overflow-hidden">
-      {/* Brand Header + Collapse Toggle */}
-      <div className={`p-4 border-b border-slate-200 flex items-center ${expanded ? 'justify-between' : 'flex-col gap-2 justify-center'}`}>
+      {/* Sidebar Menu Toggle + Brand — toggle is a prominent standalone button */}
+      <div className={`border-b border-slate-200 ${expanded ? 'p-4 flex items-center justify-between' : 'py-4 flex flex-col items-center gap-3'}`}>
+        <button
+          onClick={toggleCollapsed}
+          className="hidden md:flex p-2.5 rounded-xl bg-slate-100 hover:bg-emerald-100 text-slate-700 hover:text-emerald-700 border border-slate-200 hover:border-emerald-300 transition-colors cursor-pointer"
+          title={collapsed ? 'Open sidebar' : 'Collapse sidebar'}
+          aria-label={collapsed ? 'Open sidebar' : 'Collapse sidebar'}
+        >
+          <PanelLeft className="w-5 h-5" />
+        </button>
         <div
           role="button"
           tabIndex={0}
@@ -144,25 +153,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
             <span className="text-sm font-semibold text-slate-900 tracking-tight whitespace-nowrap">Locora</span>
           )}
         </div>
-
-        <div className="flex items-center gap-1">
+        {onMobileClose && (
           <button
-            onClick={toggleCollapsed}
-            className="hidden md:flex p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            onClick={onMobileClose}
+            className="md:hidden p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
           >
-            {collapsed ? <ChevronsRight className="w-4 h-4" /> : <ChevronsLeft className="w-4 h-4" />}
+            <X className="w-5 h-5" />
           </button>
-          {onMobileClose && (
-            <button
-              onClick={onMobileClose}
-              className="md:hidden p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Business Workspace Badge with Subdomain Indicator */}
