@@ -128,26 +128,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
 
   const renderNav = (expanded: boolean) => (
     <div className="flex flex-col h-full bg-white border-r border-slate-200 select-none font-sans text-slate-800 overflow-hidden">
-      {/* Sidebar Menu Toggle + Brand — toggle is a prominent standalone button */}
-      <div className={`border-b border-slate-200 ${expanded ? 'p-4 flex items-center justify-between' : 'py-4 flex flex-col items-center gap-3'}`}>
-        <button
-          onClick={toggleCollapsed}
-          className="hidden md:flex p-2.5 rounded-xl bg-slate-100 hover:bg-emerald-100 text-slate-700 hover:text-emerald-700 border border-slate-200 hover:border-emerald-300 transition-colors cursor-pointer"
-          title={collapsed ? 'Open sidebar' : 'Collapse sidebar'}
-          aria-label={collapsed ? 'Open sidebar' : 'Collapse sidebar'}
-        >
-          <PanelLeft className="w-5 h-5" />
-        </button>
+      {/* Brand Header — logo only, toggle lives on the sidebar edge */}
+      <div className="p-4 border-b border-slate-200 flex items-center justify-between">
         <div
           role="button"
           tabIndex={0}
           onClick={() => handleNavClick('dashboard')}
           onKeyDown={(e) => e.key === 'Enter' && handleNavClick('dashboard')}
-          className="flex items-center gap-2.5 text-left group cursor-pointer"
+          className="flex items-center gap-2 text-left group cursor-pointer mx-auto"
           title="Dashboard"
         >
           <LocoraLogo
-            className="w-10 h-10 flex-shrink-0 group-hover:scale-105 transition-transform"
+            className="w-8 h-8 flex-shrink-0 group-hover:scale-105 transition-transform"
           />
           {expanded && (
             <span className="text-sm font-semibold text-slate-900 tracking-tight whitespace-nowrap">Locora</span>
@@ -468,7 +460,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
     <>
       {/* Desktop Sidebar — collapsible icon rail, expands on hover as an overlay */}
       <aside
-        className={`hidden md:block h-screen sticky top-0 z-40 flex-shrink-0 transition-[width] duration-200 ease-in-out ${
+        className={`hidden md:block h-screen sticky top-0 z-40 flex-shrink-0 relative transition-[width] duration-200 ease-in-out ${
           collapsed ? 'w-[68px]' : 'w-64'
         }`}
         onMouseEnter={() => {
@@ -476,6 +468,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
         }}
         onMouseLeave={() => setHovered(false)}
       >
+        {/* Toggle handle on the sidebar separator line */}
+        <button
+          onClick={toggleCollapsed}
+          className="absolute top-6 -right-3.5 z-[60] w-7 h-7 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-slate-500 hover:text-emerald-700 hover:border-emerald-300 transition-colors cursor-pointer"
+          title={collapsed ? 'Open sidebar' : 'Collapse sidebar'}
+          aria-label={collapsed ? 'Open sidebar' : 'Collapse sidebar'}
+        >
+          <PanelLeft className="w-4 h-4" />
+        </button>
         <div
           className={
             hoverOverlay
