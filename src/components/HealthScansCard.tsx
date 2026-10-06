@@ -116,7 +116,7 @@ export const HealthScansCard: React.FC<{ businessId: string; businessName: strin
       ) : (
         <div className="space-y-3">
           <div className="flex items-center gap-4 bg-slate-50 rounded-xl p-4">
-            <div className={`text-4xl font-extrabold ${scoreColor(latest.score)}`}>{latest.score}</div>
+            <div className={`text-4xl font-bold ${scoreColor(latest.score)}`}>{latest.score}</div>
             <div className="text-sm">
               <p className="font-bold text-slate-900">Latest scan</p>
               <p className="text-slate-500">
@@ -136,7 +136,7 @@ export const HealthScansCard: React.FC<{ businessId: string; businessName: strin
                 className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-3 text-sm">
-                  <span className={`font-extrabold ${scoreColor(scan.score)}`}>{scan.score}</span>
+                  <span className={`font-bold ${scoreColor(scan.score)}`}>{scan.score}</span>
                   <span className="text-slate-600">{new Date(scan.ranAt).toLocaleDateString()}</span>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-semibold">
                     {scan.triggeredBy === 'scheduled' ? 'Auto' : 'Manual'}

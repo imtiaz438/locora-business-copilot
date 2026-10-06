@@ -266,11 +266,11 @@ export const GrowthCommandCenter: React.FC = () => {
   if (!hasActiveBusiness) {
     return (
       <div className="p-4 sm:p-6 lg:p-8 max-w-3xl mx-auto font-sans text-slate-900 pb-16">
-        <div className="bg-white border border-slate-200/90 rounded-3xl p-8 sm:p-12 text-center shadow-xs">
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-8 sm:p-12 text-center shadow-xs">
           <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-[#059669] flex items-center justify-center mx-auto mb-5 border border-emerald-100">
             <Building2 className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading mb-3">
+          <h2 className="text-2xl sm:text-3xl font-semibold text-slate-900 tracking-tight font-heading mb-3">
             Create your first Business
           </h2>
           <p className="text-sm sm:text-base text-slate-600 max-w-lg mx-auto leading-relaxed mb-8">
@@ -280,7 +280,7 @@ export const GrowthCommandCenter: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsAddBusinessModalOpen(true)}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <Building2 className="w-4 h-4" />
               <span>+ Create Business</span>
@@ -302,103 +302,67 @@ export const GrowthCommandCenter: React.FC = () => {
       )}
 
       {/* 1. UNIFIED WORKFLOW STATUS BAR: DIAGNOSE → PRIORITIZE → ACT → MEASURE */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-2xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-heading">
-              AI Growth Workflow
-            </span>
-            <span className="text-[11px] font-semibold text-slate-400 hidden sm:inline">•</span>
-            <span className="text-xs font-semibold text-slate-600">
-              Active Business: <strong className="text-slate-900">{businessName || 'Business Workspace'}</strong> {businessCity ? `(${businessCity}${businessState ? `, ${businessState}` : ''})` : ''}
-            </span>
-          </div>
-
-          {/* 4 Steps Indicator */}
-          <div className="flex items-center gap-2 text-xs font-semibold overflow-x-auto no-scrollbar">
-            <div className="flex items-center gap-1 text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 shrink-0">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span>1. Diagnose</span>
-            </div>
-            <ArrowRight className="w-3 h-3 text-slate-300 shrink-0" />
-            <div className="flex items-center gap-1 text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 shrink-0">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span>2. Prioritize</span>
-            </div>
-            <ArrowRight className="w-3 h-3 text-slate-300 shrink-0" />
-            <div className="flex items-center gap-1 text-[#059669] font-bold bg-white px-2.5 py-1 rounded-lg border border-[#059669] shadow-2xs shrink-0">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-              <span>3. Act (Fix It)</span>
-            </div>
-            <ArrowRight className="w-3 h-3 text-slate-300 shrink-0" />
-            <div className="flex items-center gap-1 text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg shrink-0">
-              <span>4. Measure</span>
-            </div>
-          </div>
+      <div className="bg-white border border-slate-200 rounded-xl px-4 py-2.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+          <span className="text-sm font-semibold text-slate-900">
+            {businessName || 'Business Workspace'}
+            {businessCity && (
+              <span className="font-normal text-slate-500"> · {businessCity}{businessState ? `, ${businessState}` : ''}</span>
+            )}
+          </span>
+          <span className="text-xs text-slate-500 whitespace-nowrap">
+            Diagnose <ChevronRight className="w-3 h-3 inline text-slate-300" /> Prioritize <ChevronRight className="w-3 h-3 inline text-slate-300" /> Act <ChevronRight className="w-3 h-3 inline text-slate-300" /> Measure
+          </span>
         </div>
       </div>
 
-      {/* 1.5 DIRECT GOOGLE BUSINESS PROFILE SYNC & SETUP BANNER */}
-      <div className="bg-gradient-to-r from-emerald-900 to-slate-900 text-white rounded-3xl p-5 sm:p-6 shadow-md border border-emerald-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
-              Live Google Sync Operations
-            </span>
-            <span className="text-xs text-slate-300">
-              {isGoogleConnected ? 'Google Business Linked' : 'Connect Your Google Business Profile'}
-            </span>
-          </div>
-          <h3 className="text-base sm:text-lg font-bold font-heading text-white">
+      {/* 1.5 DIRECT GOOGLE BUSINESS PROFILE SYNC & SETUP */}
+      <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="space-y-1 max-w-2xl">
+          <h3 className="text-base font-semibold text-slate-900">
             {isGoogleConnected
-              ? `${businessName || 'Your business'} is synchronized with Google Maps`
-              : 'Sync directly from Google or setup your custom business profile'}
+              ? `${businessName || 'Your business'} is synced with Google`
+              : 'Connect your Google Business Profile'}
           </h3>
-          <p className="text-xs text-slate-300 max-w-xl">
-            Pull verified business name, category, customer reviews, rating, and address directly into your database. Clean dashboard with zero dummy data.
+          <p className="text-sm text-slate-600">
+            {isGoogleConnected
+              ? 'Pull verified reviews, ratings, and business details directly into your dashboard.'
+              : 'Pull your verified business name, reviews, and rating directly into your dashboard.'}
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto">
-          <button
-            onClick={() => setIsGbpSyncModalOpen(true)}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
-          >
-            <Globe className="w-4 h-4" />
-            <span>{isGoogleConnected ? 'Re-Sync from Google' : 'Sync Google Profile'}</span>
-          </button>
-        </div>
+        <button
+          onClick={() => setIsGbpSyncModalOpen(true)}
+          className="shrink-0 w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <Globe className="w-4 h-4" />
+          <span>{isGoogleConnected ? 'Re-sync from Google' : 'Sync Google Profile'}</span>
+        </button>
       </div>
 
       {/* LOCORA DIRECTORY PRESENCE & INBOUND LEADS CARD */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-xs space-y-5">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 shadow-xs space-y-5">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-1.5 max-w-2xl">
             <div className="flex items-center gap-2 flex-wrap">
               {activeBusiness?.isPublishedInDirectory ? (
-                <>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    Locora Certified Directory
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    Verified Public Listing
-                  </span>
-                </>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Locora Certified Directory
+                </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
                   Not Published
                 </span>
               )}
               {(dirAnalytics?.totalLeads ?? 0) > 0 && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-500 text-white shadow-2xs">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-600 text-white">
                   <Zap className="w-3.5 h-3.5" />
-                  {dirAnalytics.totalLeads} Live Inbound Lead{dirAnalytics.totalLeads > 1 ? 's' : ''} Received
+                  {dirAnalytics.totalLeads} inbound lead{dirAnalytics.totalLeads > 1 ? 's' : ''}
                 </span>
               )}
             </div>
-            <h3 className="text-base sm:text-lg font-bold font-heading text-slate-900">
+            <h3 className="text-base sm:text-lg font-semibold text-slate-900">
               {activeBusiness?.isPublishedInDirectory
                 ? `${businessName || 'Your Business'} is Live on Locora Local Directory`
                 : 'Your directory listing isn\u2019t live yet'}
@@ -458,27 +422,27 @@ export const GrowthCommandCenter: React.FC = () => {
         {/* Live Metrics Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100">
           <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5">
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Inbound Quotes</div>
-            <div className="text-xl font-black text-slate-900 mt-1 flex items-center gap-1.5">
+            <div className="text-[11px] font-medium text-slate-500">Inbound Quotes</div>
+            <div className="text-xl font-bold text-slate-900 mt-1 flex items-center gap-1.5">
               <span>{dirAnalytics?.totalLeads ?? 0}</span>
               <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">Real-Time</span>
             </div>
           </div>
           <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5">
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Profile Views</div>
-            <div className="text-xl font-black text-slate-900 mt-1">
+            <div className="text-[11px] font-medium text-slate-500">Profile Views</div>
+            <div className="text-xl font-bold text-slate-900 mt-1">
               {dirAnalytics?.profileViews ?? 0}
             </div>
           </div>
           <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5">
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Direct Phone Calls</div>
-            <div className="text-xl font-black text-slate-900 mt-1">
+            <div className="text-[11px] font-medium text-slate-500">Direct Phone Calls</div>
+            <div className="text-xl font-bold text-slate-900 mt-1">
               {dirAnalytics?.phoneClicks ?? 0}
             </div>
           </div>
           <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5">
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Conversion Rate</div>
-            <div className="text-xl font-black text-emerald-700 mt-1">
+            <div className="text-[11px] font-medium text-slate-500">Conversion Rate</div>
+            <div className="text-xl font-bold text-emerald-700 mt-1">
               {dirAnalytics?.leadConversionRate ? `${dirAnalytics.leadConversionRate}%` : '0%'}
             </div>
           </div>
@@ -557,55 +521,47 @@ export const GrowthCommandCenter: React.FC = () => {
       </div>
 
       {/* 1.8 AI BUSINESS BRAIN • VERIFIED STRATEGIC DOSSIER */}
-      <section className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 text-white border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        
-        {/* Header with Live Verified Badge */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-800/80 relative z-10">
+      <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-100">
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 font-mono">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                AI Business Brain • Ground Truth
-              </span>
-              <DataProvenanceBadge
-                type="CALCULATED"
-                customText="✓ Grounded in Verified DB Record"
-                size="xs"
-              />
-            </div>
-            <h2 className="text-xl sm:text-2xl font-black font-heading text-white tracking-tight flex items-center gap-2.5">
-              <Brain className="w-6 h-6 text-emerald-400 shrink-0" />
+            <DataProvenanceBadge
+              type="CALCULATED"
+              customText="✓ Grounded in Verified DB Record"
+              size="xs"
+            />
+            <h2 className="text-xl font-semibold text-slate-900 tracking-tight flex items-center gap-2.5">
+              <Brain className="w-6 h-6 text-[#059669] shrink-0" />
               <span>{businessName || 'Business'} Intelligence Dossier</span>
             </h2>
-            <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+            <p className="text-sm text-slate-600 max-w-2xl">
               Synthesized from verified web crawl, services taxonomy, and regional competitive parameters{businessCity ? ` in ${businessCity}` : ''}.
             </p>
           </div>
 
           {/* Quick Metrics from Brain */}
           <div className="flex items-center gap-3 shrink-0 flex-wrap sm:flex-nowrap">
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl px-4 py-3 text-center min-w-[110px]">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Health Score</span>
-              <span className="text-xl font-black text-emerald-400 font-heading">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-center min-w-[110px]">
+              <span className="text-[10px] font-semibold text-slate-500 block">Health Score</span>
+              <span className="text-xl font-bold text-[#059669]">
                 {brainScore !== null ? brainScore : '—'}
               </span>
-              <span className="text-[10px] text-slate-400 font-semibold block">
+              <span className="text-[10px] text-slate-400 font-medium block">
                 {brainScore !== null ? '/ 100' : 'No data yet'}
               </span>
             </div>
-            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl px-4 py-3 text-center min-w-[120px]">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">AI Readiness</span>
-              <span className="text-xl font-black text-emerald-300 font-heading">
+            <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-center min-w-[120px]">
+              <span className="text-[10px] font-semibold text-slate-500 block">AI Readiness</span>
+              <span className="text-xl font-bold text-[#059669]">
                 {brainReadiness !== null ? `${brainReadiness}%` : '—'}
               </span>
-              <span className="text-[10px] text-slate-400 font-semibold block">
+              <span className="text-[10px] text-slate-400 font-medium block">
                 {brainReadiness !== null ? 'Verified Depth' : 'Connect data'}
               </span>
             </div>
             <button
               onClick={() => handleAskLocora('What do you know about this business?')}
-              className="px-4 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 cursor-pointer font-sans shrink-0"
+              className="px-4 py-3 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-semibold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer shrink-0"
             >
               <Bot className="w-4 h-4" />
               <span>Consult Brain</span>
@@ -614,27 +570,27 @@ export const GrowthCommandCenter: React.FC = () => {
         </div>
 
         {/* Executive AI Synthesis Text */}
-        <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-2 relative z-10">
-          <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wide font-heading">
-            <Sparkles className="w-4 h-4 text-emerald-400" />
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-5 space-y-2">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+            <Sparkles className="w-4 h-4 text-[#059669]" />
             <span>Executive Strategic Synthesis</span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
+          <p className="text-sm text-slate-700 leading-relaxed">
             {brainSummary || (businessName
               ? `Connect your Google Business Profile and website to synthesize executive AI intelligence for ${businessName}.`
               : 'Connect your business channels to synthesize executive AI intelligence.')}
           </p>
-          
+
           {/* Verified Service Catalog Pills */}
           {verifiedServices.length > 0 && (
-            <div className="pt-3 border-t border-slate-800/80 flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Verified Services:</span>
+            <div className="pt-3 border-t border-slate-200 flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-semibold text-slate-500">Verified Services:</span>
               {verifiedServices.map((srv, idx) => (
                 <span
                   key={idx}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-sans"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200"
                 >
-                  <Check className="w-3 h-3 text-emerald-400" />
+                  <Check className="w-3 h-3 text-[#059669]" />
                   {srv}
                 </span>
               ))}
@@ -643,25 +599,25 @@ export const GrowthCommandCenter: React.FC = () => {
         </div>
 
         {/* Strategic SWOT Analysis Quadrants */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5">
           {/* Strengths */}
-          <div className="bg-slate-900/90 border border-emerald-500/30 rounded-2xl p-4 space-y-2.5">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400 font-heading">
+              <span className="text-[11px] font-semibold text-emerald-700">
                 Strengths
               </span>
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
             </div>
-            <ul className="space-y-1.5 text-xs text-slate-300 font-sans">
+            <ul className="space-y-1.5 text-xs text-slate-600">
               {(brainSwot?.strengths && brainSwot.strengths.length > 0) ? (
                 brainSwot.strengths.map((item, i) => (
                   <li key={i} className="flex items-start gap-1.5 leading-snug">
-                    <span className="text-emerald-400 shrink-0 font-bold">•</span>
+                    <span className="text-emerald-600 shrink-0 font-bold">•</span>
                     <span>{item}</span>
                   </li>
                 ))
               ) : (
-                <li className="text-slate-500 italic flex items-center gap-1.5">
+                <li className="text-slate-400 italic flex items-center gap-1.5">
                   <span>No data yet — connect data to analyze strengths</span>
                 </li>
               )}
@@ -669,23 +625,23 @@ export const GrowthCommandCenter: React.FC = () => {
           </div>
 
           {/* Weaknesses */}
-          <div className="bg-slate-900/90 border border-amber-500/30 rounded-2xl p-4 space-y-2.5">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-wider text-amber-400 font-heading">
+              <span className="text-[11px] font-semibold text-amber-700">
                 Gaps & Weaknesses
               </span>
-              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <span className="w-2 h-2 rounded-full bg-amber-500" />
             </div>
-            <ul className="space-y-1.5 text-xs text-slate-300 font-sans">
+            <ul className="space-y-1.5 text-xs text-slate-600">
               {(brainSwot?.weaknesses && brainSwot.weaknesses.length > 0) ? (
                 brainSwot.weaknesses.map((item, i) => (
                   <li key={i} className="flex items-start gap-1.5 leading-snug">
-                    <span className="text-amber-400 shrink-0 font-bold">•</span>
+                    <span className="text-amber-600 shrink-0 font-bold">•</span>
                     <span>{item}</span>
                   </li>
                 ))
               ) : (
-                <li className="text-slate-500 italic flex items-center gap-1.5">
+                <li className="text-slate-400 italic flex items-center gap-1.5">
                   <span>No data yet — connect channels to surface gaps</span>
                 </li>
               )}
@@ -693,23 +649,23 @@ export const GrowthCommandCenter: React.FC = () => {
           </div>
 
           {/* Opportunities */}
-          <div className="bg-slate-900/90 border border-sky-500/30 rounded-2xl p-4 space-y-2.5">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-wider text-sky-400 font-heading">
+              <span className="text-[11px] font-semibold text-sky-700">
                 High-ROI Opportunities
               </span>
-              <span className="w-2 h-2 rounded-full bg-sky-400" />
+              <span className="w-2 h-2 rounded-full bg-sky-500" />
             </div>
-            <ul className="space-y-1.5 text-xs text-slate-300 font-sans">
+            <ul className="space-y-1.5 text-xs text-slate-600">
               {(brainSwot?.opportunities && brainSwot.opportunities.length > 0) ? (
                 brainSwot.opportunities.map((item, i) => (
                   <li key={i} className="flex items-start gap-1.5 leading-snug">
-                    <span className="text-sky-400 shrink-0 font-bold">•</span>
+                    <span className="text-sky-600 shrink-0 font-bold">•</span>
                     <span>{item}</span>
                   </li>
                 ))
               ) : (
-                <li className="text-slate-500 italic flex items-center gap-1.5">
+                <li className="text-slate-400 italic flex items-center gap-1.5">
                   <span>No data yet — connect channels to discover opportunities</span>
                 </li>
               )}
@@ -717,23 +673,23 @@ export const GrowthCommandCenter: React.FC = () => {
           </div>
 
           {/* Threats */}
-          <div className="bg-slate-900/90 border border-rose-500/30 rounded-2xl p-4 space-y-2.5">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-wider text-rose-400 font-heading">
+              <span className="text-[11px] font-semibold text-rose-700">
                 Market Threats
               </span>
-              <span className="w-2 h-2 rounded-full bg-rose-400" />
+              <span className="w-2 h-2 rounded-full bg-rose-500" />
             </div>
-            <ul className="space-y-1.5 text-xs text-slate-300 font-sans">
+            <ul className="space-y-1.5 text-xs text-slate-600">
               {(brainSwot?.threats && brainSwot.threats.length > 0) ? (
                 brainSwot.threats.map((item, i) => (
                   <li key={i} className="flex items-start gap-1.5 leading-snug">
-                    <span className="text-rose-400 shrink-0 font-bold">•</span>
+                    <span className="text-rose-600 shrink-0 font-bold">•</span>
                     <span>{item}</span>
                   </li>
                 ))
               ) : (
-                <li className="text-slate-500 italic flex items-center gap-1.5">
+                <li className="text-slate-400 italic flex items-center gap-1.5">
                   <span>No data yet — add competitors to track market threats</span>
                 </li>
               )}
@@ -743,14 +699,14 @@ export const GrowthCommandCenter: React.FC = () => {
       </section>
 
       {/* 2. OVERALL GROWTH HEALTH SECTION */}
-      <section className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+      <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold font-heading">
               <Sparkles className="w-3.5 h-3.5 text-[#059669]" />
               <span>Today's Business Health & Priorities</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-semibold font-heading text-slate-900 tracking-tight">
               What needs attention today?
             </h1>
             <p className="text-sm text-slate-600 max-w-2xl leading-relaxed">
@@ -759,7 +715,7 @@ export const GrowthCommandCenter: React.FC = () => {
           </div>
 
           {/* Master Health Score Display */}
-          <div className="flex items-center gap-5 p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 text-white shadow-md shrink-0">
+          <div className="flex items-center gap-5 p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 text-white shadow-sm shrink-0">
             <div className="relative w-20 h-20 flex items-center justify-center">
               <svg className="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
                 <path
@@ -782,7 +738,7 @@ export const GrowthCommandCenter: React.FC = () => {
                 )}
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className={`text-xl font-black font-heading leading-none ${overallScore !== null ? 'text-white' : 'text-slate-500'}`}>
+                <span className={`text-xl font-bold font-heading leading-none ${overallScore !== null ? 'text-white' : 'text-slate-500'}`}>
                   {overallScore !== null ? overallScore : '—'}
                 </span>
                 <span className="text-[9px] text-slate-400 font-bold uppercase">/ 100</span>
@@ -790,7 +746,7 @@ export const GrowthCommandCenter: React.FC = () => {
             </div>
 
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-heading">
+              <span className="text-[10px] font-semibold text-slate-400">
                 Overall Growth Health
               </span>
               <p className="text-base font-bold font-heading text-white">
@@ -809,8 +765,8 @@ export const GrowthCommandCenter: React.FC = () => {
         {/* 4-Component Growth Health Scoring Breakdown */}
         <div className="space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 font-heading">
-              Evidence-Based Scoring Breakdown (4 Components)
+            <span className="text-xs font-semibold text-slate-500">
+              Scoring breakdown
             </span>
             <span className="text-xs text-slate-500 font-medium">
               Calculated dynamically from authentic business data
@@ -961,7 +917,7 @@ export const GrowthCommandCenter: React.FC = () => {
 
         {/* Priority Actions Grid or Verified Zero-Issue State */}
         {priorityActions.length === 0 ? (
-          <div className="bg-white border border-slate-200/90 rounded-3xl p-8 text-center space-y-3 shadow-sm">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-8 text-center space-y-3 shadow-sm">
             <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
               <ShieldCheck className="w-6 h-6 text-[#059669]" />
             </div>
@@ -1001,7 +957,7 @@ export const GrowthCommandCenter: React.FC = () => {
               return (
                 <div
                   key={action.id}
-                  className={`bg-white border rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col justify-between space-y-4 transition-all ${
+                  className={`bg-white border rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col justify-between space-y-4 transition-all ${
                     action.isFixed
                       ? 'border-emerald-300 bg-emerald-50/20'
                       : idx === 0
@@ -1014,7 +970,7 @@ export const GrowthCommandCenter: React.FC = () => {
                     <div className="flex items-center justify-between gap-1.5 flex-wrap">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span
-                          className={`text-[10px] font-extrabold uppercase tracking-wide px-2.5 py-0.5 rounded-full border ${cardTag.bg}`}
+                          className={`text-[10px] font-semibold uppercase tracking-wide px-2.5 py-0.5 rounded-full border ${cardTag.bg}`}
                         >
                           {cardTag.label}
                         </span>
@@ -1144,14 +1100,14 @@ export const GrowthCommandCenter: React.FC = () => {
     </section>
 
       {/* 4. ASK LOCORA AI BUSINESS MANAGER (INTELLIGENT COMMAND BAR) */}
-      <section className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-5">
+      <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#059669] shrink-0">
               <Bot className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold font-heading text-slate-900">
+              <h3 className="text-base sm:text-lg font-semibold text-slate-900">
                 Ask Locora AI Business Manager
               </h3>
               <p className="text-xs text-slate-500 font-sans">
