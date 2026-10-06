@@ -129,18 +129,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
   const renderNav = (expanded: boolean) => (
     <div className="flex flex-col h-full bg-white border-r border-slate-200 select-none font-sans text-slate-800 overflow-hidden">
       {/* Brand Header — logo only, toggle lives on the sidebar edge */}
-      <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+      <div className={`p-4 border-b border-slate-200 flex items-center ${expanded ? "justify-start" : "justify-center"}`}>
         <div
           role="button"
           tabIndex={0}
           onClick={() => handleNavClick('dashboard')}
           onKeyDown={(e) => e.key === 'Enter' && handleNavClick('dashboard')}
-          className="flex items-center gap-2 text-left group cursor-pointer mx-auto"
+          className="flex items-center gap-2 text-left group cursor-pointer"
           title="Dashboard"
         >
           <LocoraLogo
-            size={26}
-            className="flex-shrink-0 group-hover:scale-105 transition-transform max-w-[40px]"
+            size={34}
+            className="flex-shrink-0 group-hover:scale-105 transition-transform max-w-[52px]"
           />
           {expanded && (
             <span className="text-sm font-semibold text-slate-900 tracking-tight whitespace-nowrap">Locora</span>
@@ -472,7 +472,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
         {/* Toggle handle on the sidebar separator line */}
         <button
           onClick={toggleCollapsed}
-          className={`absolute top-6 z-[60] w-7 h-7 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-slate-500 hover:text-emerald-700 hover:border-emerald-300 transition-all cursor-pointer ${
+          className={`absolute top-[80px] z-[60] w-7 h-7 rounded-full bg-white border border-slate-200 shadow-md flex items-center justify-center text-slate-500 hover:text-emerald-700 hover:border-emerald-300 transition-all cursor-pointer ${
             !collapsed || hoverOverlay ? 'left-[242px]' : 'left-[54px]'
           }`}
           title={collapsed ? 'Open sidebar' : 'Collapse sidebar'}
