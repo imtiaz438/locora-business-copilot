@@ -126,27 +126,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
 
   const renderNav = (expanded: boolean) => (
     <div className="flex flex-col h-full bg-white border-r border-slate-200 select-none font-sans text-slate-800 overflow-hidden">
-      {/* Brand Header — 200px logo when expanded, compact mark on the icon rail */}
-      <div className={`border-b border-slate-200 flex items-center ${expanded ? 'justify-start p-4' : 'justify-center px-2 py-4'}`}>
+      {/* Brand Header */}
+      <div className="p-4 border-b border-slate-200 flex items-center justify-between">
         <div
           role="button"
           tabIndex={0}
           onClick={() => handleNavClick('dashboard')}
           onKeyDown={(e) => e.key === 'Enter' && handleNavClick('dashboard')}
-          className="text-left group cursor-pointer overflow-hidden flex items-center justify-center"
-          title="Dashboard"
+          className="flex items-center gap-2.5 text-left group cursor-pointer"
         >
-          {expanded ? (
-            <LocoraLogo
-              style={{ width: '200px', height: 'auto', maxWidth: '100%' }}
-              className="flex-shrink-0 group-hover:scale-105 transition-transform"
-            />
-          ) : (
-            <LocoraLogo
-              size={30}
-              className="flex-shrink-0 group-hover:scale-105 transition-transform"
-            />
-          )}
+          <LocoraLogo
+            className="w-10 h-10 flex-shrink-0 group-hover:scale-105 transition-transform"
+          />
         </div>
         {onMobileClose && (
           <button
