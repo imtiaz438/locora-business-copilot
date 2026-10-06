@@ -47,7 +47,7 @@ interface NavItem {
   requiredPlan?: 'pro' | 'agency';
 }
 
-const SIDEBAR_COLLAPSED_KEY = 'locora.sidebarCollapsed.v2';
+const SIDEBAR_COLLAPSED_KEY = 'locora.sidebarCollapsed.v3';
 
 export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileClose }) => {
   const { activeTab, setActiveTab, activeBusiness, businessProfile, user } = useApp();
