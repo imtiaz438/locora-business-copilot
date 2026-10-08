@@ -451,6 +451,70 @@ export const HomeView: React.FC = () => {
         </div>
       </section>
 
+      {/* 01b — FEATURED ON STRIP */}
+      <section className="px-6 -mt-16 select-none cursor-default" aria-label="Featured on">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-[10px] font-semibold font-heading uppercase tracking-[0.32em] text-slate-400/90 mb-7">
+            Featured On
+          </p>
+          <div className="flex items-center justify-center gap-10 sm:gap-14 flex-wrap">
+            <a
+              href="https://launchbuff.com/products/locora-ai-4de1rh"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Featured on LaunchBuff"
+              className="opacity-80 hover:opacity-100 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              <img
+                src="https://launchbuff.com/badge-featured-dark.svg"
+                alt="Featured on LaunchBuff"
+                style={{ height: '36px', width: 'auto' }}
+                draggable={false}
+              />
+            </a>
+            <a
+              href="https://launchstag.com/p/locora-ai"
+              target="_blank"
+              rel="noopener"
+              className="opacity-80 hover:opacity-100 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              <img
+                src="https://launchstag.com/badge-light.svg"
+                alt="Featured on Launchstag"
+                style={{ height: '36px', width: 'auto' }}
+                draggable={false}
+              />
+            </a>
+            <a
+              href="https://tools.cafe"
+              target="_blank"
+              rel="noopener"
+              className="opacity-80 hover:opacity-100 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              <img
+                src="https://tools.cafe/b/light.svg"
+                alt="Featured on tools.cafe"
+                style={{ height: '36px', width: 'auto' }}
+                draggable={false}
+              />
+            </a>
+            <a
+              href="https://sellwithboost.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="opacity-80 hover:opacity-100 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              <img
+                src="https://sellwithboost.com/badge/listing.svg"
+                alt="Listed on Sell With Boost"
+                style={{ height: '34px', width: 'auto' }}
+                draggable={false}
+              />
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* 02 — QUICK BUSINESS CHECKUP RESULTS / REAL DIAGNOSTIC */}
       <section id="quick-checkup-results" className="max-w-6xl mx-auto px-6">
         <div id="ai-demo-section" className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">

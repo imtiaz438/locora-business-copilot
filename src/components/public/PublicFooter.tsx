@@ -378,21 +378,6 @@ export const PublicFooter: React.FC = () => {
           </div>
         </div>
 
-        {/* Featured-on badges */}
-        <div className="pt-8 border-t border-slate-200">
-          <p className="text-[11px] font-bold font-heading uppercase tracking-wider text-slate-400 text-center mb-4">
-            Featured On
-          </p>
-          <div className="flex items-center justify-center gap-6 flex-wrap">
-            <a href="https://launchstag.com/p/locora-ai" target="_blank" rel="noopener">
-              <img src="https://launchstag.com/badge-light.svg" alt="Featured on Launchstag" width="198" height="62" />
-            </a>
-            <a href="https://tools.cafe" target="_blank" rel="noopener">
-              <img src="https://tools.cafe/b/light.svg" alt="Featured on tools.cafe" width="256" height="80" />
-            </a>
-          </div>
-        </div>
-
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4 font-sans">
           <p>© {new Date().getFullYear()} Locora AI Platform, Inc. All rights reserved.</p>
