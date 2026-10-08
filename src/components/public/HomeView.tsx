@@ -499,7 +499,7 @@ export const HomeView: React.FC = () => {
               />
             </a>
             <a
-              href="https://sellwithboost.com"
+              href="https://sellwithboost.com/startups/locora-ai"
               target="_blank"
               rel="noopener noreferrer"
               className="opacity-80 hover:opacity-100 hover:-translate-y-0.5 transition-all duration-300"
