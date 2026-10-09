@@ -166,8 +166,24 @@ export const CheckupView: React.FC = () => {
       clearTimeout(t1);
       clearTimeout(t2);
 
-      const data = await res.json();
-      if (!res.ok && !data?.metadata) {
+      // Parse defensively: proxies/CDNs can return HTML error pages instead of JSON.
+      // Never surface a JSON-parse crash or "undefined" to the user.
+      let data: any = null;
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        try {
+          data = await res.json();
+        } catch {
+          data = null;
+        }
+      }
+      if (!res.ok || !data) {
+        throw new Error(
+          (data && (data.message || data.error)) ||
+            'The scan could not complete just now — our crawler hit a temporary snag. Please try again in a moment.'
+        );
+      }
+      if (!data?.metadata) {
         throw new Error(data.message || data.error || 'Could not complete the website checkup. Please verify your URL.');
       }
 

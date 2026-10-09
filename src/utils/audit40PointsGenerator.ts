@@ -695,11 +695,18 @@ export function build40PointAudit(targetUrl: string, rawData?: WebsiteAuditResul
   let p18Diag = '';
   let p18Rem = '';
   let p18Loss = 0;
-  if (sslActive) {
+  const redirectVerified = meta.httpRedirectsToHttps === true;
+  const redirectFailed = meta.httpRedirectsToHttps === false;
+  if (sslActive && redirectVerified) {
     p18Status = 'pass';
-    p18Diag = `Insecure HTTP requests are permanently redirected (HTTP 301) to the secure HTTPS destination.`;
+    p18Diag = `Verified: insecure HTTP requests are redirected to the secure HTTPS destination.`;
     p18Rem = 'Keep permanent 301 server redirection rules active in web server configuration.';
     p18Loss = 0;
+  } else if (sslActive) {
+    p18Status = 'warning';
+    p18Diag = `Site loads over HTTPS, but the HTTP→HTTPS redirect could not be verified in this scan${redirectFailed ? ' — the HTTP version did not redirect to HTTPS' : ''}.`;
+    p18Rem = 'Configure server rule: redirect all port 80 traffic to port 443 with 301 Moved Permanently.';
+    p18Loss = redirectFailed ? 450 : 120;
   } else {
     p18Status = 'fail';
     p18Diag = `CRITICAL: Insecure HTTP requests fail to redirect to HTTPS, leaving users vulnerable to eavesdropping.`;

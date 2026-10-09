@@ -356,7 +356,7 @@ export const AgencyClientsView: React.FC = () => {
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
                 <span className="font-bold text-white font-heading text-sm">
-                  Locora: 3 clients need attention
+                  Locora: {topAttentionClients.length} {topAttentionClients.length === 1 ? 'client needs' : 'clients need'} attention
                 </span>
               </div>
             </div>

@@ -887,7 +887,7 @@ export const GrowthView: React.FC = () => {
             </span>
             <h3 className="text-lg font-bold font-heading">
               {growthScore !== null
-                ? 'Next Milestone: Reach 85 Growth Score'
+                ? `Next Milestone: Reach ${Math.min(100, Math.floor(growthScore / 5) * 5 + 5)} Growth Score`
                 : 'Next Milestone: Complete Onboarding to Generate Growth Score'}
             </h3>
           </div>

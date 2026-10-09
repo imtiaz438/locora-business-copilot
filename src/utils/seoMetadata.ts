@@ -24,7 +24,7 @@ export interface ResolvedMetadata {
  */
 export const MARKETING_METADATA: Record<string, PageMetadata> = {
   home: {
-    title: 'Locora AI — AI Business OS, Local SEO Copilot & Verified Business Directory',
+    title: 'Locora AI — AI Business OS for Local Growth',
     description:
       'The autonomous AI business operating system and verified local business directory. Discover top-rated service providers, automate Google Maps SEO, and manage local growth.',
     canonicalPath: '/',

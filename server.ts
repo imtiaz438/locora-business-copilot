@@ -12910,6 +12910,25 @@ app.post('/api/ai/audit-website', async (req, res) => {
       }
     }
 
+    // Real HTTP->HTTPS redirect probe (don't assume it — test it)
+    let httpRedirectsToHttps: boolean | null = null;
+    try {
+      const rctrl = new AbortController();
+      const rtimeout = setTimeout(() => rctrl.abort(), 5000);
+      try {
+        const rresp = await fetch(`http://${hostname}`, {
+          method: 'HEAD',
+          headers: { 'User-Agent': browserHeaders['User-Agent'] },
+          redirect: 'manual',
+          signal: rctrl.signal,
+        });
+        const loc = rresp.headers.get('location') || '';
+        httpRedirectsToHttps = [301, 302, 307, 308].includes(rresp.status) && /^https:\/\//i.test(loc);
+      } finally {
+        clearTimeout(rtimeout);
+      }
+    } catch { httpRedirectsToHttps = null; }
+
     const decodeHtml = (str: string) => {
       return (str || '')
         .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec))
@@ -13131,6 +13150,35 @@ app.post('/api/ai/audit-website', async (req, res) => {
     const hasXFrameOptions = Boolean(responseHeaders['x-frame-options']);
     const contentEncoding = responseHeaders['content-encoding'] || '';
     const cacheControl = responseHeaders['cache-control'] || '';
+    // Static-asset cache probe: the HTML document's Cache-Control reflects dynamic
+    // page policy (no-cache is correct there). The real browser-caching signal lives
+    // on static assets, so probe one JS/CSS/image asset directly.
+    let assetCacheControl = '';
+    try {
+      const assetMatch = cleanHtml.match(/<(?:script|link)[^>]+(?:src|href)=["']([^"']+\.(?:js|css|png|jpg|jpeg|webp|svg|woff2?))["']/i);
+      if (assetMatch && assetMatch[1]) {
+        let assetUrl = assetMatch[1];
+        try {
+          assetUrl = new URL(assetUrl, finalUrl).href;
+        } catch { assetUrl = ''; }
+        if (assetUrl) {
+          const actrl = new AbortController();
+          const atimeout = setTimeout(() => actrl.abort(), 5000);
+          try {
+            const aresp = await fetch(assetUrl, {
+              method: 'HEAD',
+              headers: { 'User-Agent': browserHeaders['User-Agent'] },
+              redirect: 'follow',
+              signal: actrl.signal,
+            });
+            assetCacheControl = aresp.headers.get('cache-control') || '';
+          } finally {
+            clearTimeout(atimeout);
+          }
+        }
+      }
+    } catch { /* fall back to document header below */ }
+    const effectiveCacheControl = assetCacheControl || cacheControl;
     
     const scriptMatches = Array.from(cleanHtml.matchAll(/<script\b[^>]*>/gi));
     const headMatch = cleanHtml.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
@@ -13939,7 +13987,8 @@ Construct realistic, highly specific issues (marked as "pass", "warning", or "er
         hasCsp,
         hasXFrameOptions,
         contentEncoding,
-        cacheControl,
+        cacheControl: effectiveCacheControl,
+        httpRedirectsToHttps,
         scriptCount: scriptMatches.length,
         blockingScriptsCount,
         hasAggregateRating,
