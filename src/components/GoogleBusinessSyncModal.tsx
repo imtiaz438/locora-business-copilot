@@ -76,6 +76,7 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
     updateBusinessProfile,
     logActivity,
     user,
+    businessTruth,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'search' | 'manual'>('search');
@@ -103,7 +104,10 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
 
   // GBP connection state: once connected, the profile is locked in.
   // Single-business (Free) plan = one-time connection; multi-business plans (Pro/Agency) = per business.
-  const isGbpConnected = Boolean((activeBusiness as any)?.gbpConnected);
+  // Unified source: businessTruth (verified server-side) OR the business record flag.
+  const isGbpConnected =
+    Boolean((activeBusiness as any)?.gbpConnected) ||
+    Boolean((businessTruth as any)?.googleProfile?.connected);
   const planTier = (user?.planTier || 'free').toLowerCase();
   const isSingleBusinessPlan = planTier === 'free';
 

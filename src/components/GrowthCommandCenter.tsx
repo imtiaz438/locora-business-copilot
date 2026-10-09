@@ -66,6 +66,10 @@ export const GrowthCommandCenter: React.FC = () => {
   const businessPhone = businessTruth?.phone ?? activeBusiness?.phone ?? null;
   const businessServices = businessTruth?.services ?? activeBusiness?.services ?? null;
   const isGoogleConnected = businessTruth?.googleProfile ? businessTruth.googleProfile.connected : Boolean(activeBusiness?.gbpConnected);
+  // Single-business (Free) plan: GBP connection is one-time and locked — no re-sync
+  // button once connected. Multi-business plans (Pro/Agency) keep per-business refresh.
+  const isSingleBusinessPlan = (user?.planTier || 'free').toLowerCase() === 'free';
+  const showGbpActionButton = !isGoogleConnected || !isSingleBusinessPlan;
 
   const [selectedFixItAction, setSelectedFixItAction] = useState<PriorityAction | null>(null);
   const [expandedReasonId, setExpandedReasonId] = useState<string | null>(null);
@@ -115,7 +119,7 @@ export const GrowthCommandCenter: React.FC = () => {
   const quickPrompts = [
     `What do you know about this business?`,
     `Why is the high-intent service page our highest ROI action?`,
-    `How do we reach the Google Maps 3-pack for ${businessCity || 'Melbourne'}?`,
+    `How do we reach the Google Maps 3-pack for ${businessCity || 'our area'}?`,
     `Compare our reviews with ${activeBusiness?.competitors?.[0] || 'local competitors'}`,
   ];
 
@@ -339,17 +343,19 @@ export const GrowthCommandCenter: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => setIsGbpSyncModalOpen(true)}
-          className={`shrink-0 w-full sm:w-auto px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer ${
-            isGoogleConnected
-              ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
-              : 'bg-[#059669] hover:bg-[#047857] text-white'
-          }`}
-        >
-          <Globe className="w-4 h-4" />
-          <span>{isGoogleConnected ? 'Re-sync from Google' : 'Sync Google Profile'}</span>
-        </button>
+        {showGbpActionButton && (
+          <button
+            onClick={() => setIsGbpSyncModalOpen(true)}
+            className={`shrink-0 w-full sm:w-auto px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer ${
+              isGoogleConnected
+                ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
+                : 'bg-[#059669] hover:bg-[#047857] text-white'
+            }`}
+          >
+            <Globe className="w-4 h-4" />
+            <span>{isGoogleConnected ? 'Re-sync from Google' : 'Sync Google Profile'}</span>
+          </button>
+        )}
       </div>
 
       {/* LOCORA DIRECTORY PRESENCE & INBOUND LEADS CARD */}

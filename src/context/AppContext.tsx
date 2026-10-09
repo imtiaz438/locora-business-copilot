@@ -1404,6 +1404,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const truth = await getBusinessTruth(id, true);
       setBusinessTruth(truth);
+      // Propagate the verified GBP connection state into the businesses list so
+      // every surface (dashboard card, sync modal, settings badges) agrees on one
+      // truth instead of disagreeing across data sources.
+      if (truth?.googleProfile?.connected && id) {
+        setBusinesses((prev) =>
+          prev.map((b) => (b.id === id ? { ...b, gbpConnected: true } : b))
+        );
+      }
       return truth;
     } catch (err) {
       console.error('[BusinessTruth] Error loading canonical business truth:', err);

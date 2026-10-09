@@ -7255,6 +7255,23 @@ app.post('/api/gbp/sync-live', async (req, res) => {
         } catch {}
       }
 
+      // Deduplicate: ensure exactly one primary location per business.
+      // Stale duplicate primary rows (from older flows) would otherwise keep
+      // showing outdated city/state on the dashboard.
+      try {
+        const existingLocs = await db
+          .select({ id: schema.locationsTable.id })
+          .from(schema.locationsTable)
+          .where(eq(schema.locationsTable.businessId, bizId));
+        for (const loc of existingLocs) {
+          if (loc.id !== `loc_${bizId}`) {
+            await db.delete(schema.locationsTable).where(eq(schema.locationsTable.id, loc.id));
+          }
+        }
+      } catch (dedupeErr) {
+        console.warn('[GBP Sync Live] Location dedupe notice:', (dedupeErr as any)?.message || dedupeErr);
+      }
+
       await db.insert(schema.locationsTable).values({
         id: `loc_${bizId}`,
         businessId: bizId,
