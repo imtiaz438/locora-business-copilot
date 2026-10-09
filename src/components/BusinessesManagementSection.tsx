@@ -42,6 +42,7 @@ export const BusinessesManagementSection: React.FC<BusinessesManagementSectionPr
     businesses,
     activeBusiness,
     activeBusinessId,
+    businessTruth,
     switchBusiness,
     deleteBusiness,
     user,
@@ -415,11 +416,15 @@ export const BusinessesManagementSection: React.FC<BusinessesManagementSectionPr
           businesses.map((biz) => {
           const isActive = biz.id === activeBusinessId;
           const isPublished = Boolean(biz.isPublishedInDirectory);
+          // Unified connected state: the list flag, legacy flags, or — for the active
+          // business — the server-verified business truth. A stale list flag must never
+          // contradict the verified truth on the same screen.
           const isGoogleConnected = Boolean(
             biz.gbpConnected ||
             (biz as any).googleConnected ||
             (biz as any).googleBusinessProfile?.connected ||
-            (biz as any).truthData?.googleConnected
+            (biz as any).truthData?.googleConnected ||
+            (isActive && (businessTruth as any)?.googleProfile?.connected)
           );
 
           // Format location string: Melbourne, VIC

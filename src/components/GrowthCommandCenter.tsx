@@ -269,6 +269,16 @@ export const GrowthCommandCenter: React.FC = () => {
   const brainReadiness: number | null = brain?.readinessScore && brain.readinessScore > 0 ? brain.readinessScore : null;
   const brainSummary = brain?.summary || null;
   const brainSwot = brain?.swot || null;
+  // The stored SWOT was generated before the GBP sync — suppress its stale
+  // "GBP not connected" weakness once the profile is actually connected, so the
+  // dossier never contradicts the live connected state on the same page.
+  const visibleWeaknesses = Array.isArray(brainSwot?.weaknesses)
+    ? brainSwot.weaknesses.filter((w: string) => {
+        if (!isGoogleConnected) return true;
+        const t = (w || '').toLowerCase();
+        return !(t.includes('google business profile') && (t.includes('not connected') || t.includes('not yet connected') || t.includes('not linked') || t.includes('connect your')));
+      })
+    : brainSwot?.weaknesses;
   const verifiedServices: string[] = Array.isArray(businessServices) && businessServices.length > 0
     ? businessServices
     : (Array.isArray(activeBusiness?.services) && activeBusiness.services.length > 0 ? activeBusiness.services : []);
@@ -657,8 +667,8 @@ export const GrowthCommandCenter: React.FC = () => {
               <span className="w-2 h-2 rounded-full bg-amber-500" />
             </div>
             <ul className="space-y-1.5 text-xs text-slate-600">
-              {(brainSwot?.weaknesses && brainSwot.weaknesses.length > 0) ? (
-                brainSwot.weaknesses.map((item, i) => (
+              {(visibleWeaknesses && visibleWeaknesses.length > 0) ? (
+                visibleWeaknesses.map((item, i) => (
                   <li key={i} className="flex items-start gap-1.5 leading-snug">
                     <span className="text-amber-600 shrink-0 font-bold">•</span>
                     <span>{item}</span>
