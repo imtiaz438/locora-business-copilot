@@ -50,7 +50,18 @@ interface NavItem {
 const SIDEBAR_COLLAPSED_KEY = 'locora.sidebarCollapsed.v3';
 
 export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileClose }) => {
-  const { activeTab, setActiveTab, activeBusiness, businessProfile, user } = useApp();
+  const { activeTab, setActiveTab, activeBusiness, businessProfile, businessTruth, user } = useApp();
+
+  // Sidebar workspace name: prefer the server-verified truth, then the business
+  // record, then the local profile — and never display a stale placeholder name
+  // ("My Local Business", etc.) when a real name is known anywhere.
+  const PLACEHOLDER_NAMES = ['My Business Workspace', 'My Local Business', 'Demo Growth Workspace'];
+  const isPlaceholderName = (n: unknown) => PLACEHOLDER_NAMES.includes((typeof n === 'string' ? n : '').trim());
+  const pickRealName = (...candidates: Array<unknown>) => {
+    const real = candidates.find((c) => typeof c === 'string' && c.trim() && !isPlaceholderName(c));
+    return (real as string) || (candidates.find((c) => typeof c === 'string' && c.trim()) as string) || 'My Workspace';
+  };
+  const sidebarBusinessName = pickRealName(businessTruth?.name, activeBusiness?.name, businessProfile?.name);
 
   // Default: collapsed icon rail (fresh key so the new default applies to everyone)
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -158,7 +169,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen = false, onMobileCl
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <p className="text-xs font-semibold text-slate-900 truncate">
-                {businessProfile.name || 'My Workspace'}
+                {sidebarBusinessName}
               </p>
             </div>
             <p className="text-[10px] text-slate-500 font-mono truncate">
