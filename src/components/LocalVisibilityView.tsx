@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 
 export const LocalVisibilityView: React.FC = () => {
-  const { activeBusiness, logActivity, refreshProductionDashboard } = useApp();
+  const { activeBusiness, logActivity, refreshProductionDashboard, user } = useApp();
 
   const [loading, setLoading] = useState(true);
   const [isScanningVisibility, setIsScanningVisibility] = useState(false);
@@ -521,6 +521,7 @@ export const LocalVisibilityView: React.FC = () => {
       {/* TAB: GROUNDED AI VISIBILITY OBSERVATIONS */}
       {activeSubTab === 'ai_visibility' && (
         <AiVisibilityObservationsPanel
+          userEmail={user?.email || ''}
           businessProfile={{
             id: activeBusiness?.id,
             name: activeBusiness?.name || 'Local Business',

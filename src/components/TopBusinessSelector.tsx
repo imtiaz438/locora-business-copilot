@@ -638,6 +638,14 @@ export const TopBusinessSelector: React.FC = () => {
 
             {/* Quick Actions for Business / Location */}
             <div className="px-2 py-2 border-b border-slate-100 grid grid-cols-3 gap-1.5 text-xs">
+              {(() => {
+                // Free (single-business) plan: GBP connection is one-time and locked — once
+                // connected there is no re-sync path, so don't offer the button either.
+                // Paid multi-business plans keep per-business refresh.
+                const gbpConnected = Boolean((activeBusiness as any)?.gbpConnected) || Boolean((businessTruth as any)?.googleProfile?.connected);
+                const isSingleBusinessPlan = (user?.planTier || 'free').toLowerCase() === 'free';
+                if (gbpConnected && isSingleBusinessPlan) return null;
+                return (
               <button
                 onClick={() => {
                   setIsGbpSyncModalOpen(true);
@@ -649,6 +657,8 @@ export const TopBusinessSelector: React.FC = () => {
                 <Globe className="w-3 h-3" />
                 <span>Sync Google</span>
               </button>
+                );
+              })()}
               <button
                 onClick={() => {
                   setActiveTab('business_profile');

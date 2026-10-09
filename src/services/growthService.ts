@@ -1,8 +1,20 @@
 import { GrowthOpportunity, GrowthPlan, GrowthTask } from '../types/production';
 
 class GrowthService {
+  private async fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 20000): Promise<Response> {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async getOpportunities(businessId: string): Promise<GrowthOpportunity[]> {
-    const res = await fetch(`/api/production/growth/${encodeURIComponent(businessId)}/opportunities`, {
+    // Bounded wait: a hung backend must fail into the honest empty state,
+    // never leave the UI spinning forever.
+    const res = await this.fetchWithTimeout(`/api/production/growth/${encodeURIComponent(businessId)}/opportunities`, {
       credentials: 'include',
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

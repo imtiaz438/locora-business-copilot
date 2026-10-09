@@ -285,6 +285,13 @@ interface SettingsViewProps {
   initialTab?: 'businesses' | 'profile' | 'integrations' | 'account' | 'team' | 'billing';
 }
 
+// Placeholder workspace names used before real business data loads. These must NEVER
+// overwrite a real business name — a stale placeholder state clobbering real data
+// was a live data-loss bug (profile save reverted "LocoraAI" to "My Local Business").
+const PLACEHOLDER_BUSINESS_NAMES = ['My Business Workspace', 'My Local Business', 'Demo Growth Workspace'];
+const isPlaceholderBusinessName = (name: unknown) =>
+  PLACEHOLDER_BUSINESS_NAMES.includes((typeof name === 'string' ? name : '').trim());
+
 export const SettingsView: React.FC<SettingsViewProps> = ({ initialTab = 'businesses' }) => {
   const { settings, updateSettings, businessProfile, updateBusinessProfile, activeBusiness, updateActiveBusiness, user, updateUser, setCheckoutModalPlan, subscriptionInvoices } = useApp();
 
@@ -419,14 +426,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialTab = 'busine
 
   useEffect(() => {
     if (businessProfile) {
-      setProfileForm({
-        ...businessProfile,
-        email: user.email || businessProfile.email || '',
-        services: businessProfile.services || [],
-        targetLocations: businessProfile.targetLocations || [],
-        primaryCompetitors: businessProfile.primaryCompetitors || [],
-        currentOffers: businessProfile.currentOffers || [],
-        businessGoals: businessProfile.businessGoals || [],
+      setProfileForm((prev) => {
+        // Never let a stale placeholder state clobber a real name already in the form.
+        const incomingName = (businessProfile.name || '').trim();
+        const keepPrevName =
+          isPlaceholderBusinessName(incomingName) &&
+          prev.name?.trim() &&
+          !isPlaceholderBusinessName(prev.name);
+        return {
+          ...businessProfile,
+          email: user.email || businessProfile.email || '',
+          services: businessProfile.services || [],
+          targetLocations: businessProfile.targetLocations || [],
+          primaryCompetitors: businessProfile.primaryCompetitors || [],
+          currentOffers: businessProfile.currentOffers || [],
+          businessGoals: businessProfile.businessGoals || [],
+          ...(keepPrevName ? { name: prev.name } : {}),
+        };
       });
     }
   }, [businessProfile, user.email]);
@@ -530,20 +546,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialTab = 'busine
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    updateBusinessProfile(profileForm);
+    // Final guard: a placeholder name in the form must never overwrite a real
+    // business name known from the profile store or the active business record.
+    const knownRealName =
+      (!isPlaceholderBusinessName(businessProfile?.name) && businessProfile?.name?.trim()) ||
+      (!isPlaceholderBusinessName(activeBusiness?.name) && activeBusiness?.name?.trim()) ||
+      '';
+    const safeForm = isPlaceholderBusinessName(profileForm.name) && knownRealName
+      ? { ...profileForm, name: knownRealName }
+      : profileForm;
+    updateBusinessProfile(safeForm);
     if (updateActiveBusiness) {
       updateActiveBusiness({
-        name: profileForm.name,
-        category: profileForm.industry,
-        website: profileForm.website,
-        address: profileForm.address,
-        city: profileForm.city,
-        state: profileForm.state,
-        zip: profileForm.zip,
-        country: profileForm.country,
-        phone: profileForm.phone,
-        email: profileForm.email,
-        description: profileForm.description,
+        name: safeForm.name,
+        category: safeForm.industry,
+        website: safeForm.website,
+        address: safeForm.address,
+        city: safeForm.city,
+        state: safeForm.state,
+        zip: safeForm.zip,
+        country: safeForm.country,
+        phone: safeForm.phone,
+        email: safeForm.email,
+        description: safeForm.description,
       });
     }
     setSavedSuccess(true);

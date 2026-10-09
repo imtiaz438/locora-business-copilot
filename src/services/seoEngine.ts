@@ -64,6 +64,10 @@ export async function executeSeoIntelligence(params: SeoEngineRequest): Promise<
   });
 
   // Map normalized keywords to SeoKeywordMatrixItem
+  // STRICT ACCURACY RULE: only volume/cpc/competition/difficulty/intent come from the
+  // provider response. Rank position, traffic share and trend history are UNKNOWN unless
+  // a real per-keyword SERP check ran — they must be null so the UI renders "not enough
+  // data" instead of inventing ranks. Never fabricate a single value.
   const keywords: SeoKeywordMatrixItem[] = audit.keywords.map((k) => ({
     keyword: k.keyword,
     searchVolume: k.volume,
@@ -72,10 +76,10 @@ export async function executeSeoIntelligence(params: SeoEngineRequest): Promise<
     competitionIndex: k.competition === 'HIGH' ? 85 : k.competition === 'LOW' ? 25 : 55,
     difficultyKd: k.difficulty || 35,
     intent: normalizeIntent(k.intent),
-    position: 1,
+    position: null,
     positionChange: 0,
-    trafficShare: 0.15,
-    volumeTrend: [k.volume, k.volume, k.volume, k.volume, k.volume, k.volume],
+    trafficShare: null,
+    volumeTrend: [],
   }));
 
   // Map normalized domain overview to SeoTrafficAnalytics

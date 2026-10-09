@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Search,
@@ -77,6 +77,7 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
     logActivity,
     user,
     businessTruth,
+    refreshBusinessTruth,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'search' | 'manual'>('search');
@@ -101,6 +102,16 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncSuccess, setSyncSuccess] = useState(false);
   const [syncedListingSlug, setSyncedListingSlug] = useState<string>('');
+
+  // Reset transient sync state whenever the modal is (re)opened so a previous
+  // session's success view never shows for a fresh open.
+  useEffect(() => {
+    if (isOpen) {
+      setSyncSuccess(false);
+      setSyncedListingSlug('');
+      setIsSyncing(false);
+    }
+  }, [isOpen]);
 
   // GBP connection state: once connected, the profile is locked in.
   // Single-business (Free) plan = one-time connection; multi-business plans (Pro/Agency) = per business.
@@ -282,6 +293,9 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
       const resolvedSlug = responseData.business?.slug || responseData.business?.directorySlug || activeBusiness.slug || activeBusiness.id;
       setSyncedListingSlug(resolvedSlug);
       setSyncSuccess(true);
+      // Refresh the server-verified business truth so every surface (dashboard card,
+      // dossier, gaps, settings) agrees on the connected state immediately.
+      try { await refreshBusinessTruth(activeBusiness.id); } catch (e) { /* non-blocking */ }
     } catch (err: any) {
       alert(`Sync failed: ${err.message || 'Unknown error'}`);
     } finally {
@@ -452,20 +466,20 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
               </div>
               <div className="space-y-2 max-w-md">
                 <h4 className="text-xl font-black font-heading text-slate-900 tracking-tight">
-                  Google Business Profile Linked & Published!
+                  Google Business Profile Linked!
                 </h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Your business identity, live Google reviews, ratings, hours, and location have been synced to your workspace and <strong className="text-slate-900">published live to the Locora Business Directory</strong>.
+                  Your business identity, live Google reviews, ratings, hours, and location have been synced to your workspace.
                 </p>
               </div>
 
-              <div className="w-full max-w-sm p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-left space-y-1.5">
+              <div className="w-full max-w-sm p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-xs font-bold text-emerald-950">Live Directory Presence</span>
+                  <span className="w-2 h-2 rounded-full bg-slate-400" />
+                  <span className="text-xs font-bold text-slate-900">Directory listing: not published yet</span>
                 </div>
-                <p className="text-[11px] text-emerald-800 leading-relaxed">
-                  Customers browsing directory.locoraai.com can now discover your services, call directly, and submit instant quote inquiries.
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  Add your phone number in Business Profile to publish your verified listing on directory.locoraai.com and start receiving inbound quote requests.
                 </p>
               </div>
 

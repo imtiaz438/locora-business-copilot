@@ -713,6 +713,11 @@ export const crawlRunsTable = pgTable('crawl_runs', {
   accessibilityScore: integer('accessibility_score').default(0).notNull(),
   bestPracticesScore: integer('best_practices_score').default(0).notNull(),
   overallScore: integer('overall_score').default(0).notNull(),
+  // Persisted technical SEO breakdown so restored audits show the real stored
+  // score + factors instead of recomputing from sparse metadata (which produced
+  // a false 15/100 against a stored 90/100).
+  technicalSeoScore: integer('technical_seo_score'),
+  technicalSeoFactors: jsonb('technical_seo_factors').$type<Array<{ id: string; name: string; score: number; maxScore: number; status: string; evidence?: string }>>(),
   startedAt: timestamp('started_at').defaultNow().notNull(),
   completedAt: timestamp('completed_at'),
 });

@@ -195,7 +195,11 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
 
   // Sparkline generator for trends
   const renderSparkline = (points: number[] | undefined, width = 64, height = 20) => {
-    const data = points && points.length >= 2 ? points : [40, 48, 55, 62, 70, 78];
+    // No invented trend lines: without real history show "not enough data".
+    if (!points || points.length < 2) {
+      return <span className="text-slate-400 text-[11px] font-mono">—</span>;
+    }
+    const data = points;
     const min = Math.min(...data);
     const max = Math.max(...data);
     const range = max - min || 1;
@@ -638,7 +642,7 @@ export const SeoKeywordsAndTrafficPanel: React.FC<SeoKeywordsAndTrafficPanelProp
 
                           {/* Traffic Share */}
                           <td className="py-3 px-3 text-center font-mono font-bold text-slate-700">
-                            {kw.trafficShare ?? Math.round(100 / (keywords.length || 1))}%
+                            {kw.trafficShare != null ? `${kw.trafficShare}%` : <span className="text-slate-400 font-normal">—</span>}
                           </td>
 
                           {/* Action */}

@@ -132,6 +132,9 @@ export const WebsiteReviewView: React.FC = () => {
           })),
           aiSummary: `Last website audit completed ${d.analyzedAt ? new Date(d.analyzedAt).toLocaleDateString() : ''}. Overall score ${d.overallScore || 0}/100 across ${d.issuesFound || 0} recorded findings. Run a fresh audit for live data.`,
           actionableSteps: [],
+          // Restore the stored technical breakdown so the hero shows the real
+          // audited score/factors instead of recomputing from sparse metadata.
+          technicalSeo: d.technicalSeo || null,
           restoredFromHistory: true,
         };
         setLatestWebsiteAudit(restored);
@@ -410,7 +413,14 @@ export const WebsiteReviewView: React.FC = () => {
     ];
 
     const technicalSeoScore = technicalBreakdown?.score ?? factors.reduce((sum: number, f: any) => sum + f.score, 0);
-    const overallScore = details?.overallScore ?? Math.round((technicalSeoScore + (details?.scores?.performance ?? 75) + (details?.scores?.accessibility ?? 80)) / 3);
+    // Never invent component scores: average only scores that actually exist.
+    // Missing performance/accessibility must not silently become 75/80.
+    const knownComponentScores = [technicalSeoScore, details?.scores?.performance, details?.scores?.accessibility]
+      .filter((s): s is number => typeof s === 'number' && !Number.isNaN(s));
+    const overallScore = details?.overallScore
+      ?? (knownComponentScores.length > 0
+        ? Math.round(knownComponentScores.reduce((a, b) => a + b, 0) / knownComponentScores.length)
+        : technicalSeoScore);
 
     return (
       <div className="space-y-6">

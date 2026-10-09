@@ -816,9 +816,16 @@ export const GrowthView: React.FC = () => {
           </div>
 
           <div className="text-right">
-            <span className="text-xs font-bold text-[#059669] bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-              2 of 6 Completed
-            </span>
+            {(() => {
+              // Honest count: derive from the actual plan items, never a hardcoded claim.
+              const allItems = monthPlan.flatMap((w) => w.items);
+              const doneCount = allItems.filter((it) => it.completed).length;
+              return (
+                <span className="text-xs font-bold text-[#059669] bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                  {doneCount} of {allItems.length} Completed
+                </span>
+              );
+            })()}
           </div>
         </div>
 

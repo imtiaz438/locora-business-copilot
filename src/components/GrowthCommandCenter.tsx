@@ -65,7 +65,10 @@ export const GrowthCommandCenter: React.FC = () => {
   const businessWebsite = businessTruth?.website ?? activeBusiness?.website ?? null;
   const businessPhone = businessTruth?.phone ?? activeBusiness?.phone ?? null;
   const businessServices = businessTruth?.services ?? activeBusiness?.services ?? null;
-  const isGoogleConnected = businessTruth?.googleProfile ? businessTruth.googleProfile.connected : Boolean(activeBusiness?.gbpConnected);
+  // Unified connected state: server-verified businessTruth OR the fresh client-side flag.
+  // Either source proving "connected" is enough — a stale businessTruth must never
+  // shadow a fresh sync, and vice versa.
+  const isGoogleConnected = Boolean(businessTruth?.googleProfile?.connected) || Boolean(activeBusiness?.gbpConnected);
   // Single-business (Free) plan: GBP connection is one-time and locked — no re-sync
   // button once connected. Multi-business plans (Pro/Agency) keep per-business refresh.
   const isSingleBusinessPlan = (user?.planTier || 'free').toLowerCase() === 'free';
@@ -206,9 +209,12 @@ export const GrowthCommandCenter: React.FC = () => {
   // 1. Visibility Component
   const hasObservedRank = typeof activeBusiness.rankingAvg === 'number' && activeBusiness.rankingAvg > 0;
   const hasTrackedKeywords = Boolean(productionDashboard?.collectedData?.trackedKeywords && productionDashboard.collectedData.trackedKeywords.length > 0);
+  // Unified connected state (same rule as the GBP card below): server-verified
+  // businessTruth OR the business record flag OR the production dashboard signal.
   const isGbpConnected = Boolean(
     activeBusiness.gbpConnected ||
     (activeBusiness as any).googleConnected ||
+    (businessTruth as any)?.googleProfile?.connected ||
     productionDashboard?.collectedData?.googleProfile?.isVerified
   );
   const visibilityScore: number | null = hasObservedRank

@@ -14219,6 +14219,12 @@ Construct realistic, highly specific issues (marked as "pass", "warning", or "er
           title: pageTitle,
           metaDescription: pageDesc,
           hasSchema,
+          technicalSeo: {
+            score: technicalSeoScore,
+            factors: technicalFactors,
+            basedOn: ['HTTPS', 'title tags', 'meta descriptions', 'H1', 'canonical', 'sitemap', 'broken links'],
+            crawledAt: new Date().toISOString(),
+          },
         });
       } catch (saveErr) {
         console.warn('[Website Audit] Could not record website audit crawl to database:', saveErr);

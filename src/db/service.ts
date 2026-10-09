@@ -1925,30 +1925,25 @@ export async function saveAiVisibilityCheck(params: {
 
 export async function getAiVisibilityChecks(userIdOrEmailOrBusinessId?: string, limit = 50) {
   const norm = (userIdOrEmailOrBusinessId || '').toLowerCase().trim();
+  // ACCOUNT ISOLATION: never return cross-account history. Without an identifier
+  // there is nothing attributable — return empty instead of leaking everyone's rows.
+  if (!norm) return [];
   const fileRecords = readAiVisibilityFile();
 
   let dbRows: any[] = [];
   try {
-    if (norm) {
-      dbRows = await db
-        .select()
-        .from(schema.aiVisibilityChecksTable)
-        .where(
-          or(
-            eq(schema.aiVisibilityChecksTable.userId, norm),
-            eq(schema.aiVisibilityChecksTable.userEmail, norm),
-            eq(schema.aiVisibilityChecksTable.businessId, norm)
-          )
+    dbRows = await db
+      .select()
+      .from(schema.aiVisibilityChecksTable)
+      .where(
+        or(
+          eq(schema.aiVisibilityChecksTable.userId, norm),
+          eq(schema.aiVisibilityChecksTable.userEmail, norm),
+          eq(schema.aiVisibilityChecksTable.businessId, norm)
         )
-        .orderBy(desc(schema.aiVisibilityChecksTable.checkedAt))
-        .limit(limit);
-    } else {
-      dbRows = await db
-        .select()
-        .from(schema.aiVisibilityChecksTable)
-        .orderBy(desc(schema.aiVisibilityChecksTable.checkedAt))
-        .limit(limit);
-    }
+      )
+      .orderBy(desc(schema.aiVisibilityChecksTable.checkedAt))
+      .limit(limit);
   } catch (err) {
     // Fall back to file records
   }
@@ -1980,9 +1975,12 @@ export async function getAiVisibilityChecks(userIdOrEmailOrBusinessId?: string, 
     });
   }
 
-  // Process disk rows
+  // Process disk rows — strict account isolation: only rows belonging to this identifier.
   for (const f of fileRecords) {
-    if (!norm || f.userId === norm || f.userEmail === norm || f.businessId === norm || !norm) {
+    const fUserId = (f.userId || '').toLowerCase().trim();
+    const fUserEmail = (f.userEmail || '').toLowerCase().trim();
+    const fBusinessId = (f.businessId || '').toLowerCase().trim();
+    if (fUserId === norm || fUserEmail === norm || fBusinessId === norm) {
       if (!map.has(f.id)) {
         map.set(f.id, {
           id: f.id,
@@ -3202,6 +3200,7 @@ export async function recordWebsiteAuditCrawl(
     title?: string;
     metaDescription?: string;
     hasSchema?: boolean;
+    technicalSeo?: { score: number; factors: Array<{ id: string; name: string; score: number; maxScore: number; status: string; evidence?: string }>; basedOn?: string[]; crawledAt?: string };
   }
 ) {
   try {
@@ -3250,6 +3249,8 @@ export async function recordWebsiteAuditCrawl(
       accessibilityScore: data.scores.accessibility,
       bestPracticesScore: data.scores.bestPractices || 0,
       overallScore: data.overallScore || 0,
+      technicalSeoScore: typeof data.technicalSeo?.score === 'number' ? Math.round(data.technicalSeo.score) : null,
+      technicalSeoFactors: Array.isArray(data.technicalSeo?.factors) ? data.technicalSeo.factors : null,
       startedAt: new Date(),
       completedAt: new Date(),
     });
@@ -3352,6 +3353,11 @@ export async function getLatestWebsiteAudit(businessId: string) {
       },
       issuesFound: run.issuesFound || 0,
       keyIssues,
+      technicalSeo: (run as any).technicalSeoScore != null ? {
+        score: (run as any).technicalSeoScore,
+        factors: (run as any).technicalSeoFactors || [],
+        crawledAt: run.completedAt ? new Date(run.completedAt).toISOString() : null,
+      } : null,
       restoredFromHistory: true,
     };
   } catch (err) {

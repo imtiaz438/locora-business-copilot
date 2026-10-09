@@ -1303,10 +1303,10 @@ export interface SeoKeywordMatrixItem {
   competitionIndex: number; // 0 - 100
   difficultyKd: number; // Keyword difficulty (0 - 100)
   intent: 'Informational' | 'Commercial' | 'Transactional' | 'Navigational';
-  position: number | null; // Global ranking position
+  position: number | null; // Global ranking position (null = not tracked / unknown)
   positionChange: number; // Position change relative to previous scan
-  trafficShare: number; // % of total domain organic traffic
-  volumeTrend: number[]; // 6-month historical search volume sparkline
+  trafficShare: number | null; // % of total domain organic traffic (null = unknown, never invented)
+  volumeTrend: number[]; // 6-month historical search volume sparkline (empty = unknown)
   url?: string | null;
   snippet?: string;
 }

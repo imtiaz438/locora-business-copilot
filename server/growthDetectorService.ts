@@ -60,8 +60,13 @@ export async function detectGrowthOpportunities(businessId: string): Promise<Det
   const nowIso = now.toISOString();
 
   // DETECTION 1: Google Business Profile Connection Status
+  // Unified source: server-verified businessTruth, the live connection row, or the
+  // business record flag — any one proving "connected" wins. Never let a stale
+  // source contradict a fresh one on the same page.
   const gbpConn = connections.find((c) => c.provider === 'google_gbp');
-  const isGbpConnected = businessTruth?.googleProfile ? businessTruth.googleProfile.connected : (gbpConn?.status === 'connected');
+  const isGbpConnected = Boolean(businessTruth?.googleProfile?.connected)
+    || gbpConn?.status === 'connected'
+    || Boolean((businessTruth as any)?.gbpConnected);
 
   if (!isGbpConnected) {
     // ACTUAL DETECTED ISSUE: GBP is not connected
