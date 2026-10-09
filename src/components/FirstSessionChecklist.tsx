@@ -44,9 +44,9 @@ export const FirstSessionChecklist: React.FC = () => {
     activeBusiness?.city ??
     null;
   const businessServices = businessTruth?.services ?? activeBusiness?.services ?? null;
-  const isGoogleConnected = businessTruth?.googleProfile
-    ? businessTruth.googleProfile.connected
-    : Boolean(activeBusiness?.gbpConnected);
+  // Unified connected state: server-verified businessTruth OR the business record
+  // flag — a stale businessTruth must never shadow a fresh connection.
+  const isGoogleConnected = Boolean(businessTruth?.googleProfile?.connected) || Boolean(activeBusiness?.gbpConnected);
 
   const profileDone = Boolean(businessName && businessCategory && (businessCity || (businessServices && businessServices.length > 0)));
   const gbpDone = isGoogleConnected;
