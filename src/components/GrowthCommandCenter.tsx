@@ -269,16 +269,45 @@ export const GrowthCommandCenter: React.FC = () => {
   const brainReadiness: number | null = brain?.readinessScore && brain.readinessScore > 0 ? brain.readinessScore : null;
   const brainSummary = brain?.summary || null;
   const brainSwot = brain?.swot || null;
-  // The stored SWOT was generated before the GBP sync — suppress its stale
-  // "GBP not connected" weakness once the profile is actually connected, so the
-  // dossier never contradicts the live connected state on the same page.
+  // The stored dossier text (summary, SWOT) was generated before the GBP sync.
+  // Once the profile is actually connected, scrub stale "connect your GBP"
+  // directives and stale placeholder workspace names so the dossier never
+  // contradicts the live connected state on the same page.
+  const isStaleGbpDirective = (text: unknown) => {
+    if (!isGoogleConnected) return false;
+    const t = (typeof text === 'string' ? text : '').toLowerCase();
+    return t.includes('google business profile') && (
+      t.includes('not connected') || t.includes('not yet connected') ||
+      t.includes('not linked') || t.includes('connect your') || t.includes('connect google')
+    );
+  };
+  const scrubStaleGbpSentences = (text: string) => {
+    if (!isGoogleConnected || !text) return text;
+    // Drop sentences that tell the user to connect the (already connected) GBP.
+    const cleaned = text
+      .split(/(?<=[.!?])\s+/)
+      .filter((s) => !isStaleGbpDirective(s))
+      .join(' ')
+      .trim();
+    return cleaned || text;
+  };
+  const fixStaleWorkspaceName = (text: string) => {
+    if (!text || !businessName) return text;
+    // Replace stale placeholder workspace references with the real business name.
+    return text.replace(/My Local Business workspace/gi, `${businessName} workspace`);
+  };
   const visibleWeaknesses = Array.isArray(brainSwot?.weaknesses)
-    ? brainSwot.weaknesses.filter((w: string) => {
-        if (!isGoogleConnected) return true;
-        const t = (w || '').toLowerCase();
-        return !(t.includes('google business profile') && (t.includes('not connected') || t.includes('not yet connected') || t.includes('not linked') || t.includes('connect your')));
-      })
+    ? brainSwot.weaknesses.filter((w: string) => !isStaleGbpDirective(w))
     : brainSwot?.weaknesses;
+  const visibleOpportunities = Array.isArray(brainSwot?.opportunities)
+    ? brainSwot.opportunities.filter((o: string) => !isStaleGbpDirective(o))
+    : brainSwot?.opportunities;
+  const visibleThreats = Array.isArray(brainSwot?.threats)
+    ? brainSwot.threats.filter((t: string) => !isStaleGbpDirective(t))
+    : brainSwot?.threats;
+  const visibleSummary = brainSummary
+    ? fixStaleWorkspaceName(scrubStaleGbpSentences(brainSummary))
+    : brainSummary;
   const verifiedServices: string[] = Array.isArray(businessServices) && businessServices.length > 0
     ? businessServices
     : (Array.isArray(activeBusiness?.services) && activeBusiness.services.length > 0 ? activeBusiness.services : []);
@@ -610,7 +639,7 @@ export const GrowthCommandCenter: React.FC = () => {
             <span>Executive Strategic Synthesis</span>
           </div>
           <p className="text-sm text-slate-700 leading-relaxed">
-            {brainSummary || (businessName
+            {visibleSummary || (businessName
               ? `Connect your Google Business Profile and website to synthesize executive AI intelligence for ${businessName}.`
               : 'Connect your business channels to synthesize executive AI intelligence.')}
           </p>
@@ -691,8 +720,8 @@ export const GrowthCommandCenter: React.FC = () => {
               <span className="w-2 h-2 rounded-full bg-sky-500" />
             </div>
             <ul className="space-y-1.5 text-xs text-slate-600">
-              {(brainSwot?.opportunities && brainSwot.opportunities.length > 0) ? (
-                brainSwot.opportunities.map((item, i) => (
+              {(visibleOpportunities && visibleOpportunities.length > 0) ? (
+                visibleOpportunities.map((item, i) => (
                   <li key={i} className="flex items-start gap-1.5 leading-snug">
                     <span className="text-sky-600 shrink-0 font-bold">•</span>
                     <span>{item}</span>
@@ -715,8 +744,8 @@ export const GrowthCommandCenter: React.FC = () => {
               <span className="w-2 h-2 rounded-full bg-rose-500" />
             </div>
             <ul className="space-y-1.5 text-xs text-slate-600">
-              {(brainSwot?.threats && brainSwot.threats.length > 0) ? (
-                brainSwot.threats.map((item, i) => (
+              {(visibleThreats && visibleThreats.length > 0) ? (
+                visibleThreats.map((item, i) => (
                   <li key={i} className="flex items-start gap-1.5 leading-snug">
                     <span className="text-rose-600 shrink-0 font-bold">•</span>
                     <span>{item}</span>
