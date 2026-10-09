@@ -3248,6 +3248,8 @@ export async function recordWebsiteAuditCrawl(
       perfScore: data.scores.performance,
       seoScore: data.scores.seo,
       accessibilityScore: data.scores.accessibility,
+      bestPracticesScore: data.scores.bestPractices || 0,
+      overallScore: data.overallScore || 0,
       startedAt: new Date(),
       completedAt: new Date(),
     });
@@ -3284,6 +3286,77 @@ export async function recordWebsiteAuditCrawl(
     }
   } catch (err) {
     console.error('[Website Audit] Error recording audit crawl:', err);
+  }
+}
+
+/**
+ * Returns the most recent completed website audit for a business, reconstructed
+ * from the persisted crawl run + issues. Used to restore the user's last audit
+ * ("continue where you left off") when they return to the Website Audit view.
+ * Returns null when no audit has ever been recorded.
+ */
+export async function getLatestWebsiteAudit(businessId: string) {
+  try {
+    const cleanId = (businessId || '').trim();
+    if (!cleanId) return null;
+
+    const runs = await db
+      .select()
+      .from(schema.crawlRunsTable)
+      .where(
+        and(
+          eq(schema.crawlRunsTable.businessId, cleanId),
+          eq(schema.crawlRunsTable.status, 'completed')
+        )
+      )
+      .orderBy(desc(schema.crawlRunsTable.completedAt))
+      .limit(1);
+
+    if (runs.length === 0) return null;
+    const run = runs[0];
+
+    const [projectRows, issueRows] = await Promise.all([
+      db
+        .select()
+        .from(schema.websiteProjectsTable)
+        .where(eq(schema.websiteProjectsTable.id, run.projectId))
+        .limit(1),
+      db
+        .select()
+        .from(schema.websiteIssuesTable)
+        .where(eq(schema.websiteIssuesTable.crawlRunId, run.id))
+        .orderBy(schema.websiteIssuesTable.severity),
+    ]);
+
+    const project = projectRows[0] || null;
+    const keyIssues = issueRows.map((iss: any) => ({
+      type: iss.severity === 'critical' ? 'error' : iss.severity === 'warning' ? 'warning' : iss.isResolved ? 'pass' : 'info',
+      category: iss.category || 'seo',
+      title: iss.title,
+      description: iss.description,
+      recommendation: iss.recommendation || '',
+    }));
+
+    return {
+      businessId: cleanId,
+      crawlRunId: run.id,
+      analyzedAt: run.completedAt ? new Date(run.completedAt).toISOString() : null,
+      url: project?.targetUrl || project?.domain || '',
+      domain: project?.domain || '',
+      overallScore: run.overallScore || 0,
+      scores: {
+        seo: run.seoScore || 0,
+        performance: run.perfScore || 0,
+        accessibility: run.accessibilityScore || 0,
+        bestPractices: (run as any).bestPracticesScore || 0,
+      },
+      issuesFound: run.issuesFound || 0,
+      keyIssues,
+      restoredFromHistory: true,
+    };
+  } catch (err) {
+    console.error('[Website Audit] Error fetching latest audit:', err);
+    return null;
   }
 }
 

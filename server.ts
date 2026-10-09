@@ -5617,6 +5617,21 @@ app.get('/api/production/seo/:businessId/status', async (req, res) => {
   }
 });
 
+// Latest persisted website audit for a business — restores the user's last
+// audit ("continue where you left off") when they return to the Website Audit view.
+app.get('/api/production/website-audit/:businessId/latest', async (req, res) => {
+  try {
+    const { business } = await resolveAuthenticatedBusiness(req, req.params.businessId);
+    const latest = await dbService.getLatestWebsiteAudit(business.id);
+    if (!latest) {
+      return res.json({ success: true, hasAudit: false, data: null });
+    }
+    res.json({ success: true, hasAudit: true, data: latest });
+  } catch (err: any) {
+    res.status(err.status || 500).json({ error: err.message });
+  }
+});
+
 app.get('/api/production/seo/:businessId/serp-results', async (req, res) => {
   try {
     const { business } = await resolveAuthenticatedBusiness(req, req.params.businessId);
@@ -17543,7 +17558,7 @@ app.get('/api/admin/directory/profiles', async (req, res) => {
         qualityStatus: r.qualityStatus || (r.isVerified ? 'verified' : 'good'),
         isClaimed: r.isClaimed ?? (r.businessStatus !== 'unclaimed'),
         isVerified: Boolean(r.isVerified || effectiveStatus === 'VERIFIED'),
-        cityName: r.cityName || 'Austin',
+        cityName: r.cityName || '',
         category: r.category || r.industry || 'Local Business',
         isPublishedInDirectory: isPublished,
         createdAt: new Date(r.createdAt).toISOString(),
@@ -17585,7 +17600,7 @@ app.get('/api/admin/directory/profiles', async (req, res) => {
           qualityStatus: m.qualityStatus || 'good',
           isClaimed: Boolean(m.isClaimed),
           isVerified: Boolean(m.isVerified),
-          cityName: m.cityName || 'Austin',
+          cityName: m.cityName || '',
           category: m.categoryName || 'Local Services',
           isPublishedInDirectory: Boolean(m.isPublishedInDirectory && !isSuspended),
           createdAt: m.createdAt ? new Date(m.createdAt).toISOString() : new Date().toISOString(),

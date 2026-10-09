@@ -471,9 +471,9 @@ export const businessesTable = pgTable('businesses', {
   // Directory & Programmatic Local SEO Extensions
   isPublishedInDirectory: boolean('is_published_in_directory').default(false).notNull(),
   categorySlug: text('category_slug').default('local-services'),
-  citySlug: text('city_slug').default('austin'),
-  cityName: text('city_name').default('Austin'),
-  stateCode: text('state_code').default('TX'),
+  citySlug: text('city_slug'),
+  cityName: text('city_name'),
+  stateCode: text('state_code'),
   mediaPhotos: jsonb('media_photos').$type<string[]>().default([]),
   targetKeywords: jsonb('target_keywords').$type<string[]>().default([]),
   logoUrl: text('logo_url'),
@@ -711,6 +711,8 @@ export const crawlRunsTable = pgTable('crawl_runs', {
   perfScore: integer('perf_score').default(0).notNull(),
   seoScore: integer('seo_score').default(0).notNull(),
   accessibilityScore: integer('accessibility_score').default(0).notNull(),
+  bestPracticesScore: integer('best_practices_score').default(0).notNull(),
+  overallScore: integer('overall_score').default(0).notNull(),
   startedAt: timestamp('started_at').defaultNow().notNull(),
   completedAt: timestamp('completed_at'),
 });

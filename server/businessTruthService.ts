@@ -1,5 +1,5 @@
 import { db, schema } from '../src/db/index.ts';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and, or } from 'drizzle-orm';
 import { DataSourceAttribution } from '../src/types.ts';
 import type { BusinessTruth, BusinessTruthLocation, BusinessTruthGoogleProfile } from '../src/types.ts';
 import { getBusinessRecordById } from './locoraDataEngine.ts';
@@ -95,18 +95,27 @@ export async function getBusinessTruth(businessId: string): Promise<BusinessTrut
         dataSources.push(DataSourceAttribution.WEBSITE);
       }
 
-      // 4. Fetch GBP connection if active
+      // 4. Fetch GBP connection if active — filter by provider directly so a
+      // non-GBP connection row can never shadow the real GBP connection.
       let gbpRows: any[] = [];
       try {
         gbpRows = await db
           .select()
           .from(schema.dataConnectionsTable)
-          .where(eq(schema.dataConnectionsTable.businessId, resolvedBizId))
+          .where(
+            and(
+              eq(schema.dataConnectionsTable.businessId, resolvedBizId),
+              or(
+                eq(schema.dataConnectionsTable.provider, 'google_gbp'),
+                eq(schema.dataConnectionsTable.provider, 'google_business')
+              )
+            )
+          )
           .limit(1);
       } catch (e) {}
 
       let googleProfile: BusinessTruthGoogleProfile | null = null;
-      const gbpConnectionRecord = gbpRows.find((c) => c.provider === 'google_business' || c.provider === 'google_gbp');
+      const gbpConnectionRecord = gbpRows[0] || null;
       if (gbpConnectionRecord) {
         dataSources.push(DataSourceAttribution.GOOGLE_BUSINESS_PROFILE);
         googleProfile = {

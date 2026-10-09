@@ -83,6 +83,68 @@ export const WebsiteReviewView: React.FC = () => {
     }
   }, [activeBusiness?.id, activeBusiness?.website]);
 
+  // Restore the user's last persisted website audit ("continue where you left off")
+  // when they return to this view. Only fires when no audit is in memory yet.
+  React.useEffect(() => {
+    const bizId = activeBusiness?.id;
+    if (!bizId || latestWebsiteAudit) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/production/website-audit/${encodeURIComponent(bizId)}/latest`, {
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (cancelled || !json?.hasAudit || !json?.data) return;
+        const d = json.data;
+        const catMap: Record<string, 'SEO' | 'Performance' | 'Accessibility' | 'Security'> = {
+          seo: 'SEO',
+          performance: 'Performance',
+          accessibility: 'Accessibility',
+          security: 'Security',
+          schema: 'SEO',
+        };
+        const restored: any = {
+          url: d.url || '',
+          analyzedAt: d.analyzedAt || new Date().toISOString(),
+          overallScore: d.overallScore || 0,
+          scores: {
+            seo: d.scores?.seo || 0,
+            performance: d.scores?.performance || 0,
+            accessibility: d.scores?.accessibility || 0,
+            bestPractices: d.scores?.bestPractices || 0,
+          },
+          metadata: {
+            title: '',
+            description: '',
+            hasH1: false,
+            h1Count: 0,
+            imageAltMissingCount: 0,
+            sslActive: true,
+          },
+          keyIssues: (d.keyIssues || []).map((ki: any) => ({
+            type: ki.type === 'error' ? 'error' : ki.type === 'pass' ? 'pass' : 'warning',
+            category: catMap[(ki.category || 'seo').toLowerCase()] || 'SEO',
+            title: ki.title || '',
+            description: ki.description || '',
+            recommendation: ki.recommendation || '',
+          })),
+          aiSummary: `Last website audit completed ${d.analyzedAt ? new Date(d.analyzedAt).toLocaleDateString() : ''}. Overall score ${d.overallScore || 0}/100 across ${d.issuesFound || 0} recorded findings. Run a fresh audit for live data.`,
+          actionableSteps: [],
+          restoredFromHistory: true,
+        };
+        setLatestWebsiteAudit(restored);
+        if (d.url) setUrl(d.url);
+      } catch {
+        // No saved audit — view stays in its empty state
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeBusiness?.id]);
+
   // Normalized current domain
   const currentDomain = (url || activeBusiness?.website || businessProfile.website || '')
     .replace(/^https?:\/\//i, '')

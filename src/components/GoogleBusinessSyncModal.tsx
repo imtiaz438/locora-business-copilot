@@ -101,6 +101,12 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
   const [syncSuccess, setSyncSuccess] = useState(false);
   const [syncedListingSlug, setSyncedListingSlug] = useState<string>('');
 
+  // GBP connection state: once connected, the profile is locked in.
+  // Single-business (Free) plan = one-time connection; multi-business plans (Pro/Agency) = per business.
+  const isGbpConnected = Boolean((activeBusiness as any)?.gbpConnected);
+  const planTier = (user?.planTier || 'free').toLowerCase();
+  const isSingleBusinessPlan = planTier === 'free';
+
   // Manual Profile Fields setup states
   const [manualName, setManualName] = useState(
     activeBusiness.name !== 'Demo Growth Workspace' ? activeBusiness.name : ''
@@ -482,6 +488,34 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
             </div>
           ) : activeTab === 'search' ? (
             <div className="space-y-5">
+              {/* Already-connected state: green mark + locked search */}
+              {isGbpConnected && (
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start gap-3">
+                  <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700 shrink-0">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-emerald-950">
+                      Google Business Profile Connected
+                    </p>
+                    <p className="text-xs text-emerald-800 leading-relaxed">
+                      {activeBusiness.name || 'Your business'} is linked and active. The business search is disabled — this profile is already synced to your workspace.
+                      {isSingleBusinessPlan && ' On the Free plan this connection is one-time and cannot be changed.'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* One-time notice for single-business plan */}
+              {!isGbpConnected && isSingleBusinessPlan && (
+                <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-900 leading-relaxed">
+                    <span className="font-bold">One-time connection:</span> on the Free plan your Google Business Profile can only be connected once. Please choose carefully before syncing.
+                  </p>
+                </div>
+              )}
+
               {/* Search form */}
               <form onSubmit={handleSearchPlaces} className="space-y-3">
                 <label className="block text-xs font-bold text-slate-700">
@@ -495,13 +529,14 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="e.g. Apex Auto Repair Chicago, or Acme Legal London..."
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#059669] bg-white shadow-2xs"
+                      disabled={isGbpConnected}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#059669] bg-white shadow-2xs disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
                     />
                   </div>
                   <button
                     type="submit"
-                    disabled={isSearching || !searchQuery.trim()}
-                    className="px-5 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                    disabled={isSearching || !searchQuery.trim() || isGbpConnected}
+                    className="px-5 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSearching ? (
                       <>
@@ -517,7 +552,9 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
                   </button>
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  Tip: Include your business name and city/state for the most accurate Google Places match.
+                  {isGbpConnected
+                    ? 'Search is disabled because a Google Business Profile is already connected and active for this business.'
+                    : 'Tip: Include your business name and city/state for the most accurate Google Places match.'}
                 </p>
               </form>
 
@@ -611,8 +648,8 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
                               e.stopPropagation();
                               handleSyncSelectedPlace(result);
                             }}
-                            disabled={isSyncing}
-                            className="px-4 py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-2xs transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            disabled={isSyncing || isGbpConnected}
+                            className="px-4 py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs shadow-2xs transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {isSyncing && isSelected ? (
                               <>
@@ -750,7 +787,8 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
                                   setSearchQuery(activeBusiness.name);
                                   handleSearchPlaces(undefined, activeBusiness.name);
                                 }}
-                                className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-white text-slate-700 text-xs font-medium transition-colors cursor-pointer"
+                                disabled={isGbpConnected}
+                                className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-white text-slate-700 text-xs font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 Search on Google
                               </button>
@@ -774,10 +812,10 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
                                   };
                                   handleSyncSelectedPlace(bizPlace);
                                 }}
-                                disabled={isSyncing}
-                                className="px-3 py-1.5 rounded-lg bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
+                                disabled={isSyncing || isGbpConnected}
+                                className="px-3 py-1.5 rounded-lg bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                               >
-                                Sync Active Business
+                                {isGbpConnected ? 'Already Connected' : 'Sync Active Business'}
                               </button>
                             </div>
                           </div>

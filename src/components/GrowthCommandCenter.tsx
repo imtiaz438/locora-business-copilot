@@ -319,10 +319,18 @@ export const GrowthCommandCenter: React.FC = () => {
       {/* 1.5 DIRECT GOOGLE BUSINESS PROFILE SYNC & SETUP */}
       <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1 max-w-2xl">
-          <h3 className="text-base font-semibold text-slate-900">
-            {isGoogleConnected
-              ? `${businessName || 'Your business'} is synced with Google`
-              : 'Connect your Google Business Profile'}
+          <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2 flex-wrap">
+            {isGoogleConnected ? (
+              <>
+                <span>{businessName || 'Your business'} is synced with Google</span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Connected
+                </span>
+              </>
+            ) : (
+              'Connect your Google Business Profile'
+            )}
           </h3>
           <p className="text-sm text-slate-600">
             {isGoogleConnected
@@ -333,7 +341,11 @@ export const GrowthCommandCenter: React.FC = () => {
 
         <button
           onClick={() => setIsGbpSyncModalOpen(true)}
-          className="shrink-0 w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
+          className={`shrink-0 w-full sm:w-auto px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer ${
+            isGoogleConnected
+              ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
+              : 'bg-[#059669] hover:bg-[#047857] text-white'
+          }`}
         >
           <Globe className="w-4 h-4" />
           <span>{isGoogleConnected ? 'Re-sync from Google' : 'Sync Google Profile'}</span>

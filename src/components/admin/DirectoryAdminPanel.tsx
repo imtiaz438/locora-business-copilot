@@ -586,7 +586,7 @@ export const DirectoryAdminPanel: React.FC = () => {
 
                       {/* City / Category */}
                       <td className="py-3.5 px-4 text-slate-600">
-                        <div className="font-medium text-slate-800">{p.cityName || 'Austin'}</div>
+                        <div className="font-medium text-slate-800">{p.cityName || '—'}</div>
                         <div className="text-[11px] text-slate-400">{p.category || 'Local Business'}</div>
                       </td>
 

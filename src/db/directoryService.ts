@@ -491,8 +491,8 @@ export async function publishBusinessToDirectory(
     .where(eq(schema.locationsTable.businessId, businessId));
 
   const primaryLoc = locations.find((l) => l.isPrimary) || locations[0];
-  const city = primaryLoc?.city || business.cityName || 'Austin';
-  const state = primaryLoc?.state || business.stateCode || 'TX';
+  const city = primaryLoc?.city || business.cityName || '';
+  const state = primaryLoc?.state || business.stateCode || '';
   const category = business.category || business.industry || 'Local Services';
 
   // 4. Generate or preserve unique SEO slug
