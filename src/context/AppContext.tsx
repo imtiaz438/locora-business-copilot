@@ -1404,6 +1404,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const truth = await getBusinessTruth(id, true);
       setBusinessTruth(truth);
+      // Backfill profile blanks from the server-verified truth (Google sync data).
+      // Only fills fields the user hasn't set — never overwrites their values.
+      if (truth) {
+        const COUNTRY_CURRENCY: Record<string, string> = {
+          'United States': 'USD', 'Canada': 'CAD', 'United Kingdom': 'GBP',
+          'Australia': 'AUD', 'New Zealand': 'NZD', 'Ireland': 'EUR',
+          'Germany': 'EUR', 'France': 'EUR', 'Spain': 'EUR', 'Italy': 'EUR',
+          'Netherlands': 'EUR', 'India': 'INR', 'Pakistan': 'PKR',
+          'United Arab Emirates': 'AED', 'Singapore': 'SGD', 'South Africa': 'ZAR',
+        };
+        const truthCountry = (truth as any).country || null;
+        setBusinessProfile((prev) => {
+          const patch: Record<string, unknown> = {};
+          if (!prev.legalName && (truth as any).name) patch.legalName = (truth as any).name;
+          if (!prev.hours && (truth as any).hours) patch.hours = (truth as any).hours;
+          if (!prev.description && (truth as any).description) patch.description = (truth as any).description;
+          if (!prev.industry && (truth as any).category) patch.industry = (truth as any).category;
+          if (!prev.currency && truthCountry && COUNTRY_CURRENCY[truthCountry]) patch.currency = COUNTRY_CURRENCY[truthCountry];
+          if (Object.keys(patch).length === 0) return prev;
+          return { ...prev, ...patch };
+        });
+      }
       // Propagate the verified GBP connection state into the businesses list so
       // every surface (dashboard card, sync modal, settings badges) agrees on one
       // truth instead of disagreeing across data sources.
