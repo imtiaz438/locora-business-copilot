@@ -13083,6 +13083,14 @@ app.post('/api/ai/audit-website', async (req, res) => {
       .map(m => decodeHtml(m[1].replace(/<[^>]+>/g, '').trim()))
       .filter(Boolean);
 
+    // Detect client-rendered SPA shells: an empty framework mount point (#root/#app)
+    // plus an app bundle script means headings likely render via JavaScript after load.
+    // A static-fetch H1 check cannot verify these, so it must report inconclusive —
+    // never a false "failed".
+    const hasSpaMountPoint = /<div[^>]+id=["'](root|app)["'][^>]*>\s*<\/div>/i.test(cleanHtml);
+    const hasAppBundleScript = /<script[^>]+src=["'][^"']+\.js[^"']*["']/i.test(cleanHtml);
+    const isClientRenderedSpa = hasSpaMountPoint && hasAppBundleScript;
+
     const h2Matches = Array.from(cleanHtml.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi))
       .map(m => decodeHtml(m[1].replace(/<[^>]+>/g, '').trim()))
       .filter(Boolean)
@@ -13292,13 +13300,13 @@ app.post('/api/ai/audit-website', async (req, res) => {
       {
         id: 'h1',
         name: 'H1 Headings',
-        score: h1Matches.length === 1 ? 15 : (h1Matches.length > 1 ? 8 : 0),
+        score: h1Matches.length === 1 ? 15 : (h1Matches.length > 1 ? 8 : (isClientRenderedSpa ? 8 : 0)),
         maxScore: 15,
-        status: h1Matches.length === 1 ? 'passed' : (h1Matches.length > 1 ? 'warning' : 'failed'),
+        status: h1Matches.length === 1 ? 'passed' : (h1Matches.length > 1 ? 'warning' : (isClientRenderedSpa ? 'warning' : 'failed')),
         evidence: h1Matches.length === 1
           ? `Exactly 1 primary H1 heading detected: "${h1Matches[0].slice(0, 70)}"`
-          : (h1Matches.length > 1 ? `Multiple H1 headings found (${h1Matches.length} detected): "${h1Matches.slice(0, 2).join('", "')}"` : 'Zero H1 headings detected in page markup'),
-        recommendation: h1Matches.length === 0 ? 'Add a single high-level H1 tag containing your primary service and location.' : (h1Matches.length > 1 ? 'Consolidate multiple H1 headings into a single primary H1, changing others to H2/H3.' : undefined)
+          : (h1Matches.length > 1 ? `Multiple H1 headings found (${h1Matches.length} detected): "${h1Matches.slice(0, 2).join('", "')}"` : (isClientRenderedSpa ? 'No H1 in static HTML — page renders content client-side (JavaScript SPA), so H1 status could not be verified without JS rendering' : 'Zero H1 headings detected in page markup')),
+        recommendation: h1Matches.length === 0 ? (isClientRenderedSpa ? 'Verify the JavaScript-rendered page contains exactly one H1; consider server-side rendering or prerendering for full crawler visibility.' : 'Add a single high-level H1 tag containing your primary service and location.') : (h1Matches.length > 1 ? 'Consolidate multiple H1 headings into a single primary H1, changing others to H2/H3.' : undefined)
       },
       {
         id: 'canonical',
@@ -13701,6 +13709,8 @@ LIVE CRAWL DATA FOR ${hostname}:
 - H1 Headings (${h1Matches.length}): ${h1Matches.length ? h1Matches.join(' | ') : 'None'}
 - H2 Headings Sample: ${h2Matches.length ? h2Matches.join(' | ') : 'None'}
 - Canonical Tag: ${canonicalMatch ? canonicalMatch[1] : 'Not specified'}
+- XML Sitemap: ${hasSitemap ? `PRESENT at ${sitemapUrl} (HTTP ${sitemapHttpStatus})` : 'NOT DETECTED (live probe of /sitemap.xml failed)'}
+- Page Rendering: ${isClientRenderedSpa ? 'Client-rendered JavaScript SPA (static HTML shell; headings and content render after JS execution)' : 'Static server-rendered HTML'}
 - SSL HTTPS Active: ${isSsl}
 - Mobile Viewport: ${viewportMatch ? 'Present' : 'Missing'}
 - Total Images: ${imgMatches.length}, Missing ALT: ${imgsWithoutAlt}
@@ -13719,6 +13729,7 @@ CALCULATED BENCHMARK SCORES:
 
 INSTRUCTIONS:
 Return a valid JSON object ONLY. Use the exact calculated benchmark scores provided above.
+GROUNDING RULE (critical): every issue you report MUST be directly supported by the LIVE CRAWL DATA above. NEVER report an issue that contradicts the crawl data — e.g. do not claim a missing sitemap, title, meta description, canonical, or SSL when the data shows it present; do not claim zero H1 headings as a failure when the data says the page is a client-rendered SPA. If a data point is absent from the crawl data, omit it rather than inventing it.
 Construct realistic, highly specific issues (marked as "pass", "warning", or "error") and actionable steps tailored strictly to "${pageTitle}" and ${hostname}:
 {
   "overallScore": ${overallScore},
@@ -13785,13 +13796,23 @@ Construct realistic, highly specific issues (marked as "pass", "warning", or "er
     }
 
     if (h1Matches.length === 0) {
-      dynamicIssues.push({
-        type: 'error',
-        category: 'SEO',
-        title: 'Missing Primary <h1> Heading',
-        description: `No <h1> tag was found on the homepage.`,
-        recommendation: `Add a single <h1> heading reflecting the primary service or value proposition of ${hostname}.`,
-      });
+      if (isClientRenderedSpa) {
+        dynamicIssues.push({
+          type: 'warning',
+          category: 'SEO',
+          title: 'H1 Not Verifiable (Client-Rendered Page)',
+          description: `No <h1> tag was found in the static HTML of ${hostname}, but the page renders its content client-side via JavaScript — the H1 status could not be verified without JS rendering.`,
+          recommendation: 'Verify the JavaScript-rendered page contains exactly one H1; consider server-side rendering or prerendering for full crawler visibility.',
+        });
+      } else {
+        dynamicIssues.push({
+          type: 'error',
+          category: 'SEO',
+          title: 'Missing Primary <h1> Heading',
+          description: `No <h1> tag was found on the homepage.`,
+          recommendation: `Add a single <h1> heading reflecting the primary service or value proposition of ${hostname}.`,
+        });
+      }
     } else if (h1Matches.length === 1 || h1Matches.length === 2) {
       dynamicIssues.push({
         type: 'pass',

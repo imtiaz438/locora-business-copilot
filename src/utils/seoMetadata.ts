@@ -26,7 +26,7 @@ export const MARKETING_METADATA: Record<string, PageMetadata> = {
   home: {
     title: 'Locora AI — AI Business OS for Local Growth',
     description:
-      'The autonomous AI business operating system and verified local business directory. Discover top-rated service providers, automate Google Maps SEO, and manage local growth.',
+      'The AI business operating system and verified local business directory. Discover top-rated providers, automate Google Maps SEO, and grow locally.',
     canonicalPath: '/',
     noIndex: false,
   },
