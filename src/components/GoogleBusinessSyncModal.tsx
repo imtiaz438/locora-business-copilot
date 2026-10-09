@@ -277,16 +277,38 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
         gbpCompleteness: 98,
       });
 
+      // Auto-populate every profile field we can honestly derive from the synced
+      // Google data — only filling blanks, never overwriting user-entered values.
+      // (Google Places does not expose business description or socials, so those
+      // stay empty rather than invented.)
+      const COUNTRY_CURRENCY: Record<string, string> = {
+        'United States': 'USD', 'Canada': 'CAD', 'United Kingdom': 'GBP',
+        'Australia': 'AUD', 'New Zealand': 'NZD', 'Ireland': 'EUR',
+        'Germany': 'EUR', 'France': 'EUR', 'Spain': 'EUR', 'Italy': 'EUR',
+        'Netherlands': 'EUR', 'India': 'INR', 'Pakistan': 'PKR',
+        'United Arab Emirates': 'AED', 'Singapore': 'SGD', 'South Africa': 'ZAR',
+      };
+      const syncedCountry = place.country || 'United States';
+      const inferredCurrency = COUNTRY_CURRENCY[syncedCountry] || '';
+      const hoursText = Array.isArray(detailedHours) && detailedHours.length > 0
+        ? detailedHours.join('\n')
+        : '';
+
       updateBusinessProfile({
         name: place.name,
         city: place.city,
         state: place.state,
-        country: place.country || 'United States',
+        country: syncedCountry,
         address: place.address || place.formattedAddress,
         phone: detailedPhone || '',
         website: detailedWebsite || '',
         industry: place.primaryType || 'Local Business',
+        category: place.primaryType || 'Local Business',
         services: [place.primaryType || 'Core Service'],
+        // Fill blanks only:
+        ...(!businessProfile.legalName && place.name ? { legalName: place.name } : {}),
+        ...(!businessProfile.hours && hoursText ? { hours: hoursText } : {}),
+        ...(!businessProfile.currency && inferredCurrency ? { currency: inferredCurrency } : {}),
       });
 
       logActivity('integrations', 'Google Business Profile Synced', `Successfully linked live profile for ${place.name} in ${place.city || 'local area'}`);

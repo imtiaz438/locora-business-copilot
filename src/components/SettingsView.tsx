@@ -10,7 +10,6 @@ import { CountryAutocomplete } from './CountryAutocomplete';
 import { getDirectorySiteUrl, getDirectoryBusinessUrl } from '../utils/domain';
 import { DirectoryPublishingCard } from './DirectoryPublishingCard';
 import { businessService } from '../services/businessService';
-import { AiEngineHealthCard } from './AiEngineHealthCard';
 import { creditsForPlan, remainingCredits } from '../lib/credits';
 import { BusinessesManagementSection } from './BusinessesManagementSection';
 import {
@@ -722,7 +721,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialTab = 'busine
       {/* TAB 1: BUSINESSES MANAGEMENT (Primary Place for managing businesses) */}
       {activeTab === 'businesses' && (
         <div className="space-y-4">
-          <AiEngineHealthCard />
           <BusinessesManagementSection
             onNavigateToBusinessTab={(subTab) => {
               if (subTab === 'profile') {

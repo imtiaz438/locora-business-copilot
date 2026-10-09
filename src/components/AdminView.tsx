@@ -60,6 +60,7 @@ import {
 import { PlanProviderAccessSummary } from './PlanProviderAccessSummary';
 import { creditsForPlan } from '../lib/credits';
 import { DataFreshnessPanel } from './DataFreshnessPanel';
+import { AiEngineHealthCard } from './AiEngineHealthCard';
 import { DirectoryAdminPanel } from './admin/DirectoryAdminPanel';
 import { AdminEmailActivityPanel } from './admin/AdminEmailActivityPanel';
 
@@ -2981,6 +2982,8 @@ export const AdminView: React.FC = () => {
       {/* TAB 2: AI MODELS & CREDIT TOKENS MONITORING HUB */}
       {activeTab === 'ai_tokens' && (
         <div className="space-y-6 font-sans">
+          {/* Backend-only AI engine status: which provider lanes are live */}
+          <AiEngineHealthCard />
           {/* AI Models Management & Live Monitoring Dashboard */}
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6 shadow-xl text-white">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">

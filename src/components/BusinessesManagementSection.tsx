@@ -416,6 +416,14 @@ export const BusinessesManagementSection: React.FC<BusinessesManagementSectionPr
           businesses.map((biz) => {
           const isActive = biz.id === activeBusinessId;
           const isPublished = Boolean(biz.isPublishedInDirectory);
+          // Display name: prefer the server-verified truth for the active business,
+          // then the list record — never a stale placeholder when a real name is known.
+          const PLACEHOLDER_NAMES = ['My Business Workspace', 'My Local Business', 'Demo Growth Workspace'];
+          const isPlaceholderName = (n: unknown) => PLACEHOLDER_NAMES.includes((typeof n === 'string' ? n : '').trim());
+          const verifiedName = isActive ? (businessTruth as any)?.name : null;
+          const displayName = (!isPlaceholderName(verifiedName) && verifiedName) ||
+            (!isPlaceholderName(biz.name) && biz.name) ||
+            verifiedName || biz.name || 'My Workspace';
           // Unified connected state: the list flag, legacy flags, or — for the active
           // business — the server-verified business truth. A stale list flag must never
           // contradict the verified truth on the same screen.
@@ -445,7 +453,7 @@ export const BusinessesManagementSection: React.FC<BusinessesManagementSectionPr
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2.5">
                   <h3 className="text-base font-bold text-slate-900 font-heading">
-                    {biz.name}
+                    {displayName}
                   </h3>
                   {isActive && (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-[#059669] border border-emerald-200">

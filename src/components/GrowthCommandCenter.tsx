@@ -965,7 +965,7 @@ export const GrowthCommandCenter: React.FC = () => {
                 Top 3 Things to Fix This Week
               </h2>
               <p className="text-xs text-slate-500">
-                Ranked by AI expected impact on call conversions and local search revenue.
+                Ranked by severity and expected impact on calls and local search.
               </p>
             </div>
           </div>
