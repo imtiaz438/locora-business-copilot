@@ -5167,6 +5167,131 @@ app.delete('/api/admin/businesses/:businessId', async (req, res) => {
   }
 });
 
+// Admin data repair: surgically fix business identity + location rows.
+// Used when UI flows leave stale/duplicate data (e.g. duplicate primary locations,
+// fake leftover city/state, or a business name that drifted from the canonical name).
+// Body: { name?: string, dedupeLocations?: boolean, clearLocationFields?: boolean }
+app.post('/api/admin/businesses/:businessId/repair', async (req, res) => {
+  try {
+    const email = reqEmail(req);
+    const isAdmin = SUPER_ADMIN_EMAILS.has(email) || (await verifyAdminAccessAsync(req));
+    if (!isAdmin) {
+      return res.status(403).json({ error: 'System administrator authorization required.' });
+    }
+    const bId = req.params.businessId;
+    if (!bId) {
+      return res.status(400).json({ error: 'Business ID is required.' });
+    }
+    const { name, dedupeLocations, clearLocationFields } = req.body || {};
+    const report: any = { businessId: bId, actions: [] };
+
+    // 1. Canonical business name → PostgreSQL + in-memory engine + user profile store
+    if (typeof name === 'string' && name.trim()) {
+      const cleanName = name.trim();
+      await db
+        .update(schema.businessesTable)
+        .set({ name: cleanName, updatedAt: new Date() })
+        .where(eq(schema.businessesTable.id, bId));
+      report.actions.push(`businessesTable.name → "${cleanName}"`);
+
+      try {
+        const engineRec: any = getBusinessRecordById(bId);
+        if (engineRec) {
+          if (!engineRec.identity) engineRec.identity = {};
+          engineRec.identity.name = cleanName;
+          engineRec.updatedAt = new Date().toISOString();
+          saveBusinessRecordToLocoraDb(engineRec);
+          report.actions.push('in-memory engine identity.name updated');
+        }
+      } catch (e: any) {
+        report.actions.push(`engine update skipped: ${e?.message || e}`);
+      }
+
+      try {
+        const bizRows = await db
+          .select({ ownerEmail: schema.businessesTable.ownerEmail })
+          .from(schema.businessesTable)
+          .where(eq(schema.businessesTable.id, bId))
+          .limit(1);
+        const ownerEmail = (bizRows[0]?.ownerEmail || '').toLowerCase().trim();
+        if (ownerEmail && typeof userProfilesMap !== 'undefined') {
+          const prof: any = userProfilesMap.get(ownerEmail) || {};
+          prof.companyName = cleanName;
+          prof.updatedAt = new Date().toISOString();
+          userProfilesMap.set(ownerEmail, prof);
+          if (typeof saveUserProfilesToDisk === 'function') saveUserProfilesToDisk();
+          report.actions.push('user profile companyName updated');
+        }
+      } catch (e: any) {
+        report.actions.push(`profile store update skipped: ${e?.message || e}`);
+      }
+    }
+
+    // 2. Deduplicate locations: keep canonical `loc_<businessId>` (or first primary), delete the rest
+    let keptLocationId: string | null = null;
+    if (dedupeLocations) {
+      const locRows: any[] = await db
+        .select()
+        .from(schema.locationsTable)
+        .where(eq(schema.locationsTable.businessId, bId));
+      report.locationsBefore = locRows.map((l: any) => ({ id: l.id, name: l.name, city: l.city, state: l.state, isPrimary: l.isPrimary }));
+      if (locRows.length > 1) {
+        const canonicalId = `loc_${bId}`;
+        const keep = locRows.find((l: any) => l.id === canonicalId)
+          || locRows.find((l: any) => l.isPrimary)
+          || locRows[0];
+        keptLocationId = keep.id;
+        for (const loc of locRows) {
+          if (loc.id !== keep.id) {
+            await db.delete(schema.locationsTable).where(eq(schema.locationsTable.id, loc.id));
+            report.actions.push(`deleted duplicate location ${loc.id}`);
+          }
+        }
+        // Ensure the kept row is the primary one
+        await db
+          .update(schema.locationsTable)
+          .set({ isPrimary: true, updatedAt: new Date() })
+          .where(eq(schema.locationsTable.id, keep.id));
+      } else if (locRows.length === 1) {
+        keptLocationId = locRows[0].id;
+        report.actions.push('single location row — nothing to dedupe');
+      } else {
+        report.actions.push('no location rows found');
+      }
+    }
+
+    // 3. Clear fake leftover location fields on the kept (or canonical) location
+    if (clearLocationFields) {
+      if (!keptLocationId) {
+        const locRows: any[] = await db
+          .select({ id: schema.locationsTable.id })
+          .from(schema.locationsTable)
+          .where(eq(schema.locationsTable.businessId, bId))
+          .limit(1);
+        keptLocationId = locRows[0]?.id || null;
+      }
+      if (keptLocationId) {
+        await db
+          .update(schema.locationsTable)
+          .set({ city: '', state: '', address: '', zip: '', updatedAt: new Date() })
+          .where(eq(schema.locationsTable.id, keptLocationId));
+        report.actions.push(`cleared city/state/address/zip on ${keptLocationId}`);
+      }
+    }
+
+    const after: any[] = await db
+      .select()
+      .from(schema.locationsTable)
+      .where(eq(schema.locationsTable.businessId, bId));
+    report.locationsAfter = after.map((l: any) => ({ id: l.id, name: l.name, city: l.city, state: l.state, address: l.address, isPrimary: l.isPrimary }));
+
+    res.json({ success: true, report });
+  } catch (err: any) {
+    console.error('Error in admin repair business:', err);
+    res.status(err.status || 500).json({ error: err.message || 'Failed to repair business data' });
+  }
+});
+
 // 4. Locations
 app.get('/api/production/locations/:businessId', async (req, res) => {
   try {
