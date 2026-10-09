@@ -5147,11 +5147,12 @@ app.delete('/api/admin/businesses/:businessId', async (req, res) => {
 
     // 3. Clean up user workspace maps and disk stores
     userWorkspaceDataMap.forEach((store) => {
-      store.customers = (store.customers || []).filter((c: any) => c.businessId !== bId);
-      store.projects = (store.projects || []).filter((p: any) => p.businessId !== bId);
-      store.invoices = (store.invoices || []).filter((i: any) => i.businessId !== bId);
-      store.proposals = (store.proposals || []).filter((p: any) => p.businessId !== bId);
-      store.documents = (store.documents || []).filter((d: any) => d.businessId !== bId);
+      if (!store) return;
+      store.customers = (store.customers || []).filter((c: any) => c && c.businessId !== bId);
+      store.projects = (store.projects || []).filter((p: any) => p && p.businessId !== bId);
+      store.invoices = (store.invoices || []).filter((i: any) => i && i.businessId !== bId);
+      store.proposals = (store.proposals || []).filter((p: any) => p && p.businessId !== bId);
+      store.documents = (store.documents || []).filter((d: any) => d && d.businessId !== bId);
     });
     saveUserWorkspaceDataToDisk();
     invalidateDirectoryListingsCache();

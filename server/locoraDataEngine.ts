@@ -1051,6 +1051,11 @@ export function deleteBusinessRecord(id: string): boolean {
   // Also clean up any directory leads and events associated with this business ID
   let leadsRemoved = false;
   for (const [leadId, lead] of directoryLeadsDatabase.entries()) {
+    if (!lead) {
+      directoryLeadsDatabase.delete(leadId);
+      leadsRemoved = true;
+      continue;
+    }
     if (lead.businessId === id) {
       directoryLeadsDatabase.delete(leadId);
       leadsRemoved = true;
@@ -1062,7 +1067,8 @@ export function deleteBusinessRecord(id: string): boolean {
 
   let eventsRemoved = false;
   for (let i = directoryEventsDatabase.length - 1; i >= 0; i--) {
-    if (directoryEventsDatabase[i].businessId === id) {
+    const evt = directoryEventsDatabase[i];
+    if (!evt || evt.businessId === id) {
       directoryEventsDatabase.splice(i, 1);
       eventsRemoved = true;
     }
