@@ -36,43 +36,25 @@ export const BusinessProfileTab: React.FC = () => {
     updateActiveBusiness,
     businessProfile,
     updateBusinessProfile,
+    businessTruth,
     user,
   } = useApp();
 
-  // Unified Form State for the selected business
-  const [formData, setFormData] = useState(() => ({
-    name: businessProfile?.name || activeBusiness?.name || '',
-    category: businessProfile?.industry || activeBusiness?.category || 'Local Business',
-    legalName: businessProfile?.legalName || '',
-    description: businessProfile?.description || activeBusiness?.description || '',
-    website: businessProfile?.website || activeBusiness?.website || '',
-    phone: businessProfile?.phone || activeBusiness?.phone || '',
-    email: businessProfile?.email || activeBusiness?.email || user?.email || '',
-    address: businessProfile?.address || activeBusiness?.address || '',
-    city: businessProfile?.city || activeBusiness?.city || '',
-    state: businessProfile?.state || activeBusiness?.state || '',
-    country: businessProfile?.country || activeBusiness?.country || 'United States',
-    zip: businessProfile?.zip || activeBusiness?.zip || '',
-    hours: typeof businessProfile?.hours === 'string' ? businessProfile.hours : 'Mon-Fri: 8:00 AM - 6:00 PM',
-    services: businessProfile?.services || activeBusiness?.services || [],
-    targetAudience: businessProfile?.targetAudience || '',
-    toneOfVoice: businessProfile?.toneOfVoice || 'Professional, trustworthy, and friendly',
-    currency: businessProfile?.currency || 'USD',
-    taxId: businessProfile?.taxId || '',
-    // Social Links
-    linkedinUrl: (businessProfile as any)?.linkedinUrl || '',
-    facebookUrl: (businessProfile as any)?.facebookUrl || '',
-    instagramUrl: (businessProfile as any)?.instagramUrl || '',
-    googleMapsUrl: (businessProfile as any)?.googleMapsUrl || '',
-  }));
-
-  // Keep form updated if active business changes
-  useEffect(() => {
-    setFormData({
-      name: businessProfile?.name || activeBusiness?.name || '',
-      category: businessProfile?.industry || activeBusiness?.category || 'Local Business',
-      legalName: businessProfile?.legalName || '',
-      description: businessProfile?.description || activeBusiness?.description || '',
+  // Unified Form State for the selected business (corrected by the sync effect on mount)
+  const [formData, setFormData] = useState(() => {
+    const truth = (businessTruth as any) || {};
+    const truthName = (typeof truth.name === 'string' && truth.name.trim()) || '';
+    const truthCategory = (typeof truth.category === 'string' && truth.category.trim()) || '';
+    const PLACEHOLDERS = ['My Business Workspace', 'My Local Business', 'Demo Growth Workspace'];
+    const realOr = (v: unknown, fallback: string) => {
+      const s = (typeof v === 'string' ? v : '').trim();
+      return (s && !PLACEHOLDERS.includes(s)) ? s : fallback;
+    };
+    return {
+      name: truthName || realOr(businessProfile?.name, '') || realOr(activeBusiness?.name, '') || '',
+      category: truthCategory || realOr(businessProfile?.industry, '') || realOr(activeBusiness?.category, '') || 'Local Business',
+      legalName: businessProfile?.legalName || truthName || '',
+      description: businessProfile?.description || activeBusiness?.description || truth.description || '',
       website: businessProfile?.website || activeBusiness?.website || '',
       phone: businessProfile?.phone || activeBusiness?.phone || '',
       email: businessProfile?.email || activeBusiness?.email || user?.email || '',
@@ -81,7 +63,46 @@ export const BusinessProfileTab: React.FC = () => {
       state: businessProfile?.state || activeBusiness?.state || '',
       country: businessProfile?.country || activeBusiness?.country || 'United States',
       zip: businessProfile?.zip || activeBusiness?.zip || '',
-      hours: typeof businessProfile?.hours === 'string' ? businessProfile.hours : 'Mon-Fri: 8:00 AM - 6:00 PM',
+      hours: typeof businessProfile?.hours === 'string' && businessProfile.hours ? businessProfile.hours : (truth.hours || ''),
+      services: businessProfile?.services || activeBusiness?.services || [],
+      targetAudience: businessProfile?.targetAudience || '',
+      toneOfVoice: businessProfile?.toneOfVoice || 'Professional, trustworthy, and friendly',
+      currency: businessProfile?.currency || 'USD',
+      taxId: businessProfile?.taxId || '',
+      // Social Links
+      linkedinUrl: (businessProfile as any)?.linkedinUrl || '',
+      facebookUrl: (businessProfile as any)?.facebookUrl || '',
+      instagramUrl: (businessProfile as any)?.instagramUrl || '',
+      googleMapsUrl: (businessProfile as any)?.googleMapsUrl || '',
+    };
+  });
+
+  // Keep form updated when the business, profile, or verified truth changes.
+  // Verified truth is the final fallback for every field so stale or wrong
+  // values (placeholders, cross-account artifacts) can never persist here.
+  useEffect(() => {
+    const truth = (businessTruth as any) || {};
+    const truthName = (typeof truth.name === 'string' && truth.name.trim()) || '';
+    const truthCategory = (typeof truth.category === 'string' && truth.category.trim()) || '';
+    const PLACEHOLDERS = ['My Business Workspace', 'My Local Business', 'Demo Growth Workspace'];
+    const realOr = (v: unknown, fallback: string) => {
+      const s = (typeof v === 'string' ? v : '').trim();
+      return (s && !PLACEHOLDERS.includes(s)) ? s : fallback;
+    };
+    setFormData({
+      name: truthName || realOr(businessProfile?.name, '') || realOr(activeBusiness?.name, '') || '',
+      category: truthCategory || realOr(businessProfile?.industry, '') || realOr(activeBusiness?.category, '') || 'Local Business',
+      legalName: businessProfile?.legalName || truthName || '',
+      description: businessProfile?.description || activeBusiness?.description || truth.description || '',
+      website: businessProfile?.website || activeBusiness?.website || '',
+      phone: businessProfile?.phone || activeBusiness?.phone || '',
+      email: businessProfile?.email || activeBusiness?.email || user?.email || '',
+      address: businessProfile?.address || activeBusiness?.address || '',
+      city: businessProfile?.city || activeBusiness?.city || '',
+      state: businessProfile?.state || activeBusiness?.state || '',
+      country: businessProfile?.country || activeBusiness?.country || 'United States',
+      zip: businessProfile?.zip || activeBusiness?.zip || '',
+      hours: typeof businessProfile?.hours === 'string' && businessProfile.hours ? businessProfile.hours : (truth.hours || 'Mon-Fri: 8:00 AM - 6:00 PM'),
       services: businessProfile?.services || activeBusiness?.services || [],
       targetAudience: businessProfile?.targetAudience || '',
       toneOfVoice: businessProfile?.toneOfVoice || 'Professional, trustworthy, and friendly',
@@ -92,7 +113,7 @@ export const BusinessProfileTab: React.FC = () => {
       instagramUrl: (businessProfile as any)?.instagramUrl || '',
       googleMapsUrl: (businessProfile as any)?.googleMapsUrl || '',
     });
-  }, [activeBusiness?.id]);
+  }, [activeBusiness?.id, businessProfile, businessTruth]);
 
   const [newServiceInput, setNewServiceInput] = useState('');
   const [savedSuccess, setSavedSuccess] = useState(false);
