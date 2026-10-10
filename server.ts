@@ -7079,6 +7079,14 @@ app.get('/api/places/search-live', async (req, res) => {
         body: JSON.stringify({
           textQuery: query,
           pageSize: 8,
+          // Location bias helps surface low-prominence listings (e.g. 0-review
+          // businesses) that Google would otherwise omit from a global search.
+          locationBias: {
+            rectangle: {
+              low: { latitude: 24.396308, longitude: -125.0 },
+              high: { latitude: 49.384358, longitude: -66.93457 },
+            },
+          },
         }),
       });
 
@@ -7148,7 +7156,7 @@ app.get('/api/places/search-live', async (req, res) => {
 
     // 2. Fallback to Legacy Google Places TextSearch: maps.googleapis.com/maps/api/place/textsearch/json
     try {
-      const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${apiKey}`;
+      const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${apiKey}&location=39.8283%2C-98.5795&radius=2500000`;
       const gRes = await fetch(textSearchUrl);
       if (gRes.ok) {
         const gData = await gRes.json();
