@@ -1012,6 +1012,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialTab = 'busine
             </div>
 
             <div>
+              <label className="block text-slate-600 mb-1 font-medium">Legal Business Name</label>
+              <input
+                type="text"
+                value={profileForm.legalName || ''}
+                onChange={(e) => setProfileForm({ ...profileForm, legalName: e.target.value })}
+                placeholder="Auto-filled from your Google profile on sync"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
+              />
+            </div>
+
+            <div>
               <label className="block text-slate-600 mb-1 font-medium">Industry</label>
               <input
                 type="text"
@@ -1027,6 +1038,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialTab = 'busine
                 type="text"
                 value={profileForm.website}
                 onChange={(e) => setProfileForm({ ...profileForm, website: e.target.value })}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-slate-600 mb-1 font-medium">Operating Hours</label>
+              <textarea
+                rows={3}
+                value={profileForm.hours || ''}
+                onChange={(e) => setProfileForm({ ...profileForm, hours: e.target.value })}
+                placeholder="Auto-filled from your Google profile on sync (e.g. Monday: 9:00 AM – 5:00 PM)"
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669]"
               />
             </div>

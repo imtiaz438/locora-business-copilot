@@ -1417,7 +1417,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const truthCountry = (truth as any).country || null;
         setBusinessProfile((prev) => {
           const patch: Record<string, unknown> = {};
-          if (!prev.legalName && (truth as any).name) patch.legalName = (truth as any).name;
+          const truthName = (truth as any).name;
+          // Business name itself: replace a stale placeholder with the verified real name.
+          if (truthName && (!prev.name || ['My Business Workspace', 'My Local Business', 'Demo Growth Workspace'].includes(prev.name.trim()))) {
+            patch.name = truthName;
+          }
+          if (!prev.legalName && truthName) patch.legalName = truthName;
           if (!prev.hours && (truth as any).hours) patch.hours = (truth as any).hours;
           if (!prev.description && (truth as any).description) patch.description = (truth as any).description;
           if (!prev.industry && (truth as any).category) patch.industry = (truth as any).category;
