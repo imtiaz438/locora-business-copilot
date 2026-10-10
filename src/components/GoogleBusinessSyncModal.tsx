@@ -17,7 +17,6 @@ import {
   SearchX,
   Info,
   ExternalLink,
-  Link2,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getDirectoryBusinessUrl } from '../utils/domain';
@@ -98,8 +97,6 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
   const [searchResults, setSearchResults] = useState<PlaceSearchResult[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<PlaceSearchResult | null>(null);
-  const [mapsUrl, setMapsUrl] = useState('');
-  const [isResolvingUrl, setIsResolvingUrl] = useState(false);
 
   // Syncing state
   const [isSyncing, setIsSyncing] = useState(false);
@@ -166,38 +163,6 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
   );
 
   if (!isOpen) return null;
-
-  // Resolve a pasted Google Maps share link directly to the listing.
-  // For new/unindexed GBPs that text search cannot find yet.
-  const handleResolveUrl = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const url = mapsUrl.trim();
-    if (!url || isGbpConnected) return;
-    setIsResolvingUrl(true);
-    setSearchError(null);
-    try {
-      const res = await fetch('/api/places/resolve-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Could not resolve that link.');
-      if (data.provider_status) setProviderStatus(data.provider_status);
-      if (data.providerStatusMessage) setProviderStatusMessage(data.providerStatusMessage);
-      if (Array.isArray(data.results) && data.results.length > 0) {
-        setSearchResults(data.results);
-        setSelectedPlace(data.results[0]);
-        setHasSearched(true);
-      } else {
-        setSearchError(data.providerStatusMessage || 'No Google listing found at that link. Make sure it is the Share link from your Google Business Profile.');
-      }
-    } catch (err: any) {
-      setSearchError(err.message || 'Could not resolve that link.');
-    } finally {
-      setIsResolvingUrl(false);
-    }
-  };
 
   const handleSearchPlaces = async (e?: React.FormEvent, customQuery?: string) => {
     if (e) e.preventDefault();
@@ -631,46 +596,11 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
                     ? 'Search is disabled because a Google Business Profile is already connected and active for this business.'
                     : 'Tip: Include your business name and city/state for the most accurate Google Places match.'}
                 </p>
-              </form>
-
-              {/* Direct link option for new/unindexed listings */}
-              <form onSubmit={handleResolveUrl} className="space-y-2 pt-1">
-                <label className="block text-xs font-bold text-slate-700">
-                  Or paste your Google Maps link
-                </label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Link2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      value={mapsUrl}
-                      onChange={(e) => setMapsUrl(e.target.value)}
-                      placeholder="https://share.google/... or google.com/maps link"
-                      disabled={isGbpConnected}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#059669] bg-white shadow-2xs disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isResolvingUrl || !mapsUrl.trim() || isGbpConnected}
-                    className="px-5 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isResolvingUrl ? (
-                      <>
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>Resolving...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Link2 className="w-3.5 h-3.5" />
-                        <span>Connect Link</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  New Google Business Profile? Recently created listings can take a few days to appear in search results. If your listing doesn't show up above, open it in Google Maps, tap <span className="font-semibold">Share</span>, and paste the link here to connect it directly.
-                </p>
+                {!isGbpConnected && (
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Note: if your Google Business Profile is new, Google can take a few days to index it. Until then, search won't find it and its data can't be pulled in — only listings already indexed by Google return live data.
+                  </p>
+                )}
               </form>
 
               {searchError && (
