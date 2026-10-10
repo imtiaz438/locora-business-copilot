@@ -654,17 +654,17 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
                               </span>
                               {result.source === 'google_places_live' && (
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                                  Verified Google
+                                  Real Google listing — data pulled from GBP
                                 </span>
                               )}
                               {result.source === 'workspace_database' && (
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">
-                                  From your workspace — not Google
+                                  Locora Search — not a verified Google listing
                                 </span>
                               )}
                               {(result.source === 'custom_listing' || result.isSuggestedListing) && (
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
-                                  Suggested — not verified
+                                  Manual option — not verified
                                 </span>
                               )}
                             </div>

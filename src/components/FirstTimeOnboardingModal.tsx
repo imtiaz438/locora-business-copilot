@@ -547,6 +547,14 @@ export const FirstTimeOnboardingModal: React.FC<FirstTimeOnboardingModalProps> =
                 Provide your website URL and primary location. Locora will attempt to discover your business details directly from Google Places, Schema markup, and live website crawling — without fabricating or assuming missing data.
               </div>
 
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed space-y-1.5">
+                <p className="font-semibold text-slate-800">How your business data is sourced</p>
+                <p><span className="font-semibold text-emerald-700">Google Business Profile</span> — a verified listing found on Google. Pulls live name, hours, phone, reviews, and address.</p>
+                <p><span className="font-semibold text-blue-700">Locora Search</span> — matched from Locora's internal directory when no verified Google listing is found. Limited data.</p>
+                <p><span className="font-semibold text-slate-700">Manual Setup</span> — you enter details yourself. Fields stay empty until you fill them; nothing is invented.</p>
+                <p className="text-slate-500">New Google listing? Google can take a few days to index it — until then only Locora Search or Manual Setup are available.</p>
+              </div>
+
               {discoveryError && (
                 <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />

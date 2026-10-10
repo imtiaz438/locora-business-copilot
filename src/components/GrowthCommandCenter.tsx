@@ -69,6 +69,16 @@ export const GrowthCommandCenter: React.FC = () => {
   // Either source proving "connected" is enough — a stale businessTruth must never
   // shadow a fresh sync, and vice versa.
   const isGoogleConnected = Boolean(businessTruth?.googleProfile?.connected) || Boolean(activeBusiness?.gbpConnected);
+  // Connection method: which of the three setup paths this business used.
+  // - 'google': real Google Places listing (placeId is a genuine Google place ID)
+  // - 'locora': matched via Locora's internal search (workspace database, ws_ placeId)
+  // - 'manual': custom onboarding form, no Google connection
+  const googlePlaceId = (businessTruth?.googleProfile as any)?.placeId || '';
+  const connectionMethod: 'google' | 'locora' | 'manual' = !isGoogleConnected
+    ? 'manual'
+    : googlePlaceId.startsWith('ws_')
+      ? 'locora'
+      : 'google';
   // Single-business (Free) plan: GBP connection is one-time and locked — no re-sync
   // button once connected. Multi-business plans (Pro/Agency) keep per-business refresh.
   const isSingleBusinessPlan = (user?.planTier || 'free').toLowerCase() === 'free';
@@ -366,41 +376,77 @@ export const GrowthCommandCenter: React.FC = () => {
       </div>
 
       {/* 1.5 DIRECT GOOGLE BUSINESS PROFILE SYNC & SETUP */}
-      <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-1 max-w-2xl">
-          <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2 flex-wrap">
-            {isGoogleConnected ? (
-              <>
-                <span>{businessName || 'Your business'} is synced with Google</span>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Connected
-                </span>
-              </>
-            ) : (
-              'Connect your Google Business Profile'
-            )}
-          </h3>
-          <p className="text-sm text-slate-600">
-            {isGoogleConnected
-              ? 'Pull verified reviews, ratings, and business details directly into your dashboard.'
-              : 'Pull your verified business name, reviews, and rating directly into your dashboard.'}
-          </p>
+      <div className="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1 max-w-2xl">
+            <h3 className="text-base font-semibold text-slate-900 flex items-center gap-2 flex-wrap">
+              {isGoogleConnected ? (
+                <>
+                  <span>{businessName || 'Your business'} is synced with Google</span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Connected
+                  </span>
+                </>
+              ) : (
+                'Connect your Google Business Profile'
+              )}
+            </h3>
+            <p className="text-sm text-slate-600">
+              {isGoogleConnected
+                ? 'Pull verified reviews, ratings, and business details directly into your dashboard.'
+                : 'Pull your verified business name, reviews, and rating directly into your dashboard.'}
+            </p>
+          </div>
+
+          {showGbpActionButton && (
+            <button
+              onClick={() => setIsGbpSyncModalOpen(true)}
+              className={`shrink-0 w-full sm:w-auto px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer ${
+                isGoogleConnected
+                  ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
+                  : 'bg-[#059669] hover:bg-[#047857] text-white'
+              }`}
+            >
+              <Globe className="w-4 h-4" />
+              <span>{isGoogleConnected ? 'Re-sync from Google' : 'Sync Google Profile'}</span>
+            </button>
+          )}
         </div>
 
-        {showGbpActionButton && (
-          <button
-            onClick={() => setIsGbpSyncModalOpen(true)}
-            className={`shrink-0 w-full sm:w-auto px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer ${
-              isGoogleConnected
-                ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
-                : 'bg-[#059669] hover:bg-[#047857] text-white'
-            }`}
-          >
-            <Globe className="w-4 h-4" />
-            <span>{isGoogleConnected ? 'Re-sync from Google' : 'Sync Google Profile'}</span>
-          </button>
-        )}
+        {/* Connection method badges: which setup path this business used */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
+          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Business data source:</span>
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+            connectionMethod === 'google'
+              ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+              : 'bg-slate-100 text-slate-400 border-slate-200'
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${connectionMethod === 'google' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+            Google Business Profile {connectionMethod === 'google' ? '· Connected' : '· Off'}
+          </span>
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+            connectionMethod === 'locora'
+              ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+              : 'bg-slate-100 text-slate-400 border-slate-200'
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${connectionMethod === 'locora' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+            Locora Search {connectionMethod === 'locora' ? '· Connected' : '· Off'}
+          </span>
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+            connectionMethod === 'manual'
+              ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+              : 'bg-slate-100 text-slate-400 border-slate-200'
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${connectionMethod === 'manual' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+            Manual Setup {connectionMethod === 'manual' ? '· Connected' : '· Off'}
+          </span>
+        </div>
+        <p className="text-[11px] text-slate-500 leading-relaxed">
+          {connectionMethod === 'google' && 'Your business data comes from a verified Google Business Profile listing.'}
+          {connectionMethod === 'locora' && 'Your business was matched through Locora\u2019s internal directory — not a verified Google listing. Connect a Google Business Profile for live Google data.'}
+          {connectionMethod === 'manual' && 'Your business was set up manually. Connect a Google Business Profile to pull verified reviews, hours, and business details automatically.'}
+        </p>
       </div>
 
       {/* LOCORA DIRECTORY PRESENCE & INBOUND LEADS CARD */}
