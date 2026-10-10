@@ -1448,7 +1448,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Backfill profile blanks from the server-verified business truth (Google sync
   // data). Runs whenever fresh truth arrives — covers already-synced businesses.
-  // Only fills fields the user hasn't set; never overwrites their values.
+  // Fills empty fields AND replaces placeholder values; never overwrites real
+  // user-entered values.
   useEffect(() => {
     if (!businessTruth) return;
     const COUNTRY_CURRENCY: Record<string, string> = {
@@ -1458,19 +1459,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       'Netherlands': 'EUR', 'India': 'INR', 'Pakistan': 'PKR',
       'United Arab Emirates': 'AED', 'Singapore': 'SGD', 'South Africa': 'ZAR',
     };
+    const PLACEHOLDERS = ['My Business Workspace', 'My Local Business', 'Demo Growth Workspace'];
+    const isPlaceholder = (v: unknown) => PLACEHOLDERS.includes((typeof v === 'string' ? v : '').trim());
+    const needsFill = (v: unknown) => !v || isPlaceholder(v);
     const truth = businessTruth as any;
     const truthCountry = truth.country || null;
     const truthName = truth.name;
     setBusinessProfile((prev) => {
       const patch: Record<string, unknown> = {};
-      if (truthName && (!prev.name || ['My Business Workspace', 'My Local Business', 'Demo Growth Workspace'].includes((prev.name || '').trim()))) {
-        patch.name = truthName;
-      }
-      if (!prev.legalName && truthName) patch.legalName = truthName;
-      if (!prev.hours && truth.hours) patch.hours = truth.hours;
-      if (!prev.description && truth.description) patch.description = truth.description;
-      if (!prev.industry && truth.category) patch.industry = truth.category;
-      if (!prev.currency && truthCountry && COUNTRY_CURRENCY[truthCountry]) patch.currency = COUNTRY_CURRENCY[truthCountry];
+      if (truthName && needsFill(prev.name)) patch.name = truthName;
+      if (truthName && needsFill(prev.legalName)) patch.legalName = truthName;
+      if (truth.hours && needsFill(prev.hours)) patch.hours = truth.hours;
+      if (truth.description && needsFill(prev.description)) patch.description = truth.description;
+      if (truth.category && needsFill(prev.industry)) patch.industry = truth.category;
+      if (truthCountry && COUNTRY_CURRENCY[truthCountry] && needsFill(prev.currency)) patch.currency = COUNTRY_CURRENCY[truthCountry];
       if (Object.keys(patch).length === 0) return prev;
       return { ...prev, ...patch };
     });

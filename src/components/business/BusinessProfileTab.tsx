@@ -102,7 +102,7 @@ export const BusinessProfileTab: React.FC = () => {
       state: businessProfile?.state || activeBusiness?.state || '',
       country: businessProfile?.country || activeBusiness?.country || 'United States',
       zip: businessProfile?.zip || activeBusiness?.zip || '',
-      hours: typeof businessProfile?.hours === 'string' && businessProfile.hours ? businessProfile.hours : (truth.hours || 'Mon-Fri: 8:00 AM - 6:00 PM'),
+      hours: typeof businessProfile?.hours === 'string' && businessProfile.hours ? businessProfile.hours : (truth.hours || ''),
       services: businessProfile?.services || activeBusiness?.services || [],
       targetAudience: businessProfile?.targetAudience || '',
       toneOfVoice: businessProfile?.toneOfVoice || 'Professional, trustworthy, and friendly',

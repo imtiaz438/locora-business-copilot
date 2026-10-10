@@ -434,9 +434,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialTab = 'busine
           !isPlaceholderBusinessName(prev.name);
         // Bulletproof auto-fill: verified truth is the final fallback for every
         // synced field, so the form shows real data even if an upstream state
-        // update was missed. User-typed values always win.
+        // update was missed. Placeholder values are treated as empty.
+        // User-typed real values always win.
         const truth = (businessTruth as any) || {};
         const truthName = (typeof truth.name === 'string' && truth.name.trim()) || '';
+        const PLACEHOLDERS = ['My Business Workspace', 'My Local Business', 'Demo Growth Workspace'];
+        const isPh = (v: unknown) => PLACEHOLDERS.includes((typeof v === 'string' ? v : '').trim());
+        const firstReal = (...vals: unknown[]) => {
+          for (const v of vals) {
+            const s = (typeof v === 'string' ? v : '').trim();
+            if (s && !isPh(s)) return s;
+          }
+          return '';
+        };
         return {
           ...businessProfile,
           email: user.email || businessProfile.email || '',
@@ -446,10 +456,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialTab = 'busine
           currentOffers: businessProfile.currentOffers || [],
           businessGoals: businessProfile.businessGoals || [],
           ...(keepPrevName ? { name: prev.name } : {}),
-          legalName: businessProfile.legalName || prev.legalName || truthName || '',
-          hours: businessProfile.hours || (prev as any).hours || truth.hours || '',
-          description: businessProfile.description || prev.description || truth.description || '',
-          industry: businessProfile.industry || prev.industry || truth.category || '',
+          legalName: firstReal(businessProfile.legalName, prev.legalName, truthName),
+          hours: firstReal(businessProfile.hours, (prev as any).hours, truth.hours),
+          description: firstReal(businessProfile.description, prev.description, truth.description),
+          industry: firstReal(businessProfile.industry, prev.industry, truth.category),
         };
       });
     }
