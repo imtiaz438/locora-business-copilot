@@ -292,7 +292,7 @@ const isPlaceholderBusinessName = (name: unknown) =>
   PLACEHOLDER_BUSINESS_NAMES.includes((typeof name === 'string' ? name : '').trim());
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ initialTab = 'businesses' }) => {
-  const { settings, updateSettings, businessProfile, updateBusinessProfile, activeBusiness, updateActiveBusiness, user, updateUser, setCheckoutModalPlan, subscriptionInvoices } = useApp();
+  const { settings, updateSettings, businessProfile, updateBusinessProfile, businessTruth, activeBusiness, updateActiveBusiness, user, updateUser, setCheckoutModalPlan, subscriptionInvoices } = useApp();
 
   const isAdmin = Boolean(
     user.isAuthenticated && (
@@ -432,6 +432,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialTab = 'busine
           isPlaceholderBusinessName(incomingName) &&
           prev.name?.trim() &&
           !isPlaceholderBusinessName(prev.name);
+        // Bulletproof auto-fill: verified truth is the final fallback for every
+        // synced field, so the form shows real data even if an upstream state
+        // update was missed. User-typed values always win.
+        const truth = (businessTruth as any) || {};
+        const truthName = (typeof truth.name === 'string' && truth.name.trim()) || '';
         return {
           ...businessProfile,
           email: user.email || businessProfile.email || '',
@@ -441,10 +446,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialTab = 'busine
           currentOffers: businessProfile.currentOffers || [],
           businessGoals: businessProfile.businessGoals || [],
           ...(keepPrevName ? { name: prev.name } : {}),
+          legalName: businessProfile.legalName || prev.legalName || truthName || '',
+          hours: businessProfile.hours || (prev as any).hours || truth.hours || '',
+          description: businessProfile.description || prev.description || truth.description || '',
+          industry: businessProfile.industry || prev.industry || truth.category || '',
         };
       });
     }
-  }, [businessProfile, user.email]);
+  }, [businessProfile, businessTruth, user.email]);
 
   // Logo & Branding state for User Profile
   const logoFileInputRef = useRef<HTMLInputElement>(null);
