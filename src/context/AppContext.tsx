@@ -1404,33 +1404,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const truth = await getBusinessTruth(id, true);
       setBusinessTruth(truth);
-      // Backfill profile blanks from the server-verified truth (Google sync data).
-      // Only fills fields the user hasn't set — never overwrites their values.
-      if (truth) {
-        const COUNTRY_CURRENCY: Record<string, string> = {
-          'United States': 'USD', 'Canada': 'CAD', 'United Kingdom': 'GBP',
-          'Australia': 'AUD', 'New Zealand': 'NZD', 'Ireland': 'EUR',
-          'Germany': 'EUR', 'France': 'EUR', 'Spain': 'EUR', 'Italy': 'EUR',
-          'Netherlands': 'EUR', 'India': 'INR', 'Pakistan': 'PKR',
-          'United Arab Emirates': 'AED', 'Singapore': 'SGD', 'South Africa': 'ZAR',
-        };
-        const truthCountry = (truth as any).country || null;
-        setBusinessProfile((prev) => {
-          const patch: Record<string, unknown> = {};
-          const truthName = (truth as any).name;
-          // Business name itself: replace a stale placeholder with the verified real name.
-          if (truthName && (!prev.name || ['My Business Workspace', 'My Local Business', 'Demo Growth Workspace'].includes(prev.name.trim()))) {
-            patch.name = truthName;
-          }
-          if (!prev.legalName && truthName) patch.legalName = truthName;
-          if (!prev.hours && (truth as any).hours) patch.hours = (truth as any).hours;
-          if (!prev.description && (truth as any).description) patch.description = (truth as any).description;
-          if (!prev.industry && (truth as any).category) patch.industry = (truth as any).category;
-          if (!prev.currency && truthCountry && COUNTRY_CURRENCY[truthCountry]) patch.currency = COUNTRY_CURRENCY[truthCountry];
-          if (Object.keys(patch).length === 0) return prev;
-          return { ...prev, ...patch };
-        });
-      }
       // Propagate the verified GBP connection state into the businesses list so
       // every surface (dashboard card, sync modal, settings badges) agrees on one
       // truth instead of disagreeing across data sources.
@@ -1472,6 +1445,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setBusinessTruth(null);
     }
   }, [activeBusinessId, refreshBusinessTruth, refreshBusinessCustomers, refreshProductionDashboard]);
+
+  // Backfill profile blanks from the server-verified business truth (Google sync
+  // data). Runs whenever fresh truth arrives — covers already-synced businesses.
+  // Only fills fields the user hasn't set; never overwrites their values.
+  useEffect(() => {
+    if (!businessTruth) return;
+    const COUNTRY_CURRENCY: Record<string, string> = {
+      'United States': 'USD', 'Canada': 'CAD', 'United Kingdom': 'GBP',
+      'Australia': 'AUD', 'New Zealand': 'NZD', 'Ireland': 'EUR',
+      'Germany': 'EUR', 'France': 'EUR', 'Spain': 'EUR', 'Italy': 'EUR',
+      'Netherlands': 'EUR', 'India': 'INR', 'Pakistan': 'PKR',
+      'United Arab Emirates': 'AED', 'Singapore': 'SGD', 'South Africa': 'ZAR',
+    };
+    const truth = businessTruth as any;
+    const truthCountry = truth.country || null;
+    const truthName = truth.name;
+    setBusinessProfile((prev) => {
+      const patch: Record<string, unknown> = {};
+      if (truthName && (!prev.name || ['My Business Workspace', 'My Local Business', 'Demo Growth Workspace'].includes((prev.name || '').trim()))) {
+        patch.name = truthName;
+      }
+      if (!prev.legalName && truthName) patch.legalName = truthName;
+      if (!prev.hours && truth.hours) patch.hours = truth.hours;
+      if (!prev.description && truth.description) patch.description = truth.description;
+      if (!prev.industry && truth.category) patch.industry = truth.category;
+      if (!prev.currency && truthCountry && COUNTRY_CURRENCY[truthCountry]) patch.currency = COUNTRY_CURRENCY[truthCountry];
+      if (Object.keys(patch).length === 0) return prev;
+      return { ...prev, ...patch };
+    });
+  }, [businessTruth]);
 
   const [rightAiPanelOpen, setRightAiPanelOpen] = useState<boolean>(false);
   const toggleRightAiPanel = useCallback(() => setRightAiPanelOpen((prev) => !prev), []);
