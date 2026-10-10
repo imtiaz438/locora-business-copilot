@@ -575,7 +575,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialTab = 'busine
   };
 
   const handleToggleDirectory = async (publish: boolean) => {
-    setProfileForm((prev) => ({ ...prev, isPublishedInDirectory: publish }));
+    // Never set the published flag optimistically — only the server's success
+    // response may flip it, so a failed publish can never display "Published".
     setPublishingDirectory(true);
     setDirectoryFeedback(null);
     try {
@@ -590,6 +591,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialTab = 'busine
       });
       const data = await res.json();
       if (data.success) {
+        setProfileForm((prev) => ({ ...prev, isPublishedInDirectory: publish }));
         updateBusinessProfile({ isPublishedInDirectory: publish });
         setDirectoryFeedback({
           type: 'success',
