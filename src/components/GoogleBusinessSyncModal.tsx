@@ -652,9 +652,19 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
                               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 capitalize">
                                 {result.primaryType}
                               </span>
+                              {result.source === 'google_places_live' && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                                  Verified Google
+                                </span>
+                              )}
                               {result.source === 'workspace_database' && (
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">
-                                  Workspace Listing
+                                  From your workspace — not Google
+                                </span>
+                              )}
+                              {(result.source === 'custom_listing' || result.isSuggestedListing) && (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
+                                  Suggested — not verified
                                 </span>
                               )}
                             </div>
@@ -733,20 +743,20 @@ export const GoogleBusinessSyncModal: React.FC<GoogleBusinessSyncModalProps> = (
                       </div>
 
                       {/* Direct 1-Click Sync & Setup Card */}
-                      <div className="rounded-xl border border-emerald-200 bg-white p-4 shadow-2xs space-y-3">
+                      <div className="rounded-xl border border-amber-200 bg-white p-4 shadow-2xs space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-emerald-600" />
+                            <Sparkles className="w-4 h-4 text-amber-600" />
                             <span className="text-xs font-bold text-slate-900">
-                              Instant Sync: "{suggestedListing?.name || lastSearchedQuery}"
+                              Manual setup: "{suggestedListing?.name || lastSearchedQuery}"
                             </span>
                           </div>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                            Ready to Link
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                            Not a verified Google listing
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-500 leading-relaxed">
-                          Link "{suggestedListing?.name || lastSearchedQuery}" straight into your workspace dashboard. This activates all GBP widgets, review monitoring, local SEO diagnostics, and AI growth workflows.
+                          No verified Google listing was found for "{suggestedListing?.name || lastSearchedQuery}". You can still set up "{suggestedListing?.name || lastSearchedQuery}" manually in your workspace — this uses the name you typed, not live Google data. Google Business widgets will show "not enough data" until a verified listing is connected.
                         </p>
                         <div className="flex flex-wrap items-center gap-2 pt-1">
                           <button
