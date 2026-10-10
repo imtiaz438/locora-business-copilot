@@ -53,7 +53,7 @@ export const BusinessProfileTab: React.FC = () => {
     return {
       name: truthName || realOr(businessProfile?.name, '') || realOr(activeBusiness?.name, '') || '',
       category: truthCategory || realOr(businessProfile?.industry, '') || realOr(activeBusiness?.category, '') || 'Local Business',
-      legalName: businessProfile?.legalName || truthName || '',
+      legalName: realOr(businessProfile?.legalName, '') || truthName || realOr(businessProfile?.name, '') || realOr(activeBusiness?.name, '') || '',
       description: businessProfile?.description || activeBusiness?.description || truth.description || '',
       website: businessProfile?.website || activeBusiness?.website || '',
       phone: businessProfile?.phone || activeBusiness?.phone || '',
@@ -92,7 +92,7 @@ export const BusinessProfileTab: React.FC = () => {
     setFormData({
       name: truthName || realOr(businessProfile?.name, '') || realOr(activeBusiness?.name, '') || '',
       category: truthCategory || realOr(businessProfile?.industry, '') || realOr(activeBusiness?.category, '') || 'Local Business',
-      legalName: businessProfile?.legalName || truthName || '',
+      legalName: realOr(businessProfile?.legalName, '') || truthName || realOr(businessProfile?.name, '') || realOr(activeBusiness?.name, '') || '',
       description: businessProfile?.description || activeBusiness?.description || truth.description || '',
       website: businessProfile?.website || activeBusiness?.website || '',
       phone: businessProfile?.phone || activeBusiness?.phone || '',

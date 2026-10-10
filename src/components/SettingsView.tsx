@@ -759,6 +759,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ initialTab = 'busine
       {/* TAB 2: BUSINESS PROFILE CONTEXT */}
       {activeTab === 'profile' && (
         <div className="space-y-6">
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed space-y-1.5">
+            <p className="font-semibold text-slate-800">How your business data is sourced</p>
+            <p><span className="font-semibold text-emerald-700">Google Business Profile</span> — a verified listing found on Google. Pulls live name, hours, phone, reviews, and address.</p>
+            <p><span className="font-semibold text-blue-700">Locora Search</span> — matched from Locora's internal directory when no verified Google listing is found. Limited data.</p>
+            <p><span className="font-semibold text-slate-700">Manual Setup</span> — you enter details yourself. Fields stay empty until you fill them; nothing is invented.</p>
+          </div>
           {/* Sub-tab navigation bar: Details / Directory / Logo */}
           <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100 rounded-2xl w-fit border border-slate-200/80">
             <button
