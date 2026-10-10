@@ -6893,6 +6893,15 @@ app.post('/api/places/resolve-url', async (req, res) => {
         try { placeName = decodeURIComponent(searchMatch[1].replace(/\+/g, ' ')); } catch { placeName = searchMatch[1]; }
       }
     }
+    // Google Search knowledge-panel URLs (share links for unindexed/new listings
+    // often resolve here): extract the q= business name.
+    if (!placeName) {
+      try {
+        const u = new URL(finalUrl);
+        const q = u.searchParams.get('q');
+        if (q) placeName = q;
+      } catch { /* ignore */ }
+    }
 
     const atMatch = finalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
     if (atMatch) { lat = parseFloat(atMatch[1]); lng = parseFloat(atMatch[2]); }
