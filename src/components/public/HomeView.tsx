@@ -4,7 +4,7 @@ import { WebsiteAuditResult, PublicCheckupResult } from '../../types';
 import { LocoraLogo } from '../LocoraLogo';
 import { QuickCheckupReport } from './QuickCheckupReport';
 import { navigateToDirectory, navigateToApp } from '../../utils/domain';
-import { trackCtaClick } from '../../lib/analytics';
+import { trackCtaClick, trackCheckupStarted, trackCheckupSubmitted } from '../../lib/analytics';
 import {
   Sparkles,
   ArrowRight,
@@ -68,6 +68,7 @@ export const HomeView: React.FC = () => {
   const [heroBusinessName, setHeroBusinessName] = useState('');
   const [heroLocation, setHeroLocation] = useState('');
   const [heroEmail, setHeroEmail] = useState('');
+  const [hasStartedHeroForm, setHasStartedHeroForm] = useState(false);
   const [showOptionalFields, setShowOptionalFields] = useState(false);
 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -117,6 +118,16 @@ export const HomeView: React.FC = () => {
     'Completed • Computing deterministic SEO scores & saving audit report...',
   ];
 
+  // Fire checkup_started once on first hero-form interaction (mirrors the /checkup funnel)
+  const handleHeroInputInteraction = () => {
+    if (!hasStartedHeroForm) {
+      setHasStartedHeroForm(true);
+      trackCheckupStarted('/', {
+        initial_website: heroInputUrl || undefined,
+      });
+    }
+  };
+
   const handleHeroSubmit = async (e?: React.FormEvent, forceRefresh = false) => {
     if (e) e.preventDefault();
     const rawUrl = heroInputUrl.trim();
@@ -124,6 +135,13 @@ export const HomeView: React.FC = () => {
       setAuditError('Please enter a valid website URL.');
       return;
     }
+
+    // Count the hero scan in the checkup funnel (source_page '/' distinguishes it from /checkup)
+    trackCheckupSubmitted({
+      businessName: heroBusinessName.trim() || undefined,
+      website: rawUrl,
+      city: heroLocation.trim() || undefined,
+    });
 
     setIsAnalyzing(true);
     setAuditError(null);
@@ -341,6 +359,7 @@ export const HomeView: React.FC = () => {
                   type="text"
                   value={heroInputUrl}
                   onChange={(e) => setHeroInputUrl(e.target.value)}
+                  onFocus={handleHeroInputInteraction}
                   placeholder="Enter website (e.g. yourbusiness.com)"
                   className="w-full pl-10 pr-4 py-3 bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none font-sans"
                 />
@@ -384,6 +403,7 @@ export const HomeView: React.FC = () => {
                     type="text"
                     value={heroBusinessName}
                     onChange={(e) => setHeroBusinessName(e.target.value)}
+                    onFocus={handleHeroInputInteraction}
                     placeholder="e.g. Gotham Enterprises Ltd"
                     className="w-full px-3 py-2 bg-white/90 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                   />
@@ -394,6 +414,7 @@ export const HomeView: React.FC = () => {
                     type="text"
                     value={heroLocation}
                     onChange={(e) => setHeroLocation(e.target.value)}
+                    onFocus={handleHeroInputInteraction}
                     placeholder="e.g. Dallas, TX"
                     className="w-full px-3 py-2 bg-white/90 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                   />
@@ -404,6 +425,7 @@ export const HomeView: React.FC = () => {
                     type="email"
                     value={heroEmail}
                     onChange={(e) => setHeroEmail(e.target.value)}
+                    onFocus={handleHeroInputInteraction}
                     placeholder="you@company.com"
                     className="w-full px-3 py-2 bg-white/90 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                   />
