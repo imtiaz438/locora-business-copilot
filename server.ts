@@ -18328,6 +18328,16 @@ async function handleHtmlRequest(req: express.Request, res: express.Response, vi
       } else {
         const baseTemplate = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
         html = injectMetadataIntoHtml(baseTemplate, metadata);
+        // Fazier free-tier badge verification fetches raw HTML without
+        // executing JS, but the homepage is client-rendered. Inject the
+        // identical badge markup server-side into #root so their checker
+        // can see it; React replaces it with the same badge on load,
+        // so there is no visual duplication.
+        if (req.path === '/') {
+          const badgeHtml =
+            '<a href="https://fazier.com" target="_blank" rel="noopener noreferrer" title="Launched on Fazier"><img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=light" alt="Launched on Fazier" /></a>';
+          html = html.replace('<div id="root"></div>', `<div id="root">${badgeHtml}</div>`);
+        }
       }
     }
     return res.send(html);
