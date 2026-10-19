@@ -847,5 +847,276 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
         a: 'Yes, as a drafting aid — generate the reply, then review and personalize it before posting. What violates policy is fake reviews themselves, not using tools to help you respond to real ones.'
       }
     ]
+  },
+
+  'google-map-pack-ranking': {
+    slug: 'google-map-pack-ranking',
+    title: 'How to Rank in the Google Map Pack: 2026 Ranking Factors Guide',
+    category: 'Local SEO',
+    readingTime: '10 min read',
+    publishedDate: 'October 2026',
+    authorName: 'The LocoraAI Team',
+    authorRole: 'Local Search Experts',
+    metaTitle: 'How to Rank in the Google Map Pack (2026 Ranking Factors) | LocoraAI',
+    metaDescription: 'The Google Map Pack drives the majority of local clicks. Learn the actual ranking factors — proximity, prominence, relevance — and the exact steps to break into the top 3.',
+    targetKeywords: ['how to rank in google map pack', 'google map pack ranking factors', 'local pack seo', 'google maps 3-pack ranking'],
+    targetTab: 'local_seo',
+    ctaText: 'Check My Map Pack Visibility Free',
+    ctaHeadline: 'Where Do You Rank in the Map Pack?',
+    ctaDescription: 'See your actual Map Pack positions for your core services, benchmarked against the competitors outranking you — free, no signup.',
+    summary: 'A practitioner\'s guide to Google Map Pack rankings: how the local algorithm actually weighs proximity, prominence, and relevance, and the prioritized actions — from primary category to review velocity — that move businesses into the top 3.',
+    tableOfContents: [
+      { id: 'what-it-is', title: '1. What the Map Pack Is and Why It Wins Clicks' },
+      { id: 'factors', title: '2. The Three Ranking Factors, Honestly Explained' },
+      { id: 'relevance', title: '3. Relevance: Categories, Services, Content' },
+      { id: 'prominence', title: '4. Prominence: Reviews, Citations, Authority' },
+      { id: 'proximity', title: '5. Proximity: What You Can and Cannot Control' },
+      { id: 'action-plan', title: '6. The 30-Day Map Pack Action Plan' }
+    ],
+    sections: [
+      {
+        id: 'what-it-is',
+        heading: '1. What the Map Pack Is and Why It Wins Clicks',
+        content: [
+          'The Map Pack is the block of three local business listings with a map that appears at the top of Google for local searches like "plumber near me." It sits above the organic results and captures the majority of clicks and calls for service queries — ranking #4 organically while missing the Pack means invisibility.',
+          'The Pack is a separate algorithm from organic search. A business can rank #1 organically and miss the Pack entirely, or dominate the Pack with a modest website. Treating them as one system is the most common strategic error in local SEO.'
+        ],
+        keyTakeaway: 'The Map Pack runs on its own algorithm. Optimize for it directly instead of hoping organic rankings carry over.'
+      },
+      {
+        id: 'factors',
+        heading: '2. The Three Ranking Factors, Honestly Explained',
+        content: [
+          'Google\'s local algorithm weighs three factors: relevance (how well your listing matches the query), prominence (how well-known and trusted your business is), and proximity (how close you are to the searcher). Every tactic in local SEO feeds one of these three.',
+          'Their relative weight shifts by query. For "emergency plumber near me," proximity dominates. For "best divorce lawyer chicago," prominence (reviews, reputation) carries more weight. Diagnose which factor is holding you back before choosing tactics.'
+        ],
+        keyTakeaway: 'Relevance, prominence, proximity. Identify your weakest of the three — that is where your effort goes.'
+      },
+      {
+        id: 'relevance',
+        heading: '3. Relevance: Categories, Services, Content',
+        content: [
+          'Your primary Google Business category is the single strongest relevance signal. Audit the top 3 Pack holders for your target query and match your primary category to theirs when it accurately describes your main service. Add secondary categories for the rest.',
+          'Fill the services menu with named services and descriptions, write a complete business description using natural service language, and keep attributes (payments, accessibility, amenities) current. On your website, build one dedicated page per core service with local keywords in the title and H1.'
+        ],
+        keyTakeaway: 'Primary category first, services menu second, service pages third. Relevance is mostly data completeness.'
+      },
+      {
+        id: 'prominence',
+        heading: '4. Prominence: Reviews, Citations, Authority',
+        content: [
+          'Prominence is where most Map Pack battles are won. Review count, average rating, and — critically — review velocity relative to competitors. Ten new reviews this month beats a hundred stale ones. Respond to every review; response activity is itself a prominence signal.',
+          'Citations (NAP listings across directories) establish entity confidence — keep name, address, and phone identical everywhere. Local backlinks from chambers, sponsors, and local press add the authority layer that separates #1 from #3 in competitive markets.'
+        ],
+        keyTakeaway: 'Review velocity beats review count. Citations establish you; local links separate you.'
+      },
+      {
+        id: 'proximity',
+        heading: '5. Proximity: What You Can and Cannot Control',
+        content: [
+          'You cannot change where the searcher stands. What you can control: accurate geo-coordinates on your profile, a correct service-area definition (for service-area businesses), and location pages that establish relevance across your service radius.',
+          'Do not try to game proximity with fake addresses or virtual offices — Google filters them, and getting caught costs the whole listing. Compete on relevance and prominence where proximity is fixed.'
+        ],
+        keyTakeaway: 'Proximity is a constraint, not a tactic. Win the factors you control instead of faking the one you cannot.'
+      },
+      {
+        id: 'action-plan',
+        heading: '6. The 30-Day Map Pack Action Plan',
+        content: [
+          'Week 1: Audit and fix the fundamentals — primary category match, complete profile fields, NAP consistency across the top 20 directories, and merge any duplicate listings.',
+          'Week 2: Launch the review engine — ask every satisfied customer, respond to all reviews within 48 hours, and add photos weekly. Week 3: Publish or improve one service page per core offering with local titles and schema.',
+          'Week 4: Measure. Check your Pack positions for 5–10 core queries from different points in your service area, note movement, and double down on whatever moved. Map Pack SEO compounds — the businesses that rank in six months are the ones that started the review engine today.'
+        ],
+        keyTakeaway: 'Categories and completeness in week 1, reviews in week 2, content in week 3, measurement in week 4.'
+      }
+    ],
+    faqs: [
+      {
+        q: 'How long does it take to rank in the Google Map Pack?',
+        a: 'In low-competition niches, weeks. In competitive markets like legal or home services, expect 3–6 months of consistent work on reviews, categories, and citations before breaking into the top 3.'
+      },
+      {
+        q: 'Do I need a physical storefront to rank in the Map Pack?',
+        a: 'No. Service-area businesses rank in the Map Pack regularly — but you must hide your address, define service areas accurately, and never use virtual offices or P.O. boxes as the business address.'
+      },
+      {
+        q: 'Why did my business drop out of the Map Pack suddenly?',
+        a: 'Common causes: a Google algorithm update re-weighting factors, a competitor surge in reviews, a category change, a soft suspension, or proximity shifts. Check your dashboard for notices first, then compare your review velocity against the new top 3.'
+      }
+    ]
+  },
+
+  'google-business-profile-verification': {
+    slug: 'google-business-profile-verification',
+    title: 'Google Business Profile Verification Stuck or Failed? How to Fix It (2026)',
+    category: 'Google Business',
+    readingTime: '8 min read',
+    publishedDate: 'October 2026',
+    authorName: 'The LocoraAI Team',
+    authorRole: 'Local Search Experts',
+    metaTitle: 'GBP Verification Stuck or Failed? Fix It Fast (2026) | LocoraAI',
+    metaDescription: 'Google Business Profile verification failing or stuck? The exact fixes for video verification rejections, postcard issues, and instant verification problems — step by step.',
+    targetKeywords: ['google business profile verification failed', 'gbp verification stuck', 'how to verify google business profile', 'google business video verification rejected'],
+    targetTab: 'local_seo',
+    ctaText: 'Scan My Profile Free',
+    ctaHeadline: 'Is Your Profile Ready to Verify?',
+    ctaDescription: 'Check the profile issues that cause verification failures — address setup, name compliance, category match — before you submit, free.',
+    summary: 'A troubleshooting guide for Google Business Profile verification failures: why video verification gets rejected, what to do when the postcard never arrives, and the pre-submission checklist that prevents most failures.',
+    tableOfContents: [
+      { id: 'methods', title: '1. The Verification Methods, Ranked by Speed' },
+      { id: 'video-fails', title: '2. Why Video Verification Gets Rejected' },
+      { id: 'postcard', title: '3. When the Postcard Never Arrives' },
+      { id: 'precheck', title: '4. The Pre-Submission Checklist' },
+      { id: 'after', title: '5. After You Are Verified' }
+    ],
+    sections: [
+      {
+        id: 'methods',
+        heading: '1. The Verification Methods, Ranked by Speed',
+        content: [
+          'Google offers several verification paths and assigns them per business — you usually cannot choose. Instant verification (for Search Console-verified websites) is fastest when available. Video verification is now the most common: a live or recorded walkthrough proving real operations. Postcard verification (a mailed code) still exists for some businesses but takes up to two weeks.',
+          'If you are offered video verification, take it seriously on the first attempt. Repeated failed attempts trigger manual review, which is slower and stricter than the standard flow.'
+        ],
+        keyTakeaway: 'You rarely get to pick the method. Whatever you are offered, prepare thoroughly for the first attempt.'
+      },
+      {
+        id: 'video-fails',
+        heading: '2. Why Video Verification Gets Rejected',
+        content: [
+          'The top rejection reasons, in order: no visible permanent signage with the exact business name, footage that does not prove customer-facing operations (empty rooms, no equipment, no branded materials), blurry or shaky video, and a location that looks residential for a claimed commercial operation.',
+          'Film in daylight with a steady hand. Start outside showing the street and signage, move inside showing the workspace, equipment, and branded materials, and narrate what each shot proves. One continuous take — edited-together clips get rejected because cuts look like spliced evidence.',
+          'Service-area businesses: show the branded vehicle, tools of the trade, and any storage or office space. You do not need a storefront, but you must prove a real operation exists.'
+        ],
+        keyTakeaway: 'Permanent signage plus proof of real operations in one continuous, well-lit take. That passes.'
+      },
+      {
+        id: 'postcard',
+        heading: '3. When the Postcard Never Arrives',
+        content: [
+          'Postcards take 5–14 days and fail most often for boring reasons: suite numbers missing, mail not collected, or the address not matching postal records. Before requesting a re-send, verify the exact address format against your utility bill and confirm someone collects the mail daily.',
+          'Do not request more than one active code at a time — only the newest code works, and overlapping requests invalidate each other. If two postcards fail, contact support rather than requesting a third; repeated failures flag the profile.'
+        ],
+        keyTakeaway: 'One active code at a time, exact postal address, daily mail collection. Two failures means call support, not a third postcard.'
+      },
+      {
+        id: 'precheck',
+        heading: '4. The Pre-Submission Checklist',
+        content: [
+          'Most verification failures are really profile problems wearing a verification mask. Before submitting: business name matches signage and legal documents exactly, address is real and precisely formatted (or hidden with service areas set, for service-area businesses), primary category matches the actual main service, and there are no duplicate listings for the same location.',
+          'Also clear: no keyword stuffing in the name, no virtual office address, no P.O. box. Each of these turns a routine verification into a suspension risk.'
+        ],
+        keyTakeaway: 'Fix the profile before verifying it. Verification magnifies existing violations instead of ignoring them.'
+      },
+      {
+        id: 'after',
+        heading: '5. After You Are Verified',
+        content: [
+          'Verification is the starting line, not the finish. Complete every profile field immediately — hours, services, photos, description, attributes. An unverified-looking verified profile (empty, no photos, no hours) ranks like one.',
+          'Then protect the status: keep information current, respond to reviews, and never let the data go stale. Google re-verifies profiles when details change significantly or look suspicious — a second verification is harder than the first.'
+        ],
+        keyTakeaway: 'Verify, then complete everything the same week. Stale verified profiles get re-verified, and re-verification is stricter.'
+      }
+    ],
+    faqs: [
+      {
+        q: 'Can I skip verification and still appear on Google Maps?',
+        a: 'Effectively no. Unverified profiles have near-zero visibility in Maps and cannot be managed. Verification is mandatory for any business serious about local search.'
+      },
+      {
+        q: 'My video verification keeps getting rejected with no reason given. What now?',
+        a: 'Re-film addressing the top rejection causes: permanent signage, proof of operations, one continuous well-lit take. If three attempts fail, use the support contact option in the dashboard — repeated automated attempts can trigger stricter manual review.'
+      },
+      {
+        q: 'How do service-area businesses verify without a storefront?',
+        a: 'Through video verification showing the real operation: branded vehicles, equipment, tools, and any office or storage space. Hide the address on the profile and define service areas — the verification proves the business is real, not that it has a shop.'
+      }
+    ]
+  },
+
+  'remove-duplicate-google-business-listing': {
+    slug: 'remove-duplicate-google-business-listing',
+    title: 'How to Remove a Duplicate Google Business Listing (2026 Guide)',
+    category: 'Google Business',
+    readingTime: '7 min read',
+    publishedDate: 'October 2026',
+    authorName: 'The LocoraAI Team',
+    authorRole: 'Local Search Experts',
+    metaTitle: 'How to Remove a Duplicate Google Business Listing (2026) | LocoraAI',
+    metaDescription: 'Duplicate Google Business listings split your ranking power. Here is how to find them, report them correctly, and merge them into one canonical profile.',
+    targetKeywords: ['how to remove duplicate google business listing', 'duplicate google business profile', 'merge duplicate gmb listing', 'delete duplicate google my business'],
+    targetTab: 'local_seo',
+    ctaText: 'Scan for Duplicates Free',
+    ctaHeadline: 'Do You Have Duplicate Listings?',
+    ctaDescription: 'Our free checkup detects duplicate and conflicting listings for your business across Google and major directories — no signup.',
+    summary: 'Why duplicate Google Business listings destroy local rankings, how to find every duplicate (including ones you did not create), and the exact reporting and merge process to consolidate them into one strong profile.',
+    tableOfContents: [
+      { id: 'why-harmful', title: '1. Why Duplicates Destroy Rankings' },
+      { id: 'find', title: '2. Finding Every Duplicate' },
+      { id: 'which-keep', title: '3. Deciding Which Listing Survives' },
+      { id: 'remove', title: '4. The Removal and Merge Process' },
+      { id: 'prevent', title: '5. Preventing Future Duplicates' }
+    ],
+    sections: [
+      {
+        id: 'why-harmful',
+        heading: '1. Why Duplicates Destroy Rankings',
+        content: [
+          'Duplicate listings split Google\'s confidence in your business entity. Reviews accumulate on one profile while photos land on another; citations point to different versions of your name and address. Instead of one strong listing, Google sees two weak, contradictory ones — and often suppresses both.',
+          'Duplicates also confuse customers: wrong hours on one version, an old phone number on another. Every confused customer is a lost call, and every inconsistent citation is a trust signal working against you.'
+        ],
+        keyTakeaway: 'Duplicates do not double visibility — they halve Google\'s trust and split your reviews across profiles.'
+      },
+      {
+        id: 'find',
+        heading: '2. Finding Every Duplicate',
+        content: [
+          'Search Google Maps for your business name, name variants (old names, DBA names, abbreviations), your phone number in quotes, and your street address. Duplicates frequently hide under old business names from before a rebrand, or under practitioner names ("Dr. Smith Dental" vs "Smith Family Dentistry").',
+          'Check common auto-generation sources: data aggregators create listings from business registrations, and well-meaning employees or agencies often create a second profile without telling anyone. Ask your team directly — internal duplicates are more common than malicious ones.'
+        ],
+        keyTakeaway: 'Search name variants, old names, phone numbers, and addresses. Most duplicates are accidental, not malicious.'
+      },
+      {
+        id: 'which-keep',
+        heading: '3. Deciding Which Listing Survives',
+        content: [
+          'Keep the listing with the most reviews, the longest history, and the most accurate information — that is where your ranking equity lives. The survivor should also be the one you can verify and manage; an unclaimable listing full of reviews is still the wrong survivor if you cannot control it.',
+          'Before removing anything, screenshot both listings\' details. If the merge goes wrong, you will want a record of what each version contained.'
+        ],
+        keyTakeaway: 'Survivor = most reviews + most accurate + verifiable by you. Screenshot everything first.'
+      },
+      {
+        id: 'remove',
+        heading: '4. The Removal and Merge Process',
+        content: [
+          'If you manage both listings: on the duplicate, choose "Suggest an edit," then "Close or remove," then "Duplicate of another place," and point it at the canonical profile. Google reviews the request — it is not instant, and it can take days to weeks.',
+          'If you do not manage the duplicate: use the same "Suggest an edit" flow as a public user, or report it through the Business Profile support with evidence (your license, the canonical listing URL, proof the duplicate address or phone is wrong). For stubborn cases — especially duplicates you cannot claim — the support forum and direct support contact succeed where self-service fails.',
+          'After removal, monitor for two weeks. Google sometimes resurrects removed duplicates from aggregator data feeds; if it returns, the underlying data source needs correcting, not just the listing.'
+        ],
+        keyTakeaway: '"Suggest an edit → Duplicate of another place" for listings you manage; support contact with evidence for the rest.'
+      },
+      {
+        id: 'prevent',
+        heading: '5. Preventing Future Duplicates',
+        content: [
+          'Maintain one internal record of truth: the exact legal name, address format, phone, and the URL of the canonical listing. Share it with every employee, agency, and freelancer who touches your marketing — most duplicates are created by someone trying to help.',
+          'After rebrands or moves, update the existing listing instead of creating a new one, and audit Maps quarterly for new duplicates. Aggregators regenerate them; vigilance is permanent.'
+        ],
+        keyTakeaway: 'One canonical listing, documented internally, audited quarterly. Updates, never new listings, for rebrands and moves.'
+      }
+    ],
+    faqs: [
+      {
+        q: 'Will removing a duplicate delete its reviews?',
+        a: 'When Google merges a duplicate into your canonical listing, reviews typically transfer to the surviving profile. This is another reason to keep the listing with the most reviews as the survivor.'
+      },
+      {
+        q: 'How long does it take Google to remove a duplicate listing?',
+        a: 'Self-service duplicate reports usually resolve within days to a few weeks. Cases requiring support intervention — especially unclaimed duplicates — can take longer.'
+      },
+      {
+        q: 'A competitor created a fake duplicate of my business. What do I do?',
+        a: 'Report it through "Suggest an edit" and through Business Profile support with evidence: your business license, your canonical listing, and documentation showing the duplicate\'s information is false. Document everything in case it recurs.'
+      }
+    ]
   }
 };
