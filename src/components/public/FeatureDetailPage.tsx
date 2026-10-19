@@ -269,7 +269,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
           </div>
           <div>
             <div className="text-xs font-bold text-slate-900">
-              Written by {feature.authorName || 'Alex Rivera'}
+              Written by {feature.authorName || 'The LocoraAI Team'}
             </div>
             <div className="text-[11px] text-slate-500">
               {feature.authorRole || 'Head of Local Search Strategy'} • Verified Editorial Standard

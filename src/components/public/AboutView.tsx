@@ -6,33 +6,6 @@ import { LocoraLogo } from '../LocoraLogo';
 export const AboutView: React.FC = () => {
   const { setActiveTab } = useApp();
 
-  const team = [
-    {
-      name: 'Alex Vance',
-      role: 'Co-Founder & CEO',
-      bio: 'Former founder of Apex Digital Solutions. Scaled local agency to $3M ARR before building Locora AI.',
-      avatar: 'AV',
-    },
-    {
-      name: 'Elena Rostova',
-      role: 'Head of Product & AI',
-      bio: 'Ex-Google Search Engineer specializing in local schema graphs and LLM prompt optimization.',
-      avatar: 'ER',
-    },
-    {
-      name: 'Marcus Sterling',
-      role: 'VP of Customer Success',
-      bio: '10+ years advising local service franchises and digital marketing agencies across North America.',
-      avatar: 'MS',
-    },
-    {
-      name: 'Priya Sharma',
-      role: 'Lead Full-Stack Architect',
-      bio: 'Specialist in cloud containerized React engines and multi-provider AI SDK integrations.',
-      avatar: 'PS',
-    },
-  ];
-
   return (
     <div className="space-y-16 py-12 px-6 max-w-7xl mx-auto font-sans bg-slate-50 text-slate-900">
       {/* Hero Header */}
@@ -101,28 +74,14 @@ export const AboutView: React.FC = () => {
         </div>
       </div>
 
-      {/* Leadership Team */}
+      {/* Our Team */}
       <div className="space-y-8">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl sm:text-4xl font-bold font-heading text-slate-900">Meet Our Leadership Team</h2>
-          <p className="text-xs sm:text-sm text-slate-600 font-sans">
-            Backed by agency veterans and AI engineers passionate about local commerce.
+        <div className="text-center space-y-2 max-w-2xl mx-auto">
+          <h2 className="text-2xl sm:text-4xl font-bold font-heading text-slate-900">Built by Practitioners</h2>
+          <p className="text-xs sm:text-sm text-slate-600 font-sans leading-relaxed">
+            LocoraAI is built and run by a small team of engineers and local-search practitioners.
+            Every feature ships from real agency workflows — and everything we publish speaks as one team.
           </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {team.map((member, i) => (
-            <div key={i} className="bg-white border border-slate-200 rounded-2xl p-6 text-center space-y-3 hover:border-emerald-300 hover:shadow-md transition-all">
-              <div className="w-14 h-14 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto font-black text-base shadow-xs font-heading">
-                {member.avatar}
-              </div>
-              <div>
-                <h3 className="text-sm font-bold font-heading text-slate-900">{member.name}</h3>
-                <p className="text-[11px] text-[#059669] font-bold font-sans">{member.role}</p>
-              </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed font-sans">{member.bio}</p>
-            </div>
-          ))}
         </div>
       </div>
 
@@ -136,9 +95,8 @@ export const AboutView: React.FC = () => {
         </div>
 
         <div className="max-w-md mx-auto p-5 bg-slate-50 rounded-2xl border border-slate-200 font-sans text-center">
-          <p className="text-sm font-bold text-slate-900">Locora AI Headquarters</p>
-          <p className="text-xs text-slate-600 mt-1">100 Innovation Way, Suite 400</p>
-          <p className="text-xs text-slate-600">San Francisco, CA 94105</p>
+          <p className="text-sm font-bold text-slate-900">LocoraAI</p>
+          <p className="text-xs text-slate-600 mt-1">Serving local businesses across the United States</p>
         </div>
 
         <button
