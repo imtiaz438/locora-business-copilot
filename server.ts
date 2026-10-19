@@ -16462,6 +16462,7 @@ app.get('/sitemap.xml', async (req, res) => {
       { path: '/privacy', priority: '0.5', changefreq: 'monthly' },
       { path: '/terms', priority: '0.5', changefreq: 'monthly' },
       { path: '/refund', priority: '0.5', changefreq: 'monthly' },
+      { path: '/checkup', priority: '1.0', changefreq: 'daily' },
 
       // Layer 1: Product Feature Pages
       { path: '/features/ai-business-audit', priority: '0.85', changefreq: 'weekly' },
@@ -16540,17 +16541,15 @@ app.get('/sitemap.xml', async (req, res) => {
         }
       });
 
-      // 4. Real Published Business Profiles
+      // 4. Real Published Business Profiles — canonical /biz/ URL only.
+      // The /directory/business/ variant is intentionally NOT listed: it
+      // duplicates /biz/ (confirmed in GSC: both variants earning impressions
+      // for the same listings) and splits ranking signals.
       snapshot.businesses.forEach((b) => {
         if (b.slug) {
           pages.push({
             path: `/biz/${b.slug}`,
             priority: '0.90',
-            changefreq: 'weekly',
-          });
-          pages.push({
-            path: `/directory/business/${b.slug}`,
-            priority: '0.80',
             changefreq: 'weekly',
           });
         }
