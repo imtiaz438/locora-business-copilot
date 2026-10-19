@@ -16500,6 +16500,10 @@ app.get('/sitemap.xml', async (req, res) => {
       { path: '/resources/how-to-create-seo-proposal', priority: '0.85', changefreq: 'weekly' },
       { path: '/resources/google-business-profile-guide', priority: '0.85', changefreq: 'weekly' },
       { path: '/resources/local-seo-checklist', priority: '0.85', changefreq: 'weekly' },
+      { path: '/resources/google-business-profile-suspended', priority: '0.85', changefreq: 'weekly' },
+      { path: '/resources/business-not-showing-on-google-maps', priority: '0.85', changefreq: 'weekly' },
+      { path: '/resources/get-recommended-by-chatgpt', priority: '0.85', changefreq: 'weekly' },
+      { path: '/resources/how-to-respond-to-google-reviews', priority: '0.85', changefreq: 'weekly' },
       { path: '/directory', priority: '0.9', changefreq: 'daily' },
     ];
 

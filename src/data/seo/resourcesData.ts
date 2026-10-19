@@ -427,5 +427,425 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
         a: 'The most common conversion barrier is a phone number that is displayed as an unclickable image or plain text, forcing mobile visitors to memorize the digits rather than tapping once to dial.'
       }
     ]
+  },
+
+  'google-business-profile-suspended': {
+    slug: 'google-business-profile-suspended',
+    title: 'Google Business Profile Suspended? How to Get Reinstated (2026 Guide)',
+    category: 'Google Business',
+    readingTime: '9 min read',
+    publishedDate: 'October 2026',
+    authorName: 'The LocoraAI Team',
+    authorRole: 'Local Search Experts',
+    metaTitle: 'Google Business Profile Suspended? Reinstatement Guide (2026) | LocoraAI',
+    metaDescription: 'Your Google Business Profile was suspended. Follow the exact reinstatement process: confirm the suspension type, fix violations first, gather evidence, and file an appeal that gets read.',
+    targetKeywords: ['google business profile suspended', 'gbp suspension fix', 'google business profile reinstatement', 'suspended google business listing'],
+    targetTab: 'local_seo',
+    ctaText: 'Run My Free GBP Health Check',
+    ctaHeadline: 'Is Your Profile at Risk Right Now?',
+    ctaDescription: 'Scan your Google Business Profile for suspension-risk issues — name compliance, address setup, category match, and review-pattern flags — free, no signup.',
+    summary: 'A step-by-step reinstatement guide for suspended Google Business Profiles: how to confirm the suspension type, the violations that trigger most suspensions, what to fix before appealing, the evidence that wins appeals, and how to prevent it happening again.',
+    tableOfContents: [
+      { id: 'confirm', title: '1. Confirm What Actually Happened' },
+      { id: 'reasons', title: '2. Why Google Suspends Profiles' },
+      { id: 'fix-first', title: '3. Fix the Violation Before You Appeal' },
+      { id: 'appeal', title: '4. How to File the Reinstatement Appeal' },
+      { id: 'denied', title: '5. If Your Appeal Is Denied' },
+      { id: 'prevent', title: '6. Preventing the Next Suspension' }
+    ],
+    sections: [
+      {
+        id: 'confirm',
+        heading: '1. Confirm What Actually Happened',
+        content: [
+          'Not every disappearance is a suspension. Before doing anything else, work through these checks in order. First, search your exact business name in Google Maps. If the listing appears with a "Suggest an edit" link but no owner controls, it may be unclaimed rather than suspended.',
+          'Second, log into your Google Business Profile dashboard. A suspension shows an explicit notice — "Suspended" on the listing, sometimes accompanied by an email explaining why. No notice usually means no suspension.',
+          'Know the two types. A hard suspension removes the listing from Search and Maps entirely. A soft suspension keeps it visible but strips your management access — you cannot edit details, publish posts, or respond to reviews. The reinstatement path below covers both, but hard suspensions require a formal appeal.'
+        ],
+        keyTakeaway: 'Verify the suspension notice in your dashboard first. A listing that simply stopped ranking is a visibility problem, not a suspension — and needs a different fix.'
+      },
+      {
+        id: 'reasons',
+        heading: '2. Why Google Suspends Profiles',
+        content: [
+          'Google rarely explains itself in detail, but the triggers are well documented. The most common cause is business name violations — adding keywords or locations to your name, like "Joe\'s Plumbing — Best Cheap Plumber Phoenix." Your name must be your real-world legal business name, exactly as it appears on signage.',
+          'Address violations are next: using a P.O. box, UPS store, virtual office, or co-working space as a storefront address. Service-area businesses must hide their address and define service areas instead of showing a location they do not operate from.',
+          'Other triggers include multiple listings for one location, review manipulation (bought, incentivized, or network-posted reviews can take down the whole profile), ineligible business types such as online-only operations with no real customer contact, and misleading categories.'
+        ],
+        keyTakeaway: 'Name violations and address violations cause the large majority of suspensions. Both are fixable before you appeal.'
+      },
+      {
+        id: 'fix-first',
+        heading: '3. Fix the Violation Before You Appeal',
+        content: [
+          'This is the step most people skip, and it is why most first appeals fail. Google re-checks your profile when you appeal. If the violation is still there, the appeal is denied — no matter how polite your letter is.',
+          'Correct your business name to the exact legal name on your signage and license. Fix the address: a real physical location for storefronts, or a hidden address plus defined service areas for mobile businesses. Remove keyword stuffing from the business description and services list.',
+          'Merge or remove duplicate listings using "Suggest an edit" on the duplicates, and stop any review schemes immediately. You cannot undo fake reviews already posted, but every new one deepens the problem.'
+        ],
+        keyTakeaway: 'Never appeal a profile that still violates policy. Fix first, document the fixes, then appeal.'
+      },
+      {
+        id: 'appeal',
+        heading: '4. How to File the Reinstatement Appeal',
+        content: [
+          'Go to Google\'s Business Profile reinstatement appeal form, linked from the suspension notice in your dashboard. Fill in the business details exactly as they appear on your official documents — inconsistencies between the form and your evidence create new problems.',
+          'Attach evidence. This is what separates successful appeals from ignored ones: a business license or registration, a utility bill or lease showing the business address, photos of your storefront with permanent signage, vehicle branding photos for service-area businesses, and tax documents showing the business name and address.',
+          'Write a short, factual explanation: what the business is, where it operates, and what you corrected. No emotion, no legal threats, no essays. Submit and wait — decisions typically take several days, and complex cases take longer.'
+        ],
+        keyTakeaway: 'Evidence wins appeals. License, utility bill, and storefront photos beat paragraphs of explanation every time.'
+      },
+      {
+        id: 'denied',
+        heading: '5. If Your Appeal Is Denied',
+        content: [
+          'Read the denial reason carefully. Most denials restate the policy section you violated — fix that specific thing rather than resubmitting the same appeal. You can usually appeal again, and each appeal should add something new: stronger documentation, clearer photos, or a newly corrected listing.',
+          'If you manage profiles for clients, document your evidence-gathering process. Repeat suspensions across multiple client accounts draw extra scrutiny from Google\'s review teams, so a clean, repeatable compliance workflow protects your whole book of business.'
+        ],
+        keyTakeaway: 'A denial is a diagnosis, not a verdict. Fix the cited policy section and appeal again with new evidence.'
+      },
+      {
+        id: 'prevent',
+        heading: '6. Preventing the Next Suspension',
+        content: [
+          'Keep your business name clean and legal at all times, maintain exactly one listing per location, and audit quarterly for duplicates. Never buy reviews or run "review for discount" schemes — incentivized reviews violate policy and can cost you the profile.',
+          'Keep hours, address, and service areas current. Stale data triggers re-verification, and re-verification is when dormant violations get caught. A periodic policy-risk scan catches name compliance issues, address misconfigurations, and category mismatches before Google does.'
+        ],
+        keyTakeaway: 'Suspensions are almost always preventable. Quarterly compliance checks cost minutes and save weeks of lost visibility.'
+      }
+    ],
+    faqs: [
+      {
+        q: 'How long does Google Business Profile reinstatement take?',
+        a: 'Most appeals are decided within a few days, but complex cases — especially those involving address verification or repeat violations — can take several weeks. Submitting complete evidence with the first appeal is the fastest way to shorten the wait.'
+      },
+      {
+        q: 'Can I create a new profile instead of appealing the suspended one?',
+        a: 'No. Creating a duplicate profile to dodge a suspension violates policy and typically results in both listings being removed. Fix the original and appeal it.'
+      },
+      {
+        q: 'What is the difference between a hard and soft suspension?',
+        a: 'A hard suspension removes your listing from Google Search and Maps entirely. A soft suspension keeps the listing visible but revokes your management access — you cannot edit information, post updates, or respond to reviews until it is resolved.'
+      }
+    ]
+  },
+
+  'business-not-showing-on-google-maps': {
+    slug: 'business-not-showing-on-google-maps',
+    title: 'Why Is My Business Not Showing Up on Google Maps? (7-Point Diagnostic)',
+    category: 'Google Business',
+    readingTime: '8 min read',
+    publishedDate: 'October 2026',
+    authorName: 'The LocoraAI Team',
+    authorRole: 'Local Search Experts',
+    metaTitle: 'Business Not Showing on Google Maps? 7-Point Diagnostic (2026) | LocoraAI',
+    metaDescription: 'Your business is not appearing on Google Maps. Work through this 7-point diagnostic — verification, suspension, address setup, categories, duplicates, filters, ranking — and find the exact cause.',
+    targetKeywords: ['business not showing up on google maps', 'why is my business not showing on google', 'google maps business not appearing', 'business not visible on google maps'],
+    targetTab: 'local_seo',
+    ctaText: 'Check My Maps Visibility Free',
+    ctaHeadline: 'See Exactly What Google Shows',
+    ctaDescription: 'Run a free Maps visibility diagnostic: verification status, suspension risk, address configuration, category match, and duplicate detection — no signup.',
+    summary: 'A systematic 7-point diagnostic for businesses missing from Google Maps: how to rule out search error, then check verification, suspension, address setup, categories, duplicates, filtering, and ranking — with a concrete fix for each.',
+    tableOfContents: [
+      { id: 'search-check', title: '1. Rule Out Search Error First' },
+      { id: 'verification', title: '2. Profile Not Verified' },
+      { id: 'suspension', title: '3. Profile Suspended' },
+      { id: 'address', title: '4. Address Setup Is Wrong' },
+      { id: 'categories', title: '5. Categories Are Wrong or Missing' },
+      { id: 'duplicates', title: '6. Duplicate Listing Splitting Signals' },
+      { id: 'ranking', title: '7. Indexed but Outranked' }
+    ],
+    sections: [
+      {
+        id: 'search-check',
+        heading: '1. Rule Out Search Error First',
+        content: [
+          'Before diagnosing anything, search your exact business name in quotes in Google Maps — not just your service plus city. If the listing appears for the exact-name search but not for "plumber near me," you do not have a visibility problem. You have a ranking problem, and the fix is further down at point 7.',
+          'This distinction matters because every step below assumes the listing is genuinely missing. Chasing verification or suspension issues for a listing that is simply outranked wastes days.'
+        ],
+        keyTakeaway: 'Exact-name search works but service search does not means you are indexed and outranked — skip to point 7.'
+      },
+      {
+        id: 'verification',
+        heading: '2. Profile Not Verified',
+        content: [
+          'Unverified profiles barely surface in Maps results. Check the verification status in your Google Business Profile dashboard. New profiles commonly require video verification: one continuous recording showing your storefront signage, business materials, and proof of operation.',
+          'The most common rejection reasons are blurry footage, missing or temporary-looking signage, and premises that look residential for a claimed storefront. Re-shoot in daylight, keep the camera steady, and narrate what each shot proves.'
+        ],
+        keyTakeaway: 'No verification, no visibility. Video verification fails most often on signage evidence — film it clearly.'
+      },
+      {
+        id: 'suspension',
+        heading: '3. Profile Suspended',
+        content: [
+          'Check the dashboard for a suspension notice. A hard suspension removes the listing from Search and Maps entirely, which looks exactly like "not showing up." If you find one, do not file the appeal yet — read our reinstatement guide first, because appealing before fixing the underlying violation is the top reason first appeals fail.'
+        ],
+        keyTakeaway: 'A missing listing with a dashboard suspension notice needs the reinstatement process, not a visibility fix.'
+      },
+      {
+        id: 'address',
+        heading: '4. Address Setup Is Wrong',
+        content: [
+          'This is the most common silent killer for service businesses. Storefronts need a real, precise address matching the website and citations. Service-area businesses — plumbers, electricians, cleaners — must hide the address and set service areas instead. Showing a home address you then try to obscure, or inventing a suite number, suppresses the listing.',
+          'Co-working and virtual addresses get filtered. If Google cannot verify real operations at the address, the listing will not stick no matter how complete the rest of the profile is.'
+        ],
+        keyTakeaway: 'Service-area businesses: hide the address, set service areas. Never use virtual addresses as storefronts.'
+      },
+      {
+        id: 'categories',
+        heading: '5. Categories Are Wrong or Missing',
+        content: [
+          'Your primary category is the strongest relevance signal for Maps ranking. "Plumber" versus "Plumbing supply store" is the difference between appearing and not appearing for the same search. Audit what categories your ranking competitors use and match your primary category to your actual main service, then add relevant secondary categories.',
+          'A missing primary category — common on profiles set up in a hurry — leaves Google guessing what you do, and guessing businesses do not rank.'
+        ],
+        keyTakeaway: 'Match your primary category to the exact service customers search for, then verify against ranking competitors.'
+      },
+      {
+        id: 'duplicates',
+        heading: '6. Duplicate Listing Splitting Signals',
+        content: [
+          'Search Maps for your business name and address variants. Duplicates split Google\'s confidence in your entity — it may suppress both listings rather than pick one. This often happens after rebrands, moves, or when a well-meaning employee creates a second profile.',
+          'Merge them: on the duplicate listing, use "Suggest an edit," then "Close or remove," then "Duplicate of another place," pointing at the canonical profile.'
+        ],
+        keyTakeaway: 'One business, one listing. Duplicates do not double your visibility — they halve Google\'s trust.'
+      },
+      {
+        id: 'ranking',
+        heading: '7. Indexed but Outranked',
+        content: [
+          'If the exact-name search works but "service + city" does not, you are indexed and losing the ranking battle. The levers, in rough order of impact: review count and velocity relative to competitors, primary category match, proximity signals from accurate geo-coordinates, listing completeness (hours, services, photos, description), and local signals from your website.',
+          'Work them in that order. Ten new reviews move the needle more than ten new photos; the correct primary category beats both.'
+        ],
+        keyTakeaway: 'Outranked is a competition problem. Benchmark review velocity and category match against the top 3 competitors first.'
+      }
+    ],
+    faqs: [
+      {
+        q: 'How long does it take for a new Google Business Profile to appear on Maps?',
+        a: 'A verified, compliant new profile typically stabilizes within days to a few weeks. If everything checks out and the profile is under three weeks old, give it time before assuming something is broken.'
+      },
+      {
+        q: 'My business shows on Google Search but not on Google Maps. Why?',
+        a: 'This usually means the listing exists but lacks the local signals Maps requires — most often an unverified profile, a hidden-address misconfiguration, or a category mismatch. Work through the diagnostic above starting at point 2.'
+      },
+      {
+        q: 'Can a competitor remove my business from Google Maps?',
+        a: 'Competitors can suggest edits to your listing, including malicious ones, but they cannot directly remove it. If your details keep changing unexpectedly, check the edit history in your dashboard and lock down the primary fields.'
+      }
+    ]
+  },
+
+  'get-recommended-by-chatgpt': {
+    slug: 'get-recommended-by-chatgpt',
+    title: 'How to Get Your Business Recommended by ChatGPT (2026 Playbook)',
+    category: 'Local SEO',
+    readingTime: '10 min read',
+    publishedDate: 'October 2026',
+    authorName: 'The LocoraAI Team',
+    authorRole: 'Local Search Experts',
+    metaTitle: 'How to Get ChatGPT to Recommend Your Business (2026 Playbook) | LocoraAI',
+    metaDescription: 'Customers now ask ChatGPT for local recommendations. Follow the 7-step playbook to make AI search engines find, trust, and recommend your business — plus a free AI visibility check.',
+    targetKeywords: ['how to get my business recommended by chatgpt', 'ai search visibility for local business', 'chatgpt business recommendations', 'how to rank in ai search'],
+    targetTab: 'local_seo',
+    ctaText: 'Check My AI Visibility Free',
+    ctaHeadline: 'See How AI Engines See Your Business',
+    ctaDescription: 'Audit your AI-search readiness — crawler access, profile completeness, citation consistency, review signals, and schema — scored against local competitors.',
+    summary: 'A practical 7-step playbook for AI search visibility: how ChatGPT, Gemini, and Perplexity choose which local businesses to recommend, and the concrete steps — crawler access, GBP completeness, Bing Places, schema — that put your business in their answers.',
+    tableOfContents: [
+      { id: 'why-now', title: '1. Why AI Recommendations Matter Now' },
+      { id: 'how-they-pick', title: '2. How AI Engines Actually Pick Businesses' },
+      { id: 'crawlers', title: '3. Let the AI Crawlers In' },
+      { id: 'gbp', title: '4. Complete Your Google Business Profile to 100%' },
+      { id: 'nap', title: '5. Make Your NAP Consistent Everywhere' },
+      { id: 'reviews', title: '6. Build Review Velocity and Respond to All' },
+      { id: 'bing-schema', title: '7. Claim Bing Places and Add Schema' },
+      { id: 'check', title: '8. How to Check Where You Stand' }
+    ],
+    sections: [
+      {
+        id: 'why-now',
+        heading: '1. Why AI Recommendations Matter Now',
+        content: [
+          'The way customers find local businesses is splitting in two. Alongside Google search, a growing share of consumers now ask AI assistants — ChatGPT, Gemini, Perplexity — for recommendations. BrightLocal\'s 2026 research found 45% of consumers had used AI for local recommendations, up from 6% the year before.',
+          'When AI engines answer local questions, Google Business Profiles are the single most-cited source — around 28.5% of roughly 2 million AI citations analyzed came from GBP data. Yet only about 13% of small businesses are doing anything about AI visibility. The businesses that move first get recommended while competitors stay invisible.'
+        ],
+        keyTakeaway: 'AI recommendation is already a major discovery channel, and almost nobody in local is competing for it yet.'
+      },
+      {
+        id: 'how-they-pick',
+        heading: '2. How AI Engines Actually Pick Businesses',
+        content: [
+          'AI assistants do not have a secret local index. They retrieve from the public web — business profiles, review platforms, your website — and synthesize an answer. That means the inputs are familiar: complete business data, consistent listings, reviews, and crawlable website content.',
+          'The difference is the reader. A human skims your homepage; an AI model parses your structured data, cross-references your citations, and weighs review signals. Optimize for machine readability and the recommendations follow.'
+        ],
+        keyTakeaway: 'There is no AI-only trick. AI engines recommend businesses with complete, consistent, machine-readable public data.'
+      },
+      {
+        id: 'crawlers',
+        heading: '3. Let the AI Crawlers In',
+        content: [
+          'Check your robots.txt. If it blocks GPTBot, ClaudeBot, PerplexityBot, or similar crawlers, AI engines cannot read your site at all. This is a binary gate — everything else in this playbook is worthless if the crawlers are locked out.',
+          'Equally important: make sure key pages serve real content in plain HTML. AI crawlers generally do not execute JavaScript, so pages that render empty without JS are invisible to them. LocoraAI\'s own audit caught exactly this — resource pages returning empty HTML to non-JS crawlers.'
+        ],
+        keyTakeaway: 'Allow AI crawler user-agents in robots.txt and verify your pages return real HTML without JavaScript.'
+      },
+      {
+        id: 'gbp',
+        heading: '4. Complete Your Google Business Profile to 100%',
+        content: [
+          'GBP data is the most-cited source in AI local answers, so treat completeness as non-negotiable: exact legal business name, correct primary category, full hours including holidays, services with descriptions, photos, and a complete business description.',
+          'An incomplete profile gives the AI an incomplete answer to work with. When the model has to choose between a complete profile and a half-filled one, it cites the complete one — that is the entire game.'
+        ],
+        keyTakeaway: 'Fill every GBP field. It is the single highest-leverage input to AI local answers.'
+      },
+      {
+        id: 'nap',
+        heading: '5. Make Your NAP Consistent Everywhere',
+        content: [
+          'Name, Address, Phone — identical across your website, GBP, Yelp, Facebook, and directories. AI models cross-reference sources before recommending, and inconsistencies lower their confidence. "St." versus "Street" will not sink you, but different phone numbers or addresses across platforms will.',
+          'Run a citation audit quarterly. Businesses accumulate inconsistent listings every time they move, change numbers, or get auto-generated profiles from data aggregators.'
+        ],
+        keyTakeaway: 'Consistent citations are how AI models verify you are real. Audit them quarterly.'
+      },
+      {
+        id: 'reviews',
+        heading: '6. Build Review Velocity and Respond to All',
+        content: [
+          'Reviews are trust signals AI engines weigh heavily. A steady stream of recent reviews with owner responses signals an active, legitimate business. Respond to every review — the responses themselves become citable content that reinforces your services and location.',
+          'Velocity matters more than lifetime count. Fifty reviews with the newest six months old loses to thirty reviews with five from this month.'
+        ],
+        keyTakeaway: 'Recent reviews plus owner responses on all of them — that is the review profile AI engines trust.'
+      },
+      {
+        id: 'bing-schema',
+        heading: '7. Claim Bing Places and Add Schema',
+        content: [
+          'ChatGPT\'s search grounding draws significantly on Bing\'s index, yet most local businesses have never touched their Bing Places for Business listing. Claiming and completing it is the single most underrated step in this playbook — ten minutes of work your competitors have not done.',
+          'Then add LocalBusiness schema to your website: name, address, phone, hours, geo-coordinates, and reviews in JSON-LD. Schema hands AI crawlers your facts in a format they cannot misread — the closest thing to handing the model your business card directly.'
+        ],
+        keyTakeaway: 'Claim Bing Places today, then add LocalBusiness JSON-LD schema to your site. Both are quick and widely skipped.'
+      },
+      {
+        id: 'check',
+        heading: '8. How to Check Where You Stand',
+        content: [
+          'Ask ChatGPT, Gemini, and Perplexity the way a customer would: "best [service] in [city]" and "recommend a [service] near [neighborhood]." Note whether you appear, what the engines say about you, and which competitors they name instead. Use a fresh session each time — chat history personalizes results.',
+          'Repeat monthly. AI indexes shift as models retrain and re-crawl, so a single check is a snapshot, not a verdict. Track which competitors appear consistently and study what their public data has that yours lacks.'
+        ],
+        keyTakeaway: 'Test monthly in fresh sessions across all three engines, and study whoever the AI recommends instead of you.'
+      }
+    ],
+    faqs: [
+      {
+        q: 'Can I pay to be recommended by ChatGPT?',
+        a: 'No. ChatGPT does not sell local recommendations. Businesses appear in AI answers because their public data — profiles, reviews, citations, website content — makes them the best answer to retrieve, not because of advertising spend.'
+      },
+      {
+        q: 'Does traditional SEO help with AI visibility?',
+        a: 'Largely yes. Complete profiles, consistent citations, reviews, and crawlable content feed both Google rankings and AI answers. The AI-specific additions are crawler access, Bing Places, and structured data.'
+      },
+      {
+        q: 'How long before AI visibility efforts show results?',
+        a: 'Crawler access and Bing Places changes can surface within weeks. Review velocity and citation consistency compound over months. Unlike ad spend, the work is cumulative — it keeps paying after you stop.'
+      }
+    ]
+  },
+
+  'how-to-respond-to-google-reviews': {
+    slug: 'how-to-respond-to-google-reviews',
+    title: 'How to Respond to Google Reviews (Examples for Every Situation)',
+    category: 'Google Business',
+    readingTime: '7 min read',
+    publishedDate: 'October 2026',
+    authorName: 'The LocoraAI Team',
+    authorRole: 'Local Search Experts',
+    metaTitle: 'How to Respond to Google Reviews: Examples + Free AI Replies | LocoraAI',
+    metaDescription: 'Review response examples for positive, negative, and fake Google reviews — plus how to generate on-brand replies in one click instead of staring at a blank box.',
+    targetKeywords: ['how to respond to google reviews', 'google review response examples', 'responding to negative google reviews', 'ai review response generator'],
+    targetTab: 'local_seo',
+    ctaText: 'Generate Review Replies Free',
+    ctaHeadline: 'Never Stare at a Blank Reply Box Again',
+    ctaDescription: 'Draft an on-brand reply for every review in one click — in your tone, referencing the review specifics. You review and post.',
+    summary: 'Why review responses matter for rankings and trust, the 4-part anatomy of a strong response, copy-paste examples for positive, negative, vague, and fake reviews, and how to automate replies without sounding automated.',
+    tableOfContents: [
+      { id: 'why', title: '1. Why Responses Matter More Than You Think' },
+      { id: 'anatomy', title: '2. The Anatomy of a Good Response' },
+      { id: 'examples', title: '3. Examples for Every Situation' },
+      { id: 'fake', title: '4. Handling Fake or Suspicious Reviews' },
+      { id: 'automation', title: '5. Solving the Blank-Box Problem' },
+      { id: 'rules', title: '6. Three Rules That Prevent Disasters' }
+    ],
+    sections: [
+      {
+        id: 'why',
+        heading: '1. Why Responses Matter More Than You Think',
+        content: [
+          'Two reasons. First, customers read them: a thoughtful owner response on a negative review reassures the next ten readers more than the review itself worries them. Shoppers specifically look at how businesses handle complaints before deciding to call.',
+          'Second, Google watches. Response rate and recency are engagement signals on your profile, and your responses are indexable text that reinforces what your business does and where. The businesses that win reviews are not the ones with zero complaints — they are the ones whose responses make complaints look handled.'
+        ],
+        keyTakeaway: 'Responses are read by future customers and indexed by Google. Silence is the only wrong answer.'
+      },
+      {
+        id: 'anatomy',
+        heading: '2. The Anatomy of a Good Response',
+        content: [
+          'Every strong response has the same four parts. Thank them, by name if given. Reference something specific from their review — this proves you actually read it, which is what the next reader is checking for. Add one useful fact: hours, a service detail, an invitation. That gives the response substance beyond politeness.',
+          'Keep it to two to four sentences. Nobody reads paragraphs under a review, and long responses look defensive even when they are not.'
+        ],
+        keyTakeaway: 'Thank, reference something specific, add one useful fact, keep it short. That is the whole formula.'
+      },
+      {
+        id: 'examples',
+        heading: '3. Examples for Every Situation',
+        content: [
+          'Positive review with detail: "Thank you, Sarah! Glad the same-day drain repair worked out — that is exactly what our emergency line is for. We appreciate you taking the time to leave this." The specific callback proves attention and advertises the emergency service in one line.',
+          'Positive review with no detail: "Thanks for the five stars, Mike! We appreciate your business and hope to see you again." Short is fine when there is nothing to reference — the response rate itself is the signal.',
+          'Negative review with a specific complaint: "Thank you for letting us know, David. You are right that the appointment ran 45 minutes late on Tuesday, and that is not our standard. We have adjusted our scheduling buffer to prevent repeats — we would welcome the chance to make the next visit right." Acknowledge the specific fact, state the fix, invite them back. Never argue the facts in public.',
+          'Negative review that is vague or emotional: "We are sorry to hear about your experience, Lisa. We would like to understand what happened — please reach out to us directly at [phone] so we can make this right." Move heated disputes to a private channel; keep the public thread gracious.'
+        ],
+        keyTakeaway: 'Mirror the review\'s specificity: detailed reviews earn detailed replies, vague ones get a gracious invitation offline.'
+      },
+      {
+        id: 'fake',
+        heading: '4. Handling Fake or Suspicious Reviews',
+        content: [
+          'Post a calm public reply first: "We do not have a record of this visit under this name. If you were our customer, please contact us at [phone] with your invoice number so we can look into it." This signals to readers that the review is dubious without accusing anyone.',
+          'Then report it: in your GBP dashboard go to Reviews, open the review\'s menu, and choose "Report review." Google removes reviews that violate policy, but the process takes time — the public reply covers you meanwhile. Never offer payment or incentives to offset a fake review; incentivized reviews violate policy and can cost you the profile.'
+        ],
+        keyTakeaway: 'Reply calmly to cast doubt, then report through the dashboard. Never fight fake reviews with fake positives.'
+      },
+      {
+        id: 'automation',
+        heading: '5. Solving the Blank-Box Problem',
+        content: [
+          'Knowing the formula and writing thirty unique responses a month are different things. Most businesses either respond to nothing or paste the same "Thanks for your feedback!" everywhere — which reads as not caring, and readers notice.',
+          'The practical fix is drafting assistance: generate an on-brand reply for each review in one click, in your tone, referencing the review\'s specifics — then you review and post. It stays your voice without the blank box, and the response rate goes from aspirational to actual.'
+        ],
+        keyTakeaway: 'Response rate beats response eloquence. Remove the friction and the rate takes care of itself.'
+      },
+      {
+        id: 'rules',
+        heading: '6. Three Rules That Prevent Disasters',
+        content: [
+          'Respond within 48 hours. Speed signals that someone is home, and the reviewer is still paying attention. A fast, decent reply outperforms a perfect reply posted three weeks later.',
+          'Never argue in public. Even when the reviewer is wrong, the audience sides with whoever stays gracious. Take disputes to phone or email.',
+          'Never offer payment for reviews. "Leave us 5 stars for 10% off" violates Google policy and can get the reviews — or the profile — removed. Earn reviews with good service and a simple ask.'
+        ],
+        keyTakeaway: 'Fast, gracious, and never incentivized. Those three rules prevent nearly every review disaster.'
+      }
+    ],
+    faqs: [
+      {
+        q: 'Should I respond to every Google review?',
+        a: 'Yes — positive and negative. Response rate is a visible engagement signal, and future customers read your replies to judge how you treat people. Even a one-line thank-you on positive reviews counts.'
+      },
+      {
+        q: 'How do I get a fake Google review removed?',
+        a: 'Reply calmly first, then report it through your GBP dashboard (Reviews → the review menu → Report review). Google reviews reports against its policies; removal is not instant, so the public reply protects you in the meantime.'
+      },
+      {
+        q: 'Is it okay to use AI to write review responses?',
+        a: 'Yes, as a drafting aid — generate the reply, then review and personalize it before posting. What violates policy is fake reviews themselves, not using tools to help you respond to real ones.'
+      }
+    ]
   }
 };
