@@ -15,6 +15,7 @@ import * as rankTracking from './server/rankTracking.ts';
 
 const resolveMxAsync = promisify(dns.resolveMx);
 import { resolveRouteMetadata, injectMetadataIntoHtml } from './src/utils/seoMetadata.ts';
+import { SEO_RESOURCES_DATABASE } from './src/data/seo/resourcesData.ts';
 import { getOrCreateUser } from './src/db/users.ts';
 import * as dbService from './src/db/service.ts';
 import * as onboardingService from './server/onboardingService.ts';
@@ -16495,15 +16496,13 @@ app.get('/sitemap.xml', async (req, res) => {
       { path: '/for/agencies', priority: '0.9', changefreq: 'weekly' },
       { path: '/for/dentists', priority: '0.88', changefreq: 'weekly' },
 
-      // Layer 4: Educational Content & SOPs
-      { path: '/resources/how-to-improve-local-seo', priority: '0.85', changefreq: 'weekly' },
-      { path: '/resources/how-to-create-seo-proposal', priority: '0.85', changefreq: 'weekly' },
-      { path: '/resources/google-business-profile-guide', priority: '0.85', changefreq: 'weekly' },
-      { path: '/resources/local-seo-checklist', priority: '0.85', changefreq: 'weekly' },
-      { path: '/resources/google-business-profile-suspended', priority: '0.85', changefreq: 'weekly' },
-      { path: '/resources/business-not-showing-on-google-maps', priority: '0.85', changefreq: 'weekly' },
-      { path: '/resources/get-recommended-by-chatgpt', priority: '0.85', changefreq: 'weekly' },
-      { path: '/resources/how-to-respond-to-google-reviews', priority: '0.85', changefreq: 'weekly' },
+      // Layer 4: Resource articles — generated dynamically from the article
+      // database so every current and future article is listed automatically.
+      ...Object.keys(SEO_RESOURCES_DATABASE).map((slug) => ({
+        path: `/resources/${slug}`,
+        priority: '0.85',
+        changefreq: 'weekly',
+      })),
       { path: '/directory', priority: '0.9', changefreq: 'daily' },
     ];
 
