@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { resolveRouteMetadata, injectMetadataIntoHtml } from '../src/utils/seoMetadata';
 import { getArticleSlug, getArticleMeta, injectArticleContent } from './prerenderArticles';
+import { SEO_RESOURCES_DATABASE } from '../src/data/seo/resourcesData';
 
 const MARKETING_ROUTES_TO_PRERENDER: string[] = [
   '/directory',
@@ -44,11 +45,9 @@ const MARKETING_ROUTES_TO_PRERENDER: string[] = [
   '/use-cases/marketing-planning',
   '/use-cases/agency-operations',
   '/use-cases/business-growth',
-  // Layer 4: Resources SOP Guides
-  '/resources/how-to-improve-local-seo',
-  '/resources/how-to-create-seo-proposal',
-  '/resources/google-business-profile-guide',
-  '/resources/local-seo-checklist',
+  // Layer 4: Resource articles — generated dynamically from the article database
+  // so every current and future article is prerendered automatically.
+  ...Object.keys(SEO_RESOURCES_DATABASE).map((slug) => `/resources/${slug}`),
 ];
 
 async function prerenderMarketingRoutes() {
