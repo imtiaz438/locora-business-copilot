@@ -533,6 +533,20 @@ export const HomeView: React.FC = () => {
                 draggable={false}
               />
             </a>
+            <a
+              href="https://fazier.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Launched on Fazier"
+              className="opacity-80 hover:opacity-100 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              <img
+                src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=light"
+                alt="Launched on Fazier"
+                style={{ height: '36px', width: 'auto' }}
+                draggable={false}
+              />
+            </a>
           </div>
         </div>
       </section>
