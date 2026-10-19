@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { resolveRouteMetadata, injectMetadataIntoHtml } from '../src/utils/seoMetadata';
+import { getArticleSlug, getArticleMeta, injectArticleContent } from './prerenderArticles';
 
 const MARKETING_ROUTES_TO_PRERENDER: string[] = [
   '/directory',
@@ -63,9 +64,18 @@ async function prerenderMarketingRoutes() {
   console.log(`[Prerender] Generating static HTML for ${MARKETING_ROUTES_TO_PRERENDER.length} marketing routes...`);
 
   let count = 0;
+  let articleCount = 0;
   for (const route of MARKETING_ROUTES_TO_PRERENDER) {
     const meta = resolveRouteMetadata(route, 'locoraai.com');
-    const prerenderedHtml = injectMetadataIntoHtml(baseHtml, meta);
+    // Article routes get their real per-article title/description plus
+    // server-side body content + JSON-LD so non-JS crawlers can read them.
+    const articleSlug = getArticleSlug(route);
+    const finalMeta = articleSlug ? { ...meta, ...getArticleMeta(articleSlug) } : meta;
+    let prerenderedHtml = injectMetadataIntoHtml(baseHtml, finalMeta);
+    if (articleSlug) {
+      prerenderedHtml = injectArticleContent(prerenderedHtml, articleSlug);
+      articleCount++;
+    }
 
     const cleanRoute = route.replace(/^\/+/, '');
     const routeDir = path.join(distPath, cleanRoute);
@@ -87,7 +97,7 @@ async function prerenderMarketingRoutes() {
     count++;
   }
 
-  console.log(`[Prerender] Successfully pre-rendered ${count} public marketing routes with unique metadata and self-referential canonical tags.`);
+  console.log(`[Prerender] Successfully pre-rendered ${count} public marketing routes with unique metadata and self-referential canonical tags (${articleCount} with server-side article content for AI crawlers).`);
 }
 
 prerenderMarketingRoutes().catch((err) => {
