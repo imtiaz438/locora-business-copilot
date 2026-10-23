@@ -38,16 +38,16 @@ export const MARKETING_METADATA: Record<string, PageMetadata> = {
     noIndex: false,
   },
   directory: {
-    title: 'Verified Local Business Directory — Top-Rated Service Providers & Contractors | Locora AI',
+    title: 'Local Business Directory | Locora AI',
     description:
-      'Search the authoritative directory of verified local businesses, licensed contractors, dental clinics, and home services. Browse authentic Google reviews, verified hours, and request 0% fee direct quotes.',
+      'The LocoraAI directory of local businesses — real profiles with Google reviews, live hours and direct contact. Own a business? Get listed and run your free visibility checkup.',
     canonicalPath: '/directory',
     noIndex: false,
   },
   directory_hub: {
-    title: 'Verified Local Business Directory — Top-Rated Service Providers & Contractors | Locora AI',
+    title: 'Local Business Directory | Locora AI',
     description:
-      'Search the authoritative directory of verified local businesses, licensed contractors, dental clinics, and home services. Browse authentic Google reviews, verified hours, and request 0% fee direct quotes.',
+      'The LocoraAI directory of local businesses — real profiles with Google reviews, live hours and direct contact. Own a business? Get listed and run your free visibility checkup.',
     canonicalPath: '/directory',
     noIndex: false,
   },
@@ -609,8 +609,8 @@ export function resolveRouteMetadata(
     }
 
     return {
-      title: 'Verified Local Business Directory — Top-Rated Service Providers & Contractors | Locora AI',
-      description: 'Search the authoritative directory of verified local businesses, licensed contractors, dental clinics, and home services. Browse authentic Google reviews, verified hours, and request 0% fee direct quotes.',
+      title: 'Local Business Directory | Locora AI',
+      description: 'The LocoraAI directory of local businesses — real profiles with Google reviews, live hours and direct contact. Own a business? Get listed and run your free visibility checkup.',
       canonicalUrl: isDirectoryHost ? 'https://directory.locoraai.com/' : 'https://locoraai.com/directory',
       noIndex: false,
       isDashboard: false,
