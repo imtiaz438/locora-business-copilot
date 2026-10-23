@@ -16,6 +16,7 @@ import * as rankTracking from './server/rankTracking.ts';
 const resolveMxAsync = promisify(dns.resolveMx);
 import { resolveRouteMetadata, injectMetadataIntoHtml } from './src/utils/seoMetadata.ts';
 import { SEO_RESOURCES_DATABASE } from './src/data/seo/resourcesData.ts';
+import { getPageStaticHtml } from './scripts/prerenderPages.ts';
 import { getOrCreateUser } from './src/db/users.ts';
 import * as dbService from './src/db/service.ts';
 import * as onboardingService from './server/onboardingService.ts';
@@ -16447,7 +16448,6 @@ Sitemap: https://locoraai.com/sitemap.xml
 app.get('/sitemap.xml', async (req, res) => {
   try {
     const baseUrl = 'https://locoraai.com';
-    const today = new Date().toISOString().split('T')[0];
 
     const pages = [
       { path: '/', priority: '1.0', changefreq: 'daily' },
@@ -16570,7 +16570,8 @@ app.get('/sitemap.xml', async (req, res) => {
         seenPaths.add(p.path);
         xml += `  <url>\n`;
         xml += `    <loc>${baseUrl}${p.path}</loc>\n`;
-        xml += `    <lastmod>${today}</lastmod>\n`;
+        // No <lastmod>: page-level modification dates are not tracked, and a
+        // blanket "today" stamp is dishonest — Google ignores it. Omit instead.
         xml += `    <changefreq>${p.changefreq}</changefreq>\n`;
         xml += `    <priority>${p.priority}</priority>\n`;
         xml += `  </url>\n`;
@@ -18124,42 +18125,44 @@ app.get(['/directory/sitemap.xml', '/api/directory/sitemap.xml'], async (req, re
 
     const seenUrls = new Set<string>();
 
-    const addUrl = (loc: string, lastmod: string, changefreq: string, priority: string) => {
+    const addUrl = (loc: string, lastmod: string | null, changefreq: string, priority: string) => {
       if (!seenUrls.has(loc)) {
         seenUrls.add(loc);
-        xml += `  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>\n`;
+        // Only emit <lastmod> for a real modification date (business updatedAt);
+        // a blanket "today" stamp is dishonest and ignored by Google.
+        xml += `  <url>\n    <loc>${loc}</loc>\n${lastmod ? `    <lastmod>${lastmod}</lastmod>\n` : ''}    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>\n`;
       }
     };
 
     // 1. Root Directory Hub (Indexable only if we have active listings)
     if (listings.length > 0) {
-      addUrl(isDirHost ? `${baseUrl}/` : `${baseUrl}/directory`, today, 'daily', '1.0');
+      addUrl(isDirHost ? `${baseUrl}/` : `${baseUrl}/directory`, null, 'daily', '1.0');
     }
 
     // 2. City Pages (Only include cities with >= 1 published business)
     snapshot.cities.forEach((c) => {
       if (c.count >= 1 && c.slug) {
-        addUrl(isDirHost ? `${baseUrl}/city/${c.slug}` : `${baseUrl}/${c.slug}`, today, 'daily', '0.85');
+        addUrl(isDirHost ? `${baseUrl}/city/${c.slug}` : `${baseUrl}/${c.slug}`, null, 'daily', '0.85');
       }
     });
 
     // 3. Category Pages (Only include categories with >= 1 published business)
     snapshot.categories.forEach((cat) => {
       if (cat.count >= 1 && cat.slug) {
-        addUrl(`${baseUrl}/category/${cat.slug}`, today, 'daily', '0.85');
+        addUrl(`${baseUrl}/category/${cat.slug}`, null, 'daily', '0.85');
       }
     });
 
     // 4. City + Category Combined Pages (Only include combinations with >= 1 published business)
     snapshot.cityCategoryPairs.forEach((pair) => {
       if (pair.count >= 1 && pair.citySlug && pair.categorySlug) {
-        addUrl(`${baseUrl}/${pair.citySlug}/${pair.categorySlug}`, today, 'daily', '0.80');
+        addUrl(`${baseUrl}/${pair.citySlug}/${pair.categorySlug}`, null, 'daily', '0.80');
       }
     });
 
     // 5. Canonical Individual Business Pages (Only valid non-deleted businesses)
     listings.forEach((b) => {
-      const bDate = b.updatedAt ? b.updatedAt.split('T')[0] : today;
+      const bDate = b.updatedAt ? b.updatedAt.split('T')[0] : null;
       addUrl(isDirHost ? `${baseUrl}/business/${b.slug}` : `${baseUrl}/biz/${b.slug}`, bDate, 'weekly', '0.90');
     });
 
@@ -18337,6 +18340,16 @@ async function handleHtmlRequest(req: express.Request, res: express.Response, vi
           const badgeHtml =
             '<a href="https://fazier.com" target="_blank" rel="noopener noreferrer" title="Launched on Fazier"><img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=light" alt="Launched on Fazier" /></a>';
           html = html.replace('<div id="root"></div>', `<div id="root">${badgeHtml}</div>`);
+          // Static homepage content for non-JS crawlers / AI bots, built
+          // from the same data the React homepage renders (see
+          // scripts/prerenderPages.ts). The homepage is served from the
+          // shell template, so it cannot be prerendered to a file like the
+          // other routes; inject at serve time instead. React clears #root
+          // on mount, so JS users see the full app, badge included.
+          const homeStatic = getPageStaticHtml('/');
+          if (homeStatic) {
+            html = html.replace('<div id="root">', `<div id="root">\n${homeStatic}\n`);
+          }
         }
       }
     }
@@ -18380,6 +18393,7 @@ async function startServer() {
     app.use(
       express.static(distPath, {
         maxAge: '1d',
+        redirect: false, // Do not 301 /about -> /about/ etc.: canonical URLs are the non-slash forms declared in sitemap/canonicals; the SPA fallback below serves them with 200.
         index: false, // Prevents serving un-injected dist/index.html on root
         setHeaders: (res, filePath) => {
           // Hashed assets in assets folder get immutable long-term caching

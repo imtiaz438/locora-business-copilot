@@ -2,9 +2,13 @@ import fs from 'fs';
 import path from 'path';
 import { resolveRouteMetadata, injectMetadataIntoHtml } from '../src/utils/seoMetadata';
 import { getArticleSlug, getArticleMeta, injectArticleContent } from './prerenderArticles';
+import { injectPageContent } from './prerenderPages';
 import { SEO_RESOURCES_DATABASE } from '../src/data/seo/resourcesData';
 
 const MARKETING_ROUTES_TO_PRERENDER: string[] = [
+  // '/' is handled at serve time by server.ts (the homepage is served from
+  // dist/index.html, which must stay the bare shell template on disk).
+  '/checkup',
   '/directory',
   '/products',
   '/pricing',
@@ -74,6 +78,11 @@ async function prerenderMarketingRoutes() {
     if (articleSlug) {
       prerenderedHtml = injectArticleContent(prerenderedHtml, articleSlug);
       articleCount++;
+    } else {
+      // Non-article routes: inject faithful static page content (built from
+      // the same data files the React pages render) so non-JS crawlers and
+      // AI bots see real page content instead of an empty shell.
+      prerenderedHtml = injectPageContent(prerenderedHtml, route);
     }
 
     const cleanRoute = route.replace(/^\/+/, '');
