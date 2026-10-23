@@ -18324,9 +18324,21 @@ async function handleHtmlRequest(req: express.Request, res: express.Response, vi
       const directHtmlPath = path.join(distPath, `${cleanPath}.html`);
       const nestedIndexPath = path.join(distPath, cleanPath, 'index.html');
 
-      if (cleanPath && !metadata.isDashboard && !isAppHost && fs.existsSync(directHtmlPath)) {
+      // Dynamic rendering: prerendered files carry static page content for
+      // crawlers that never run JS. Human browsers must NOT see that raw
+      // text flash before React mounts, so browsers get the clean shell
+      // (with the same per-route metadata) and only crawler / link-preview
+      // user agents get the content-rich prerendered file. The content is
+      // generated from the same data the React pages render — no cloaking,
+      // just no-JS progressive enhancement.
+      const ua = ((req.headers['user-agent'] as string) || '').toLowerCase();
+      const isCrawler =
+        !ua ||
+        /bot|spider|crawler|gptbot|claudebot|perplexity|chatgpt|oai-searchbot|bytespider|facebookexternalhit|meta-externalagent|twitterbot|linkedinbot|slackbot|whatsapp|telegrambot|slurp|ia_archiver|cohere|mistralai|deepseek|prerender|lighthouse/.test(ua);
+
+      if (cleanPath && isCrawler && !metadata.isDashboard && !isAppHost && fs.existsSync(directHtmlPath)) {
         html = fs.readFileSync(directHtmlPath, 'utf-8');
-      } else if (cleanPath && !metadata.isDashboard && !isAppHost && fs.existsSync(nestedIndexPath)) {
+      } else if (cleanPath && isCrawler && !metadata.isDashboard && !isAppHost && fs.existsSync(nestedIndexPath)) {
         html = fs.readFileSync(nestedIndexPath, 'utf-8');
       } else {
         const baseTemplate = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
@@ -18349,7 +18361,7 @@ async function handleHtmlRequest(req: express.Request, res: express.Response, vi
           // shell template, so it cannot be prerendered to a file like the
           // other routes; inject at serve time instead. React clears #root
           // on mount, so JS users see the full app, badge included.
-          const homeStatic = getPageStaticHtml('/');
+          const homeStatic = isCrawler ? getPageStaticHtml('/') : null;
           if (homeStatic) {
             html = html.replace('<div id="root">', `<div id="root">\n${homeStatic}\n`);
           }
