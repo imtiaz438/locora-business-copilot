@@ -269,7 +269,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
             Find & Hire Verified Local Businesses
           </h1>
           <p className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Real Google Business Profile verified reviews, live operating hours, and instant direct quote requests with zero middleman markup.
+            Real Google Business Profile reviews, live operating hours, and direct contact with the business — no middleman.
           </p>
 
           {/* Search Box with Autocomplete Location */}

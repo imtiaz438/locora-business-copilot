@@ -1879,20 +1879,20 @@ export const HomeView: React.FC = () => {
               <div className="space-y-2">
                 <h4 className="text-lg font-bold font-heading text-white">Explore By Service Category</h4>
                 <p className="text-xs text-slate-400 leading-relaxed font-sans">
-                  Browse accredited local businesses across thousands of indexed categories with authentic reviews and verified ratings.
+                  Explore the LocoraAI directory by service category. Every listing is a real business profile with its live Google presence — no paid placements, no inflated counts.
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { name: 'Dentists', count: '450+' },
-                  { name: 'HVAC & AC', count: '380+' },
-                  { name: 'Plumbing', count: '320+' },
-                  { name: 'Contractors', count: '290+' },
-                  { name: 'Auto Repair', count: '410+' },
-                  { name: 'Med Spas', count: '210+' },
-                  { name: 'Law Firms', count: '180+' },
-                  { name: 'Electricians', count: '260+' },
+                  { name: 'Dentists' },
+                  { name: 'HVAC & AC' },
+                  { name: 'Plumbing' },
+                  { name: 'Contractors' },
+                  { name: 'Auto Repair' },
+                  { name: 'Med Spas' },
+                  { name: 'Law Firms' },
+                  { name: 'Electricians' },
                 ].map((cat, idx) => (
                   <button
                     key={idx}
@@ -1902,9 +1902,6 @@ export const HomeView: React.FC = () => {
                   >
                     <span className="text-xs font-semibold text-slate-200 group-hover:text-emerald-300 transition-colors">
                       {cat.name}
-                    </span>
-                    <span className="text-[10px] text-slate-400 bg-slate-700/50 px-1.5 py-0.5 rounded font-mono">
-                      {cat.count}
                     </span>
                   </button>
                 ))}
