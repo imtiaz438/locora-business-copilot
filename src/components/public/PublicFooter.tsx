@@ -378,6 +378,31 @@ export const PublicFooter: React.FC = () => {
           </div>
         </div>
 
+        {/* Featured On — badge line (moved from the homepage hero strip at
+            the founder's request): small badges in one line, corner-aligned. */}
+        <div className="pt-8 mt-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+            Featured On
+          </p>
+          <div className="flex items-center gap-6 flex-wrap justify-center sm:justify-end">
+            <a href="https://launchbuff.com/products/locora-ai-4de1rh" target="_blank" rel="noopener noreferrer" title="Featured on LaunchBuff" className="opacity-70 hover:opacity-100 transition-opacity">
+              <img src="https://launchbuff.com/badge-featured-dark.svg" alt="Featured on LaunchBuff" style={{ height: '22px', width: 'auto' }} draggable={false} />
+            </a>
+            <a href="https://launchstag.com/p/locora-ai" target="_blank" rel="noopener" title="Featured on Launchstag" className="opacity-70 hover:opacity-100 transition-opacity">
+              <img src="https://launchstag.com/badge-light.svg" alt="Featured on Launchstag" style={{ height: '22px', width: 'auto' }} draggable={false} />
+            </a>
+            <a href="https://tools.cafe" target="_blank" rel="noopener" title="Featured on tools.cafe" className="opacity-70 hover:opacity-100 transition-opacity">
+              <img src="https://tools.cafe/b/light.svg" alt="Featured on tools.cafe" style={{ height: '22px', width: 'auto' }} draggable={false} />
+            </a>
+            <a href="https://sellwithboost.com/startups/locora-ai" target="_blank" rel="noopener noreferrer" title="Listed on Sell With Boost" className="opacity-70 hover:opacity-100 transition-opacity">
+              <img src="https://sellwithboost.com/badge/listing.svg" alt="Listed on Sell With Boost" style={{ height: '22px', width: 'auto' }} draggable={false} />
+            </a>
+            <a href="https://fazier.com" target="_blank" rel="noopener noreferrer" title="Launched on Fazier" className="opacity-70 hover:opacity-100 transition-opacity">
+              <img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=light" alt="Launched on Fazier" style={{ height: '22px', width: 'auto' }} draggable={false} />
+            </a>
+          </div>
+        </div>
+
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4 font-sans">
           <p>© {new Date().getFullYear()} Locora AI Platform, Inc. All rights reserved.</p>
