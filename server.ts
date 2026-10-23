@@ -18345,15 +18345,13 @@ async function handleHtmlRequest(req: express.Request, res: express.Response, vi
         html = injectMetadataIntoHtml(baseTemplate, metadata);
         // Fazier free-tier badge verification fetches raw HTML without
         // executing JS, but the homepage is client-rendered. Inject the
-        // badge markup server-side into #root so their checker can see it;
-        // React replaces it on load (the badge now lives in the footer).
-        // The wrapper is pinned small in the bottom corner with inline
-        // styles so the pre-React paint never shows a raw badge at the
-        // top-left of the page.
-        if (req.path === '/') {
+        // badge markup server-side into #root so their checker can see it —
+        // but ONLY for crawler/verifier requests: human browsers must never
+        // see a stray badge while the app loads. Visitors see the badge in
+        // the footer once React mounts (it lives there now).
+        if (req.path === '/' && isCrawler) {
           const badgeHtml =
-            '<div style="position:fixed;left:12px;bottom:12px;z-index:50;background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:6px 10px;line-height:0;">' +
-            '<a href="https://fazier.com" target="_blank" rel="noopener noreferrer" title="Launched on Fazier"><img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=light" alt="Launched on Fazier" style="height:22px;width:auto;" /></a></div>';
+            '<a href="https://fazier.com" target="_blank" rel="noopener noreferrer" title="Launched on Fazier"><img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=light" alt="Launched on Fazier" /></a>';
           html = html.replace('<div id="root"></div>', `<div id="root">${badgeHtml}</div>`);
           // Static homepage content for non-JS crawlers / AI bots, built
           // from the same data the React homepage renders (see
