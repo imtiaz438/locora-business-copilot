@@ -175,6 +175,302 @@ ${faqBlock(u.faqs)}
 </article>`;
 }
 
+/* ------- Industry pages whose React data lives in IndustryPseoView -------
+ * Static content for the /for/:slug routes that have no industriesData
+ * entry. Copy is transcribed verbatim from INDUSTRY_DATABASE in
+ * src/components/public/IndustryPseoView.tsx (the data the React pages
+ * render). Per this file's standing rule, stats / ROI / ticket figures
+ * from that database are deliberately NOT copied into the crawler layer.
+ */
+const COMPONENT_INDUSTRY_STATIC: Record<string, { name: string; heroHeadline: string; heroSubheadline: string; useCases: Array<{ title: string; desc: string }>; faqItems: Array<{ question: string; answer: string }>; sampleReviewReply: string }> = {
+  "restaurants": {
+    "name": "Restaurants & Hospitality",
+    "heroHeadline": "Restaurant Marketing AI & Reputation Management",
+    "heroSubheadline": "Fill your dining room, grow local Google Maps search visibility, automate diner review responses, and streamline catering proposals with Locora AI.",
+    "useCases": [
+      {
+        "title": "Google Maps Food Discovery",
+        "desc": "Optimize your Google Business Profile menu, dietary tags, and cuisine categories to capture nearby hungry diners."
+      },
+      {
+        "title": "Catering & Event Proposal Generator",
+        "desc": "Create catering proposals with per-head pricing, drink packages, and deposit payment links in seconds."
+      },
+      {
+        "title": "Diner Sentiment & Review Responder",
+        "desc": "Turn positive feedback into brand loyalty and address guest concerns immediately with thoughtful AI replies."
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "How do restaurants rank higher on Google Maps for food searches?",
+        "answer": "Restaurants improve ranking by keeping their primary category accurate (e.g. \"Italian Restaurant\"), listing complete menu items, updating holiday and weekend operating hours, and responding consistently to diner reviews."
+      },
+      {
+        "question": "How does AI help with restaurant review management?",
+        "answer": "Locora AI crafts personalized, appreciative responses to 5-star diners and writes composed, de-escalating replies to critical reviews, protecting the restaurant's public reputation and boosting SEO keywords."
+      },
+      {
+        "question": "How can restaurants win more private dining and catering revenue?",
+        "answer": "By using built-in proposal and invoicing tools, managers can quickly send custom catering menus, guest count estimates, and deposit invoices with online payment links to event planners."
+      },
+      {
+        "question": "Why is Google Business Profile menu optimization crucial for restaurants?",
+        "answer": "Google extracts dish names and dietary attributes directly from menu data to answer user searches like \"gluten-free pasta near me\" or \"best steak downtown\", driving high-intent walk-ins."
+      }
+    ],
+    "sampleReviewReply": "\"Thank you for celebrating your anniversary with us, Brandon! Chef Marco was thrilled to hear you loved the dry-aged ribeye. We look forward to welcoming you back soon!\""
+  },
+  "hvac-contractors": {
+    "name": "HVAC Contractors",
+    "heroHeadline": "HVAC Business Software & AI CRM for Heating & Cooling Contractors",
+    "heroSubheadline": "Capture emergency HVAC repair calls, expand visibility across your service radius, send mobile equipment replacement estimates on-site, and automate seasonal maintenance renewals.",
+    "useCases": [
+      {
+        "title": "Multi-Zip Code Radius Local SEO",
+        "desc": "Generate localized service area pages and geotagged project case studies that rank across every suburb in your territory."
+      },
+      {
+        "title": "Instant Mobile Estimates & Invoicing",
+        "desc": "Techs in the field can send professional AC/Heating unit replacement proposals on-the-spot from any phone or tablet."
+      },
+      {
+        "title": "Automated Service Renewal Reminders",
+        "desc": "AI client CRM tracks installation dates and automatically pings homeowners for seasonal tune-ups."
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "How do HVAC contractors get more local heating and AC leads?",
+        "answer": "HVAC contractors generate steady local leads by maintaining strong visibility across multi-zip code service radiuses on Google Maps, optimizing for seasonal phrases like \"emergency AC repair\" or \"furnace replacement\", and following up with leads within minutes using automated CRM workflows."
+      },
+      {
+        "question": "What is the best CRM for an HVAC company?",
+        "answer": "The best CRM for an HVAC business tracks service calls, manages seasonal maintenance agreements, sends instant mobile replacement quotes, and handles itemized PDF invoicing with Stripe payment links from a single mobile-friendly workspace."
+      },
+      {
+        "question": "How do I market emergency HVAC repair services locally?",
+        "answer": "Emergency HVAC marketing relies on prominent 24/7 service hour listings on Google Business Profile, rapid response to incoming calls, targeted schema markup highlighting emergency services, and automated SMS quote confirmations sent directly to homeowners."
+      },
+      {
+        "question": "How do automated proposals increase HVAC equipment sales?",
+        "answer": "By offering Good/Better/Best equipment options (such as Standard vs High-Efficiency Heat Pumps) with clear warranty and energy rebate information, homeowners can easily pick their preferred package and sign digitally on mobile."
+      }
+    ],
+    "sampleReviewReply": "\"Thanks for the review, Mike! Our HVAC technicians were glad to get your AC cooling quickly during the heatwave. Enjoy the new high-efficiency system!\""
+  },
+  "real-estate": {
+    "name": "Real Estate Agents",
+    "heroHeadline": "AI Tools & Client CRM for Real Estate Agents & Teams",
+    "heroSubheadline": "Establish hyper-local neighborhood authority, streamline buyer and seller follow-up, create listing proposals, and nurture real estate leads with Locora AI.",
+    "useCases": [
+      {
+        "title": "Neighborhood Authority & SEO Pages",
+        "desc": "Create AI-powered hyper-local community guides and market trend summaries that rank for neighborhood searches."
+      },
+      {
+        "title": "Instant Listing Proposals & Seller Decks",
+        "desc": "Generate high-converting listing presentation proposals with custom commission breakdowns and marketing plans."
+      },
+      {
+        "title": "Client Referral & Review Automation",
+        "desc": "Keep buyers and sellers engaged long after closing with automated anniversary check-ins and review requests."
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "How do real estate agents get more seller listings with local SEO?",
+        "answer": "Agents win seller listings by establishing hyper-local neighborhood authority: publishing community guides, creating suburb-specific market updates, maintaining active Google Business Profiles with recent sales, and collecting 5-star client testimonials."
+      },
+      {
+        "question": "What is the best AI tool for real estate agents?",
+        "answer": "Locora AI serves as a complete real estate copilot, helping agents draft listing presentations, generate localized SEO content, manage lead nurture pipelines, and automate post-closing client check-ins."
+      },
+      {
+        "question": "How does AI help with real estate lead nurture?",
+        "answer": "AI CRM tracks client preferences (price range, school districts, timeline), suggests timely follow-ups, and drafts personalized check-ins to keep buyers and sellers engaged over multi-month transaction cycles."
+      },
+      {
+        "question": "Can real estate agents rank on Google Maps?",
+        "answer": "Yes. Real estate professionals operating from verified brokerage or team offices can optimize their Google Business Profile with client reviews, localized service categories, and structured RealEstateAgent JSON-LD schema."
+      }
+    ],
+    "sampleReviewReply": "\"Thank you, David & Lisa! It was an absolute pleasure helping you sell your home for top market value in [Neighborhood]. Best wishes in your new chapter!\""
+  },
+  "med-spas": {
+    "name": "MedSpas & Aesthetic Clinics",
+    "heroHeadline": "Med Spa Marketing Software & AI CRM",
+    "heroSubheadline": "Attract aesthetic clients, streamline consultation treatment plans, manage recurring memberships, and build a 5-star reputation with Locora AI.",
+    "useCases": [
+      {
+        "title": "Cosmetic Procedure Search Visibility",
+        "desc": "Rank for treatment queries like laser resurfacing, body contouring, and facial aesthetics across your target communities."
+      },
+      {
+        "title": "Multi-Tier Treatment Plans",
+        "desc": "Deliver elegant treatment proposal packages that bundle injectables with skin rejuvenation for higher patient satisfaction."
+      },
+      {
+        "title": "Automated Aesthetic Membership Billing",
+        "desc": "Run recurring monthly beauty memberships with automated invoice receipts and milestone reminders."
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "How can med spas get more local clients from Google Maps?",
+        "answer": "Med spas get more local clients by optimizing their GBP categories for \"Medical Spa\" and \"Skin Care Clinic\", highlighting treatment modalities (Botox, dermal fillers, laser resurfacing), maintaining photo galleries of clinic aesthetics, and gathering verified patient reviews."
+      },
+      {
+        "question": "What features should a med spa CRM have?",
+        "answer": "A med spa CRM should handle multi-visit treatment package proposals, automated post-procedure review requests, recurring membership billing, and HIPAA-mindful client communication."
+      },
+      {
+        "question": "How do digital treatment plans increase med spa revenue?",
+        "answer": "Presenting tiered treatment blueprints (e.g. Essential Glow vs Full Facial Harmonization) with clear pricing and financing options helps clients understand cumulative results, raising average ticket value."
+      },
+      {
+        "question": "How does review automation help aesthetic practices?",
+        "answer": "Satisfied clients are gently prompted via SMS after treatment sessions to leave feedback on Google, building social proof that converts high-ticket aesthetic inquiries."
+      }
+    ],
+    "sampleReviewReply": "\"Thank you so much, Emily! Our aesthetic team loves helping you achieve that radiant glow. See you at your next facial maintenance session!\""
+  },
+  "auto-repair": {
+    "name": "Auto Repair & Detailing",
+    "heroHeadline": "Auto Repair Shop Software & AI CRM",
+    "heroSubheadline": "Fill your service bays, get found for high-margin repair terms, deliver transparent itemized digital estimates, and automate maintenance reminders with Locora AI.",
+    "useCases": [
+      {
+        "title": "High-Intent Repair Keyword SEO",
+        "desc": "Rank for high-margin repair terms like \"transmission repair near me\" and \"European auto repair\" across your county."
+      },
+      {
+        "title": "Itemized Digital Repair Estimates",
+        "desc": "Send clear, photo-verified repair estimates to customer smartphones with one-click approval buttons."
+      },
+      {
+        "title": "Preventative Service CRM Reminders",
+        "desc": "Automatically notify motorists when mileage thresholds suggest oil changes, brake pads, or timing belts."
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "How do auto repair shops get more local customers?",
+        "answer": "Auto shops attract high-ticket repairs by ranking for specific diagnostics like \"check engine light diagnosis\", \"brake repair near me\", and \"transmission repair\", maintaining transparent customer reviews, and answering estimate requests promptly."
+      },
+      {
+        "question": "What is the best software for an independent mechanic shop?",
+        "answer": "The best software for independent shops combines transparent digital estimates with photo attachments, customer service history tracking, automated SMS updates, and fast PDF invoicing with online payment."
+      },
+      {
+        "question": "How do automated maintenance reminders increase repair shop revenue?",
+        "answer": "By logging service dates and mileage intervals, the CRM automatically notifies vehicle owners when factory maintenance, brake pad checks, or oil changes are due, creating reliable repeat bay traffic."
+      },
+      {
+        "question": "How do digital estimates improve mechanic customer trust?",
+        "answer": "Customers receive itemized breakdown quotes on their smartphones detailing parts and labor with photos of worn components, eliminating surprise billing and boosting quote approval rates."
+      }
+    ],
+    "sampleReviewReply": "\"Thank you for trusting our mechanic team with your vehicle, Chris! Safe travels on your road trip and let us know if you need anything else.\""
+  },
+  "contractors": {
+    "name": "General & Trade Contractors",
+    "heroHeadline": "Contractor CRM & AI Proposal Generator",
+    "heroSubheadline": "Win construction and remodeling bids with on-site 3-tier proposals, expand service radius Google Maps SEO, and automate client CRM with Locora AI.",
+    "useCases": [
+      {
+        "title": "Service Radius Google Maps SEO",
+        "desc": "Deploy GeneralContractor schema and geotargeted suburb pages to increase search visibility across your entire metro area."
+      },
+      {
+        "title": "On-Site 3-Tier Proposal Builder",
+        "desc": "Present homeowners with itemized remodeling packages (Standard, Premium, Lifetime Warranty) directly on your tablet."
+      },
+      {
+        "title": "Automated Job Sign-Off & Reviews",
+        "desc": "Send SMS review requests on the driveway during final project walkthroughs to build a 5-star local reputation."
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "How do contractors win more bids against competitors?",
+        "answer": "Contractors win more bids by delivering fast, comprehensive digital proposals within 24 hours of site visits, presenting clear tiered scopes with milestone payment schedules, and showcasing verified local client reviews."
+      },
+      {
+        "question": "What is the best CRM for general contractors?",
+        "answer": "The best contractor CRM tracks leads from initial phone inquiry to job completion, generates itemized scopes of work, and issues progressive draw invoices with integrated payment processing."
+      },
+      {
+        "question": "How can contractors rank on Google Maps across a large service area?",
+        "answer": "Contractors should define clear service areas in Google Business Profile, create localized project portfolio pages with geotagged job site descriptions, and embed GeneralContractor JSON-LD schema."
+      },
+      {
+        "question": "How do tiered proposals increase contractor project profit?",
+        "answer": "Presenting Good, Better, Best options (e.g. Standard, Premium, and Architectural finishes) allows homeowners to self-select higher-margin upgrades rather than negotiating down the base price."
+      }
+    ],
+    "sampleReviewReply": "\"Thank you for the 5-star review, Tom! Our construction crew was glad to complete your kitchen remodel on schedule. Enjoy the new custom countertops!\""
+  },
+  "agencies": {
+    "name": "Marketing & SEO Agencies",
+    "heroHeadline": "White Label Local SEO Platform & Agency CRM",
+    "heroSubheadline": "Run your local SEO agency on one platform: multi-client CRM, white-label audit reports, AI proposal generation, and automated local ranking execution for every client you manage.",
+    "useCases": [
+      {
+        "title": "Automated Google Maps & Schema Audits",
+        "desc": "Generate white-label 7-point audit teardowns with JSON-LD schema in 10 seconds to convert cold outreach into retainers."
+      },
+      {
+        "title": "Tiered Proposal & Scope Generator",
+        "desc": "Draft Good/Better/Best commercial proposals directly from discovery notes with built-in digital signature terms."
+      },
+      {
+        "title": "Visual Pipeline CRM & PDF Invoicing",
+        "desc": "Track deal stages, log client notes, and issue branded white-label PDF invoices with automated tax calculations."
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "What is the best white-label local SEO platform for agencies?",
+        "answer": "Locora AI provides digital agencies with a complete client operating system: run technical website audits, generate branded SEO strategy proposals, track multi-client deal pipelines, and send retainer invoices from a single dashboard."
+      },
+      {
+        "question": "How can marketing agencies automate client reporting?",
+        "answer": "Agencies use Locora AI to automatically analyze rankings, audit Core Web Vitals, identify schema gaps, and export white-labeled executive summary reports for monthly client reviews."
+      },
+      {
+        "question": "Can agencies manage multiple sub-accounts under one login?",
+        "answer": "Yes. Locora AI's agency plan includes multi-client workspace switching, dedicated business profiles, and team collaboration permissions."
+      },
+      {
+        "question": "How do instant audits help agencies close local business retainers?",
+        "answer": "Running a comprehensive 7-point audit during a discovery call provides tangible proof of ranking deficiencies (NAP citation mismatches, missing schema), positioning the agency as the immediate solution."
+      }
+    ],
+    "sampleReviewReply": "\"Thank you, Marcus! Our agency loves scaling local visibility for your dental practice. We are excited for another quarter of record inbound patient calls!\""
+  }
+};
+
+function buildComponentIndustryStaticHtml(slug: string): string {
+  const d = COMPONENT_INDUSTRY_STATIC[slug];
+  const uses = d.useCases?.length
+    ? `<section>\n<h2>What LocoraAI does for ${e(d.name)}</h2>\n${d.useCases.map((u) => `<h3>${e(u.title)}</h3>\n<p>${e(u.desc)}</p>`).join('\n')}\n</section>`
+    : '';
+  return `<article>
+<header>
+<h1>${e(d.heroHeadline)}</h1>
+<p>${e(d.heroSubheadline)}</p>
+</header>
+${uses}
+<section>
+<h2>Sample review reply</h2>
+<p>${e(d.sampleReviewReply)}</p>
+</section>
+${faqBlock((d.faqItems || []).map((f) => ({ q: f.question, a: f.answer })))}
+<p><a href="/checkup">Run the free checkup</a> · <a href="/pricing">See pricing</a></p>
+</article>`;
+}
+
 /* ---------------- Index pages ---------------- */
 
 function buildFeaturesIndexHtml(): string {
@@ -228,7 +524,102 @@ ${items}
 </article>`;
 }
 
-/* ---------------- Core pages: home, checkup, pricing ---------------- */
+/* ---------------- Core pages: home, checkup, pricing, products ---------------- */
+
+function buildProductsStaticHtml(): string {
+  return `<article>
+<header>
+<h1>Autonomous AI Engines Built for Local Dominance</h1>
+<p>Explore the 8 specialized product modules designed to analyze your local market, boost Google Maps 3-Pack rankings, capture 2026 AI answer engines, outmaneuver competitors, and run your business operations.</p>
+</header>
+<section>
+<h2>Product modules</h2>
+<ul>
+<li><strong>AI Business Manager</strong> — central intelligence across your business data</li>
+<li><strong>Local SEO Copilot</strong> — built for Google Maps 3-Pack visibility</li>
+<li><strong>AI Search Visibility</strong> — the 2026 GEO engine: get cited by AI answer engines</li>
+<li><strong>Reputation Intelligence</strong> — review monitoring and sentiment</li>
+<li><strong>Competitor Radar</strong> — see the growth gaps between you and local competitors</li>
+<li><strong>30-Day Growth Plan</strong> — autonomous growth sprints</li>
+<li><strong>Agency Client Manager</strong> — multi-location and multi-client management</li>
+<li><strong>Core Execution Suite</strong> — CRM and invoicing</li>
+</ul>
+</section>
+<section>
+<h2>Dedicated product guides</h2>
+<h3>AI Proposals &amp; Contracts</h3>
+<p>Generate comprehensive proposals with scope of work, project milestones, deliverable schedules, itemized pricing, and formal client acceptance terms.</p>
+<h3>Local SEO &amp; Schema Assistant</h3>
+<p>Generate localized descriptions, review reply templates, Google Q&amp;As, local landing page copy, and valid JSON-LD schema markup tailored to any local service industry.</p>
+<h3>Client CRM &amp; Pipeline Tracker</h3>
+<p>A clean, intuitive CRM designed for local service businesses and agencies to organize contacts, track deal stages, record client notes, and monitor total pipeline value.</p>
+<h3>White-Label PDF Invoices</h3>
+<p>Create professional invoices for one-time projects or recurring monthly retainers. Calculate state/local taxes automatically and download high-resolution PDF invoices.</p>
+<h3>AI Business &amp; Website Audit Engine</h3>
+<p>Audit client websites for title tag optimization, meta description length, mobile viewport readiness, SSL security, and receive prioritized AI recommendations.</p>
+<h3>30 &amp; 90-Day Marketing Planner</h3>
+<p>Build structured 30, 60, and 90-day growth strategies, campaign schedules, promotional offer calendars, and expected ROI benchmarks for local client niches.</p>
+</section>
+<p><a href="/checkup">Run the free checkup</a> · <a href="/pricing">See pricing</a> · <a href="/features">See all features</a></p>
+</article>`;
+}
+
+function buildProposalGeneratorStaticHtml(): string {
+  return `<article>
+<header>
+<h1>SEO Proposal Generator — Win the Client Before the Call Ends</h1>
+<p>Turn a prospect's website into a polished, tiered SEO proposal in about a minute: live audit findings, a structured scope of work, tiered pricing and terms — generated by AI, finished by you, sent from the same tool that runs your CRM and invoicing.</p>
+</header>
+<section>
+<h2>What goes into every proposal</h2>
+<h3>Live audit findings</h3>
+<p>The prospect's actual visibility issues, so the proposal opens with their problems, not your pitch.</p>
+<h3>Structured scope of work</h3>
+<p>Deliverables broken down by phase, so the client sees exactly what happens and when.</p>
+<h3>Tiered pricing</h3>
+<p>Basic / Growth / Enterprise-style options that let the client pick a level instead of yes/no.</p>
+<h3>Milestone schedule</h3>
+<p>What happens in weeks 1–4 and beyond, set out in the document itself.</p>
+<h3>Terms that protect your margins</h3>
+<p>Payment schedule, revision and scope boundaries included from the start.</p>
+<h3>Your branding</h3>
+<p>Agency Elite white-labels proposals with your logo, so the document looks like your firm produced it.</p>
+</section>
+<section>
+<h2>How it works</h2>
+<ol>
+<li><strong>Enter the prospect's website</strong> — LocoraAI runs the same 40-point checkup and pulls their real issues.</li>
+<li><strong>Pick the services and tier structure</strong> — the generator drafts scope, timeline and pricing around your choices.</li>
+<li><strong>Edit, brand, send</strong> — edit anything, apply your branding, send. The client lands in your CRM either way.</li>
+</ol>
+</section>
+<section>
+<h2>Who it's for</h2>
+<p>Freelancers and small agencies who write proposals in Google Docs at midnight — and local businesses quoting larger jobs who want a professional document without the blank page.</p>
+<p>New to proposals? Read the guide first: <a href="/resources/how-to-create-seo-proposal">How to Create an SEO Proposal</a>.</p>
+</section>
+<section>
+<h2>Frequently asked questions</h2>
+<div>
+<h3>Is the proposal based on real data about my prospect?</h3>
+<p>Yes — it starts from a live checkup of their website and public listings, so the findings section cites their actual issues.</p>
+</div>
+<div>
+<h3>Can I change the pricing and scope?</h3>
+<p>Everything is editable before you send. Tiers, deliverables, timelines and terms are drafts you control, not locked templates.</p>
+</div>
+<div>
+<h3>Does it white-label?</h3>
+<p>Agency Elite ($99/mo) applies your agency logo and branding to proposals, report cards and invoices. Pro ($29/mo) generates proposals under LocoraAI branding.</p>
+</div>
+<div>
+<h3>What does it cost to try?</h3>
+<p>The Free plan includes 25 AI credits a month — enough to generate real proposals and see if it fits your workflow. No credit card required.</p>
+</div>
+</section>
+<p><a href="/checkup">Run the free checkup</a> · <a href="/pricing">See pricing</a></p>
+</article>`;
+}
 
 function buildPricingStaticHtml(): string {
   return `<article>
@@ -277,44 +668,65 @@ function buildPricingStaticHtml(): string {
 function buildCheckupStaticHtml(): string {
   return `<article>
 <header>
-<h1>Free Local Business Checkup — See Your Business Through Google's Eyes</h1>
-<p>Enter your business and LocoraAI runs a free, live 40-point checkup of how customers actually find you — on Google Search, Google Maps and AI assistants like ChatGPT. No signup needed to run it, and it takes about 60 seconds.</p>
+<h1>Free Local SEO Audit for Your Business</h1>
+<p>Find out exactly what's holding your local visibility back — website, Google profile, reviews, Maps ranking, and AI search — in one free 40-point checkup. No signup, no sales call.</p>
 </header>
 <section>
-<h2>What the checkup scans</h2>
-<p>Your website's technical health, on-page SEO, local signals (name, phone, and address consistency), content depth, structured data, and performance — scored from the live crawl of your site.</p>
-<ul>
-<li>Google Search snippet and presence</li>
-<li>Google Maps 3-Pack presence</li>
-<li>Local search footprint and Google Business Profile signals</li>
-<li>Reviews and reputation footprint</li>
-<li>AI search engine discovery — whether AI assistants can find and cite your business</li>
-<li>Website health: speed, mobile, SSL, headings and metadata</li>
-</ul>
+<h2>What the audit checks</h2>
+<h3>Your website (technical + on-page)</h3>
+<p>Mobile-friendliness, page speed signals, title and meta coverage, heading structure, image optimization, SSL, and whether search engines — and AI crawlers — can actually read your pages.</p>
+<h3>Your Google Business Profile</h3>
+<p>Completeness score, category match, name compliance (suspension-risk check), address configuration, hours accuracy, photo coverage, and posting activity.</p>
+<h3>Reviews &amp; reputation</h3>
+<p>Review count vs. local competitors, rating trend, response rate, and platform coverage across Google, Yelp, and Facebook.</p>
+<h3>Maps &amp; local visibility</h3>
+<p>Where you actually appear in local results for your core services, duplicate-listing detection, and citation consistency.</p>
+<h3>AI search readiness</h3>
+<p>Whether ChatGPT, Gemini, and Perplexity can find and recommend you: crawler access, structured data, profile completeness, and review signals.</p>
+<h3>Competitors</h3>
+<p>Your scores benchmarked against the businesses outranking you locally — so you know the gap in concrete terms, not vague advice.</p>
 </section>
 <section>
 <h2>How it works</h2>
 <ol>
-<li><strong>Enter your website or business.</strong> The scan runs live against your real site and public listings.</li>
-<li><strong>See your score and top issues.</strong> You get a graded score with the highest-impact problems first.</li>
-<li><strong>Unlock the full 40-point report.</strong> Import the audit into a free Locora workspace to track fixes — no credit card required.</li>
+<li><strong>Enter your business name and website</strong> (30 seconds).</li>
+<li><strong>We run the 40-point scan</strong> across the areas above (about a minute).</li>
+<li><strong>You get a plain-English report:</strong> what's fine, what's broken, and what to fix first — prioritized by impact.</li>
 </ol>
+</section>
+<section>
+<h2>What you get (and what you don't)</h2>
+<ul>
+<li>A complete visibility report you can keep, free.</li>
+<li>Prioritized fixes, not a 200-row spreadsheet.</li>
+<li>No account required to run the scan. No credit card. No "free trial" that bills you later.</li>
+<li>What we ask in return: nothing. If the report convinces you, Pro plans exist — but the audit is free either way.</li>
+</ul>
 </section>
 <section>
 <h2>Frequently asked questions</h2>
 <div>
-<h3>Is the checkup really free?</h3>
-<p>Yes. The checkup is a free automated scan of your website and public listings. No credit card required.</p>
+<h3>Is it really free?</h3>
+<p>Yes. The full 40-point audit costs nothing and needs no signup.</p>
 </div>
 <div>
-<h3>What happens after I unlock my full report?</h3>
-<p>Your audit is imported into a free Locora workspace as your first business. From there you can connect your Google Business Profile, track visibility, manage reviews, and generate AI fixes — no credit card required.</p>
+<h3>How long does it take?</h3>
+<p>About a minute for the scan, after 30 seconds of input.</p>
 </div>
 <div>
-<h3>What does the checkup scan?</h3>
-<p>Your website's technical health, on-page SEO, local signals (name, phone, and address consistency), content depth, structured data, and performance — scored from the live crawl of your site.</p>
+<h3>Do I need to connect my Google account?</h3>
+<p>No. The free audit works from public data.</p>
+</div>
+<div>
+<h3>Will this work for service-area businesses?</h3>
+<p>Yes — the audit detects service-area setups (hidden address) and checks them correctly.</p>
+</div>
+<div>
+<h3>What happens after the audit?</h3>
+<p>You get the report. Optionally, create a free account to track your score over time or run deeper scans.</p>
 </div>
 </section>
+<p><a href="/pricing">See pricing</a></p>
 </article>`;
 }
 
@@ -322,8 +734,22 @@ function buildHomeStaticHtml(): string {
   const featureList = Object.values(SEO_FEATURES_DATABASE)
     .map((f) => `<li><a href="/features/${e(f.slug)}">${e(f.name)}</a> — ${e(f.metaDescription)}</li>`)
     .join('\n');
-  const industryList = Object.values(SEO_INDUSTRIES_DATABASE)
-    .map((i) => `<li>${e(i.name)}</li>`)
+  const industryList = [
+    ['Restaurants', '/for/restaurants'],
+    ['HVAC Contractors', '/for/hvac-contractors'],
+    ['Real Estate', '/for/real-estate'],
+    ['Law Firms', '/for/law-firms'],
+    ['Plumbers', '/for/plumbers'],
+    ['Med Spas', '/for/med-spas'],
+    ['Auto Repair', '/for/auto-repair'],
+    ['Contractors', '/for/contractors'],
+    ['Agencies', '/for/agencies'],
+    ['Dentists', '/for/dentists'],
+  ]
+    .map(([name, route]) => `<li><a href="${route}">${name}</a></li>`)
+    .join('\n');
+  const articleList = Object.values(SEO_RESOURCES_DATABASE)
+    .map((a) => `<li><a href="/resources/${e(a.slug)}">${e(a.title)}</a></li>`)
     .join('\n');
   return `<article>
 <header>
@@ -346,7 +772,13 @@ ${featureList}
 <ul>
 ${industryList}
 </ul>
-<p>Plus dedicated pages for restaurants, HVAC contractors, real estate, plumbers, med spas, auto repair, contractors, agencies and dentists — see <a href="/features">all features</a> and <a href="/pricing">pricing</a>.</p>
+<p>See <a href="/features">all features</a> and <a href="/pricing">pricing</a>.</p>
+</section>
+<section>
+<h2>Guides and resources</h2>
+<ul>
+${articleList}
+</ul>
 </section>
 <section>
 <h2>Honest, real-time diagnostics</h2>
@@ -360,6 +792,8 @@ ${industryList}
 export function getPageStaticHtml(route: string): string | null {
   if (route === '/') return buildHomeStaticHtml();
   if (route === '/checkup') return buildCheckupStaticHtml();
+  if (route === '/products') return buildProductsStaticHtml();
+  if (route === '/seo-proposal-generator') return buildProposalGeneratorStaticHtml();
   if (route === '/pricing') return buildPricingStaticHtml();
   if (route === '/features') return buildFeaturesIndexHtml();
   if (route === '/use-cases') return buildUseCasesIndexHtml();
@@ -375,6 +809,7 @@ export function getPageStaticHtml(route: string): string | null {
   if (ind) {
     const key = INDUSTRY_ALIASES[ind[1]] || ind[1];
     if (SEO_INDUSTRIES_DATABASE[key]) return buildIndustryStaticHtml(key);
+    if (COMPONENT_INDUSTRY_STATIC[ind[1]]) return buildComponentIndustryStaticHtml(ind[1]);
   }
   return null;
 }

@@ -6,35 +6,41 @@ export const SEO_INDUSTRIES_DATABASE: Record<string, SeoIndustryItem> = {
     name: 'Dentists & Cosmetic Dental Practices',
     shortName: 'Dentists',
     icon: 'Sparkles',
-    badge: 'Dental Practice Playbook',
-    heroHeadline: 'How Modern Dental Practices Capture High-Ticket Cosmetic & Implant Patients',
-    heroSubheadline: 'A comprehensive local search and practice growth guide. Discover how high-intent schema, automated patient review requests, and 3-tier treatment proposals double cosmetic case acceptance.',
+    badge: 'For Dental Practices',
+    heroHeadline: 'Does ChatGPT recommend your dental practice?',
+    heroSubheadline: 'New patients don\'t just Google "dentist near me" anymore — they ask ChatGPT, Gemini and Perplexity who to book. LocoraAI\'s free checkup shows you exactly what those AI assistants see when they look at your practice: your Google profile, your Maps ranking, your reviews — and whether AI search recommends you or the practice down the street.',
     targetTab: 'local_seo',
-    overview: 'Dental practices face fierce local search competition. Patients seeking high-value elective procedures—like dental implants, Invisalign, and porcelain veneers—rarely pick the closest dental clinic blindly. They thoroughly research Google Maps reviews, dentist credentials, and mobile booking ease. Standardizing local SEO and tiered treatment plans transforms local dental clinics into high-margin practices.',
+    overview: 'Most dental marketing still optimizes for 2019 Google. Rankings matter, but the patient journey has split in two: Google Search and Maps on one side, and AI assistants on the other. When a patient asks an AI assistant for a dentist, it answers from your Google Business Profile, your reviews, your website\'s structured data and what the web says about you — and it usually names one or two practices, not ten blue links.\n\nLocoraAI\'s free 40-point checkup reads your practice the way those systems do. It live-crawls your website, checks your local signals and structured data, looks at your Maps presence and review footprint, and tests whether AI assistants can find and cite your practice. You get a graded report with the highest-impact fixes first — no signup needed to run it, no credit card to unlock the full report.',
     howToUse: [
       {
         stepNumber: 1,
-        title: 'Optimize Google Business Categories for High-Ticket Services',
-        description: 'Set "Dentist" or "Cosmetic Dentist" as primary, adding "Dental Implants Periodontist" and "Teeth Whitening Service" as secondary.',
-        proTip: 'Highlight sedation dentistry and emergency dental availability to capture urgent pain-driven search queries.'
+        title: 'AI recommendation readiness',
+        description: 'Can ChatGPT-class assistants find, understand and cite your practice for "dentist in [your city]" style questions?'
       },
       {
         stepNumber: 2,
-        title: 'Deploy Dentist JSON-LD Schema with Accepted Insurance',
-        description: 'Embed structured schema containing doctor credentials (DDS/DMD), medical specialties, and geo-coordinates.',
-        proTip: 'Include payment accepted attributes (CareCredit, major cards) directly in the schema.'
+        title: 'Google Business Profile completeness',
+        description: 'Primary category (Dentist vs. Cosmetic dentist vs. Dental implants provider), services list (implants, Invisalign, veneers, emergency), hours, photos, attributes.'
       },
       {
         stepNumber: 3,
-        title: 'Implement Automated Post-Cleaning SMS Review Requests',
-        description: 'Send a personalized review request link to patients 15 minutes after their appointment while satisfaction is high.',
-        proTip: 'Target 15+ new 5-star reviews every month to maintain Top 3 Google Maps placement.'
+        title: 'Maps 3-Pack presence',
+        description: 'Where you surface for high-intent searches from your actual location.'
       },
       {
         stepNumber: 4,
-        title: 'Present 3-Tier Treatment Proposals for Elective Cases',
-        description: 'Provide patients with Good/Better/Best treatment options (e.g. Single Crown vs. Full Implant Restoration).',
-        proTip: 'Tiered presentation increases multi-tooth restorative case acceptance by over 38%.'
+        title: 'Review footprint',
+        description: 'Count, rating, recency and response rate; whether replies stay HIPAA-safe (never confirm someone is a patient).'
+      },
+      {
+        stepNumber: 5,
+        title: 'Website trust signals',
+        description: 'LocalBusiness/Dentist schema, NAP consistency, service pages for high-value treatments, mobile performance.'
+      },
+      {
+        stepNumber: 6,
+        title: 'Competitor snapshot',
+        description: 'The practices AI and Google surface instead of you, from the scan\'s real competitor set.'
       }
     ],
     prosAndCons: {
@@ -51,17 +57,19 @@ export const SEO_INDUSTRIES_DATABASE: Record<string, SeoIndustryItem> = {
       ]
     },
     localSeoChecklist: [
-      'Primary GBP category set to "Dentist" or "Cosmetic Dentist"',
-      'Doctor credentials (DDS / DMD) and specialties listed in schema',
-      'HIPAA-compliant review response protocol established',
-      'Dedicated landing pages for Invisalign, Dental Implants, and Emergency Dental',
-      'Click-to-call phone number and online appointment booking button in sticky header'
+      'Primary GBP category set to the highest-value service you actually offer; secondary categories for implants / cosmetic / emergency',
+      'Every treatment you want cases for listed as a GBP service with descriptions',
+      'Dentist schema (LocalBusiness subtype) on the website with matching NAP',
+      'Review requests sent after completed appointments; every review answered without confirming patient status',
+      'Service pages for implants, Invisalign/clear aligners, veneers and emergency dentistry — one page per treatment, per location',
+      'Photos: real team, office and technology photos added monthly (no stock)',
+      'AI check: ask ChatGPT/Perplexity monthly who they recommend in your area — and note who they name'
     ],
     sampleDeliverables: {
-      gbpBio: 'Apex Dental Care is a premier cosmetic & family dental practice in San Francisco. Led by Dr. Emily Watson, DDS, we specialize in painless dental implants, Invisalign clear aligners, same-day crowns, and emergency dental care.',
-      reviewReply: 'Thank you for the wonderful 5-star review, Sarah! Dr. Watson and our entire dental team are delighted that your dental implant consultation was smooth and comfortable. We look forward to seeing you at your next visit!',
+      gbpBio: 'Sample Dental Studio is a family and cosmetic dental practice in Austin, TX. We offer dental implants, Invisalign clear aligners, porcelain veneers, same-day crowns and emergency dentistry in a calm, modern office. Our team focuses on clear pricing, gentle techniques and honest treatment plans — no pressure, no surprises. We welcome new patients of all ages, offer early-morning and Saturday appointments, and work with most major insurance plans. Call today to schedule your first visit and see why Austin families trust Sample Dental Studio with their smiles.',
+      reviewReply: 'Thank you so much for the kind words! Our team works hard to make every visit comfortable, and feedback like yours means a lot to us. We appreciate you choosing our practice!',
       schemaType: 'Dentist',
-      jsonLdSnippet: '{\n  "@context": "https://schema.org",\n  "@type": "Dentist",\n  "name": "Apex Dental Care",\n  "medicalSpecialty": "Dentistry",\n  "priceRange": "$$",\n  "telephone": "YOUR_BUSINESS_PHONE"\n}'
+      jsonLdSnippet: '{\n  "@context": "https://schema.org",\n  "@type": "Dentist",\n  "name": "Sample Dental Studio",\n  "address": {\n    "@type": "PostalAddress",\n    "streetAddress": "1200 Sample Street",\n    "addressLocality": "Austin",\n    "addressRegion": "TX",\n    "postalCode": "78701",\n    "addressCountry": "US"\n  },\n  "geo": { "@type": "GeoCoordinates", "latitude": 30.2672, "longitude": -97.7431 },\n  "telephone": "+1-512-555-0100",\n  "openingHours": "Mo-Fr 08:00-17:00",\n  "sameAs": ["https://www.google.com/maps/search/Sample+Dental+Studio+Austin+TX"]\n}'
     },
     roiBenchmark: {
       avgTicket: 3800,
@@ -85,12 +93,28 @@ export const SEO_INDUSTRIES_DATABASE: Record<string, SeoIndustryItem> = {
     },
     faqs: [
       {
-        q: 'How does local SEO help dentists attract high-ticket cosmetic patients?',
-        a: 'High-ticket cosmetic patients actively search for specific procedures like "dental implants near me" or "best porcelain veneers in Dallas". Ranking in the top 3 with 5-star reviews positions your practice as the trusted expert in your city.'
+        q: 'How do patients use ChatGPT to find a dentist?',
+        a: 'They ask conversational questions — "best dentist for implants near me," "which dental practice in Austin has the best reviews for Invisalign." The assistant answers with one or two named practices, drawn from Google profiles, reviews, websites and directories. If your practice\'s data is thin or inconsistent, you simply aren\'t named.'
       },
       {
-        q: 'Can dental practices mention medical conditions in public review replies?',
-        a: 'No! Under HIPAA, practices must never disclose or confirm specific medical or dental treatments in public replies without explicit written patient consent. Locora AI review templates are pre-configured to be strictly HIPAA-compliant.'
+        q: 'What does the free checkup actually scan?',
+        a: 'Your website\'s technical health, on-page SEO, local signals (name, phone and address consistency), structured data and performance — scored from a live crawl — plus your Google Maps presence and whether AI assistants can find and cite your practice.'
+      },
+      {
+        q: 'Is the checkup really free? What do I get?',
+        a: 'Yes. You see your score and top issues immediately. Unlocking imports the full 40-point report into a free LocoraAI workspace — no credit card required — where you can connect your Google Business Profile and track fixes over time.'
+      },
+      {
+        q: 'Will this help with implants and cosmetic cases specifically?',
+        a: 'Those are the searches where AI recommendations matter most: high-value, research-heavy, and usually asked conversationally. The checkup shows whether your services, reviews and service pages make you the practice AI names for those treatments.'
+      },
+      {
+        q: 'Do review replies create HIPAA risk?',
+        a: 'They can if a reply confirms someone is a patient or references treatment. LocoraAI\'s review tools are designed to respond without confirming patient status — thank the reviewer, speak generally, and move specifics offline.'
+      },
+      {
+        q: 'I already have a marketing agency. Is this still useful?',
+        a: 'Yes — as an independent measure. The checkup is a neutral, live read of how Google and AI search see your practice today; many practices run it to verify what their agency reports.'
       }
     ]
   },

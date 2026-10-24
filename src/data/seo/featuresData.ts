@@ -150,7 +150,7 @@ export const SEO_FEATURES_DATABASE: Record<string, SeoFeatureItem> = {
         'Single-click URL scan with multi-point automated analysis in 10s',
         'Instant client-ready executive summary in plain English',
         'Clear ROI-driven recommendations paired with your service packages',
-        'Exportable white-label PDF that closes 40%+ of audit prospects'
+        'Exportable white-label PDF your prospects can review and sign'
       ]
     },
     samplePreview: {
@@ -543,7 +543,7 @@ export const SEO_FEATURES_DATABASE: Record<string, SeoFeatureItem> = {
       'AI business operating system for service businesses'
     ],
     badge: 'Deal Closing Engine Guide',
-    heroHeadline: 'How to Write High-Ticket Client Proposals that Win 40%+ More Deals',
+    heroHeadline: 'Draft High-Ticket Client Proposals From Live Audit Findings',
     heroSubheadline: 'Explore the anatomy of a winning local business proposal: structured scope of work, transparent tiered pricing, milestone schedules, and legal terms that protect your margins.',
     readingTime: '9 min read',
     publishedDate: 'August 2026',
@@ -1343,7 +1343,7 @@ export const SEO_FEATURES_DATABASE: Record<string, SeoFeatureItem> = {
       locoraAiWay: [
         'Instant, word-for-word consultative objection handling scripts',
         'Deep competitive positioning and USP development in seconds',
-        'Hyper-personalized cold outreach angles that achieve 40%+ open rates',
+        'Hyper-personalized cold outreach angles written for each prospect',
         '24/7 expert sounding board for every high-stakes business decision'
       ]
     },

@@ -132,7 +132,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
     authorName: 'The LocoraAI Team',
     authorRole: 'Local Search Experts',
     metaTitle: 'How to Create an SEO Proposal That Closes: 3-Tier Blueprint | Locora AI',
-    metaDescription: 'Learn how to write winning SEO proposals with 3-tier pricing, clear scopes of work, and legally sound acceptance terms that close 40%+ of discovery prospects.',
+    metaDescription: 'Learn how to write winning SEO proposals with 3-tier pricing, clear scopes of work, and legally sound acceptance terms.',
     targetKeywords: ['how to create SEO proposal', 'SEO proposal template', 'agency scope of work', '3 tier pricing model', 'closing marketing proposals'],
     targetTab: 'proposals',
     ctaText: 'Test Proposal Builder Sandbox',
@@ -199,7 +199,17 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
           'By using automated proposal software like Locora AI, you can generate, review, and deliver a personalized 3-tier white-label proposal within 2 hours of hanging up the discovery call.',
           'Pair the proposal delivery with a short 90-second video walkthrough explaining the 3 options and recommending the best fit for their goals.'
         ],
-        keyTakeaway: 'Delivering a customized proposal within 2 hours of a discovery call increases close rates by over 300%.'
+        keyTakeaway: 'Delivering a customized proposal within 2 hours of a discovery call keeps your offer in front of the prospect while competitors are still drafting.'
+      },
+      {
+        id: 'generate',
+        heading: '5. Put It Into Practice: Generate the Proposal',
+        content: [
+          'Reading the blueprint is step one. Step two is producing the document while the discovery call is still fresh — which is exactly what the LocoraAI SEO Proposal Generator is for.',
+          'It starts from a live 40-point checkup of your prospect\'s website and public listings, then drafts the scope of work, tiered pricing, milestone schedule and terms around their actual issues. You edit, brand and send — the client lands in your CRM either way.',
+          'Open it here: locoraai.com/seo-proposal-generator'
+        ],
+        keyTakeaway: 'The generator turns this guide\'s structure into a finished, client-ready proposal built from live audit data — no blank page.'
       }
     ],
     faqs: [

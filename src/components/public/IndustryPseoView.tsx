@@ -58,9 +58,9 @@ export const INDUSTRY_DATABASE: Record<string, IndustryData> = {
     name: 'Dental Practices',
     category: 'Healthcare & Dentistry',
     iconName: 'Stethoscope',
-    heroHeadline: 'Dental Practice Marketing Software & Local SEO Copilot',
+    heroHeadline: 'Does ChatGPT recommend your dental practice?',
     heroSubheadline:
-      'Grow dental practice visibility on Google Maps, automate patient review responses, manage treatment plan estimates, and attract qualified new patients with Locora AI.',
+      'New patients don\'t just Google "dentist near me" anymore — they ask ChatGPT, Gemini and Perplexity who to book. LocoraAI\'s free checkup shows you exactly what those AI assistants see when they look at your practice: your Google profile, your Maps ranking, your reviews — and whether AI search recommends you or the practice down the street.',
     primaryKeywords: [
       'dental practice marketing software',
       'AI CRM for dentists',
@@ -82,24 +82,34 @@ export const INDUSTRY_DATABASE: Record<string, IndustryData> = {
     ],
     faqItems: [
       {
-        question: 'How do dental practices get more private-pay patients from Google Maps?',
+        question: 'How do patients use ChatGPT to find a dentist?',
         answer:
-          'Dentists attract high-value cosmetic, restorative, and implant cases by optimizing primary Google Business Profile categories (e.g. "Dentist", "Cosmetic Dentist"), showcasing verified patient testimonials, deploying structured Dentist JSON-LD schema markup, and answering patient inquiries promptly.',
+          'They ask conversational questions — "best dentist for implants near me," "which dental practice in Austin has the best reviews for Invisalign." The assistant answers with one or two named practices, drawn from Google profiles, reviews, websites and directories. If your practice\'s data is thin or inconsistent, you simply aren\'t named.',
       },
       {
-        question: 'How should dental practices handle patient review responses?',
+        question: 'What does the free checkup actually scan?',
         answer:
-          'Review responses must remain strictly HIPAA-compliant: never confirm or deny that a reviewer is a patient or discuss specific clinical treatments. Locora AI crafts respectful, compliant responses that protect patient privacy while reinforcing local relevance.',
+          'Your website\'s technical health, on-page SEO, local signals (name, phone and address consistency), structured data and performance — scored from a live crawl — plus your Google Maps presence and whether AI assistants can find and cite your practice.',
       },
       {
-        question: 'How do digital treatment proposals help dental practices close cases?',
+        question: 'Is the checkup really free? What do I get?',
         answer:
-          'By breaking complex restorative or cosmetic procedures into clear, multi-visit phases with visual fee estimates and flexible financing terms, patients feel informed and are significantly more likely to proceed with treatment.',
+          'Yes. You see your score and top issues immediately. Unlocking imports the full 40-point report into a free LocoraAI workspace — no credit card required — where you can connect your Google Business Profile and track fixes over time.',
       },
       {
-        question: 'What is the best software for dental practice local marketing and CRM?',
+        question: 'Will this help with implants and cosmetic cases specifically?',
         answer:
-          'The ideal software combines Google Business Profile visibility tracking, HIPAA-mindful review automation, digital treatment estimates, and patient follow-up workflows in a single workspace without requiring expensive agency retainers.',
+          'Those are the searches where AI recommendations matter most: high-value, research-heavy, and usually asked conversationally. The checkup shows whether your services, reviews and service pages make you the practice AI names for those treatments.',
+      },
+      {
+        question: 'Do review replies create HIPAA risk?',
+        answer:
+          'They can if a reply confirms someone is a patient or references treatment. LocoraAI\'s review tools are designed to respond without confirming patient status — thank the reviewer, speak generally, and move specifics offline.',
+      },
+      {
+        question: 'I already have a marketing agency. Is this still useful?',
+        answer:
+          'Yes — as an independent measure. The checkup is a neutral, live read of how Google and AI search see your practice today; many practices run it to verify what their agency reports.',
       },
     ],
     targetKeywords: [
@@ -116,23 +126,23 @@ export const INDUSTRY_DATABASE: Record<string, IndustryData> = {
     ],
     useCases: [
       {
-        title: 'Local Google Maps 3-Pack Visibility',
-        desc: 'Automatically generate localized dental content and geotagged schema markup to rank for "dentist near me" and "cosmetic dentistry".',
+        title: 'AI Recommendation Check',
+        desc: 'See whether ChatGPT, Gemini and Perplexity can find and cite your practice when patients ask for a dentist in your city — and who they name instead if they can\'t.',
       },
       {
-        title: 'Treatment Proposal & Estimate Engine',
-        desc: 'Send clear, multi-tier treatment estimate proposals directly to patient phones with transparent milestone payment options.',
+        title: 'Google Business Profile & Maps Audit',
+        desc: 'A live check of your profile categories, services, photos and Maps presence, benchmarked against the practices AI and Google surface instead of you.',
       },
       {
-        title: 'Compliant Google Review Responder',
-        desc: 'HIPAA-mindful AI review responses that turn happy patients into 5-star Google Business Profile advocates.',
+        title: 'HIPAA-Safe Review Replies',
+        desc: 'Respond to every review without ever confirming patient status or treatment — the compliant way to build your reputation.',
       },
     ],
     schemaType: 'Dentist',
     sampleProposalSnippet:
       'Comprehensive Cosmetic Treatment Proposal • Porcelain Veneers (6 Units) + In-Office Whitening • Estimated Timeline: 3 Visits • Digital Signature & Flexible Financing Terms Included.',
     sampleReviewReply:
-      '"Thank you for sharing your experience, Sarah! Our dental team in [City] is delighted that your visit was comfortable and thorough. We look forward to seeing you at your next routine checkup!"',
+      '"Thank you so much for the kind words! Our team works hard to make every visit comfortable, and feedback like yours means a lot to us. We appreciate you choosing our practice!"',
     defaultAvgTicket: 1200,
   },
   'hvac-contractors': {

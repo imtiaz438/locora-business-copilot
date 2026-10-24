@@ -17,6 +17,7 @@ export interface ResolvedRoute {
 export const TAB_TO_PATH: Record<string, string> = {
   home: '/',
   checkup: '/checkup',
+  seo_proposal_generator: '/seo-proposal-generator',
   products: '/products',
   product: '/products',
   features: '/features',
@@ -84,6 +85,7 @@ export const PATH_TO_TAB: Record<string, string> = {
   'home': 'home',
   'checkup': 'checkup',
   'checkup/': 'checkup',
+  'seo-proposal-generator': 'seo_proposal_generator',
   'products': 'products',
   'product': 'products',
   'features': 'features',

@@ -59,6 +59,7 @@ import { TermsOfServiceView } from './components/public/TermsOfServiceView';
 import { SecurityOverviewView } from './components/public/SecurityOverviewView';
 import { RefundPolicyView } from './components/public/RefundPolicyView';
 import { CheckupView } from './components/public/CheckupView';
+import { ProposalGeneratorView } from './components/public/ProposalGeneratorView';
 import { DirectoryHubView } from './components/directory/DirectoryHubView';
 import { DirectoryBusinessDetailView } from './components/directory/DirectoryBusinessDetailView';
 import { applyPageMetadata } from './utils/seoMetadata';
@@ -70,6 +71,7 @@ const PATH_TO_TAB: Record<string, string> = {
   'home': 'home',
   'checkup': 'checkup',
   'checkup/': 'checkup',
+  'seo-proposal-generator': 'seo_proposal_generator',
   'products': 'products',
   'product': 'products',
   'features': 'features',
@@ -437,6 +439,7 @@ const MainContent: React.FC = () => {
     // Other Public Routes
     if (activeTab === 'home') return <HomeView />;
     if (activeTab === 'checkup') return <CheckupView />;
+    if (activeTab === 'seo_proposal_generator') return <ProposalGeneratorView />;
     if (activeTab === 'products' || activeTab === 'product') return <ProductView />;
     if (activeTab === 'features') return <FeaturesView />;
     if (activeTab === 'pricing_public') return <PricingPublicView />;

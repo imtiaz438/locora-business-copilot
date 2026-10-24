@@ -172,6 +172,32 @@ app.use((req, res, next) => {
     return res.redirect(301, `https://locoraai.com${req.originalUrl}`);
   }
 
+  // B6 (2026-10-24): directory subdomain retired. It duplicated the main
+  // domain's directory and earned search impressions for other businesses'
+  // names (GSC: "west town auto repair", 16 impressions). All human traffic
+  // 301s to the canonical directory on the main domain; listing URLs map to
+  // their canonical /biz/ URL. API and asset paths are left untouched.
+  if (isDirectoryHost && !req.path.startsWith('/api/') && !req.path.startsWith('/assets/')) {
+    if (req.path.startsWith('/business/')) {
+      const slug = req.path.replace(/^\/business\//, '');
+      return res.redirect(301, `https://locoraai.com/biz/${slug}`);
+    }
+    return res.redirect(301, 'https://locoraai.com/directory');
+  }
+
+  // B6 (2026-10-24): thin city/category directory browse surfaces retired.
+  // The directory has a single real listing; these pages only fragmented
+  // ranking signals and attracted irrelevant impressions.
+  if (
+    req.path === '/austin/local-services' ||
+    req.path === '/wilmington' ||
+    req.path.startsWith('/wilmington/') ||
+    req.path.startsWith('/category/') ||
+    req.path.startsWith('/city/')
+  ) {
+    return res.redirect(301, 'https://locoraai.com/directory');
+  }
+
   // 301 permanently redirect underscore URLs to clean marketing URLs
   if (req.path === '/resources_hub') {
     return res.redirect(301, `https://locoraai.com/resources`);
@@ -16464,6 +16490,7 @@ app.get('/sitemap.xml', async (req, res) => {
       { path: '/terms', priority: '0.5', changefreq: 'monthly' },
       { path: '/refund', priority: '0.5', changefreq: 'monthly' },
       { path: '/checkup', priority: '1.0', changefreq: 'daily' },
+      { path: '/seo-proposal-generator', priority: '0.85', changefreq: 'weekly' },
 
       // Layer 1: Product Feature Pages
       { path: '/features/ai-business-audit', priority: '0.85', changefreq: 'weekly' },
@@ -16511,38 +16538,10 @@ app.get('/sitemap.xml', async (req, res) => {
       const allPublished = await getUnifiedPublishedListings();
       const snapshot = extractSnapshotFromBusinesses(allPublished);
 
-      // 1. Valid Cities (only cities with >= 1 published business)
-      snapshot.cities.forEach((c) => {
-        if (c.count >= 1 && c.slug) {
-          pages.push({
-            path: `/${c.slug}`,
-            priority: '0.85',
-            changefreq: 'daily',
-          });
-        }
-      });
-
-      // 2. Valid Categories (only categories with >= 1 published business)
-      snapshot.categories.forEach((cat) => {
-        if (cat.count >= 1 && cat.slug) {
-          pages.push({
-            path: `/category/${cat.slug}`,
-            priority: '0.85',
-            changefreq: 'daily',
-          });
-        }
-      });
-
-      // 3. Valid City + Category Combinations (only pairs with >= 1 published business)
-      snapshot.cityCategoryPairs.forEach((pair) => {
-        if (pair.count >= 1 && pair.citySlug && pair.categorySlug) {
-          pages.push({
-            path: `/${pair.citySlug}/${pair.categorySlug}`,
-            priority: '0.82',
-            changefreq: 'daily',
-          });
-        }
-      });
+      // B6 (2026-10-24): city, category and city+category browse pages are
+      // retired (they 301 to /directory) and are no longer listed here.
+      // Only the directory hub (static entry above) and real listing pages
+      // remain crawlable directory surfaces.
 
       // 4. Real Published Business Profiles — canonical /biz/ URL only.
       // The /directory/business/ variant is intentionally NOT listed: it
@@ -18139,26 +18138,8 @@ app.get(['/directory/sitemap.xml', '/api/directory/sitemap.xml'], async (req, re
       addUrl(isDirHost ? `${baseUrl}/` : `${baseUrl}/directory`, null, 'daily', '1.0');
     }
 
-    // 2. City Pages (Only include cities with >= 1 published business)
-    snapshot.cities.forEach((c) => {
-      if (c.count >= 1 && c.slug) {
-        addUrl(isDirHost ? `${baseUrl}/city/${c.slug}` : `${baseUrl}/${c.slug}`, null, 'daily', '0.85');
-      }
-    });
-
-    // 3. Category Pages (Only include categories with >= 1 published business)
-    snapshot.categories.forEach((cat) => {
-      if (cat.count >= 1 && cat.slug) {
-        addUrl(`${baseUrl}/category/${cat.slug}`, null, 'daily', '0.85');
-      }
-    });
-
-    // 4. City + Category Combined Pages (Only include combinations with >= 1 published business)
-    snapshot.cityCategoryPairs.forEach((pair) => {
-      if (pair.count >= 1 && pair.citySlug && pair.categorySlug) {
-        addUrl(`${baseUrl}/${pair.citySlug}/${pair.categorySlug}`, null, 'daily', '0.80');
-      }
-    });
+    // B6 (2026-10-24): city, category and combined browse pages retired —
+    // no longer listed. Hub + real listings only.
 
     // 5. Canonical Individual Business Pages (Only valid non-deleted businesses)
     listings.forEach((b) => {
@@ -18246,6 +18227,25 @@ async function handleHtmlRequest(req: express.Request, res: express.Response, vi
     rHost.startsWith('directory.') ||
     (Array.isArray(req.subdomains) && req.subdomains.includes('directory'));
   const effectiveHost = isAppHost ? 'app.locoraai.com' : isDirectoryHost ? 'directory.locoraai.com' : (fHost || hHost || rHost);
+
+  // B6 (2026-10-24): directory subdomain + thin city/category surfaces retired
+  // (mirrors the global middleware rules above).
+  if (isDirectoryHost && !req.path.startsWith('/api/') && !req.path.startsWith('/assets/')) {
+    if (req.path.startsWith('/business/')) {
+      const slug = req.path.replace(/^\/business\//, '');
+      return res.redirect(301, `/biz/${slug}`);
+    }
+    return res.redirect(301, '/directory');
+  }
+  if (
+    req.path === '/austin/local-services' ||
+    req.path === '/wilmington' ||
+    req.path.startsWith('/wilmington/') ||
+    req.path.startsWith('/category/') ||
+    req.path.startsWith('/city/')
+  ) {
+    return res.redirect(301, '/directory');
+  }
 
   // Clean redirects for legacy or underscore URLs:
   if (req.path === '/resources_hub') {

@@ -256,12 +256,12 @@ export const CheckupView: React.FC = () => {
 
           {/* Target Headline */}
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-heading text-white tracking-tight leading-[1.12]">
-            See Your Business Through Google&apos;s Eyes
+            Free Local SEO Audit for Your Business
           </h1>
 
           {/* Target Supporting Copy */}
           <p className="text-base sm:text-lg text-emerald-100/90 max-w-2xl mx-auto leading-relaxed font-sans">
-            Check how your business appears in Google Search and Maps and discover the actions that can improve your local visibility.
+            Find out exactly what&apos;s holding your local visibility back — website, Google profile, reviews, Maps ranking, and AI search — in one free 40-point checkup. No signup, no sales call.
           </p>
 
           {/* Simple Premium Form */}
@@ -634,42 +634,80 @@ export const CheckupView: React.FC = () => {
       <section className="max-w-5xl mx-auto px-6 py-16 space-y-12">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
-            Why Local Visibility Decides Most Inbound Customers
+            What the Audit Checks
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
-            When potential customers in your city search for local services, Google makes instantaneous ranking decisions based on crawlable signals.
+            The 40 points, grouped — so you can see exactly where local visibility is won and lost.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold">
-              <MapPin className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 font-heading">Google Maps 3-Pack</h3>
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold text-sm">01</div>
+            <h3 className="text-base font-bold text-slate-900 font-heading">Your Website</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Most clicks for local searches go directly to the top 3 Google Maps listings. Consistent NAP citations and local schemas secure that coveted real estate.
+              Mobile-friendliness, page speed signals, title and meta coverage, heading structure, image optimization, SSL, and whether search engines — and AI crawlers — can actually read your pages.
             </p>
           </div>
 
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 font-heading">AI Search Engine Discovery</h3>
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold text-sm">02</div>
+            <h3 className="text-base font-bold text-slate-900 font-heading">Your Google Business Profile</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Google Gemini, ChatGPT, and Apple Intelligence rely on verified directory schema and accurate business attributes to recommend local contractors and clinics.
+              Completeness score, category match, name compliance (suspension-risk check), address configuration, hours accuracy, photo coverage, and posting activity.
             </p>
           </div>
 
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 font-heading">Fast Deterministic Remediation</h3>
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold text-sm">03</div>
+            <h3 className="text-base font-bold text-slate-900 font-heading">Reviews &amp; Reputation</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Fix missing meta descriptions, broken heading tags, slow mobile rendering, and unlinked citations with Locora&apos;s pre-packaged 1-click prompt copilot.
+              Review count vs. local competitors, rating trend, response rate, and platform coverage across Google, Yelp, and Facebook.
             </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold text-sm">04</div>
+            <h3 className="text-base font-bold text-slate-900 font-heading">Maps &amp; Local Visibility</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Where you actually appear in local results for your core services, duplicate-listing detection, and citation consistency.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold text-sm">05</div>
+            <h3 className="text-base font-bold text-slate-900 font-heading">AI Search Readiness</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Whether ChatGPT, Gemini, and Perplexity can find and recommend you: crawler access, structured data, profile completeness, and review signals.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold text-sm">06</div>
+            <h3 className="text-base font-bold text-slate-900 font-heading">Competitors</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Your scores benchmarked against the businesses outranking you locally — so you know the gap in concrete terms, not vague advice.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
+            <h3 className="text-base font-bold text-slate-900 font-heading">How it works</h3>
+            <ol className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-2 list-decimal list-inside">
+              <li>Enter your business name and website (30 seconds).</li>
+              <li>We run the 40-point scan across the areas above (about a minute).</li>
+              <li>You get a plain-English report: what&apos;s fine, what&apos;s broken, and what to fix first — prioritized by impact.</li>
+            </ol>
+          </div>
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
+            <h3 className="text-base font-bold text-slate-900 font-heading">What you get (and what you don&apos;t)</h3>
+            <ul className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-2 list-disc list-inside">
+              <li>A complete visibility report you can keep, free.</li>
+              <li>Prioritized fixes, not a 200-row spreadsheet.</li>
+              <li>No account required to run the scan. No credit card. No &quot;free trial&quot; that bills you later.</li>
+              <li>What we ask in return: nothing. If the report convinces you, Pro plans exist — but the audit is free either way.</li>
+            </ul>
           </div>
         </div>
       </section>
@@ -683,27 +721,33 @@ export const CheckupView: React.FC = () => {
         </div>
         <div className="space-y-4">
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
-            <h3 className="text-sm font-bold text-slate-900 font-heading">Can a missed phone call really cost me money?</h3>
+            <h3 className="text-sm font-bold text-slate-900 font-heading">Is it really free?</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Since October 1, 2026, Google&apos;s Local Services Ads treats a missed business-hours call as a billable lead when the caller waits more than 20 seconds. A phone that rings out doesn&apos;t just lose the job anymore — it can also cost you the lead fee. <a href="https://ppc.land/google-lsa-advertisers-face-missed-call-charges-from-october-1/" target="_blank" rel="noopener noreferrer" className="text-[#059669] underline">Source</a>
+              Yes. The full 40-point audit costs nothing and needs no signup.
             </p>
           </div>
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
-            <h3 className="text-sm font-bold text-slate-900 font-heading">What happens after I unlock my full report?</h3>
+            <h3 className="text-sm font-bold text-slate-900 font-heading">How long does it take?</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Your audit is imported into a free Locora workspace as your first business. From there you can connect your Google Business Profile, track visibility, manage reviews, and generate AI fixes — no credit card required.
+              About a minute for the scan, after 30 seconds of input.
             </p>
           </div>
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
-            <h3 className="text-sm font-bold text-slate-900 font-heading">Is the checkup really free?</h3>
+            <h3 className="text-sm font-bold text-slate-900 font-heading">Do I need to connect my Google account?</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Yes. The checkup is a free automated scan of your website and public listings. No credit card required.
+              No. The free audit works from public data.
             </p>
           </div>
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
-            <h3 className="text-sm font-bold text-slate-900 font-heading">What does the checkup scan?</h3>
+            <h3 className="text-sm font-bold text-slate-900 font-heading">Will this work for service-area businesses?</h3>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Your website&apos;s technical health, on-page SEO, local signals (name, phone, and address consistency), content depth, structured data, and performance — scored from the live crawl of your site.
+              Yes — the audit detects service-area setups (hidden address) and checks them correctly.
+            </p>
+          </div>
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
+            <h3 className="text-sm font-bold text-slate-900 font-heading">What happens after the audit?</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              You get the report. Optionally, create a free account to track your score over time or run deeper scans.
             </p>
           </div>
         </div>

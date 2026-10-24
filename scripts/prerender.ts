@@ -9,6 +9,7 @@ const MARKETING_ROUTES_TO_PRERENDER: string[] = [
   // '/' is handled at serve time by server.ts (the homepage is served from
   // dist/index.html, which must stay the bare shell template on disk).
   '/checkup',
+  '/seo-proposal-generator',
   '/directory',
   '/products',
   '/pricing',
