@@ -222,51 +222,10 @@ const MainContent: React.FC = () => {
         }
       }
 
-      // If visitor is on the main production domain or app subdomain and navigates to directory routes, redirect to directory subdomain:
-      if (!isDirectory && isProductionCustomDomain()) {
-        if (rawPath === '/directory' || rawPath === '/directory/') {
-          navigateToDirectory('/');
-          return;
-        }
-        if (rawPath.startsWith('/directory/business/')) {
-          const slug = rawPath.replace(/^\/directory\/business\//, '');
-          navigateToDirectory(`/biz/${slug}`);
-          return;
-        }
-        if (rawPath.startsWith('/business/')) {
-          const sub = rawPath.replace(/^\/business\//, '').split('/')[0];
-          const reservedBusinessSubroutes = ['locations', 'directory', 'profile', 'brain', 'settings'];
-          if (sub && !reservedBusinessSubroutes.includes(sub.toLowerCase())) {
-            navigateToDirectory(`/biz/${sub}`);
-            return;
-          }
-        }
-        if (rawPath.startsWith('/biz/')) {
-          const slug = rawPath.replace(/^\/biz\//, '');
-          navigateToDirectory(`/biz/${slug}`);
-          return;
-        }
-        if (rawPath.startsWith('/directory/city/')) {
-          const slug = rawPath.replace(/^\/directory\/city\//, '');
-          navigateToDirectory(`/city/${slug}`);
-          return;
-        }
-        if (rawPath.startsWith('/city/')) {
-          const slug = rawPath.replace(/^\/city\//, '');
-          navigateToDirectory(`/city/${slug}`);
-          return;
-        }
-        if (rawPath.startsWith('/directory/category/')) {
-          const slug = rawPath.replace(/^\/directory\/category\//, '');
-          navigateToDirectory(`/category/${slug}`);
-          return;
-        }
-        if (rawPath.startsWith('/category/')) {
-          const slug = rawPath.replace(/^\/category\//, '');
-          navigateToDirectory(`/category/${slug}`);
-          return;
-        }
-      }
+      // B6 hotfix (2026-10-24): the directory subdomain is retired server-side
+      // (301 to locoraai.com/directory). The former client-side enforcement
+      // that bounced main-domain directory routes TO the subdomain was
+      // removed — together the two rules looped /directory forever.
 
       const resolved = resolveRouteFromPath(rawPath, isApp, isDirectory);
       let targetTab = resolved.targetTab;

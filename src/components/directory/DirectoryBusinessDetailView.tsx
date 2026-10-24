@@ -549,16 +549,18 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
     ],
   };
 
+  // B6 (2026-10-24): city/category browse pages are retired; breadcrumbs land
+  // on the directory hub on the main domain instead of the retired subdomain.
   const navigateToCity = () => {
-    navigateToDirectory(`/city/${business.citySlug}`);
+    window.location.href = '/directory';
   };
 
   const navigateToCategory = () => {
-    navigateToDirectory(`/category/${business.categorySlug}`);
+    window.location.href = '/directory';
   };
 
   const navigateToCityCategory = () => {
-    navigateToDirectory(`/${business.citySlug}/${business.categorySlug}`);
+    window.location.href = '/directory';
   };
 
   return (
