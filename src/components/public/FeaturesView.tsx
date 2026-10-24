@@ -122,7 +122,7 @@ export const FeaturesView: React.FC = () => {
     <div className="space-y-16 py-12 px-6 max-w-7xl mx-auto font-sans bg-slate-50 text-slate-900">
       {/* Header */}
       <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-semibold font-heading uppercase tracking-wider">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-semibold font-heading uppercase tracking-wider">
           <Sparkles className="w-4 h-4 text-[#059669]" />
           <span>Full Product Suite</span>
         </div>
@@ -143,7 +143,7 @@ export const FeaturesView: React.FC = () => {
             <button
               key={m.id}
               onClick={() => setSelectedModule(m.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 isSelected
                   ? 'bg-[#059669] text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -159,7 +159,7 @@ export const FeaturesView: React.FC = () => {
       {/* Selected Module Spotlight Card */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-white border border-slate-200 rounded-3xl p-8 shadow-md items-center">
         <div className="lg:col-span-7 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-[#059669] rounded-full text-sm font-bold border border-emerald-200">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-[#059669] rounded-full text-xs font-bold border border-emerald-200">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Active Feature Spotlight</span>
           </div>
@@ -172,13 +172,13 @@ export const FeaturesView: React.FC = () => {
             {currentModule.tagline}
           </p>
 
-          <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-sans">
+          <p className="text-sm sm:text-sm text-slate-600 leading-relaxed font-sans">
             {currentModule.description}
           </p>
 
           <div className="space-y-2.5 pt-2">
             {currentModule.bullets.map((b, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <div key={i} className="flex items-center gap-2 text-xs font-medium text-slate-700">
                 <CheckCircle2 className="w-4 h-4 text-[#059669] flex-shrink-0" />
                 <span>{b}</span>
               </div>
@@ -188,7 +188,7 @@ export const FeaturesView: React.FC = () => {
           <div className="pt-4 flex flex-wrap gap-3 font-sans">
             <button
               onClick={() => navigateToFeature(currentModule.slug)}
-              className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer font-heading"
+              className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer font-heading"
             >
               <span>Explore {currentModule.name} Dedicated Guide</span>
               <ArrowRight className="w-4 h-4" />
@@ -202,7 +202,7 @@ export const FeaturesView: React.FC = () => {
                 }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold rounded-xl border border-slate-200 transition-colors cursor-pointer"
+              className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-xl border border-slate-200 transition-colors cursor-pointer"
             >
               Start Free Workspace
             </button>
@@ -212,20 +212,20 @@ export const FeaturesView: React.FC = () => {
         {/* Live UI Mockup Card */}
         <div className="lg:col-span-5 bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-            <span className="text-sm font-bold text-slate-900 font-heading">Locora AI Engine</span>
-            <span className="text-sm px-2 py-0.5 bg-emerald-100 text-[#059669] rounded font-mono font-bold border border-emerald-200">
+            <span className="text-xs font-bold text-slate-900 font-heading">Locora AI Engine</span>
+            <span className="text-[10px] px-2 py-0.5 bg-emerald-100 text-[#059669] rounded font-mono font-bold border border-emerald-200">
               STATUS: READY
             </span>
           </div>
 
-          <div className="space-y-3 text-sm font-sans">
+          <div className="space-y-3 text-xs font-sans">
             <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1 shadow-2xs">
-              <p className="text-sm text-slate-500 uppercase font-bold">Input Context</p>
+              <p className="text-[10px] text-slate-500 uppercase font-bold">Input Context</p>
               <p className="text-slate-800 font-medium">Business: Vance Plumbing & Heating (Austin, TX)</p>
             </div>
 
             <div className="p-3 bg-white rounded-xl border border-emerald-200 space-y-2 shadow-2xs">
-              <p className="text-sm text-[#059669] uppercase font-bold">AI Output Preview</p>
+              <p className="text-[10px] text-[#059669] uppercase font-bold">AI Output Preview</p>
               <p className="text-slate-600 text-sm leading-relaxed italic">
                 "Locora Copilot analyzed local Austin competition and generated 3 custom service packages ($1,500 - $3,200), itemizing emergency call-out landing pages and GBP local search schema."
               </p>
@@ -233,7 +233,7 @@ export const FeaturesView: React.FC = () => {
           </div>
 
           <div className="pt-2 text-center">
-            <p className="text-sm text-slate-500 font-sans">
+            <p className="text-[11px] text-slate-500 font-sans">
               Powered by Groq Ultra-Fast LPU & Multi-Model Switcher
             </p>
           </div>
@@ -246,7 +246,7 @@ export const FeaturesView: React.FC = () => {
           <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900">
             Dedicated Product Deep-Dives
           </h2>
-          <p className="text-sm sm:text-base text-slate-600 font-sans">
+          <p className="text-xs sm:text-sm text-slate-600 font-sans">
             Explore detailed feature guides, sample outputs, workflows, and automated deliverables.
           </p>
         </div>
@@ -259,7 +259,7 @@ export const FeaturesView: React.FC = () => {
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                     {feat.badge}
                   </span>
                 </div>
@@ -277,7 +277,7 @@ export const FeaturesView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => navigateToFeature(feat.slug)}
-                  className="text-sm font-bold text-slate-900 hover:text-[#059669] flex items-center gap-1.5 cursor-pointer font-heading"
+                  className="text-xs font-bold text-slate-900 hover:text-[#059669] flex items-center gap-1.5 cursor-pointer font-heading"
                 >
                   <span>Feature Overview</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -292,7 +292,7 @@ export const FeaturesView: React.FC = () => {
                     }
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
-                  className="px-3 py-1.5 bg-emerald-50 hover:bg-[#059669] text-emerald-800 hover:text-white rounded-lg text-sm font-bold transition-all cursor-pointer"
+                  className="px-3 py-1.5 bg-emerald-50 hover:bg-[#059669] text-emerald-800 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
                 >
                   Explore Guide →
                 </button>
@@ -308,13 +308,13 @@ export const FeaturesView: React.FC = () => {
           <h2 className="text-2xl sm:text-4xl font-bold font-heading text-slate-900">
             Locora AI vs. Traditional Tool Stacks
           </h2>
-          <p className="text-sm sm:text-base text-slate-600 font-sans">
+          <p className="text-xs sm:text-sm text-slate-600 font-sans">
             Stop paying $500+/month for 5 separate software subscriptions.
           </p>
         </div>
 
         <div className="overflow-x-auto bg-white border border-slate-200 rounded-3xl shadow-sm">
-          <table className="w-full text-left border-collapse text-sm font-sans">
+          <table className="w-full text-left border-collapse text-xs font-sans">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-100 text-slate-800 font-heading">
                 <th className="p-4 font-bold">Feature / Tool</th>
@@ -361,7 +361,7 @@ export const FeaturesView: React.FC = () => {
       {/* CTA */}
       <div className="p-8 bg-white border border-slate-200 rounded-3xl text-center space-y-4 shadow-sm">
         <h3 className="text-2xl font-bold font-heading text-slate-900">Ready to test these features live?</h3>
-        <p className="text-sm text-slate-600 max-w-md mx-auto font-sans">
+        <p className="text-xs text-slate-600 max-w-md mx-auto font-sans">
           Start with 25 free monthly AI credits right now in your workspace. No credit card required.
         </p>
         <button
@@ -373,7 +373,7 @@ export const FeaturesView: React.FC = () => {
             }
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
-          className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-xs transition-all inline-flex items-center gap-2 cursor-pointer font-sans"
+          className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-xs transition-all inline-flex items-center gap-2 cursor-pointer font-sans"
         >
           <span>Start Free Explorer Tier</span>
           <ArrowRight className="w-4 h-4" />

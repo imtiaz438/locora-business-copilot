@@ -136,7 +136,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
   return (
     <div className="bg-slate-50 text-slate-900 font-sans min-h-screen">
       {/* Breadcrumb Bar */}
-      <div className="border-b border-slate-200 bg-white/90 backdrop-blur-xs py-3.5 px-6 text-sm text-slate-500 sticky top-0 z-30 shadow-2xs">
+      <div className="border-b border-slate-200 bg-white/90 backdrop-blur-xs py-3.5 px-6 text-xs text-slate-500 sticky top-0 z-30 shadow-2xs">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
             <button onClick={() => setActiveTab('home')} className="hover:text-slate-900 cursor-pointer font-medium">
@@ -158,7 +158,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
 
           <button
             onClick={handleLaunchTool}
-            className="hidden sm:inline-block px-3.5 py-1 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+            className="hidden sm:inline-block px-3.5 py-1 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
           >
             {user ? 'Open in Workspace' : 'Get Free Tools'}
           </button>
@@ -168,14 +168,14 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
       {/* Article Header */}
       <header className="py-14 sm:py-18 px-6 max-w-5xl mx-auto space-y-6">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-full text-sm font-bold font-heading uppercase">
+          <span className="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-full text-xs font-bold font-heading uppercase">
             {article.category}
           </span>
-          <span className="flex items-center gap-1 text-sm text-slate-500 font-medium">
+          <span className="flex items-center gap-1 text-xs text-slate-500 font-medium">
             <Clock className="w-3.5 h-3.5 text-slate-400" />
             <span>{article.readingTime}</span>
           </span>
-          <span className="flex items-center gap-1 text-sm text-slate-500 font-medium">
+          <span className="flex items-center gap-1 text-xs text-slate-500 font-medium">
             <Calendar className="w-3.5 h-3.5 text-slate-400" />
             <span>{article.publishedDate}</span>
           </span>
@@ -195,7 +195,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
         {/* Sticky Table of Contents (Desktop) */}
         <aside className="lg:col-span-4 hidden lg:block space-y-6">
           <div className="sticky top-24 bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs space-y-4">
-            <h3 className="text-sm font-bold font-heading text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-xs font-bold font-heading text-slate-900 uppercase tracking-wider flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-emerald-700" />
               <span>Table of Contents</span>
             </h3>
@@ -204,7 +204,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
                 <a
                   key={toc.id}
                   href={`#${toc.id}`}
-                  className="block text-sm text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 p-2 rounded-lg transition-colors font-medium"
+                  className="block text-xs text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 p-2 rounded-lg transition-colors font-medium"
                 >
                   {toc.title}
                 </a>
@@ -214,7 +214,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
             {/* Interactive Progress Meter if checklists exist */}
             {allChecklistCount > 0 && (
               <div className="pt-4 border-t border-slate-100 space-y-2">
-                <div className="flex items-center justify-between text-sm font-bold text-slate-800 font-heading">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-800 font-heading">
                   <span>Interactive Audit Progress</span>
                   <span className="text-emerald-700 font-extrabold">{progressPercent}%</span>
                 </div>
@@ -224,7 +224,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
-                <p className="text-sm text-slate-500">
+                <p className="text-[10px] text-slate-500">
                   {checkedCount} of {allChecklistCount} audit points checked.
                 </p>
               </div>
@@ -233,7 +233,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
             <div className="pt-4 border-t border-slate-100">
               <button
                 onClick={handleLaunchTool}
-                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer font-heading"
+                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer font-heading"
               >
                 <span>{user ? 'Open Workspace' : 'Get Free Tools'}</span>
                 <ArrowRight className="w-3.5 h-3.5 text-emerald-400" />
@@ -251,7 +251,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
                 {section.heading}
               </h2>
 
-              <div className="space-y-3 text-base text-slate-700 leading-relaxed font-sans">
+              <div className="space-y-3 text-sm text-slate-700 leading-relaxed font-sans">
                 {section.content.map((p, pIdx) => (
                   <p key={pIdx}>{p}</p>
                 ))}
@@ -259,7 +259,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
 
               {/* Key Takeaway */}
               {section.keyTakeaway && (
-                <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl flex items-start gap-3 text-sm text-emerald-950 font-medium">
+                <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl flex items-start gap-3 text-xs text-emerald-950 font-medium">
                   <Sparkles className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
                   <div>
                     <strong className="font-bold font-heading text-emerald-900 block mb-0.5">
@@ -273,7 +273,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
               {/* Interactive Checklist Items */}
               {section.checklistItems && section.checklistItems.length > 0 && (
                 <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
-                  <span className="text-sm font-bold uppercase tracking-wider text-slate-700 font-heading block">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700 font-heading block">
                     Interactive Implementation Checklist
                   </span>
                   <div className="space-y-2">
@@ -284,7 +284,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
                         <div
                           key={cIdx}
                           onClick={() => toggleCheck(itemId)}
-                          className={`p-2.5 rounded-xl border flex items-center gap-3 text-sm cursor-pointer transition-all ${
+                          className={`p-2.5 rounded-xl border flex items-center gap-3 text-xs cursor-pointer transition-all ${
                             isChecked
                               ? 'bg-emerald-50 border-emerald-200 text-emerald-900 font-medium line-through'
                               : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
@@ -313,11 +313,11 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="bg-emerald-50/60 border border-emerald-200 rounded-2xl p-5 space-y-3">
-                  <span className="text-sm font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-700" />
                     <span>Advantages of This Strategy</span>
                   </span>
-                  <ul className="space-y-2 text-sm text-slate-800">
+                  <ul className="space-y-2 text-xs text-slate-800">
                     {article.prosAndCons.pros.map((pr, i) => (
                       <li key={i} className="flex items-start gap-2">
                         <Check className="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5" />
@@ -328,11 +328,11 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
                 </div>
 
                 <div className="bg-slate-100 border border-slate-200 rounded-2xl p-5 space-y-3">
-                  <span className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                     <AlertTriangle className="w-4 h-4 text-amber-600" />
                     <span>Prerequisites & Watchouts</span>
                   </span>
-                  <ul className="space-y-2 text-sm text-slate-600">
+                  <ul className="space-y-2 text-xs text-slate-600">
                     {article.prosAndCons.cons.map((cn, i) => (
                       <li key={i} className="flex items-start gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0 mt-1.5" />
@@ -348,7 +348,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
           {/* Embedded Callout Box */}
           <div className="p-8 bg-slate-900 text-white rounded-3xl space-y-4 shadow-md flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="space-y-2 max-w-md">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-bold font-heading uppercase">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-bold font-heading uppercase">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Automated Workflow</span>
               </div>
@@ -361,7 +361,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
             </div>
             <button
               onClick={handleLaunchTool}
-              className="px-6 py-3.5 bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold text-sm rounded-xl shadow-md transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer font-heading shrink-0"
+              className="px-6 py-3.5 bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold text-xs rounded-xl shadow-md transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer font-heading shrink-0"
             >
               <span>{article.ctaText}</span>
               <ArrowRight className="w-4 h-4" />
@@ -385,7 +385,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
                       onClick={() => setOpenFaq(isOpen ? null : i)}
                       className="w-full p-4 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-100 transition-colors"
                     >
-                      <span className="text-sm sm:text-sm font-bold font-heading text-slate-900">{faq.q}</span>
+                      <span className="text-xs sm:text-sm font-bold font-heading text-slate-900">{faq.q}</span>
                       <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${isOpen ? 'rotate-180 text-emerald-700' : ''}`} />
                     </button>
                     {isOpen && (
@@ -417,11 +417,11 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
               }}
               className="p-4 bg-white border border-slate-200 rounded-xl hover:border-emerald-600 hover:bg-emerald-50/20 text-left transition-all cursor-pointer space-y-2 shadow-2xs"
             >
-              <span className="text-sm font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded uppercase font-mono">
+              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded uppercase font-mono">
                 {oa.category}
               </span>
-              <h4 className="text-sm font-bold text-slate-900 font-heading line-clamp-2">{oa.title}</h4>
-              <p className="text-sm text-slate-500 line-clamp-2 font-sans">{oa.summary}</p>
+              <h4 className="text-xs font-bold text-slate-900 font-heading line-clamp-2">{oa.title}</h4>
+              <p className="text-[11px] text-slate-500 line-clamp-2 font-sans">{oa.summary}</p>
             </button>
           ))}
         </div>

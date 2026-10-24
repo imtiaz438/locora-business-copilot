@@ -86,7 +86,7 @@ export const ProposalGeneratorView: React.FC = () => {
       {/* Hero */}
       <section className="relative overflow-hidden bg-[#04241c] px-6 py-20 sm:py-24">
         <div className="relative z-10 max-w-4xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#10b981]/15 border border-[#10b981]/30 text-[#6ee7b7] text-sm font-semibold font-heading tracking-wider uppercase">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#10b981]/15 border border-[#10b981]/30 text-[#6ee7b7] text-xs font-semibold font-heading tracking-wider uppercase">
             <Sparkles className="w-4 h-4 text-[#6ee7b7]" />
             <span>SEO Proposal Generator</span>
           </div>
@@ -123,7 +123,7 @@ export const ProposalGeneratorView: React.FC = () => {
           <h2 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
             What Goes Into Every Proposal
           </h2>
-          <p className="text-sm sm:text-base text-slate-500 leading-relaxed">
+          <p className="text-sm sm:text-sm text-slate-500 leading-relaxed">
             Built from the product&apos;s real capabilities — the same generator that powers the LocoraAI proposals workspace.
           </p>
         </div>
@@ -143,7 +143,7 @@ export const ProposalGeneratorView: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
             <h3 className="text-base font-bold text-slate-900 font-heading">How it works</h3>
-            <ol className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-2 list-decimal list-inside">
+            <ol className="text-sm sm:text-sm text-slate-600 leading-relaxed space-y-2 list-decimal list-inside">
               {steps.map((s) => (
                 <li key={s.title}>
                   <strong className="text-slate-800">{s.title}</strong> — {s.desc}
@@ -153,10 +153,10 @@ export const ProposalGeneratorView: React.FC = () => {
           </div>
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
             <h3 className="text-base font-bold text-slate-900 font-heading">Who it&apos;s for</h3>
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+            <p className="text-sm sm:text-sm text-slate-600 leading-relaxed">
               Freelancers and small agencies who write proposals in Google Docs at midnight — and local businesses quoting larger jobs who want a professional document without the blank page.
             </p>
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+            <p className="text-sm sm:text-sm text-slate-600 leading-relaxed">
               New to proposals? Start with the guide: <a href="/resources/how-to-create-seo-proposal" className="text-[#059669] underline">How to Create an SEO Proposal</a> — then generate yours from a live audit.
             </p>
           </div>

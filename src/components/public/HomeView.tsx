@@ -335,13 +335,13 @@ export const HomeView: React.FC = () => {
 
         <div className="relative z-10 text-center space-y-6 max-w-4xl mx-auto">
           {/* Eyebrow Pill */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#10b981]/15 border border-[#10b981]/30 text-[#6ee7b7] text-sm font-semibold font-heading tracking-wider uppercase">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#10b981]/15 border border-[#10b981]/30 text-[#6ee7b7] text-xs font-semibold font-heading tracking-wider uppercase">
             <LocoraLogo assetType="hero" size={20} className="w-5 h-5" />
             <span>AI Business OS • Local SEO Copilot • Verified Directory</span>
           </div>
 
           {/* Core Title */}
-          <h1 className="text-4xl sm:text-sm lg:text-sm font-bold font-heading text-white tracking-tight leading-[1.12]">
+          <h1 className="text-4xl sm:text-[56px] lg:text-[62px] font-bold font-heading text-white tracking-tight leading-[1.12]">
             Your AI Manager & <span className="text-[#6ee7b7]">Verified Local Directory</span>
           </h1>
 
@@ -361,13 +361,13 @@ export const HomeView: React.FC = () => {
                   onChange={(e) => setHeroInputUrl(e.target.value)}
                   onFocus={handleHeroInputInteraction}
                   placeholder="Enter website (e.g. yourbusiness.com)"
-                  className="w-full pl-10 pr-4 py-3 bg-transparent text-sm sm:text-base text-slate-900 placeholder-slate-400 focus:outline-none font-sans"
+                  className="w-full pl-10 pr-4 py-3 bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none font-sans"
                 />
               </div>
               <button
                 type="submit"
                 disabled={isAnalyzing}
-                className="w-full sm:w-auto px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm sm:text-sm rounded-xl sm:rounded-full shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans shrink-0 disabled:opacity-75"
+                className="w-full sm:w-auto px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm rounded-xl sm:rounded-full shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans shrink-0 disabled:opacity-75"
               >
                 {isAnalyzing ? (
                   <>
@@ -388,7 +388,7 @@ export const HomeView: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowOptionalFields(!showOptionalFields)}
-                className="text-sm text-emerald-200/90 hover:text-white transition-colors inline-flex items-center gap-1.5 cursor-pointer font-medium"
+                className="text-xs text-emerald-200/90 hover:text-white transition-colors inline-flex items-center gap-1.5 cursor-pointer font-medium"
               >
                 <span>{showOptionalFields ? '− Hide Optional Business Details' : '+ Add Business Name, Location, or Email (Optional)'}</span>
                 {showOptionalFields ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -398,43 +398,43 @@ export const HomeView: React.FC = () => {
             {showOptionalFields && (
               <div className="p-4 bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-2 text-left animate-in fade-in-50">
                 <div>
-                  <label className="block text-sm font-bold text-emerald-200 mb-1">Business Name</label>
+                  <label className="block text-[11px] font-bold text-emerald-200 mb-1">Business Name</label>
                   <input
                     type="text"
                     value={heroBusinessName}
                     onChange={(e) => setHeroBusinessName(e.target.value)}
                     onFocus={handleHeroInputInteraction}
                     placeholder="e.g. Gotham Enterprises Ltd"
-                    className="w-full px-3 py-2 bg-white/90 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                    className="w-full px-3 py-2 bg-white/90 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-emerald-200 mb-1">Location</label>
+                  <label className="block text-[11px] font-bold text-emerald-200 mb-1">Location</label>
                   <input
                     type="text"
                     value={heroLocation}
                     onChange={(e) => setHeroLocation(e.target.value)}
                     onFocus={handleHeroInputInteraction}
                     placeholder="e.g. Dallas, TX"
-                    className="w-full px-3 py-2 bg-white/90 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                    className="w-full px-3 py-2 bg-white/90 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-emerald-200 mb-1">Email for Report</label>
+                  <label className="block text-[11px] font-bold text-emerald-200 mb-1">Email for Report</label>
                   <input
                     type="email"
                     value={heroEmail}
                     onChange={(e) => setHeroEmail(e.target.value)}
                     onFocus={handleHeroInputInteraction}
                     placeholder="you@company.com"
-                    className="w-full px-3 py-2 bg-white/90 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                    className="w-full px-3 py-2 bg-white/90 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                   />
                 </div>
               </div>
             )}
 
             {auditError && (
-              <div className="p-3.5 bg-rose-500/20 border border-rose-400/40 rounded-xl text-left flex items-start gap-2.5 text-sm text-rose-200">
+              <div className="p-3.5 bg-rose-500/20 border border-rose-400/40 rounded-xl text-left flex items-start gap-2.5 text-xs text-rose-200">
                 <AlertTriangle className="w-4 h-4 text-rose-300 shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="font-bold text-white">Diagnostic Notice</p>
@@ -443,7 +443,7 @@ export const HomeView: React.FC = () => {
               </div>
             )}
 
-            <div className="pt-1 text-sm text-emerald-200/80 flex items-center justify-center gap-2 font-medium">
+            <div className="pt-1 text-xs text-emerald-200/80 flex items-center justify-center gap-2 font-medium">
               <ShieldCheck className="w-4 h-4 text-[#6ee7b7]" />
               <span>100% Real Live Checkup • Zero Fake Data • Deterministic Scoring</span>
             </div>
@@ -452,7 +452,7 @@ export const HomeView: React.FC = () => {
           {/* Analyzing Progress State */}
           {isAnalyzing && (
             <div className="max-w-md mx-auto p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-left space-y-2.5 animate-in fade-in-50">
-              <div className="flex items-center justify-between text-sm text-emerald-300 font-bold">
+              <div className="flex items-center justify-between text-xs text-emerald-300 font-bold">
                 <span className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                   Live Website Diagnostic Crawl
@@ -489,11 +489,11 @@ export const HomeView: React.FC = () => {
                       <h3 className="font-bold text-base font-heading">
                         Real Diagnostic: {publicAudit.businessName}
                       </h3>
-                      <span className="px-2 py-0.5 text-sm font-black rounded-full uppercase border bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+                      <span className="px-2 py-0.5 text-[10px] font-black rounded-full uppercase border bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
                         Verified Live Crawl
                       </span>
                     </div>
-                    <p className="text-sm text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
+                    <p className="text-xs text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
                       <span className="font-mono text-slate-300">{publicAudit.domain}</span>
                       <span>•</span>
                       <span>{publicAudit.pagesCrawled} {publicAudit.pagesCrawled === 1 ? 'page analyzed' : 'pages analyzed'}</span>
@@ -509,7 +509,7 @@ export const HomeView: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleResetCheckup}
-                    className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium text-sm rounded-xl transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+                    className="px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer font-sans"
                     title="Clear current report and check another website"
                   >
                     <RefreshCw className="w-3.5 h-3.5" />
@@ -517,7 +517,7 @@ export const HomeView: React.FC = () => {
                   </button>
                   <button
                     onClick={() => handleClaimAndUnlock()}
-                    className="px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer font-sans"
+                    className="px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer font-sans"
                   >
                     <span>Claim Audit & Open Workspace</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -530,17 +530,17 @@ export const HomeView: React.FC = () => {
                 {auditTab !== 'quick_checkup' && (
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-bold text-slate-400 uppercase tracking-wider font-heading">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-wider font-heading">
                         Calculated Health Scores
                       </span>
-                      <span className="text-sm text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                      <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
                         Deterministic Engine • 0% AI Hallucination
                       </span>
                     </div>
 
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                       <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-sm text-slate-500 font-medium">
+                        <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
                           <span>Overall Health</span>
                           <TrendingUp className="w-4 h-4 text-emerald-600" />
                         </div>
@@ -550,13 +550,13 @@ export const HomeView: React.FC = () => {
                           </span>
                           <span className="text-sm font-semibold text-slate-400">/100</span>
                         </div>
-                        <span className="text-sm text-slate-500 font-sans">
+                        <span className="text-[11px] text-slate-500 font-sans">
                           Weighted composite of technical SEO, speed, and local footprint.
                         </span>
                       </div>
 
                       <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-sm text-slate-500 font-medium">
+                        <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
                           <span>Technical SEO</span>
                           <Search className="w-4 h-4 text-blue-600" />
                         </div>
@@ -566,13 +566,13 @@ export const HomeView: React.FC = () => {
                           </span>
                           <span className="text-sm font-semibold text-slate-400">/100</span>
                         </div>
-                        <span className="text-sm text-slate-500 font-sans">
+                        <span className="text-[11px] text-slate-500 font-sans">
                           Title tags, meta descriptions, H1 hierarchy, and image alt text.
                         </span>
                       </div>
 
                       <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-sm text-slate-500 font-medium">
+                        <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
                           <span>Page Speed & TTFB</span>
                           <Zap className="w-4 h-4 text-amber-500" />
                         </div>
@@ -582,13 +582,13 @@ export const HomeView: React.FC = () => {
                           </span>
                           <span className="text-sm font-semibold text-slate-400">/100</span>
                         </div>
-                        <span className="text-sm text-slate-500 font-sans">
+                        <span className="text-[11px] text-slate-500 font-sans">
                           {publicAudit.crawlStats.latencyMs}ms response time • {publicAudit.crawlStats.htmlSizeKb}KB payload.
                         </span>
                       </div>
 
                       <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
-                        <div className="flex items-center justify-between text-sm text-slate-500 font-medium">
+                        <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
                           <span>Local Search Footprint</span>
                           <MapPin className="w-4 h-4 text-purple-600" />
                         </div>
@@ -598,7 +598,7 @@ export const HomeView: React.FC = () => {
                           </span>
                           <span className="text-sm font-semibold text-slate-400">/100</span>
                         </div>
-                        <span className="text-sm text-slate-500 font-sans">
+                        <span className="text-[11px] text-slate-500 font-sans">
                           LocalBusiness JSON-LD, direct phone & physical address verification.
                         </span>
                       </div>
@@ -611,7 +611,7 @@ export const HomeView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setAuditTab('quick_checkup')}
-                    className={`px-3.5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
                       auditTab === 'quick_checkup'
                         ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
@@ -624,7 +624,7 @@ export const HomeView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setAuditTab('overview')}
-                    className={`px-3.5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
                       auditTab === 'overview'
                         ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
@@ -637,7 +637,7 @@ export const HomeView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setAuditTab('discovery')}
-                    className={`px-3.5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
                       auditTab === 'discovery'
                         ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
@@ -650,7 +650,7 @@ export const HomeView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setAuditTab('seo')}
-                    className={`px-3.5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
                       auditTab === 'seo'
                         ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
@@ -663,7 +663,7 @@ export const HomeView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setAuditTab('local')}
-                    className={`px-3.5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
                       auditTab === 'local'
                         ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
@@ -676,7 +676,7 @@ export const HomeView: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setAuditTab('performance')}
-                    className={`px-3.5 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
                       auditTab === 'performance'
                         ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
@@ -704,16 +704,16 @@ export const HomeView: React.FC = () => {
                     {/* Digital Footprint & NAP Detection */}
                     <div className="p-5 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-bold text-slate-600 uppercase tracking-wider font-heading flex items-center gap-1.5">
+                        <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider font-heading flex items-center gap-1.5">
                           <Globe className="w-4 h-4 text-emerald-600" />
                           <span>Verified Digital Footprint & Signals</span>
                         </h4>
-                        <span className="text-sm text-slate-400 font-mono">Live DOM Inspection</span>
+                        <span className="text-[11px] text-slate-400 font-mono">Live DOM Inspection</span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                         <div className="p-3 bg-white rounded-xl border border-slate-200/80">
-                          <span className="text-slate-400 block text-sm font-medium mb-1">Direct Phone</span>
+                          <span className="text-slate-400 block text-[11px] font-medium mb-1">Direct Phone</span>
                           <p className="font-semibold text-slate-900 truncate">
                             {publicAudit.detectedBusinessData.phone || (
                               <span className="text-amber-600 font-normal">Not detected in HTML</span>
@@ -721,7 +721,7 @@ export const HomeView: React.FC = () => {
                           </p>
                         </div>
                         <div className="p-3 bg-white rounded-xl border border-slate-200/80">
-                          <span className="text-slate-400 block text-sm font-medium mb-1">Address / Geo</span>
+                          <span className="text-slate-400 block text-[11px] font-medium mb-1">Address / Geo</span>
                           <p className="font-semibold text-slate-900 truncate">
                             {publicAudit.detectedBusinessData.address || (
                               <span className="text-amber-600 font-normal">Not detected in HTML</span>
@@ -729,7 +729,7 @@ export const HomeView: React.FC = () => {
                           </p>
                         </div>
                         <div className="p-3 bg-white rounded-xl border border-slate-200/80">
-                          <span className="text-slate-400 block text-sm font-medium mb-1">Schema.org JSON-LD</span>
+                          <span className="text-slate-400 block text-[11px] font-medium mb-1">Schema.org JSON-LD</span>
                           <p className="font-semibold text-slate-900 truncate">
                             {publicAudit.detectedBusinessData.hasLocalBusinessSchema ? (
                               <span className="text-emerald-700">✓ LocalBusiness Active</span>
@@ -739,7 +739,7 @@ export const HomeView: React.FC = () => {
                           </p>
                         </div>
                         <div className="p-3 bg-white rounded-xl border border-slate-200/80">
-                          <span className="text-slate-400 block text-sm font-medium mb-1">Image Accessibility</span>
+                          <span className="text-slate-400 block text-[11px] font-medium mb-1">Image Accessibility</span>
                           <p className="font-semibold text-slate-900 truncate">
                             {publicAudit.crawlStats.missingAltImages === 0 ? (
                               <span className="text-emerald-700">✓ All Alt Tags Present</span>
@@ -783,7 +783,7 @@ export const HomeView: React.FC = () => {
                               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-2">
-                                    <span className={`px-2 py-0.5 text-sm font-black uppercase rounded-md border ${
+                                    <span className={`px-2 py-0.5 text-[10px] font-black uppercase rounded-md border ${
                                       isCritical
                                         ? 'bg-rose-100 text-rose-700 border-rose-300'
                                         : isWarning
@@ -792,7 +792,7 @@ export const HomeView: React.FC = () => {
                                     }`}>
                                       {issue.severity}
                                     </span>
-                                    <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">
+                                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                                       {issue.category}
                                     </span>
                                     <h5 className="text-sm font-bold text-slate-900 font-heading">
@@ -805,7 +805,7 @@ export const HomeView: React.FC = () => {
                                 </div>
                               </div>
 
-                              <div className="mt-3 p-2.5 bg-white/80 rounded-xl border border-slate-200/70 text-sm font-mono text-slate-700 flex items-center gap-2">
+                              <div className="mt-3 p-2.5 bg-white/80 rounded-xl border border-slate-200/70 text-[11px] font-mono text-slate-700 flex items-center gap-2">
                                 <span className="font-bold text-slate-400 shrink-0">HTML Evidence:</span>
                                 <span className="truncate">{issue.evidence}</span>
                               </div>
@@ -832,7 +832,7 @@ export const HomeView: React.FC = () => {
                           Extracted actual publicly available business information from DOM, JSON-LD, and page metadata.
                         </p>
                       </div>
-                      <div className="px-3 py-1 rounded-lg bg-white border border-blue-200 text-sm text-blue-800 font-semibold shrink-0">
+                      <div className="px-3 py-1 rounded-lg bg-white border border-blue-200 text-[11px] text-blue-800 font-semibold shrink-0">
                         Strict Source Attribution (0% Hallucination)
                       </div>
                     </div>
@@ -868,12 +868,12 @@ export const HomeView: React.FC = () => {
                           >
                             <div>
                               <div className="flex items-center justify-between gap-2 mb-1.5">
-                                <div className="flex items-center gap-1.5 text-sm font-bold text-slate-700 font-heading">
+                                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 font-heading">
                                   <Icon className="w-3.5 h-3.5 text-slate-400" />
                                   <span>{item.label}</span>
                                 </div>
                                 <span
-                                  className={`px-2 py-0.5 rounded-full text-sm font-bold ${
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                                     isFound
                                       ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                       : 'bg-slate-100 text-slate-500 border border-slate-200'
@@ -884,7 +884,7 @@ export const HomeView: React.FC = () => {
                               </div>
 
                               <p
-                                className={`text-sm font-semibold leading-relaxed break-words ${
+                                className={`text-xs font-semibold leading-relaxed break-words ${
                                   isFound ? 'text-slate-900' : 'text-slate-400 font-normal italic'
                                 }`}
                               >
@@ -893,7 +893,7 @@ export const HomeView: React.FC = () => {
                             </div>
 
                             <div className="pt-2 border-t border-slate-100">
-                              <span className="text-sm font-mono font-medium text-slate-400 block truncate">
+                              <span className="text-[10px] font-mono font-medium text-slate-400 block truncate">
                                 {item.field?.source || 'Source: Website Crawl (Not detected)'}
                               </span>
                             </div>
@@ -902,7 +902,7 @@ export const HomeView: React.FC = () => {
                       })}
                     </div>
 
-                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm text-slate-500 flex items-center gap-2">
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500 flex items-center gap-2">
                       <Info className="w-4 h-4 text-slate-400 shrink-0" />
                       <span>
                         <strong>Deterministic Policy:</strong> Missing fields display &quot;Not found on website&quot; rather than being inferred or estimated.
@@ -929,72 +929,72 @@ export const HomeView: React.FC = () => {
                     {/* 6.1 Technical SEO */}
                     <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <h5 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-heading flex items-center gap-2">
+                        <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading flex items-center gap-2">
                           <Server className="w-4 h-4 text-indigo-600" />
                           <span>Technical SEO</span>
                         </h5>
-                        <span className="text-sm text-slate-400 font-mono">Protocols & Handshakes</span>
+                        <span className="text-[11px] text-slate-400 font-mono">Protocols & Handshakes</span>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
                         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-slate-700">HTTPS / SSL</span>
-                            <span className={`px-2 py-0.5 rounded text-sm font-bold ${publicAudit.realSeoAnalysis.technical.https.enabled ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.realSeoAnalysis.technical.https.enabled ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
                               {publicAudit.realSeoAnalysis.technical.https.enabled ? 'Enabled' : 'Missing'}
                             </span>
                           </div>
-                          <p className="text-slate-500 text-sm">{publicAudit.realSeoAnalysis.technical.https.evidence}</p>
+                          <p className="text-slate-500 text-[11px]">{publicAudit.realSeoAnalysis.technical.https.evidence}</p>
                         </div>
 
                         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-slate-700">Crawlability (Meta Robots)</span>
-                            <span className="px-2 py-0.5 rounded text-sm font-bold bg-emerald-100 text-emerald-800">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
                               {publicAudit.realSeoAnalysis.technical.crawlability.status}
                             </span>
                           </div>
-                          <p className="text-slate-500 text-sm font-mono truncate">{publicAudit.realSeoAnalysis.technical.crawlability.evidence}</p>
+                          <p className="text-slate-500 text-[11px] font-mono truncate">{publicAudit.realSeoAnalysis.technical.crawlability.evidence}</p>
                         </div>
 
                         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-slate-700">robots.txt</span>
-                            <span className={`px-2 py-0.5 rounded text-sm font-bold ${publicAudit.realSeoAnalysis.technical.robotsTxt.found ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.realSeoAnalysis.technical.robotsTxt.found ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
                               HTTP {publicAudit.realSeoAnalysis.technical.robotsTxt.statusCode}
                             </span>
                           </div>
-                          <p className="text-slate-500 text-sm">{publicAudit.realSeoAnalysis.technical.robotsTxt.evidence}</p>
+                          <p className="text-slate-500 text-[11px]">{publicAudit.realSeoAnalysis.technical.robotsTxt.evidence}</p>
                         </div>
 
                         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-slate-700">sitemap.xml</span>
-                            <span className={`px-2 py-0.5 rounded text-sm font-bold ${publicAudit.realSeoAnalysis.technical.sitemapXml.found ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.realSeoAnalysis.technical.sitemapXml.found ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
                               HTTP {publicAudit.realSeoAnalysis.technical.sitemapXml.statusCode}
                             </span>
                           </div>
-                          <p className="text-slate-500 text-sm">{publicAudit.realSeoAnalysis.technical.sitemapXml.evidence}</p>
+                          <p className="text-slate-500 text-[11px]">{publicAudit.realSeoAnalysis.technical.sitemapXml.evidence}</p>
                         </div>
 
                         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-slate-700">Canonical Tag</span>
-                            <span className={`px-2 py-0.5 rounded text-sm font-bold ${publicAudit.realSeoAnalysis.technical.canonicalTag.present ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.realSeoAnalysis.technical.canonicalTag.present ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
                               {publicAudit.realSeoAnalysis.technical.canonicalTag.present ? 'Present' : 'Missing'}
                             </span>
                           </div>
-                          <p className="text-slate-500 text-sm font-mono truncate">{publicAudit.realSeoAnalysis.technical.canonicalTag.evidence}</p>
+                          <p className="text-slate-500 text-[11px] font-mono truncate">{publicAudit.realSeoAnalysis.technical.canonicalTag.evidence}</p>
                         </div>
 
                         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-slate-700">Internal Sample Links</span>
-                            <span className="px-2 py-0.5 rounded text-sm font-bold bg-emerald-100 text-emerald-800">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
                               {publicAudit.realSeoAnalysis.technical.internalLinksHealth.brokenCount === 0 ? '0 Broken' : `${publicAudit.realSeoAnalysis.technical.internalLinksHealth.brokenCount} Broken`}
                             </span>
                           </div>
-                          <p className="text-slate-500 text-sm">{publicAudit.realSeoAnalysis.technical.internalLinksHealth.evidence}</p>
+                          <p className="text-slate-500 text-[11px]">{publicAudit.realSeoAnalysis.technical.internalLinksHealth.evidence}</p>
                         </div>
                       </div>
                     </div>
@@ -1002,52 +1002,52 @@ export const HomeView: React.FC = () => {
                     {/* 6.2 On-Page SEO */}
                     <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <h5 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-heading flex items-center gap-2">
+                        <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading flex items-center gap-2">
                           <FileText className="w-4 h-4 text-blue-600" />
                           <span>On-Page SEO</span>
                         </h5>
-                        <span className="text-sm text-slate-400 font-mono">Headings & Metadata</span>
+                        <span className="text-[11px] text-slate-400 font-mono">Headings & Metadata</span>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
                         <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-slate-900">Title Tag</span>
-                            <span className="text-sm font-mono text-slate-500">{publicAudit.realSeoAnalysis.onPage.titleTag.length} chars</span>
+                            <span className="text-[11px] font-mono text-slate-500">{publicAudit.realSeoAnalysis.onPage.titleTag.length} chars</span>
                           </div>
                           <p className="text-slate-800 font-medium">{publicAudit.realSeoAnalysis.onPage.titleTag.text || 'No title tag found'}</p>
-                          <p className="text-slate-500 text-sm font-mono">{publicAudit.realSeoAnalysis.onPage.titleTag.evidence}</p>
+                          <p className="text-slate-500 text-[11px] font-mono">{publicAudit.realSeoAnalysis.onPage.titleTag.evidence}</p>
                         </div>
 
                         <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-slate-900">Meta Description</span>
-                            <span className="text-sm font-mono text-slate-500">{publicAudit.realSeoAnalysis.onPage.metaDescription.length} chars</span>
+                            <span className="text-[11px] font-mono text-slate-500">{publicAudit.realSeoAnalysis.onPage.metaDescription.length} chars</span>
                           </div>
                           <p className="text-slate-800 font-medium">{publicAudit.realSeoAnalysis.onPage.metaDescription.text || 'No meta description found'}</p>
-                          <p className="text-slate-500 text-sm font-mono">{publicAudit.realSeoAnalysis.onPage.metaDescription.evidence}</p>
+                          <p className="text-slate-500 text-[11px] font-mono">{publicAudit.realSeoAnalysis.onPage.metaDescription.evidence}</p>
                         </div>
 
                         <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-slate-900">H1 Tag Structure</span>
-                            <span className={`px-2 py-0.5 rounded text-sm font-bold ${publicAudit.realSeoAnalysis.onPage.h1Heading.present ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.realSeoAnalysis.onPage.h1Heading.present ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
                               {publicAudit.realSeoAnalysis.onPage.h1Heading.count} H1 Tag(s)
                             </span>
                           </div>
                           <p className="text-slate-800 font-medium">{publicAudit.realSeoAnalysis.onPage.h1Heading.headings[0] || 'No H1 found'}</p>
-                          <p className="text-slate-500 text-sm">{publicAudit.realSeoAnalysis.onPage.h1Heading.evidence}</p>
+                          <p className="text-slate-500 text-[11px]">{publicAudit.realSeoAnalysis.onPage.h1Heading.evidence}</p>
                         </div>
 
                         <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-slate-900">Image Alt Accessibility</span>
-                            <span className={`px-2 py-0.5 rounded text-sm font-bold ${publicAudit.realSeoAnalysis.onPage.imageAltAttributes.missingAltCount === 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.realSeoAnalysis.onPage.imageAltAttributes.missingAltCount === 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
                               {publicAudit.realSeoAnalysis.onPage.imageAltAttributes.compliancePercentage}% Compliant
                             </span>
                           </div>
                           <p className="text-slate-800 font-medium">{publicAudit.realSeoAnalysis.onPage.imageAltAttributes.evidence}</p>
-                          <p className="text-slate-500 text-sm">Checked {publicAudit.realSeoAnalysis.onPage.imageAltAttributes.totalImages} images on homepage</p>
+                          <p className="text-slate-500 text-[11px]">Checked {publicAudit.realSeoAnalysis.onPage.imageAltAttributes.totalImages} images on homepage</p>
                         </div>
                       </div>
                     </div>
@@ -1055,23 +1055,23 @@ export const HomeView: React.FC = () => {
                     {/* 6.3 Structured Data / Schema.org */}
                     <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <h5 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-heading flex items-center gap-2">
+                        <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading flex items-center gap-2">
                           <Layers className="w-4 h-4 text-purple-600" />
                           <span>Structured Data (JSON-LD)</span>
                         </h5>
-                        <span className="text-sm text-slate-400 font-mono">{publicAudit.realSeoAnalysis.structuredData.totalBlocks} Blocks Found</span>
+                        <span className="text-[11px] text-slate-400 font-mono">{publicAudit.realSeoAnalysis.structuredData.totalBlocks} Blocks Found</span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
                         {publicAudit.realSeoAnalysis.structuredData.findings.map((item, idx) => (
                           <div key={idx} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
                             <div className="flex items-center justify-between">
                               <span className="font-bold text-slate-800">{item.schema}</span>
-                              <span className={`px-2 py-0.5 rounded text-sm font-bold ${item.detected ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${item.detected ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
                                 {item.detected ? 'Detected' : 'Missing'}
                               </span>
                             </div>
-                            <p className="text-slate-500 text-sm">{item.evidence}</p>
+                            <p className="text-slate-500 text-[11px]">{item.evidence}</p>
                           </div>
                         ))}
                       </div>
@@ -1098,20 +1098,20 @@ export const HomeView: React.FC = () => {
                     <div className="p-5 rounded-2xl bg-amber-50/80 border border-amber-200 space-y-2.5">
                       <div className="flex items-center gap-2">
                         <Lock className="w-4 h-4 text-amber-700 shrink-0" />
-                        <h5 className="text-sm font-bold text-amber-900 uppercase tracking-wider font-heading">
+                        <h5 className="text-xs font-bold text-amber-900 uppercase tracking-wider font-heading">
                           {publicAudit.localSeoAnalysis.googleBusinessProfileNotice.headline}
                         </h5>
                       </div>
                       <p className="text-sm text-amber-900/90 leading-relaxed font-sans">
                         {publicAudit.localSeoAnalysis.googleBusinessProfileNotice.explanation}
                       </p>
-                      <div className="pt-2 border-t border-amber-200/70 flex items-center justify-between text-sm">
-                        <span className="text-sm font-medium text-amber-800">
+                      <div className="pt-2 border-t border-amber-200/70 flex items-center justify-between text-xs">
+                        <span className="text-[11px] font-medium text-amber-800">
                           {publicAudit.localSeoAnalysis.googleBusinessProfileNotice.actionRequired}
                         </span>
                         <button
                           onClick={() => handleClaimAndUnlock()}
-                          className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm rounded-lg transition-all cursor-pointer font-sans shrink-0 ml-3"
+                          className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg transition-all cursor-pointer font-sans shrink-0 ml-3"
                         >
                           Connect in Workspace
                         </button>
@@ -1119,49 +1119,49 @@ export const HomeView: React.FC = () => {
                     </div>
 
                     {/* Local Signals Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
                       <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-slate-900 font-heading">Name & Brand Consistency</span>
-                          <span className={`px-2 py-0.5 rounded text-sm font-bold ${publicAudit.localSeoAnalysis.signals.businessName.found ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.localSeoAnalysis.signals.businessName.found ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
                             {publicAudit.localSeoAnalysis.signals.businessName.found ? 'Verified' : 'Not detected'}
                           </span>
                         </div>
                         <p className="text-slate-800 font-semibold">{publicAudit.localSeoAnalysis.signals.businessName.value || 'Not found on website'}</p>
-                        <p className="text-slate-500 text-sm">{publicAudit.localSeoAnalysis.signals.businessName.evidence}</p>
+                        <p className="text-slate-500 text-[11px]">{publicAudit.localSeoAnalysis.signals.businessName.evidence}</p>
                       </div>
 
                       <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-slate-900 font-heading">Physical Address & Geo</span>
-                          <span className={`px-2 py-0.5 rounded text-sm font-bold ${publicAudit.localSeoAnalysis.signals.address.found ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.localSeoAnalysis.signals.address.found ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
                             {publicAudit.localSeoAnalysis.signals.address.found ? 'Verified' : 'Not detected'}
                           </span>
                         </div>
                         <p className="text-slate-800 font-semibold">{publicAudit.localSeoAnalysis.signals.address.value || 'Not found on website'}</p>
-                        <p className="text-slate-500 text-sm">{publicAudit.localSeoAnalysis.signals.address.evidence}</p>
+                        <p className="text-slate-500 text-[11px]">{publicAudit.localSeoAnalysis.signals.address.evidence}</p>
                       </div>
 
                       <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-slate-900 font-heading">Local Business Schema</span>
-                          <span className={`px-2 py-0.5 rounded text-sm font-bold ${publicAudit.localSeoAnalysis.signals.localBusinessSchema.found ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${publicAudit.localSeoAnalysis.signals.localBusinessSchema.found ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
                             {publicAudit.localSeoAnalysis.signals.localBusinessSchema.found ? 'Present' : 'Missing'}
                           </span>
                         </div>
                         <p className="text-slate-800 font-semibold">{publicAudit.localSeoAnalysis.signals.localBusinessSchema.schemaType || 'None'}</p>
-                        <p className="text-slate-500 text-sm">{publicAudit.localSeoAnalysis.signals.localBusinessSchema.evidence}</p>
+                        <p className="text-slate-500 text-[11px]">{publicAudit.localSeoAnalysis.signals.localBusinessSchema.evidence}</p>
                       </div>
 
                       <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-slate-900 font-heading">Dedicated Subpages</span>
-                          <span className="px-2 py-0.5 rounded text-sm font-bold bg-indigo-100 text-indigo-800">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800">
                             {publicAudit.localSeoAnalysis.signals.servicePages.pages.length} Service URLs
                           </span>
                         </div>
                         <p className="text-slate-800 font-semibold">{publicAudit.localSeoAnalysis.signals.servicePages.evidence}</p>
-                        <p className="text-slate-500 text-sm">{publicAudit.localSeoAnalysis.signals.locationPages.evidence}</p>
+                        <p className="text-slate-500 text-[11px]">{publicAudit.localSeoAnalysis.signals.locationPages.evidence}</p>
                       </div>
                     </div>
                   </div>
@@ -1188,42 +1188,42 @@ export const HomeView: React.FC = () => {
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                           <div className="flex items-center gap-2">
                             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                            <h5 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-heading">
+                            <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">
                               Google Lighthouse Mobile Score
                             </h5>
                           </div>
-                          <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-bold text-sm border border-emerald-200">
+                          <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200">
                             {publicAudit.performanceAnalysis.pageSpeedMetrics.mobilePerformanceScore}/100
                           </span>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
                           <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                            <span className="text-slate-400 block text-sm font-medium">First Contentful Paint (FCP)</span>
+                            <span className="text-slate-400 block text-[10px] font-medium">First Contentful Paint (FCP)</span>
                             <span className="font-bold text-slate-900 mt-1 block">
                               {publicAudit.performanceAnalysis.pageSpeedMetrics.coreWebVitals.firstContentfulPaint}
                             </span>
                           </div>
                           <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                            <span className="text-slate-400 block text-sm font-medium">Largest Contentful Paint (LCP)</span>
+                            <span className="text-slate-400 block text-[10px] font-medium">Largest Contentful Paint (LCP)</span>
                             <span className="font-bold text-slate-900 mt-1 block">
                               {publicAudit.performanceAnalysis.pageSpeedMetrics.coreWebVitals.largestContentfulPaint}
                             </span>
                           </div>
                           <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                            <span className="text-slate-400 block text-sm font-medium">Cumulative Layout Shift (CLS)</span>
+                            <span className="text-slate-400 block text-[10px] font-medium">Cumulative Layout Shift (CLS)</span>
                             <span className="font-bold text-slate-900 mt-1 block">
                               {publicAudit.performanceAnalysis.pageSpeedMetrics.coreWebVitals.cumulativeLayoutShift}
                             </span>
                           </div>
                           <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                            <span className="text-slate-400 block text-sm font-medium">Total Blocking Time (TBT)</span>
+                            <span className="text-slate-400 block text-[10px] font-medium">Total Blocking Time (TBT)</span>
                             <span className="font-bold text-slate-900 mt-1 block">
                               {publicAudit.performanceAnalysis.pageSpeedMetrics.coreWebVitals.totalBlockingTime}
                             </span>
                           </div>
                           <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                            <span className="text-slate-400 block text-sm font-medium">Speed Index</span>
+                            <span className="text-slate-400 block text-[10px] font-medium">Speed Index</span>
                             <span className="font-bold text-slate-900 mt-1 block">
                               {publicAudit.performanceAnalysis.pageSpeedMetrics.coreWebVitals.speedIndex}
                             </span>
@@ -1234,14 +1234,14 @@ export const HomeView: React.FC = () => {
                       <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
                         <div className="flex items-center gap-2">
                           <Info className="w-4 h-4 text-slate-500" />
-                          <h5 className="text-sm font-bold text-slate-700 uppercase tracking-wider font-heading">
+                          <h5 className="text-xs font-bold text-slate-700 uppercase tracking-wider font-heading">
                             External PageSpeed API Status
                           </h5>
                         </div>
                         <p className="text-sm text-slate-600 font-sans">
                           {publicAudit.performanceAnalysis.statusMessage}
                         </p>
-                        <p className="text-sm text-slate-400 font-sans pt-1">
+                        <p className="text-[11px] text-slate-400 font-sans pt-1">
                           Locora never fabricates artificial performance scores when Google Lighthouse API keys are unconfigured.
                         </p>
                       </div>
@@ -1250,41 +1250,41 @@ export const HomeView: React.FC = () => {
                     {/* Direct Live Socket Telemetry */}
                     <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <h5 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-heading flex items-center gap-2">
+                        <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading flex items-center gap-2">
                           <Activity className="w-4 h-4 text-emerald-600" />
                           <span>Direct Live Socket Telemetry</span>
                         </h5>
-                        <span className="text-sm text-slate-400 font-mono">Server Handshake Probe</span>
+                        <span className="text-[11px] text-slate-400 font-mono">Server Handshake Probe</span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                          <span className="text-slate-400 block text-sm font-medium mb-1">Time To First Byte (TTFB)</span>
+                          <span className="text-slate-400 block text-[10px] font-medium mb-1">Time To First Byte (TTFB)</span>
                           <span className="text-lg font-bold text-slate-900">
                             {publicAudit.performanceAnalysis.socketTelemetry.serverLatencyTtfbMs}ms
                           </span>
                         </div>
                         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                          <span className="text-slate-400 block text-sm font-medium mb-1">Transferred HTML Size</span>
+                          <span className="text-slate-400 block text-[10px] font-medium mb-1">Transferred HTML Size</span>
                           <span className="text-lg font-bold text-slate-900">
                             {publicAudit.performanceAnalysis.socketTelemetry.htmlPayloadSizeKb} KB
                           </span>
                         </div>
                         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                          <span className="text-slate-400 block text-sm font-medium mb-1">Transport Protocol</span>
+                          <span className="text-slate-400 block text-[10px] font-medium mb-1">Transport Protocol</span>
                           <span className="text-sm font-bold text-slate-900 truncate block">
                             {publicAudit.performanceAnalysis.socketTelemetry.protocol}
                           </span>
                         </div>
                         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                          <span className="text-slate-400 block text-sm font-medium mb-1">HTTP Response Code</span>
+                          <span className="text-slate-400 block text-[10px] font-medium mb-1">HTTP Response Code</span>
                           <span className="text-sm font-bold text-emerald-700">
                             HTTP {publicAudit.performanceAnalysis.socketTelemetry.httpStatusCode} OK
                           </span>
                         </div>
                       </div>
 
-                      <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/70 text-sm font-mono text-slate-600">
+                      <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/70 text-xs font-mono text-slate-600">
                         {publicAudit.performanceAnalysis.socketTelemetry.evidence}
                       </div>
                     </div>
@@ -1315,7 +1315,7 @@ export const HomeView: React.FC = () => {
                           >
                             <div className="space-y-2">
                               <div className="flex items-center justify-between">
-                                <span className="text-sm font-bold text-[#059669] uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 font-heading">
+                                <span className="text-[10px] font-bold text-[#059669] uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 font-heading">
                                   {teaser.question}
                                 </span>
                                 <Lock className="w-3.5 h-3.5 text-slate-400" />
@@ -1328,13 +1328,13 @@ export const HomeView: React.FC = () => {
                               </p>
                             </div>
 
-                            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-sm">
-                              <span className="text-sm font-medium text-slate-500">
+                            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                              <span className="text-[11px] font-medium text-slate-500">
                                 {teaser.featureHighlight}
                               </span>
                               <button
                                 onClick={() => handleClaimAndUnlock()}
-                                className="text-[#059669] hover:text-[#047857] font-bold text-sm flex items-center gap-1 cursor-pointer"
+                                className="text-[#059669] hover:text-[#047857] font-bold text-xs flex items-center gap-1 cursor-pointer"
                               >
                                 <span>Unlock</span>
                                 <ArrowRight className="w-3 h-3" />
@@ -1348,14 +1348,14 @@ export const HomeView: React.FC = () => {
                     {/* Primary CTA Unlock Banner */}
                     <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-[#043427] to-[#011a13] text-white space-y-5">
                       <div className="max-w-2xl space-y-2">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-sm font-bold font-heading">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-bold font-heading">
                           <Sparkles className="w-3.5 h-3.5" />
                           <span>Claim Your Business Diagnostic</span>
                         </div>
                         <h4 className="text-xl sm:text-2xl font-bold font-heading text-white tracking-tight">
                           Turn These Findings Into Customers with Locora
                         </h4>
-                        <p className="text-sm sm:text-base text-emerald-100/90 leading-relaxed font-sans">
+                        <p className="text-sm sm:text-sm text-emerald-100/90 leading-relaxed font-sans">
                           Claiming your audit saves your findings and initializes your autonomous Business Brain.
                           Locora AI will immediately prioritize your highest-ROI fixes and generate copy-paste ready Schema.org code.
                         </p>
@@ -1371,13 +1371,13 @@ export const HomeView: React.FC = () => {
                         </button>
                         <button
                           onClick={handleResetCheckup}
-                          className="px-4 py-3 bg-white/10 hover:bg-white/15 text-white font-medium text-sm rounded-xl transition-all cursor-pointer font-sans"
+                          className="px-4 py-3 bg-white/10 hover:bg-white/15 text-white font-medium text-xs rounded-xl transition-all cursor-pointer font-sans"
                         >
                           Check Another Website
                         </button>
                       </div>
 
-                      <div className="pt-2 flex flex-wrap items-center gap-4 text-sm text-emerald-200/80 font-medium">
+                      <div className="pt-2 flex flex-wrap items-center gap-4 text-xs text-emerald-200/80 font-medium">
                         <span className="flex items-center gap-1">✓ No credit card required</span>
                         <span className="flex items-center gap-1">✓ Live diagnostic imported into your workspace</span>
                         <span className="flex items-center gap-1">✓ 100% Free tier included</span>
@@ -1391,7 +1391,7 @@ export const HomeView: React.FC = () => {
             /* Pre-Audit Preview (Clean, Authentic, Zero Fake Data) */
             <div className="p-8 sm:p-12 text-center space-y-8">
               <div className="max-w-2xl mx-auto space-y-3">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-semibold font-heading uppercase tracking-wider">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-semibold font-heading uppercase tracking-wider">
                   <Zap className="w-3.5 h-3.5" />
                   <span>100% Real Website Diagnostic</span>
                 </div>
@@ -1447,7 +1447,7 @@ export const HomeView: React.FC = () => {
                     const el = document.getElementById('hero-input');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm sm:text-sm rounded-xl shadow-sm transition-all inline-flex items-center gap-2 cursor-pointer font-sans"
+                  className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm rounded-xl shadow-sm transition-all inline-flex items-center gap-2 cursor-pointer font-sans"
                 >
                   <span>Enter Your Website to Check</span>
                   <ArrowRight className="w-4 h-4" />
@@ -1461,14 +1461,14 @@ export const HomeView: React.FC = () => {
       {/* 04 — THE PRODUCT SUITE AT A GLANCE */}
       <section id="product-overview" className="max-w-6xl mx-auto px-6 space-y-8">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-bold font-heading uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" />
             <span>The Unified AI Platform</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-slate-900 tracking-tight">
             Six Intelligent Engines. One Clean System.
           </h2>
-          <p className="text-sm sm:text-base text-slate-600 font-sans leading-relaxed">
+          <p className="text-sm sm:text-sm text-slate-600 font-sans leading-relaxed">
             Locora brings your SEO, AI search presence, reputation, competitor radar, and daily business operations together under an autonomous Business Brain.
           </p>
         </div>
@@ -1529,7 +1529,7 @@ export const HomeView: React.FC = () => {
                     <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#059669] flex items-center justify-center group-hover:bg-[#059669] group-hover:text-white transition-colors">
                       <Icon className="w-5 h-5" />
                     </div>
-                    <span className="text-sm font-bold text-slate-400 uppercase tracking-wider font-heading">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-heading">
                       {engine.tag}
                     </span>
                   </div>
@@ -1546,7 +1546,7 @@ export const HomeView: React.FC = () => {
                 <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
                   <button
                     onClick={() => navigateTo('products', '/products', engine.id)}
-                    className="text-sm font-bold text-[#059669] hover:text-[#047857] flex items-center gap-1.5 cursor-pointer font-sans"
+                    className="text-xs font-bold text-[#059669] hover:text-[#047857] flex items-center gap-1.5 cursor-pointer font-sans"
                   >
                     <span>View Product Details</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -1561,20 +1561,20 @@ export const HomeView: React.FC = () => {
         <div className="bg-gradient-to-br from-[#022c22] via-[#044a36] to-[#011a13] text-white rounded-3xl p-8 sm:p-10 border border-emerald-800/60 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden">
           <div className="absolute top-0 right-0 w-72 h-72 bg-[#10b981]/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10 space-y-2 text-center sm:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-[#6ee7b7] text-sm font-bold font-heading uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-[#6ee7b7] text-xs font-bold font-heading uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Dedicated Product Suite</span>
             </div>
             <h3 className="text-xl sm:text-2xl font-bold font-heading text-white">
               Want to see the interactive feature demos and workflow teardowns?
             </h3>
-            <p className="text-sm sm:text-base text-emerald-100/80 font-sans max-w-xl">
+            <p className="text-xs sm:text-sm text-emerald-100/80 font-sans max-w-xl">
               Explore our dedicated product page for interactive tools, AI business chat consoles, schema previews, and agency management modules.
             </p>
           </div>
           <button
             onClick={() => navigateTo('products', '/products')}
-            className="px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-2xl shadow-lg transition-all flex items-center gap-2 shrink-0 cursor-pointer font-heading uppercase tracking-wider"
+            className="px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-2xl shadow-lg transition-all flex items-center gap-2 shrink-0 cursor-pointer font-heading uppercase tracking-wider"
           >
             <span>Explore All Products</span>
             <ArrowRight className="w-4 h-4" />
@@ -1585,14 +1585,14 @@ export const HomeView: React.FC = () => {
       {/* HOW IT WORKS — the complete Locora flow */}
       <section id="how-it-works" className="max-w-6xl mx-auto px-6 space-y-10">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-bold font-heading uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider">
             <Route className="w-3.5 h-3.5" />
             <span>How It Works</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-slate-900 tracking-tight">
             From Checkup to Growth in Five Steps
           </h2>
-          <p className="text-sm sm:text-base text-slate-600 font-sans leading-relaxed">
+          <p className="text-sm sm:text-sm text-slate-600 font-sans leading-relaxed">
             No guesswork, no fake numbers. Every step is powered by your real business data.
           </p>
         </div>
@@ -1654,21 +1654,21 @@ export const HomeView: React.FC = () => {
             <span>Start Your Free Checkup</span>
             <ArrowRight className="w-4 h-4" />
           </button>
-          <p className="text-sm text-slate-500 font-sans mt-3">Free forever plan · No credit card required · Real data from minute one</p>
+          <p className="text-[11px] text-slate-500 font-sans mt-3">Free forever plan · No credit card required · Real data from minute one</p>
         </div>
       </section>
 
       {/* 04.5 — NEW FEATURE: VERIFIED LOCAL BUSINESS DIRECTORY */}
       <section id="business-directory-feature" className="max-w-6xl mx-auto px-6 space-y-12">
         <div className="text-center space-y-3 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-bold font-heading uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" />
             <span>New Feature · Verified Directory Network</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-slate-900 tracking-tight">
             The Locora Verified Local Business Directory
           </h2>
-          <p className="text-sm sm:text-base text-slate-600 font-sans leading-relaxed">
+          <p className="text-sm sm:text-sm text-slate-600 font-sans leading-relaxed">
             Connect with high-intent local customers looking for accredited service professionals. Every listing is fortified with Google Business Profile synchronization, Schema.org LocalBusiness structured data, verified reviews, and Generative Engine Optimization (GEO) citations across 2026 AI search engines.
           </p>
         </div>
@@ -1722,11 +1722,11 @@ export const HomeView: React.FC = () => {
             {/* Left: Verified Real Listing Card */}
             <div className="lg:col-span-7 bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 space-y-5 backdrop-blur-sm">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-700/60 pb-4">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-sm font-bold font-heading">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold font-heading">
                   <BadgeCheck className="w-4 h-4 text-emerald-400" />
                   <span>Locora Directory Profile</span>
                 </div>
-                <span className="text-sm text-emerald-400 font-semibold flex items-center gap-1.5">
+                <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   Claimed Business Workspace
                 </span>
@@ -1736,15 +1736,15 @@ export const HomeView: React.FC = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <h4 className="text-xl font-bold font-heading text-white">Gotham Enterprises Ltd</h4>
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-sm font-semibold">
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-xs font-semibold">
                       Professional Services
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-slate-700/80 border border-slate-600/60 text-slate-300 text-sm font-mono font-bold">
+                    <span className="px-2.5 py-0.5 rounded-full bg-slate-700/80 border border-slate-600/60 text-slate-300 text-xs font-mono font-bold">
                       85 SEO Score
                     </span>
                   </div>
                 </div>
-                <p className="text-sm text-slate-300 flex items-center gap-2">
+                <p className="text-xs text-slate-300 flex items-center gap-2">
                   <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span>Wilmington, Delaware 19801 • Serving Nationwide Healthcare Practices</span>
                 </p>
@@ -1761,7 +1761,7 @@ export const HomeView: React.FC = () => {
                   'Nurse Practitioners & PTs',
                   'Nationwide Remote Search',
                 ].map((svc, idx) => (
-                  <span key={idx} className="px-2.5 py-1 rounded-lg bg-slate-700/70 border border-slate-600/50 text-sm text-slate-200 font-medium">
+                  <span key={idx} className="px-2.5 py-1 rounded-lg bg-slate-700/70 border border-slate-600/50 text-[11px] text-slate-200 font-medium">
                     {svc}
                   </span>
                 ))}
@@ -1772,14 +1772,14 @@ export const HomeView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => navigateToDirectory('/biz/gotham-enterprises-ltd-s-business-workspace')}
-                  className="px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-sans shadow-md"
+                  className="px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-sans shadow-md"
                 >
                   <Building2 className="w-3.5 h-3.5" />
                   <span>View Directory Profile</span>
                 </button>
                 <a
                   href="/checkup"
-                  className="px-4 py-2.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-1.5 font-sans"
+                  className="px-4 py-2.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 font-sans"
                 >
                   <Phone className="w-3.5 h-3.5 text-emerald-400" />
                   <span>Prefer to talk? Run the free checkup first</span>
@@ -1788,7 +1788,7 @@ export const HomeView: React.FC = () => {
                   href="https://www.gothamenterprisesltd.com/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-1.5 font-sans"
+                  className="px-4 py-2.5 bg-slate-700/80 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 font-sans"
                 >
                   <Globe className="w-3.5 h-3.5 text-emerald-400" />
                   <span>gothamenterprisesltd.com</span>
@@ -1822,7 +1822,7 @@ export const HomeView: React.FC = () => {
                     onClick={() => navigateToDirectory()}
                     className="p-2.5 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 hover:border-emerald-400/50 rounded-xl text-left transition-all flex items-center justify-between cursor-pointer group"
                   >
-                    <span className="text-sm font-semibold text-slate-200 group-hover:text-emerald-300 transition-colors">
+                    <span className="text-xs font-semibold text-slate-200 group-hover:text-emerald-300 transition-colors">
                       {cat.name}
                     </span>
                   </button>
@@ -1834,7 +1834,7 @@ export const HomeView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => navigateToDirectory()}
-                  className="w-full sm:w-auto px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer font-heading uppercase tracking-wider"
+                  className="w-full sm:w-auto px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer font-heading uppercase tracking-wider"
                 >
                   <Search className="w-4 h-4" />
                   <span>Browse Directory Listings</span>
@@ -1842,7 +1842,7 @@ export const HomeView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => navigateToDirectory()}
-                  className="w-full sm:w-auto px-5 py-3 bg-white/10 hover:bg-white/15 border border-white/20 text-white font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer font-heading"
+                  className="w-full sm:w-auto px-5 py-3 bg-white/10 hover:bg-white/15 border border-white/20 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer font-heading"
                 >
                   <Building2 className="w-4 h-4 text-emerald-400" />
                   <span>Claim or Add Business</span>
@@ -1856,14 +1856,14 @@ export const HomeView: React.FC = () => {
       {/* 05 — WHO LOCORA IS BUILT FOR (SOLUTIONS BY INDUSTRY) */}
       <section id="industry-solutions" className="max-w-6xl mx-auto px-6 space-y-8">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-bold font-heading uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider">
             <Building2 className="w-3.5 h-3.5" />
             <span>Built For Real Businesses</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-slate-900 tracking-tight">
             Engineered For Your Specific Business Model
           </h2>
-          <p className="text-sm sm:text-base text-slate-600 font-sans leading-relaxed">
+          <p className="text-sm sm:text-sm text-slate-600 font-sans leading-relaxed">
             Locora comes pre-trained with playbooks and metrics calibrated for local service trades, clinical practices, and high-velocity agencies.
           </p>
         </div>
@@ -1925,12 +1925,12 @@ export const HomeView: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-base font-bold font-heading text-slate-900">{item.industry}</h3>
-                    <p className="text-sm font-medium text-emerald-700 mt-0.5">{item.examples}</p>
+                    <p className="text-[11px] font-medium text-emerald-700 mt-0.5">{item.examples}</p>
                   </div>
                   <p className="text-sm text-slate-600 leading-relaxed font-sans">{item.desc}</p>
                 </div>
                 <div className="pt-3 border-t border-slate-100">
-                  <span className="text-sm font-bold text-slate-800 flex items-center gap-1 font-heading">
+                  <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1 font-heading">
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" />
                     <span>{item.highlight}</span>
                   </span>
@@ -1946,7 +1946,7 @@ export const HomeView: React.FC = () => {
         <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 shadow-sm relative overflow-hidden space-y-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="space-y-3 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-bold font-heading uppercase tracking-wider">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider">
                 <ShieldCheck className="w-3.5 h-3.5 text-[#059669]" />
                 <span>Honest Real-Time Diagnostics</span>
               </div>
@@ -1966,7 +1966,7 @@ export const HomeView: React.FC = () => {
                   setActiveTab('checkup');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="px-7 py-3.5 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-sm sm:text-sm font-bold transition-all inline-flex items-center justify-center gap-2 cursor-pointer font-heading shadow-md hover:shadow-lg"
+                className="px-7 py-3.5 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs sm:text-sm font-bold transition-all inline-flex items-center justify-center gap-2 cursor-pointer font-heading shadow-md hover:shadow-lg"
               >
                 <span>Start Free Checkup</span>
                 <ArrowRight className="w-4 h-4" />
@@ -1976,7 +1976,7 @@ export const HomeView: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-slate-100">
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-              <div className="flex items-center gap-2 text-slate-900 font-bold text-sm sm:text-sm font-heading">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-xs sm:text-sm font-heading">
                 <MapPin className="w-4 h-4 text-emerald-600" />
                 <span>Maps &amp; Local Pack Presence</span>
               </div>
@@ -1986,7 +1986,7 @@ export const HomeView: React.FC = () => {
             </div>
 
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-              <div className="flex items-center gap-2 text-slate-900 font-bold text-sm sm:text-sm font-heading">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-xs sm:text-sm font-heading">
                 <Activity className="w-4 h-4 text-emerald-600" />
                 <span>Technical Website Health</span>
               </div>
@@ -1996,7 +1996,7 @@ export const HomeView: React.FC = () => {
             </div>
 
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-              <div className="flex items-center gap-2 text-slate-900 font-bold text-sm sm:text-sm font-heading">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-xs sm:text-sm font-heading">
                 <Sparkles className="w-4 h-4 text-emerald-600" />
                 <span>Review &amp; Visibility Footprint</span>
               </div>
@@ -2006,7 +2006,7 @@ export const HomeView: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500 pt-1 font-sans">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 pt-1 font-sans">
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
               100% Real Live Google Scan
@@ -2027,20 +2027,20 @@ export const HomeView: React.FC = () => {
       <section id="pricing" className="max-w-5xl mx-auto px-6">
         <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6 hover:border-emerald-300 transition-all">
           <div className="space-y-2 text-center sm:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-bold font-heading uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider">
               <Zap className="w-3.5 h-3.5" />
               <span>Transparent Pricing</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 tracking-tight">
               Predictable Plans for Solo Businesses & Agencies
             </h2>
-            <p className="text-sm sm:text-base text-slate-600 font-sans max-w-xl leading-relaxed">
+            <p className="text-sm sm:text-sm text-slate-600 font-sans max-w-xl leading-relaxed">
               Explore our flexible subscription plans—including our free Forever Explorer plan, Pro AI Growth ($29/mo), and multi-client Agency Elite ($99/mo)—with full feature comparisons and guarantees.
             </p>
           </div>
           <button
             onClick={() => navigateTo('pricing_public', '/pricing')}
-            className="px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center gap-2 shrink-0 cursor-pointer font-heading uppercase tracking-wider"
+            className="px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-2 shrink-0 cursor-pointer font-heading uppercase tracking-wider"
           >
             <span>View All Pricing Plans</span>
             <ArrowRight className="w-4 h-4" />
@@ -2054,7 +2054,7 @@ export const HomeView: React.FC = () => {
           <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 tracking-tight">
             Frequently Asked Questions
           </h2>
-          <p className="text-sm sm:text-base text-slate-600">
+          <p className="text-xs sm:text-sm text-slate-600">
             Everything you need to know about Locora AI and your Business Brain.
           </p>
         </div>
@@ -2067,7 +2067,7 @@ export const HomeView: React.FC = () => {
             >
               <button
                 onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
-                className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-sm text-slate-900 cursor-pointer font-heading"
+                className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 font-bold text-xs sm:text-sm text-slate-900 cursor-pointer font-heading"
               >
                 <span>{faq.q}</span>
                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${expandedFaq === i ? 'rotate-180' : ''}`} />
@@ -2115,7 +2115,7 @@ export const HomeView: React.FC = () => {
                 Create Account
               </button>
             </div>
-            <div className="text-sm text-emerald-200/80 pt-2 font-medium">
+            <div className="text-xs text-emerald-200/80 pt-2 font-medium">
               No credit card required · Free checkup · Instant insights
             </div>
           </div>

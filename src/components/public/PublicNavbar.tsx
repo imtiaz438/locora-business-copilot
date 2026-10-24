@@ -134,7 +134,7 @@ export const PublicNavbar: React.FC = () => {
           {/* HOME LINK */}
           <button
             onClick={() => navigateTo('home', '/')}
-            className={`px-4 py-2 rounded-full text-sm sm:text-sm font-semibold transition-all cursor-pointer ${
+            className={`px-4 py-2 rounded-full text-xs sm:text-[13px] font-semibold transition-all cursor-pointer ${
               activeTab === 'home'
                 ? 'bg-slate-900 text-white shadow-xs'
                 : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/70'
@@ -147,7 +147,7 @@ export const PublicNavbar: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setOpenDropdown(openDropdown === 'product' ? null : 'product')}
-              className={`px-4 py-2 rounded-full text-sm sm:text-sm font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-4 py-2 rounded-full text-xs sm:text-[13px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === 'products' || openDropdown === 'product'
                   ? 'bg-slate-900 text-white'
                   : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/70'
@@ -167,7 +167,7 @@ export const PublicNavbar: React.FC = () => {
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900 font-heading flex items-center gap-1.5">
+                    <div className="text-xs font-bold text-slate-900 font-heading flex items-center gap-1.5">
                       <span>Explore All Products</span>
                       <ArrowRight className="w-3 h-3 text-[#059669]" />
                     </div>
@@ -183,7 +183,7 @@ export const PublicNavbar: React.FC = () => {
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900 font-heading">AI Business Manager</div>
+                    <div className="text-xs font-bold text-slate-900 font-heading">AI Business Manager</div>
                     <div className="text-sm text-slate-500">Autonomous growth recommendations & action items</div>
                   </div>
                 </button>
@@ -196,7 +196,7 @@ export const PublicNavbar: React.FC = () => {
                     <MapPin className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900 font-heading">Local SEO Copilot</div>
+                    <div className="text-xs font-bold text-slate-900 font-heading">Local SEO Copilot</div>
                     <div className="text-sm text-slate-500">Google Maps ranking, service pages & schemas</div>
                   </div>
                 </button>
@@ -209,7 +209,7 @@ export const PublicNavbar: React.FC = () => {
                     <Search className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900 font-heading">AI Search Visibility</div>
+                    <div className="text-xs font-bold text-slate-900 font-heading">AI Search Visibility</div>
                     <div className="text-sm text-slate-500">Track mentions in ChatGPT, Perplexity & Copilot</div>
                   </div>
                 </button>
@@ -222,7 +222,7 @@ export const PublicNavbar: React.FC = () => {
                     <Star className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900 font-heading">AI Reputation Manager</div>
+                    <div className="text-xs font-bold text-slate-900 font-heading">AI Reputation Manager</div>
                     <div className="text-sm text-slate-500">Reviews into customer insights & marketing</div>
                   </div>
                 </button>
@@ -235,7 +235,7 @@ export const PublicNavbar: React.FC = () => {
                     <Shield className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900 font-heading">Competitor Intelligence</div>
+                    <div className="text-xs font-bold text-slate-900 font-heading">Competitor Intelligence</div>
                     <div className="text-sm text-slate-500">Spot gaps in rankings, services and reviews</div>
                   </div>
                 </button>
@@ -248,7 +248,7 @@ export const PublicNavbar: React.FC = () => {
                     <Users className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900 font-heading">Agency AI Client Manager</div>
+                    <div className="text-xs font-bold text-slate-900 font-heading">Agency AI Client Manager</div>
                     <div className="text-sm text-slate-500">Multi-location and client retainer management</div>
                   </div>
                 </button>
@@ -260,7 +260,7 @@ export const PublicNavbar: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setOpenDropdown(openDropdown === 'solutions' ? null : 'solutions')}
-              className={`px-3.5 py-1.5 rounded-full text-sm font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                 openDropdown === 'solutions'
                   ? 'bg-slate-900 text-white'
                   : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/70'
@@ -280,7 +280,7 @@ export const PublicNavbar: React.FC = () => {
                     <Building className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900 font-heading">Small Business Owners</div>
+                    <div className="text-xs font-bold text-slate-900 font-heading">Small Business Owners</div>
                     <div className="text-sm text-slate-500">More customers with zero technical headache</div>
                   </div>
                 </button>
@@ -293,7 +293,7 @@ export const PublicNavbar: React.FC = () => {
                     <Users className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900 font-heading">Local SEO Agencies</div>
+                    <div className="text-xs font-bold text-slate-900 font-heading">Local SEO Agencies</div>
                     <div className="text-sm text-slate-500">AI Client Manager for 10-100+ accounts</div>
                   </div>
                 </button>
@@ -306,7 +306,7 @@ export const PublicNavbar: React.FC = () => {
                     <Compass className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900 font-heading">Industry Blueprints</div>
+                    <div className="text-xs font-bold text-slate-900 font-heading">Industry Blueprints</div>
                     <div className="text-sm text-slate-500">Dental, HVAC, Legal, Roofing & Clinics</div>
                   </div>
                 </button>
@@ -318,7 +318,7 @@ export const PublicNavbar: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setOpenDropdown(openDropdown === 'resources' ? null : 'resources')}
-              className={`px-3.5 py-1.5 rounded-full text-sm font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                 openDropdown === 'resources'
                   ? 'bg-slate-900 text-white'
                   : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/70'
@@ -338,7 +338,7 @@ export const PublicNavbar: React.FC = () => {
                     <FileText className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900 font-heading">Guides & Tutorials</div>
+                    <div className="text-xs font-bold text-slate-900 font-heading">Guides & Tutorials</div>
                     <div className="text-sm text-slate-500">Step-by-step local growth strategies</div>
                   </div>
                 </button>
@@ -351,7 +351,7 @@ export const PublicNavbar: React.FC = () => {
                     <TrendingUp className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-slate-900 font-heading">Case Studies</div>
+                    <div className="text-xs font-bold text-slate-900 font-heading">Case Studies</div>
                     <div className="text-sm text-slate-500">Verified revenue & ranking outcomes</div>
                   </div>
                 </button>
@@ -362,7 +362,7 @@ export const PublicNavbar: React.FC = () => {
           {/* DIRECTORY LINK */}
           <button
             onClick={() => navigateTo('directory', '/directory')}
-            className={`px-3.5 py-1.5 rounded-full text-sm font-semibold transition-all cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
               activeTab === 'directory' || activeTab.startsWith('directory_')
                 ? 'bg-[#059669] text-white font-bold shadow-xs'
                 : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/70'
@@ -374,7 +374,7 @@ export const PublicNavbar: React.FC = () => {
           {/* PRICING LINK */}
           <button
             onClick={() => navigateTo('pricing_public', '/pricing')}
-            className={`px-3.5 py-1.5 rounded-full text-sm font-semibold transition-all cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
               activeTab === 'pricing_public' || activeTab === 'pricing'
                 ? 'bg-[#059669] text-white font-bold shadow-xs'
                 : 'text-slate-700 hover:text-slate-900 hover:bg-slate-200/70'
@@ -390,7 +390,7 @@ export const PublicNavbar: React.FC = () => {
             <>
               <button
                 onClick={() => navigateToApp('/dashboard', () => navigateTo('dashboard', '/dashboard'))}
-                className="px-5 py-2.5 sm:py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer font-sans"
+                className="px-5 py-2.5 sm:py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer font-sans"
               >
                 <LayoutDashboard className="w-4 h-4" />
                 <span>Launch App</span>
@@ -400,7 +400,7 @@ export const PublicNavbar: React.FC = () => {
                   logout();
                   navigateTo('home', '/');
                 }}
-                className="px-4 py-2.5 sm:py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-sm sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+                className="px-4 py-2.5 sm:py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs sm:text-sm font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer font-sans"
                 title="Sign Out"
               >
                 <LogOut className="w-4 h-4" />
@@ -411,14 +411,14 @@ export const PublicNavbar: React.FC = () => {
             <>
               <button
                 onClick={() => navigateToApp('/login', () => navigateTo('login', '/login'))}
-                className="px-5 py-2.5 sm:py-3 text-sm sm:text-sm font-bold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all flex items-center gap-2 cursor-pointer font-sans shadow-2xs"
+                className="px-5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all flex items-center gap-2 cursor-pointer font-sans shadow-2xs"
               >
                 <LogIn className="w-4 h-4 text-[#059669]" />
                 <span>Sign In</span>
               </button>
               <button
                 onClick={() => navigateTo('home', '/', 'hero-input')}
-                className="px-6 py-2.5 sm:py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer font-sans group"
+                className="px-6 py-2.5 sm:py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer font-sans group"
               >
                 <span>Analyze My Business</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -445,7 +445,7 @@ export const PublicNavbar: React.FC = () => {
           <div className="flex flex-col gap-2">
             <button
               onClick={() => navigateTo('home', '/')}
-              className={`text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors cursor-pointer ${
+              className={`text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
                 activeTab === 'home'
                   ? 'bg-emerald-50 text-[#059669]'
                   : 'text-slate-700 hover:bg-slate-100'
@@ -455,59 +455,59 @@ export const PublicNavbar: React.FC = () => {
             </button>
             <button
               onClick={() => navigateTo('products', '/products')}
-              className={`text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors cursor-pointer flex items-center justify-between ${
+              className={`text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center justify-between ${
                 activeTab === 'products'
                   ? 'bg-emerald-50 text-[#059669]'
                   : 'text-slate-700 hover:bg-slate-100'
               }`}
             >
               <span>Products (All 8 Engines)</span>
-              <span className="text-sm px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">Explore</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">Explore</span>
             </button>
             <button
               onClick={() => navigateTo('products', '/products', 'ai-manager')}
-              className="text-left px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 pl-6"
+              className="text-left px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 pl-6"
             >
               · AI Business Manager
             </button>
             <button
               onClick={() => navigateTo('products', '/products', 'local-seo')}
-              className="text-left px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 pl-6"
+              className="text-left px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 pl-6"
             >
               · Local SEO & Maps Copilot
             </button>
             <button
               onClick={() => navigateTo('products', '/products', 'ai-visibility')}
-              className="text-left px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 pl-6"
+              className="text-left px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 pl-6"
             >
               · AI Search Visibility (GEO)
             </button>
             <button
               onClick={() => navigateTo('products', '/products', 'reputation')}
-              className="text-left px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 pl-6"
+              className="text-left px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 pl-6"
             >
               · AI Reputation & Reviews
             </button>
             <button
               onClick={() => navigateTo('products', '/products', 'competitors')}
-              className="text-left px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 pl-6"
+              className="text-left px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 pl-6"
             >
               · Competitor Radar
             </button>
             <button
               onClick={() => navigateTo('directory', '/directory')}
-              className={`text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors cursor-pointer flex items-center justify-between ${
+              className={`text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center justify-between ${
                 activeTab === 'directory' || activeTab.startsWith('directory_')
                   ? 'bg-emerald-50 text-[#059669]'
                   : 'text-slate-700 hover:bg-slate-100'
               }`}
             >
               <span>Local Business Directory</span>
-              <span className="text-sm px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">Live</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">Live</span>
             </button>
             <button
               onClick={() => navigateTo('pricing_public', '/pricing')}
-              className="text-left px-4 py-2.5 rounded-xl text-sm font-bold text-[#059669] hover:bg-emerald-50"
+              className="text-left px-4 py-2.5 rounded-xl text-xs font-bold text-[#059669] hover:bg-emerald-50"
             >
               Pricing ($0 Free / $29 Pro / $99 Agency)
             </button>
@@ -517,7 +517,7 @@ export const PublicNavbar: React.FC = () => {
             {user.isAuthenticated ? (
               <button
                 onClick={() => navigateToApp('/dashboard', () => navigateTo('dashboard', '/dashboard'))}
-                className="w-full py-3 bg-[#059669] text-white font-bold text-sm rounded-xl shadow-md text-center flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 bg-[#059669] text-white font-bold text-xs rounded-xl shadow-md text-center flex items-center justify-center gap-2 cursor-pointer"
               >
                 <LayoutDashboard className="w-4 h-4" />
                 <span>Launch App</span>
@@ -525,7 +525,7 @@ export const PublicNavbar: React.FC = () => {
             ) : (
               <button
                 onClick={() => navigateTo('home', '/', 'hero-input')}
-                className="w-full py-3 bg-[#059669] text-white font-bold text-sm rounded-xl shadow-md text-center flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 bg-[#059669] text-white font-bold text-xs rounded-xl shadow-md text-center flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Analyze My Business — Free</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -534,7 +534,7 @@ export const PublicNavbar: React.FC = () => {
             {!user.isAuthenticated ? (
               <button
                 onClick={() => navigateToApp('/login', () => navigateTo('login', '/login'))}
-                className="w-full py-2.5 bg-slate-100 text-slate-800 font-semibold text-sm rounded-xl text-center"
+                className="w-full py-2.5 bg-slate-100 text-slate-800 font-semibold text-xs rounded-xl text-center"
               >
                 Sign In
               </button>
@@ -544,7 +544,7 @@ export const PublicNavbar: React.FC = () => {
                   logout();
                   navigateTo('home', '/');
                 }}
-                className="w-full py-2.5 bg-rose-50 text-rose-700 font-semibold text-sm rounded-xl text-center flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 bg-rose-50 text-rose-700 font-semibold text-xs rounded-xl text-center flex items-center justify-center gap-1.5"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Sign Out</span>

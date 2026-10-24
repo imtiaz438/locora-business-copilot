@@ -194,7 +194,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
   return (
     <div className="bg-slate-50 text-slate-900 font-sans min-h-screen">
       {/* Breadcrumb Navigation */}
-      <div className="border-b border-slate-200 bg-white/90 backdrop-blur-xs py-3.5 px-6 text-sm text-slate-500 sticky top-0 z-30 shadow-2xs">
+      <div className="border-b border-slate-200 bg-white/90 backdrop-blur-xs py-3.5 px-6 text-xs text-slate-500 sticky top-0 z-30 shadow-2xs">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap py-0.5">
             <button
@@ -217,13 +217,13 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
           <div className="hidden sm:flex items-center gap-3">
             <button
               onClick={handleScrollToSandbox}
-              className="px-3 py-1 text-sm font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200 transition-colors cursor-pointer"
+              className="px-3 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200 transition-colors cursor-pointer"
             >
               Try Live Demo
             </button>
             <button
               onClick={handleLaunchTool}
-              className="px-3.5 py-1 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+              className="px-3.5 py-1 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
             >
               {user ? 'Open in Workspace' : 'Sign Up Free'}
             </button>
@@ -234,18 +234,18 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
       {/* Editorial Article Hero Header */}
       <section className="py-14 sm:py-18 px-6 max-w-5xl mx-auto space-y-6">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-bold font-heading uppercase tracking-wide">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold font-heading uppercase tracking-wide">
             <HeroIcon className="w-3.5 h-3.5 text-emerald-700" />
             <span>{feature.badge}</span>
           </div>
           {feature.readingTime && (
-            <div className="inline-flex items-center gap-1 text-sm font-medium text-slate-500">
+            <div className="inline-flex items-center gap-1 text-xs font-medium text-slate-500">
               <Clock className="w-3.5 h-3.5 text-slate-400" />
               <span>{feature.readingTime}</span>
             </div>
           )}
           {feature.publishedDate && (
-            <span className="text-sm text-slate-400">• Updated {feature.publishedDate}</span>
+            <span className="text-xs text-slate-400">• Updated {feature.publishedDate}</span>
           )}
         </div>
 
@@ -259,7 +259,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
 
         {/* Author / Expert Attribution Banner */}
         <div className="pt-2 flex items-center gap-3 border-t border-slate-200">
-          <div className="w-9 h-9 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-sm">
+          <div className="w-9 h-9 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-xs">
             {feature.authorName
               ? feature.authorName
                   .split(' ')
@@ -268,7 +268,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
               : 'LA'}
           </div>
           <div>
-            <div className="text-sm font-bold text-slate-900">
+            <div className="text-xs font-bold text-slate-900">
               Written by {feature.authorName || 'The LocoraAI Team'}
             </div>
             <div className="text-sm text-slate-500">
@@ -292,7 +292,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
           </div>
 
           <div className="p-6 bg-slate-50 border-l-4 border-emerald-600 rounded-r-2xl space-y-2">
-            <h3 className="text-sm uppercase font-bold text-slate-500 tracking-wider">
+            <h3 className="text-xs uppercase font-bold text-slate-500 tracking-wider">
               Why This Matters for Local Businesses
             </h3>
             <p className="text-sm font-medium text-slate-800 leading-relaxed font-sans">
@@ -317,7 +317,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
             </div>
           </div>
 
-          <div className="text-sm text-slate-500 font-sans border-t border-slate-100 pt-4">
+          <div className="text-xs text-slate-500 font-sans border-t border-slate-100 pt-4">
             <span className="font-semibold text-slate-700">Architecture Note: </span>
             {feature.editorialOverview.technicalArchitecture}
           </div>
@@ -327,7 +327,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
       {/* How to Use Step-by-Step Guide */}
       <section className="py-12 px-6 max-w-5xl mx-auto space-y-8">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-200 text-slate-800 rounded-full text-sm font-bold font-heading uppercase">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-200 text-slate-800 rounded-full text-xs font-bold font-heading uppercase">
             <span>Execution SOP</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900">
@@ -348,7 +348,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
                 <span className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-center font-extrabold text-sm font-heading">
                   {step.stepNumber}
                 </span>
-                <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                   Phase {step.stepNumber}
                 </span>
               </div>
@@ -418,14 +418,14 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-bold font-heading mb-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-bold font-heading mb-2">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Interactive Public Sandbox (No Account Required)</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold font-heading">
                 {feature.sandbox?.heading || `Test ${feature.name} Live`}
               </h2>
-              <p className="text-sm sm:text-base text-slate-400 mt-1">
+              <p className="text-xs sm:text-sm text-slate-400 mt-1">
                 {feature.sandbox?.subheading ||
                   'Select a preset industry scenario or enter your own parameters to generate an instant preview deliverable.'}
               </p>
@@ -435,7 +435,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
           {/* Preset Selector */}
           {feature.sandbox?.presets && feature.sandbox.presets.length > 0 && (
             <div className="space-y-2">
-              <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Select a Sample Scenario:
               </span>
               <div className="flex flex-wrap gap-2">
@@ -447,7 +447,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
                       setCustomBusinessInput(preset.sampleInput);
                       setSandboxResult(preset.sampleOutput);
                     }}
-                    className={`px-3.5 py-1.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       selectedPresetIndex === idx
                         ? 'bg-emerald-700 text-white shadow-xs'
                         : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
@@ -463,7 +463,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
           {/* Input Form */}
           <form onSubmit={handleRunSandboxTest} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-bold text-slate-300">
+              <label className="text-xs font-bold text-slate-300">
                 Input Parameters / Target Domain:
               </label>
               <div className="flex flex-col sm:flex-row gap-2">
@@ -472,12 +472,12 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
                   value={customBusinessInput}
                   onChange={(e) => setCustomBusinessInput(e.target.value)}
                   placeholder="e.g. https://apexservices.com or Client Name"
-                  className="flex-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-hidden focus:border-emerald-500"
+                  className="flex-1 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-emerald-500"
                 />
                 <button
                   type="submit"
                   disabled={isSandboxGenerating}
-                  className="px-6 py-2.5 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white font-bold text-sm rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer shrink-0 font-heading"
+                  className="px-6 py-2.5 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer shrink-0 font-heading"
                 >
                   {isSandboxGenerating ? (
                     <>
@@ -497,15 +497,15 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
 
           {/* Result Output Preview */}
           {sandboxResult && (
-            <div className="p-5 bg-slate-950 border border-slate-800 rounded-2xl space-y-3 font-mono text-sm shadow-inner">
-              <div className="flex items-center justify-between text-slate-400 text-sm pb-2 border-b border-slate-800">
+            <div className="p-5 bg-slate-950 border border-slate-800 rounded-2xl space-y-3 font-mono text-xs shadow-inner">
+              <div className="flex items-center justify-between text-slate-400 text-[11px] pb-2 border-b border-slate-800">
                 <span className="text-emerald-400 font-bold">
                   {feature.sandbox?.presets[selectedPresetIndex]?.outputType ||
                     'AI Deliverable Preview'}
                 </span>
                 <button
                   onClick={handleCopySandbox}
-                  className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors cursor-pointer text-sm"
+                  className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors cursor-pointer text-[11px]"
                 >
                   {copiedResult ? (
                     <>
@@ -526,7 +526,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
             </div>
           )}
 
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-400 border-t border-slate-800">
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 border-t border-slate-800">
             <span>Want to generate real-time reports with live web crawling?</span>
             <button
               onClick={handleLaunchTool}
@@ -542,13 +542,13 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
       {feature.caseStudy && (
         <section className="py-12 px-6 max-w-5xl mx-auto space-y-8">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-200 text-slate-800 rounded-full text-sm font-bold font-heading uppercase">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-200 text-slate-800 rounded-full text-xs font-bold font-heading uppercase">
               <span>Illustrative Example</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900">
               Example Scenario: {feature.caseStudy.industry}
             </h2>
-            <p className="text-sm sm:text-base text-slate-500 font-sans">
+            <p className="text-xs sm:text-sm text-slate-500 font-sans">
               An illustrative example of how this feature is used — not a real customer or verified result.
             </p>
           </div>
@@ -556,7 +556,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
           <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-slate-100">
               <div className="space-y-2">
-                <span className="text-sm uppercase font-bold text-rose-600 tracking-wider">
+                <span className="text-xs uppercase font-bold text-rose-600 tracking-wider">
                   The Challenge
                 </span>
                 <p className="text-sm text-slate-700 leading-relaxed font-sans">
@@ -564,7 +564,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
                 </p>
               </div>
               <div className="space-y-2">
-                <span className="text-sm uppercase font-bold text-emerald-700 tracking-wider">
+                <span className="text-xs uppercase font-bold text-emerald-700 tracking-wider">
                   The Solution
                 </span>
                 <p className="text-sm text-slate-700 leading-relaxed font-sans">
@@ -577,7 +577,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {feature.caseStudy.results.map((res, i) => (
                 <div key={i} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1">
-                  <span className="text-sm font-bold text-slate-500 uppercase tracking-wider block">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
                     {res.label}
                   </span>
                   <span className="text-xl font-extrabold font-heading text-slate-900">
@@ -587,7 +587,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
               ))}
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between text-sm text-slate-500 pt-2 gap-2">
+            <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 pt-2 gap-2">
               <span>Time spent manually: <strong className="text-slate-700">{feature.caseStudy.timeSpentBefore}</strong></span>
               <span>Time with Locora AI: <strong className="text-emerald-700">{feature.caseStudy.timeSpentAfter}</strong></span>
             </div>
@@ -640,7 +640,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
           <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900">
             Frequently Asked Questions
           </h2>
-          <p className="text-sm sm:text-base text-slate-600 font-sans">
+          <p className="text-xs sm:text-sm text-slate-600 font-sans">
             Clear answers to common technical and operational questions.
           </p>
         </div>
@@ -658,7 +658,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
                   onClick={() => setOpenFaq(isOpen ? null : i)}
                   className="w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-50 transition-colors"
                 >
-                  <span className="text-sm sm:text-sm font-bold font-heading text-slate-900">
+                  <span className="text-xs sm:text-sm font-bold font-heading text-slate-900">
                     {faq.q}
                   </span>
                   <ChevronDown
@@ -680,7 +680,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
 
       {/* Related Features Internal Links */}
       <section className="py-12 px-6 max-w-5xl mx-auto border-t border-slate-200 space-y-6">
-        <h3 className="text-sm font-bold font-heading text-slate-800 uppercase tracking-wider">
+        <h3 className="text-xs font-bold font-heading text-slate-800 uppercase tracking-wider">
           Explore Related Guides & Tools
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -694,11 +694,11 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
               }}
               className="p-4 bg-white border border-slate-200 rounded-xl hover:border-emerald-600 hover:bg-emerald-50/20 text-left transition-all cursor-pointer space-y-1.5 shadow-2xs"
             >
-              <div className="flex items-center justify-between text-sm font-bold text-slate-900 font-heading">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-900 font-heading">
                 <span>{of.name}</span>
                 <ArrowRight className="w-3.5 h-3.5 text-emerald-700" />
               </div>
-              <p className="text-sm text-slate-500 line-clamp-2 font-sans">
+              <p className="text-[11px] text-slate-500 line-clamp-2 font-sans">
                 {of.heroSubheadline}
               </p>
             </button>
@@ -712,20 +712,20 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
           <h2 className="text-2xl sm:text-3xl font-extrabold font-heading tracking-tight">
             Ready to Put {feature.name} to Work?
           </h2>
-          <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-sans">
+          <p className="text-sm sm:text-sm text-slate-300 leading-relaxed font-sans">
             Start with 25 free AI Copilot credits. No credit card required. Generate live audits, proposals, schema, and review replies.
           </p>
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               onClick={handleLaunchTool}
-              className="px-8 py-3.5 bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold text-sm sm:text-base rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer font-heading"
+              className="px-8 py-3.5 bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer font-heading"
             >
               <span>{user ? 'Open in Workspace' : 'Get Started Free'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
               onClick={handleScrollToSandbox}
-              className="px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-sm sm:text-sm rounded-xl transition-all cursor-pointer font-heading border border-slate-700"
+              className="px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer font-heading border border-slate-700"
             >
               <span>Test Interactive Sandbox</span>
             </button>

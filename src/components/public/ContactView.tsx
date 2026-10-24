@@ -163,7 +163,7 @@ export const ContactView: React.FC = () => {
     <div className="space-y-16 py-12 px-6 max-w-7xl mx-auto font-sans bg-slate-50 text-slate-900">
       {/* Header */}
       <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-semibold font-heading uppercase tracking-wider">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-semibold font-heading uppercase tracking-wider">
           <Mail className="w-4 h-4 text-[#059669]" />
           <span>We'd Love to Hear From You</span>
         </div>
@@ -181,15 +181,15 @@ export const ContactView: React.FC = () => {
           <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm">
             <h2 className="text-xl font-bold font-heading text-slate-900">Direct Communication Channels</h2>
 
-            <div className="space-y-4 text-sm font-sans">
+            <div className="space-y-4 text-xs font-sans">
               <div className="flex items-start gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
                 <Mail className="w-5 h-5 text-[#059669] flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold text-slate-900">Email Support & Sales</p>
-                  <a href="mailto:support@locoraai.com" className="text-[#059669] hover:underline text-sm font-semibold block">
+                  <a href="mailto:support@locoraai.com" className="text-[#059669] hover:underline text-[11px] font-semibold block">
                     support@locoraai.com
                   </a>
-                  <p className="text-sm text-slate-500 pt-0.5">Avg Response: &lt; 2 Hours</p>
+                  <p className="text-[10px] text-slate-500 pt-0.5">Avg Response: &lt; 2 Hours</p>
                 </div>
               </div>
 
@@ -197,10 +197,10 @@ export const ContactView: React.FC = () => {
                 <Phone className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold text-slate-900">Phone Support (US Toll Free)</p>
-                  <a href="tel:+15717062446" className="text-indigo-600 hover:underline text-sm font-semibold block">
+                  <a href="tel:+15717062446" className="text-indigo-600 hover:underline text-[11px] font-semibold block">
                     +1 (571) 706-2446
                   </a>
-                  <p className="text-sm text-slate-500 pt-0.5">Mon - Fri • 8am - 8pm EST</p>
+                  <p className="text-[10px] text-slate-500 pt-0.5">Mon - Fri • 8am - 8pm EST</p>
                 </div>
               </div>
 
@@ -208,20 +208,20 @@ export const ContactView: React.FC = () => {
                 <MapPin className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold text-slate-900">Locora AI Headquarters</p>
-                  <p className="text-slate-600 text-sm">100 Innovation Way, Suite 400</p>
-                  <p className="text-slate-600 text-sm">San Francisco, CA 94105, United States</p>
+                  <p className="text-slate-600 text-[11px]">100 Innovation Way, Suite 400</p>
+                  <p className="text-slate-600 text-[11px]">San Francisco, CA 94105, United States</p>
                 </div>
               </div>
 
               {/* Social Channels */}
               <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
-                <p className="text-sm font-bold text-slate-900 mb-2">Follow Our Official Channels</p>
+                <p className="text-xs font-bold text-slate-900 mb-2">Follow Our Official Channels</p>
                 <div className="flex items-center gap-2">
                   <a
                     href="https://www.linkedin.com/company/locoracopilot"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:text-[#0077b5] hover:border-[#0077b5]/30 hover:bg-slate-50 transition-all shadow-2xs"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:text-[#0077b5] hover:border-[#0077b5]/30 hover:bg-slate-50 transition-all shadow-2xs"
                   >
                     <Linkedin className="w-3.5 h-3.5" />
                     <span>LinkedIn</span>
@@ -230,7 +230,7 @@ export const ContactView: React.FC = () => {
                     href="https://www.facebook.com/profile.php?id=61593321283379"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:text-[#1877f2] hover:border-[#1877f2]/30 hover:bg-slate-50 transition-all shadow-2xs"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 hover:text-[#1877f2] hover:border-[#1877f2]/30 hover:bg-slate-50 transition-all shadow-2xs"
                   >
                     <Facebook className="w-3.5 h-3.5" />
                     <span>Facebook</span>
@@ -243,14 +243,14 @@ export const ContactView: React.FC = () => {
             <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2 font-sans">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-[#059669]" />
-                <p className="text-sm font-bold text-slate-900">Need an Instant Answer?</p>
+                <p className="text-xs font-bold text-slate-900">Need an Instant Answer?</p>
               </div>
               <p className="text-sm text-slate-600 leading-relaxed">
                 Ask our live AI Business Copilot directly in your workspace.
               </p>
               <button
                 onClick={handleStartCopilotChat}
-                className="w-full py-2 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer font-sans"
+                className="w-full py-2 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer font-sans"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
                 <span>Ask AI Copilot Now</span>
@@ -273,7 +273,7 @@ export const ContactView: React.FC = () => {
 
               <button
                 onClick={() => setSubmitted(false)}
-                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-bold rounded-xl border border-slate-200 transition-colors cursor-pointer"
+                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl border border-slate-200 transition-colors cursor-pointer"
               >
                 Send Another Message
               </button>
@@ -284,61 +284,61 @@ export const ContactView: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700">Your Full Name *</label>
+                  <label className="text-xs font-semibold text-slate-700">Your Full Name *</label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="e.g. Sarah Jenkins"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700">Work Email Address *</label>
+                  <label className="text-xs font-semibold text-slate-700">Work Email Address *</label>
                   <input
                     type="email"
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="sarah@company.com"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700">Company / Business Name</label>
+                  <label className="text-xs font-semibold text-slate-700">Company / Business Name</label>
                   <input
                     type="text"
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                     placeholder="e.g. Apex Growth Agency"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700">Phone Number (Optional)</label>
+                  <label className="text-xs font-semibold text-slate-700">Phone Number (Optional)</label>
                   <input
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="+1 (512) 000-0000"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700">Inquiry Type</label>
+                  <label className="text-xs font-semibold text-slate-700">Inquiry Type</label>
                   <select
                     value={formData.inquiryType}
                     onChange={(e) => setFormData({ ...formData, inquiryType: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
                   >
                     <option value="demo">Book 15-Min VIP Demo</option>
                     <option value="sales">Enterprise & Agency Sales</option>
@@ -348,11 +348,11 @@ export const ContactView: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-sm font-semibold text-slate-700">Est. Monthly Client Retainers</label>
+                  <label className="text-xs font-semibold text-slate-700">Est. Monthly Client Retainers</label>
                   <select
                     value={formData.budget}
                     onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
                   >
                     <option value="under1k">Under $1,000 / mo</option>
                     <option value="1k-5k">$1,000 - $5,000 / mo</option>
@@ -363,21 +363,21 @@ export const ContactView: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm font-semibold text-slate-700">Message / Details *</label>
+                <label className="text-xs font-semibold text-slate-700">Message / Details *</label>
                 <textarea
                   required
                   rows={4}
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   placeholder="Tell us about your agency workflow or any specific features you'd like to explore..."
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3.5 bg-[#059669] hover:bg-[#047857] disabled:opacity-60 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
+                className="w-full py-3.5 bg-[#059669] hover:bg-[#047857] disabled:opacity-60 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
               >
                 {isSubmitting ? (
                   <>
@@ -417,7 +417,7 @@ export const ContactView: React.FC = () => {
                     Live AI Business Copilot
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   </h3>
-                  <p className="text-sm text-slate-400">Instant Quick Assistance • No Account Needed</p>
+                  <p className="text-[10px] text-slate-400">Instant Quick Assistance • No Account Needed</p>
                 </div>
               </div>
               <button
@@ -430,7 +430,7 @@ export const ContactView: React.FC = () => {
             </div>
 
             {/* Quick Prompt Chips */}
-            <div className="px-3 py-2 bg-slate-50 border-b border-slate-200 flex items-center gap-1.5 overflow-x-auto text-sm no-scrollbar">
+            <div className="px-3 py-2 bg-slate-50 border-b border-slate-200 flex items-center gap-1.5 overflow-x-auto text-[10px] no-scrollbar">
               <button
                 onClick={() => handleSendQuickChat(undefined, 'What features does Locora AI offer?')}
                 className="px-2.5 py-1 bg-white border border-slate-200 hover:border-[#059669] rounded-full text-slate-700 hover:text-[#059669] font-medium whitespace-nowrap cursor-pointer transition-colors"
@@ -459,14 +459,14 @@ export const ContactView: React.FC = () => {
                   className={`flex items-start gap-2.5 ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}
                 >
                   <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0 ${
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs flex-shrink-0 ${
                       msg.sender === 'user' ? 'bg-indigo-600 text-white' : 'bg-[#059669] text-white'
                     }`}
                   >
                     {msg.sender === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                   </div>
                   <div
-                    className={`max-w-[80%] p-3 rounded-2xl text-sm space-y-1 ${
+                    className={`max-w-[80%] p-3 rounded-2xl text-xs space-y-1 ${
                       msg.sender === 'user'
                         ? 'bg-indigo-600 text-white rounded-tr-none'
                         : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none shadow-2xs'
@@ -474,7 +474,7 @@ export const ContactView: React.FC = () => {
                   >
                     <p className="leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                     <span
-                      className={`text-sm block text-right ${
+                      className={`text-[9px] block text-right ${
                         msg.sender === 'user' ? 'text-indigo-200' : 'text-slate-400'
                       }`}
                     >
@@ -485,7 +485,7 @@ export const ContactView: React.FC = () => {
               ))}
 
               {isAiTyping && (
-                <div className="flex items-center gap-2 text-sm text-slate-500 p-2">
+                <div className="flex items-center gap-2 text-xs text-slate-500 p-2">
                   <Loader2 className="w-4 h-4 animate-spin text-[#059669]" />
                   <span>Locora AI is composing response...</span>
                 </div>
@@ -500,7 +500,7 @@ export const ContactView: React.FC = () => {
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Ask AI Copilot anything..."
-                className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:border-[#059669] transition-all"
+                className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:border-[#059669] transition-all"
               />
               <button
                 type="submit"

@@ -57,11 +57,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           <div className="flex items-center gap-3">
             <LocoraLogo size={42} className="w-10 h-10" />
             <span className="font-heading font-black text-slate-900 text-xl tracking-tight">Locora</span>
-            <span className="text-sm uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">App</span>
+            <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">App</span>
           </div>
           <a
             href={getMainSiteUrl('/')}
-            className="text-sm font-semibold text-slate-600 hover:text-[#059669] flex items-center gap-1.5 transition-colors"
+            className="text-xs font-semibold text-slate-600 hover:text-[#059669] flex items-center gap-1.5 transition-colors"
           >
             <span>Visit Website (locoraai.com)</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -72,7 +72,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           <AuthView initialMode={activeTab === 'signup' ? 'signup' : 'login'} />
         </main>
 
-        <footer className="py-4 px-6 text-center text-sm text-slate-400 border-t border-slate-100">
+        <footer className="py-4 px-6 text-center text-xs text-slate-400 border-t border-slate-100">
           © {new Date().getFullYear()} Locora AI Inc. All rights reserved. Secure Cloud Dashboard.
         </footer>
         <CookieConsentBanner />
@@ -151,7 +151,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             <div className="space-y-3 pt-2">
               <button
                 onClick={() => setActiveTab('signup')}
-                className="w-full py-3.5 px-4 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 px-4 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Sparkles className="w-4 h-4 text-amber-300" />
                 <span>Register Free Account</span>
@@ -160,7 +160,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
               <button
                 onClick={() => setActiveTab('login')}
-                className="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm rounded-xl border border-slate-200 transition-colors cursor-pointer font-sans"
+                className="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition-colors cursor-pointer font-sans"
               >
                 Already have an account? Sign In
               </button>

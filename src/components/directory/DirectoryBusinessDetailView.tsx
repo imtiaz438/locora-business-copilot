@@ -350,12 +350,12 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
         <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-md text-center shadow-lg">
           <AlertCircle className="w-10 h-10 text-amber-500 mx-auto mb-3" />
           <h2 className="text-lg font-bold text-slate-900 font-heading">Listing Not Found</h2>
-          <p className="text-sm text-slate-500 mt-2 mb-6">
+          <p className="text-xs text-slate-500 mt-2 mb-6">
             The requested business profile is either private or unavailable on the directory.
           </p>
           <button
             onClick={handleBackToDirectory}
-            className="px-5 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800"
+            className="px-5 py-2.5 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800"
           >
             Back to Directory
           </button>
@@ -577,7 +577,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
 
       {/* Owner Unpublished Preview Banner */}
       {(business.isDraft || business.isPublishedInDirectory === false) && (
-        <div className="bg-amber-600 text-white text-sm font-semibold px-4 py-2.5 shadow-sm">
+        <div className="bg-amber-600 text-white text-xs font-semibold px-4 py-2.5 shadow-sm">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0 text-amber-200" />
@@ -587,7 +587,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
             </div>
             <a
               href="/app/settings"
-              className="px-3 py-1 bg-white text-amber-900 text-sm font-bold rounded-lg hover:bg-amber-50 shrink-0 transition-colors"
+              className="px-3 py-1 bg-white text-amber-900 text-xs font-bold rounded-lg hover:bg-amber-50 shrink-0 transition-colors"
             >
               Go to Settings
             </a>
@@ -597,7 +597,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
 
       {/* Top Breadcrumb Bar */}
       <div className="bg-white border-b border-slate-200 py-3 px-4 sm:px-8">
-        <div className="max-w-7xl mx-auto flex items-center justify-between text-sm">
+        <div className="max-w-7xl mx-auto flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 text-slate-500 flex-wrap">
             <button
               onClick={handleBackToDirectory}
@@ -623,7 +623,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
             <span className="text-slate-900 font-bold truncate max-w-xs">{business.businessName}</span>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 text-emerald-600 font-bold text-sm">
+          <div className="hidden sm:flex items-center gap-2 text-emerald-600 font-bold text-[11px]">
             <ShieldCheck className="w-4 h-4" /> Real-Time Google Business Profile Verified
           </div>
         </div>
@@ -635,32 +635,32 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-sm rounded-md border border-emerald-200">
+                <span className="px-3 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-md border border-emerald-200">
                   {business.categoryName}
                 </span>
                 {isPremium && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-sm font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
                     <CheckCircle2 className="w-3.5 h-3.5 text-amber-500" /> Locora Top Rated Pro
                   </span>
                 )}
                 {status === 'VERIFIED' ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-sm font-bold bg-emerald-100 text-emerald-900 border border-emerald-400">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-400">
                     <Award className="w-3.5 h-3.5 text-emerald-700" /> Verified Owner Managed
                   </span>
                 ) : status === 'CLAIMED' ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" /> Claimed Business
                   </span>
                 ) : status === 'CLAIM_PENDING' ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-sm font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
                     <Clock className="w-3.5 h-3.5 text-amber-700" /> Claim Verification Pending
                   </span>
                 ) : status === 'ELIGIBLE' ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-sm font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
                     <Building2 className="w-3.5 h-3.5 text-amber-600" /> Verified Google Business
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-sm font-medium bg-slate-100 text-slate-700 border border-slate-300">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 border border-slate-300">
                     <Building2 className="w-3.5 h-3.5 text-slate-500" /> Verified Local Pro
                   </span>
                 )}
@@ -672,7 +672,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
 
               {/* Verified directory notice for unclaimed profiles */}
               {isUnclaimed && (
-                <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl text-sm text-amber-900 flex items-start gap-2.5 max-w-3xl">
+                <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs text-amber-900 flex items-start gap-2.5 max-w-3xl">
                   <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
                   <div className="space-y-0.5">
                     <span className="font-bold block">Verified Directory Listing</span>
@@ -703,7 +703,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                     </span>
                   </>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 text-sm text-slate-500">
+                  <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
                     <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
                     No customer reviews yet
                   </span>
@@ -711,7 +711,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               </div>
 
               {/* Address & Quick Info */}
-              <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600 pt-1">
+              <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600 pt-1">
                 <div className="flex items-center gap-1.5">
                   <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0" />
                   <span>{fullAddress || 'United States'}</span>
@@ -735,7 +735,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       Visit Official Website
                       <ExternalLink className="w-3 h-3 text-slate-400" />
                       {isPremium && (
-                        <span className="text-sm font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
                           DoFollow Citation
                         </span>
                       )}
@@ -747,14 +747,14 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               {/* Social Links */}
               {socialEntries.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="text-slate-400 text-sm font-medium mr-1">Social Profiles:</span>
+                  <span className="text-slate-400 text-[11px] font-medium mr-1">Social Profiles:</span>
                   {socialEntries.map(([platform, url]) => (
                     <a
                       key={platform}
                       href={url.startsWith('http') ? url : `https://${url}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-sm capitalize inline-flex items-center gap-1.5 transition-colors border border-slate-200/60"
+                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-[11px] capitalize inline-flex items-center gap-1.5 transition-colors border border-slate-200/60"
                     >
                       <Share2 className="w-3 h-3 text-slate-400" />
                       <span>{platform}</span>
@@ -771,7 +771,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                 <a
                   href={`tel:${business.phone}`}
                   onClick={handlePhoneClick}
-                  className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Phone className="w-3.5 h-3.5 text-emerald-400" />
                   Call {business.phone}
@@ -779,7 +779,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               )}
               <a
                 href="#quote-form"
-                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 Request Instant Quote
@@ -790,7 +790,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={handleWebsiteClick}
-                  className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Globe className="w-3.5 h-3.5 text-slate-500" />
                   Visit Website
@@ -801,14 +801,14 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                   <button
                     id="improve-this-business-btn"
                     onClick={handleRunFreeCheckup}
-                    className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
                     <span>Run Free SEO Checkup</span>
                   </button>
                 </div>
               ) : (
-                <div className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-bold">
+                <div className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" /> Managed with Locora
                 </div>
               )}
@@ -822,14 +822,14 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
         {isUnclaimed ? (
           <div className="bg-gradient-to-r from-slate-900 via-slate-850 to-emerald-950 text-white rounded-3xl p-6 sm:p-7 border border-emerald-500/30 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="space-y-2 max-w-2xl">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                 <Building2 className="w-3.5 h-3.5 text-emerald-400" />
                 Business Owner Portal
               </div>
               <h3 className="text-xl font-black text-white font-heading tracking-tight">
                 Do you own or manage {business.businessName}?
               </h3>
-              <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-sans">
+              <p className="text-sm sm:text-sm text-slate-300 leading-relaxed font-sans">
                 Claim your free profile to update your services & hours, respond directly to customer quote requests, and see how Locora helps improve your local ranking on Google.
               </p>
             </div>
@@ -837,7 +837,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               <button
                 id="claim-this-business-btn"
                 onClick={handleInitiateClaim}
-                className="w-full sm:w-auto px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
+                className="w-full sm:w-auto px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
               >
                 <ShieldCheck className="w-4 h-4 text-slate-950" />
                 <span>Claim This Business (Free)</span>
@@ -845,7 +845,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               <button
                 id="free-checkup-btn"
                 onClick={handleRunFreeCheckup}
-                className="w-full sm:w-auto px-5 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
+                className="w-full sm:w-auto px-5 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
               >
                 <Sparkles className="w-4 h-4 text-emerald-400" />
                 <span>Free Growth Checkup</span>
@@ -859,13 +859,13 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-sm font-bold text-emerald-900 flex items-center gap-1.5 font-heading">
+                <div className="text-xs font-bold text-emerald-900 flex items-center gap-1.5 font-heading">
                   <span>{isGbpConnected ? 'Verified Owner Managed Profile' : 'Owner Managed Business Profile'}</span>
-                  <span className="text-sm px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300">
                     Active
                   </span>
                 </div>
-                <p className="text-sm text-emerald-700 mt-0.5">
+                <p className="text-xs text-emerald-700 mt-0.5">
                   {isGbpConnected
                     ? 'Locora is actively helping this business manage customer inquiries, sync reviews, and optimize local visibility.'
                     : 'Locora is managing customer inquiries and directory visibility for this business workspace.'}
@@ -877,7 +877,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                 window.history.pushState({}, '', '/dashboard');
                 window.dispatchEvent(new PopStateEvent('popstate'));
               }}
-              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition-all flex items-center gap-2 cursor-pointer shrink-0 shadow-xs"
+              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-2 cursor-pointer shrink-0 shadow-xs"
             >
               <span>Manage in Locora Dashboard</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -897,7 +897,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 About {business.businessName}
               </h2>
-              <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+              <p className="text-sm sm:text-sm text-slate-600 leading-relaxed">
                 {business.scrapedContent?.description ||
                   business.scrapedContent?.aboutSummary ||
                   `${business.businessName} provides ${business.categoryName} services throughout ${business.cityName || 'the local area'}. Dedicated to high quality customer outcomes.`}
@@ -906,14 +906,14 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               {/* Service Capabilities */}
               {business.scrapedContent?.serviceTags && business.scrapedContent.serviceTags.length > 0 && (
                 <div className="mt-6 pt-6 border-t border-slate-100">
-                  <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-3">
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">
                     {isGbpConnected ? 'Verified Services & Specializations' : 'Core Services & Specializations'}
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {business.scrapedContent.serviceTags.map((tag, idx) => (
                       <span
                         key={idx}
-                        className="px-3 py-1 bg-slate-100 text-slate-700 font-medium text-sm rounded-lg border border-slate-200"
+                        className="px-3 py-1 bg-slate-100 text-slate-700 font-medium text-xs rounded-lg border border-slate-200"
                       >
                         ✓ {tag}
                       </span>
@@ -931,7 +931,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               </h2>
 
               {hasValidHours ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   {formattedHoursList.map(({ day, time }) => (
                     <div
                       key={day}
@@ -945,7 +945,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                   ))}
                 </div>
               ) : (
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-center text-sm text-slate-500">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 text-center text-xs text-slate-500">
                   Hours not available
                 </div>
               )}
@@ -974,7 +974,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       href={googleMapsDirectionsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                     >
                       <MapPin className="w-3.5 h-3.5" />
                       <span>Directions</span>
@@ -984,7 +984,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       href={googleMapsSearchUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                      className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
                     >
                       <span>Open in Maps</span>
                       <ExternalLink className="w-3 h-3 text-slate-500" />
@@ -1009,7 +1009,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                   </div>
 
                   {/* Location Details and Marker Card */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-100 gap-3 text-sm">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-100 gap-3 text-xs">
                     <div className="flex items-start gap-2.5">
                       <div className="p-2 rounded-lg bg-emerald-100 text-emerald-800 shrink-0 mt-0.5">
                         <MapPin className="w-4 h-4 text-emerald-700" />
@@ -1018,7 +1018,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                         <span className="font-bold text-slate-900 block">{business.businessName}</span>
                         <span className="text-slate-600 block mt-0.5">{fullAddress || `${business.cityName}, ${business.stateCode}`}</span>
                         {hasCoordinates && (
-                          <span className="text-sm text-slate-400 block mt-0.5 font-mono">
+                          <span className="text-[10px] text-slate-400 block mt-0.5 font-mono">
                             GPS: {business.latitude?.toFixed(5)}, {business.longitude?.toFixed(5)}
                           </span>
                         )}
@@ -1029,7 +1029,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       href={googleMapsDirectionsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-emerald-700 hover:underline font-bold text-sm flex items-center gap-1 shrink-0"
+                      className="text-emerald-700 hover:underline font-bold text-xs flex items-center gap-1 shrink-0"
                     >
                       <span>Get driving directions</span>
                       <ArrowUpRight className="w-3.5 h-3.5" />
@@ -1039,8 +1039,8 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               ) : (
                 <div className="p-8 rounded-xl bg-slate-50 border border-slate-100 text-center">
                   <MapPin className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-sm font-bold text-slate-700">Map unavailable for this business</p>
-                  <p className="text-sm text-slate-400 mt-1">No verified physical location coordinates available.</p>
+                  <p className="text-xs font-bold text-slate-700">Map unavailable for this business</p>
+                  <p className="text-[11px] text-slate-400 mt-1">No verified physical location coordinates available.</p>
                 </div>
               )}
             </div>
@@ -1070,7 +1070,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                     </div>
                     <div>
                       <span className="text-sm font-bold text-slate-900">{rating.toFixed(1)}</span>
-                      <span className="text-sm text-slate-500 ml-1.5">
+                      <span className="text-xs text-slate-500 ml-1.5">
                         ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
                       </span>
                     </div>
@@ -1085,8 +1085,8 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                     <div key={rev.id} className="p-4 rounded-xl bg-slate-50 border border-slate-100">
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div>
-                          <span className="text-sm font-bold text-slate-900 block">{rev.authorName}</span>
-                          <span className="text-sm text-slate-400">
+                          <span className="text-xs font-bold text-slate-900 block">{rev.authorName}</span>
+                          <span className="text-[10px] text-slate-400">
                             {rev.relativePublishTimeDescription || (rev.publishedAt ? new Date(rev.publishedAt).toLocaleDateString() : '')}
                           </span>
                         </div>
@@ -1102,7 +1102,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                             ))}
                           </div>
                           {rev.rating != null && (
-                            <span className="text-sm font-bold text-slate-800 ml-1">{Number(rev.rating).toFixed(1)}</span>
+                            <span className="text-xs font-bold text-slate-800 ml-1">{Number(rev.rating).toFixed(1)}</span>
                           )}
                         </div>
                       </div>
@@ -1115,21 +1115,21 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
 
                       {/* Owner Response if available */}
                       {rev.replyText && (
-                        <div className="mt-3 p-3 bg-white rounded-lg border border-slate-200/80 text-sm">
-                          <div className="flex items-center gap-1.5 text-emerald-800 font-bold text-sm mb-1">
+                        <div className="mt-3 p-3 bg-white rounded-lg border border-slate-200/80 text-xs">
+                          <div className="flex items-center gap-1.5 text-emerald-800 font-bold text-[11px] mb-1">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                             <span>Response from {business.businessName}</span>
                             {rev.responseDate && (
                               <span className="text-slate-400 font-normal">· {new Date(rev.responseDate).toLocaleDateString()}</span>
                             )}
                           </div>
-                          <p className="text-slate-600 text-sm italic">
+                          <p className="text-slate-600 text-xs italic">
                             {rev.replyText}
                           </p>
                         </div>
                       )}
 
-                      <div className="flex items-center justify-between text-sm text-slate-400 mt-2.5 pt-2 border-t border-slate-100">
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 mt-2.5 pt-2 border-t border-slate-100">
                         <span className="inline-flex items-center gap-1">
                           Source: <strong className="text-slate-600">{rev.source === 'user_entered' ? 'Owner-added' : (rev.source || reviewSourceLabel)}</strong>
                         </span>
@@ -1142,7 +1142,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                     <div className="pt-2 text-center">
                       <button
                         onClick={() => setVisibleReviewsCount((prev) => prev + 5)}
-                        className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm rounded-xl transition-all cursor-pointer inline-flex items-center gap-2"
+                        className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all cursor-pointer inline-flex items-center gap-2"
                       >
                         <span>Load More Reviews ({sortedReviews.length - visibleReviewsCount} remaining)</span>
                         <ChevronRight className="w-3.5 h-3.5" />
@@ -1151,7 +1151,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                   )}
                 </div>
               ) : typeof rating === 'number' && rating > 0 && typeof reviewCount === 'number' && reviewCount > 0 ? (
-                <div className="p-6 rounded-xl bg-slate-50 border border-slate-100 text-center text-sm">
+                <div className="p-6 rounded-xl bg-slate-50 border border-slate-100 text-center text-xs">
                   <MessageSquare className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                   <p className="font-bold text-slate-800 text-sm">
                     {reviewSourceLabel} Rating: {rating.toFixed(1)}
@@ -1159,12 +1159,12 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                   <p className="text-slate-500 mt-1">
                     Based on {reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}
                   </p>
-                  <p className="text-sm text-slate-400 mt-2">
+                  <p className="text-[11px] text-slate-400 mt-2">
                     Individual review text is not currently available for this business.
                   </p>
                 </div>
               ) : (
-                <div className="p-6 rounded-xl bg-slate-50 border border-slate-100 text-center text-sm text-slate-500">
+                <div className="p-6 rounded-xl bg-slate-50 border border-slate-100 text-center text-xs text-slate-500">
                   <MessageSquare className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                   <p className="font-semibold text-slate-700">No customer reviews yet.</p>
                 </div>
@@ -1176,7 +1176,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
           <div className="space-y-6">
             <div id="quote-form" className="bg-white rounded-2xl border-2 border-emerald-500/20 p-6 shadow-md relative">
               <div className="mb-4">
-                <span className="text-sm font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 flex items-center gap-1">
                   <Sparkles className="w-3.5 h-3.5" /> Instant Free Quote
                 </span>
                 <h3 className="text-lg font-black text-slate-900 font-heading mt-0.5">
@@ -1198,7 +1198,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                   </p>
                   <button
                     onClick={() => setQuoteSuccess(false)}
-                    className="text-sm text-emerald-600 font-bold hover:underline"
+                    className="text-xs text-emerald-600 font-bold hover:underline"
                   >
                     Submit another question
                   </button>
@@ -1206,7 +1206,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               ) : (
                 <form onSubmit={handleSubmitQuote} className="space-y-3">
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Your Full Name *</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Your Full Name *</label>
                     <input
                       type="text"
                       required
@@ -1214,12 +1214,12 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       onFocus={handleLeadInputFocus}
                       onChange={(e) => setQuoteForm({ ...quoteForm, fullName: e.target.value })}
                       placeholder="e.g. Sarah Jenkins"
-                      className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Phone Number *</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Phone Number *</label>
                     <input
                       type="tel"
                       required
@@ -1227,47 +1227,47 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       onFocus={handleLeadInputFocus}
                       onChange={(e) => setQuoteForm({ ...quoteForm, phone: e.target.value })}
                       placeholder="(512) 000-0000"
-                      className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Email (Optional)</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Email (Optional)</label>
                     <input
                       type="email"
                       value={quoteForm.email}
                       onChange={(e) => setQuoteForm({ ...quoteForm, email: e.target.value })}
                       placeholder="sarah@example.com"
-                      className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Service Needed</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Service Needed</label>
                     <input
                       type="text"
                       value={quoteForm.serviceNeed}
                       onChange={(e) => setQuoteForm({ ...quoteForm, serviceNeed: e.target.value })}
                       placeholder={business.categoryName}
-                      className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Message / Job Description</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Message / Job Description</label>
                     <textarea
                       rows={3}
                       value={quoteForm.message}
                       onChange={(e) => setQuoteForm({ ...quoteForm, message: e.target.value })}
                       placeholder="Describe the issue, timeline, or consultation requirements..."
-                      className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={submittingQuote}
-                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
                   >
                     {submittingQuote ? (
                       <>
@@ -1282,7 +1282,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                     )}
                   </button>
 
-                  <p className="text-sm text-slate-400 text-center leading-tight">
+                  <p className="text-[10px] text-slate-400 text-center leading-tight">
                     🔒 Certified privacy: Your details are only sent to {business.businessName} to fulfill your request.
                   </p>
                 </form>
@@ -1290,7 +1290,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
             </div>
 
             {/* Badges / Guarantees */}
-            <div className="p-4 rounded-xl bg-white border border-slate-200 text-sm space-y-2.5">
+            <div className="p-4 rounded-xl bg-white border border-slate-200 text-xs space-y-2.5">
               <div className="flex items-center gap-2 text-slate-700 font-semibold">
                 <ShieldCheck className={`w-4 h-4 ${isGbpConnected ? 'text-emerald-600' : 'text-slate-500'}`} />
                 <span>{isGbpConnected ? 'Verified Business Registration' : 'Business Workspace Profile'}</span>
@@ -1306,23 +1306,23 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
             </div>
 
             {/* Verified Listing vs Manual Business Details Information */}
-            <div className="p-4 rounded-xl bg-white border border-slate-200 text-sm space-y-2.5 shadow-xs">
+            <div className="p-4 rounded-xl bg-white border border-slate-200 text-xs space-y-2.5 shadow-xs">
               <div className="flex items-center justify-between">
-                <span className="text-sm uppercase font-bold text-slate-400 block tracking-wider font-heading">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider font-heading">
                   {isGbpConnected ? 'Verified Listing Details' : 'Manual Business Details'}
                 </span>
                 {isGbpConnected ? (
-                  <span className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 font-bold px-2 py-0.5 rounded flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Verified
                   </span>
                 ) : (
-                  <span className="text-sm text-amber-800 bg-amber-50 border border-amber-200 font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                  <span className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 font-bold px-2 py-0.5 rounded flex items-center gap-1">
                     <Info className="w-3 h-3 text-amber-600" /> Manual Entry
                   </span>
                 )}
               </div>
 
-              <div className="space-y-2 text-slate-600 text-sm">
+              <div className="space-y-2 text-slate-600 text-[11px]">
                 <div className="flex items-center justify-between">
                   <span>Google Business Profile:</span>
                   {isGbpConnected ? (
@@ -1386,7 +1386,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               </div>
 
               {!isGbpConnected && (
-                <div className="pt-2 border-t border-slate-100 flex items-start gap-1.5 text-sm text-amber-700/90 leading-tight">
+                <div className="pt-2 border-t border-slate-100 flex items-start gap-1.5 text-[10px] text-amber-700/90 leading-tight">
                   <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
                   <span>
                     Entered manually. Google reviews & star ratings are only pulled automatically when official Google Business Profile is connected.
@@ -1398,10 +1398,10 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
             {/* Free Business Checkup Card */}
             <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-md space-y-3">
               <div className="flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-sm font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   <Activity className="w-3 h-3 text-emerald-400" /> Free Business Checkup
                 </span>
-                <span className="text-sm text-slate-400">60-Second Scan</span>
+                <span className="text-[11px] text-slate-400">60-Second Scan</span>
               </div>
 
               <div>
@@ -1415,7 +1415,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
 
               <button
                 onClick={handleRunFreeCheckup}
-                className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer mt-1 font-sans"
+                className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer mt-1 font-sans"
               >
                 <Zap className="w-3.5 h-3.5 fill-slate-950" />
                 Run Free Business Checkup
@@ -1435,15 +1435,15 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
                       Exclusive Pro Verified Guarantee
                     </span>
-                    <span className="text-sm font-bold text-slate-500">100% Verified Profile</span>
+                    <span className="text-[11px] font-bold text-slate-500">100% Verified Profile</span>
                   </div>
                   <h3 className="text-base font-bold text-slate-900 font-heading mt-1">
                     Direct Client Guarantee with {business.businessName}
                   </h3>
-                  <p className="text-sm text-slate-600 mt-0.5 max-w-xl">
+                  <p className="text-xs text-slate-600 mt-0.5 max-w-xl">
                     This business is an authorized, high-priority service provider. Inquiries submitted here are routed directly to the verified owner with priority response time.
                   </p>
                 </div>
@@ -1453,7 +1453,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                 <a
                   href={`tel:${business.phone}`}
                   onClick={handlePhoneClick}
-                  className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-sm transition-all flex items-center gap-2 shrink-0 cursor-pointer"
+                  className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-2 shrink-0 cursor-pointer"
                 >
                   <Phone className="w-4 h-4" />
                   <span>Call Directly: {business.phone}</span>
@@ -1470,7 +1470,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               <div>
                 <h3 className="text-sm sm:text-base font-bold text-slate-900 font-heading flex items-center gap-2">
                   <span>Other {business.categoryName || 'Related'} Businesses</span>
-                  <span className="text-sm font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                     {relatedBusinesses.length}
                   </span>
                 </h3>
@@ -1481,7 +1481,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               {business.categorySlug && (
                 <button
                   onClick={navigateToCategory}
-                  className="text-sm font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 cursor-pointer transition-colors"
+                  className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 cursor-pointer transition-colors"
                 >
                   View all {business.categoryName || 'in category'} <ArrowRight className="w-3.5 h-3.5" />
                 </button>
@@ -1498,11 +1498,11 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                   >
                     <div className="space-y-2.5">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200 inline-block truncate">
+                        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200 inline-block truncate">
                           {rel.categoryName}
                         </span>
                         {rel.isClaimed && (
-                          <span className="text-sm font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200 flex items-center gap-1 shrink-0">
+                          <span className="text-[10px] font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200 flex items-center gap-1 shrink-0">
                             <ShieldCheck className="w-3 h-3 text-sky-600" /> Verified
                           </span>
                         )}
@@ -1512,13 +1512,13 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                         {rel.businessName}
                       </h4>
 
-                      <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500">
                         <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span className="truncate">{rel.cityName}{rel.stateCode ? `, ${rel.stateCode}` : ''}</span>
                       </div>
 
                       {typeof rel.gbpData?.averageRating === 'number' && rel.gbpData.averageRating > 0 && (
-                        <div className="flex items-center gap-1 text-sm text-amber-600 font-semibold">
+                        <div className="flex items-center gap-1 text-xs text-amber-600 font-semibold">
                           <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                           <span>{rel.gbpData.averageRating.toFixed(1)}</span>
                           <span className="text-slate-400">({rel.gbpData.reviewCount || 0} reviews)</span>
@@ -1529,7 +1529,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                     <div className="pt-4 mt-4 border-t border-slate-100 flex items-center gap-2">
                       <a
                         href={relUrl}
-                        className="w-full py-2 px-3 text-center text-sm font-bold text-slate-700 bg-slate-100 hover:bg-emerald-600 hover:text-white rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="w-full py-2 px-3 text-center text-xs font-bold text-slate-700 bg-slate-100 hover:bg-emerald-600 hover:text-white rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <span>View Listing</span>
                         <ChevronRight className="w-3.5 h-3.5" />
@@ -1563,14 +1563,14 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                 <p className="text-sm text-slate-600 leading-relaxed max-w-sm mx-auto">
                   Listing claimed for <strong>{business.businessName}</strong>. Redirecting you to finalize your secure owner account and access your Business Brain...
                 </p>
-                <div className="flex items-center justify-center gap-2 pt-2 text-sm text-emerald-600 font-semibold">
+                <div className="flex items-center justify-center gap-2 pt-2 text-xs text-emerald-600 font-semibold">
                   <Loader2 className="w-4 h-4 animate-spin" /> Redirecting to Onboarding...
                 </div>
               </div>
             ) : (
               <form onSubmit={handleConfirmClaim} className="space-y-4">
                 <div className="space-y-1">
-                  <span className="inline-flex items-center gap-1 text-sm font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200">
                     <ShieldCheck className="w-3.5 h-3.5 text-amber-600" /> Verified Owner Claim
                   </span>
                   <h3 className="text-lg font-black text-slate-900 font-heading">
@@ -1582,7 +1582,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                 </div>
 
                 {claimError && (
-                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700 flex items-start gap-2">
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start gap-2">
                     <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                     <span>{claimError}</span>
                   </div>
@@ -1590,28 +1590,28 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
 
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Your Full Name *</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Your Full Name *</label>
                     <input
                       type="text"
                       required
                       value={claimName}
                       onChange={(e) => setClaimName(e.target.value)}
                       placeholder="e.g. Dr. John Smith"
-                      className="w-full text-sm px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-xs px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-1">Work Email Address *</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Work Email Address *</label>
                     <input
                       type="email"
                       required
                       value={claimEmail}
                       onChange={(e) => setClaimEmail(e.target.value)}
                       placeholder="e.g. owner@smilesolutions.com.au"
-                      className="w-full text-sm px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-xs px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
-                    <span className="text-sm text-slate-400 mt-1 block">
+                    <span className="text-[10px] text-slate-400 mt-1 block">
                       Preferably using your business domain to accelerate instant verification.
                     </span>
                   </div>
@@ -1621,7 +1621,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                   <button
                     type="submit"
                     disabled={claimSubmitting}
-                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {claimSubmitting ? (
                       <>
@@ -1635,7 +1635,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       </>
                     )}
                   </button>
-                  <p className="text-sm text-slate-400 text-center mt-2">
+                  <p className="text-[10px] text-slate-400 text-center mt-2">
                     Zero credit card required. Free tier includes directory profile management.
                   </p>
                 </div>

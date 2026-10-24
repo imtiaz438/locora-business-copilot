@@ -10,7 +10,7 @@ export const AboutView: React.FC = () => {
     <div className="space-y-16 py-12 px-6 max-w-7xl mx-auto font-sans bg-slate-50 text-slate-900">
       {/* Hero Header */}
       <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-semibold font-heading uppercase tracking-wider">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-semibold font-heading uppercase tracking-wider">
           <Building2 className="w-4 h-4 text-[#059669]" />
           <span>Our Story & Mission</span>
         </div>
@@ -27,10 +27,10 @@ export const AboutView: React.FC = () => {
         <div className="space-y-4">
           <LocoraLogo className="w-14 h-14 flex-shrink-0 drop-shadow-xs" />
           <h2 className="text-2xl font-bold font-heading text-slate-900">Why We Built Locora AI</h2>
-          <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-sans">
+          <p className="text-sm sm:text-sm text-slate-600 leading-relaxed font-sans">
             In 2024, our founders ran a digital growth agency in Austin, Texas. Every week, our account managers spent 20+ hours manually drafting proposals, creating Google Business schema markup, copying client invoices, and assembling PDF strategy roadmaps.
           </p>
-          <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-sans">
+          <p className="text-sm sm:text-sm text-slate-600 leading-relaxed font-sans">
             Existing software was either too complex, fragmented across 6 expensive subscriptions, or produced generic AI gibberish. We built Locora AI to combine multi-model AI accuracy with crisp, white-label client operations.
           </p>
         </div>
@@ -42,31 +42,31 @@ export const AboutView: React.FC = () => {
 
           <div className="space-y-3 font-sans">
             <div className="flex gap-3">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-[#059669] border border-emerald-200 flex items-center justify-center flex-shrink-0 font-bold text-sm font-heading">
+              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-[#059669] border border-emerald-200 flex items-center justify-center flex-shrink-0 font-bold text-xs font-heading">
                 1
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-900">Speed & Simplicity First</p>
+                <p className="text-xs font-bold text-slate-900">Speed & Simplicity First</p>
                 <p className="text-sm text-slate-500">Generates structured client assets in under 3 seconds.</p>
               </div>
             </div>
 
             <div className="flex gap-3">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-[#059669] border border-emerald-200 flex items-center justify-center flex-shrink-0 font-bold text-sm font-heading">
+              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-[#059669] border border-emerald-200 flex items-center justify-center flex-shrink-0 font-bold text-xs font-heading">
                 2
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-900">Strict Privacy & Security</p>
+                <p className="text-xs font-bold text-slate-900">Strict Privacy & Security</p>
                 <p className="text-sm text-slate-500">Client CRM records are never used to train public LLM models.</p>
               </div>
             </div>
 
             <div className="flex gap-3">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-[#059669] border border-emerald-200 flex items-center justify-center flex-shrink-0 font-bold text-sm font-heading">
+              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-[#059669] border border-emerald-200 flex items-center justify-center flex-shrink-0 font-bold text-xs font-heading">
                 3
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-900">Measurable Revenue Impact</p>
+                <p className="text-xs font-bold text-slate-900">Measurable Revenue Impact</p>
                 <p className="text-sm text-slate-500">Every feature is designed to increase proposal win rates and client retention.</p>
               </div>
             </div>
@@ -78,7 +78,7 @@ export const AboutView: React.FC = () => {
       <div className="space-y-8">
         <div className="text-center space-y-2 max-w-2xl mx-auto">
           <h2 className="text-2xl sm:text-4xl font-bold font-heading text-slate-900">Built by Practitioners</h2>
-          <p className="text-sm sm:text-base text-slate-600 font-sans leading-relaxed">
+          <p className="text-sm sm:text-sm text-slate-600 font-sans leading-relaxed">
             LocoraAI is built and run by a small team of engineers and local-search practitioners.
             Every feature ships from real agency workflows — and everything we publish speaks as one team.
           </p>
@@ -101,7 +101,7 @@ export const AboutView: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('contact')}
-          className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl transition-all inline-flex items-center gap-2 cursor-pointer font-sans"
+          className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl transition-all inline-flex items-center gap-2 cursor-pointer font-sans"
         >
           <span>Get in Touch with Our Team</span>
           <ArrowRight className="w-4 h-4" />

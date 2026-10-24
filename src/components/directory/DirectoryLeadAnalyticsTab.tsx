@@ -241,13 +241,13 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                 Phase 4 Real Analytics Engine
               </span>
-              <span className="flex items-center gap-1 text-sm font-semibold text-emerald-600 bg-emerald-50/50 px-2.5 py-0.5 rounded-full border border-emerald-100">
+              <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50/50 px-2.5 py-0.5 rounded-full border border-emerald-100">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Zero Fabricated Metrics
               </span>
-              <span className="text-sm text-slate-400 font-mono">
+              <span className="text-[11px] text-slate-400 font-mono">
                 Attribution: source = directory
               </span>
             </div>
@@ -259,7 +259,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
 
               {businesses.length > 1 && (
                 <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/90 rounded-xl px-3 py-1.5 shadow-2xs">
-                  <span className="text-sm font-bold text-slate-500 whitespace-nowrap">Active Business:</span>
+                  <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Active Business:</span>
                   <select
                     value={selectedBizId}
                     onChange={(e) => {
@@ -267,7 +267,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                       setSelectedBizId(newId);
                       switchBusiness(newId);
                     }}
-                    className="text-sm font-bold bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                    className="text-xs font-bold bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
                   >
                     {businesses.map((b) => (
                       <option key={b.id} value={b.id}>
@@ -287,7 +287,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
             <button
               onClick={fetchAnalytics}
               disabled={loading}
-              className="px-4 py-2 text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               <span>Refresh Logs</span>
@@ -298,7 +298,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                 href={getDirectoryBusinessUrl(biz.slug)}
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-2 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+                className="px-4 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <span>View Public Profile</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -309,7 +309,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
 
         {/* Success Alert Banner */}
         {successMessage && (
-          <div className="mt-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-sm font-semibold text-emerald-800 flex items-center gap-2 animate-in fade-in">
+          <div className="mt-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800 flex items-center gap-2 animate-in fade-in">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>{successMessage}</span>
           </div>
@@ -320,12 +320,12 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
           <div className="flex items-center gap-3">
             <div className={`w-3 h-3 rounded-full ${isListingActive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
             <div>
-              <span className="text-sm font-bold text-slate-900 block">
+              <span className="text-xs font-bold text-slate-900 block">
                 {isListingActive
                   ? `Directory Status: ${biz?.isClaimed ? 'Active & Owner Verified' : 'Live Directory Listing'}`
                   : 'Processing Directory Profile'}
               </span>
-              <div className="text-sm text-slate-500 mt-0.5">
+              <div className="text-[11px] text-slate-500 mt-0.5">
                 {biz?.slug ? (
                   <span className="inline-flex items-center gap-1.5">
                     <span>Public Directory Link:</span>
@@ -346,7 +346,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-sm font-semibold text-slate-600">
+          <div className="flex items-center gap-4 text-xs font-semibold text-slate-600">
             <span className="flex items-center gap-1">
               <Eye className="w-4 h-4 text-slate-400" />
               {profileViews} Real Views
@@ -367,7 +367,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Direct Inbound Leads */}
         <div className="p-6 bg-white rounded-3xl border border-slate-200/90 shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-slate-500 text-sm font-bold uppercase tracking-wider">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase tracking-wider">
             <span>Direct Inbound Leads</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
               <FileText className="w-4 h-4" />
@@ -375,7 +375,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
           </div>
           <div className="flex items-baseline gap-2 pt-1">
             <span className="text-3xl font-black font-heading text-slate-900">{totalLeads}</span>
-            <span className="text-sm text-emerald-600 font-bold">{deliveredLeads} delivered</span>
+            <span className="text-xs text-emerald-600 font-bold">{deliveredLeads} delivered</span>
           </div>
           <p className="text-sm text-slate-500">
             Verified quote and service requests submitted via your public profile.
@@ -384,7 +384,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
 
         {/* Conversion Rate to Paying Client */}
         <div className="p-6 bg-white rounded-3xl border border-slate-200/90 shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-slate-500 text-sm font-bold uppercase tracking-wider">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase tracking-wider">
             <span>Lead Conversion Rate</span>
             <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-600">
               <TrendingUp className="w-4 h-4" />
@@ -392,7 +392,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
           </div>
           <div className="flex items-baseline gap-2 pt-1">
             <span className="text-3xl font-black font-heading text-slate-900">{leadConversionRate}%</span>
-            <span className="text-sm text-slate-500 font-semibold">{conversionsCount} converted</span>
+            <span className="text-xs text-slate-500 font-semibold">{conversionsCount} converted</span>
           </div>
           <p className="text-sm text-slate-500">
             Ratio of delivered directory leads converted into paying clients.
@@ -401,7 +401,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
 
         {/* Free Public Checkups Funnel */}
         <div className="p-6 bg-white rounded-3xl border border-slate-200/90 shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-slate-500 text-sm font-bold uppercase tracking-wider">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase tracking-wider">
             <span>Checkups Initiated</span>
             <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
               <Zap className="w-4 h-4" />
@@ -409,7 +409,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
           </div>
           <div className="flex items-baseline gap-2 pt-1">
             <span className="text-3xl font-black font-heading text-slate-900">{checkupsStarted}</span>
-            <span className="text-sm text-amber-600 font-bold">{checkupsCompleted} finished</span>
+            <span className="text-xs text-amber-600 font-bold">{checkupsCompleted} finished</span>
           </div>
           <p className="text-sm text-slate-500">
             Prospects running the free website & SEO audit from your directory profile.
@@ -418,7 +418,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
 
         {/* Total Inquiry Rate */}
         <div className="p-6 bg-white rounded-3xl border border-slate-200/90 shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-slate-500 text-sm font-bold uppercase tracking-wider">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-bold uppercase tracking-wider">
             <span>Overall Action Rate</span>
             <div className="w-8 h-8 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
               <MousePointerClick className="w-4 h-4" />
@@ -426,7 +426,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
           </div>
           <div className="flex items-baseline gap-2 pt-1">
             <span className="text-3xl font-black font-heading text-slate-900">{inquiryRate}%</span>
-            <span className="text-sm text-slate-500 font-semibold">{phoneClicks} calls + {websiteClicks} web</span>
+            <span className="text-xs text-slate-500 font-semibold">{phoneClicks} calls + {websiteClicks} web</span>
           </div>
           <p className="text-sm text-slate-500">
             Percentage of directory viewers who contacted or tapped your site.
@@ -438,7 +438,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
       <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
         <button
           onClick={() => setActiveTab('leads')}
-          className={`px-4 py-2 text-sm font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-2 ${
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-2 ${
             activeTab === 'leads'
               ? 'bg-emerald-600 text-white shadow-xs'
               : 'text-slate-600 hover:bg-slate-100'
@@ -446,14 +446,14 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
         >
           <FileText className="w-3.5 h-3.5" />
           <span>Directory Leads Inbox</span>
-          <span className={`text-sm px-1.5 py-0.2 rounded-full ${activeTab === 'leads' ? 'bg-emerald-700 text-white' : 'bg-slate-200 text-slate-700'}`}>
+          <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${activeTab === 'leads' ? 'bg-emerald-700 text-white' : 'bg-slate-200 text-slate-700'}`}>
             {leadsList.length}
           </span>
         </button>
 
         <button
           onClick={() => setActiveTab('events')}
-          className={`px-4 py-2 text-sm font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-2 ${
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-2 ${
             activeTab === 'events'
               ? 'bg-emerald-600 text-white shadow-xs'
               : 'text-slate-600 hover:bg-slate-100'
@@ -461,14 +461,14 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
         >
           <Activity className="w-3.5 h-3.5" />
           <span>Real-Time Event Audit Log</span>
-          <span className={`text-sm px-1.5 py-0.2 rounded-full ${activeTab === 'events' ? 'bg-emerald-700 text-white' : 'bg-slate-200 text-slate-700'}`}>
+          <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${activeTab === 'events' ? 'bg-emerald-700 text-white' : 'bg-slate-200 text-slate-700'}`}>
             {eventsList.length}
           </span>
         </button>
 
         <button
           onClick={() => setActiveTab('benchmarks')}
-          className={`px-4 py-2 text-sm font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-2 ${
+          className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors cursor-pointer flex items-center gap-2 ${
             activeTab === 'benchmarks'
               ? 'bg-emerald-600 text-white shadow-xs'
               : 'text-slate-600 hover:bg-slate-100'
@@ -491,7 +491,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                 Every lead originated through your public listing is cataloged here with persistent storage and lifecycle tracking.
               </p>
             </div>
-            <div className="flex items-center gap-2 text-sm text-slate-500">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
               <span className="flex items-center gap-1 font-semibold text-emerald-600">
                 <CheckCircle2 className="w-3.5 h-3.5" /> {responsesCount} Contacted
               </span>
@@ -514,7 +514,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                   href={getDirectoryBusinessUrl(biz.slug)}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white font-bold text-sm rounded-xl hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
+                  className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
                 >
                   Test Quote Request on Your Listing <ArrowRight className="w-3.5 h-3.5" />
                 </a>
@@ -535,21 +535,21 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                       <div>
                         <div className="flex items-center gap-2">
                           <h5 className="text-sm font-bold text-slate-900">{lead.leadName}</h5>
-                          <span className="text-sm uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
                             {lead.serviceRequested || 'Service Quote'}
                           </span>
                           {lead.isUnlocked ? (
-                            <span className="text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
                               <Unlock className="w-3 h-3 text-emerald-600" /> Pro Unmasked
                             </span>
                           ) : (
-                            <span className="text-sm font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
                               <Lock className="w-3 h-3 text-amber-600" /> Masked (Free Tier)
                             </span>
                           )}
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500 mt-2">
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-2">
                           {lead.isUnlocked ? (
                             <>
                               {lead.leadPhone && (
@@ -579,14 +579,14 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                               </span>
                               <a
                                 href="/pricing"
-                                className="text-amber-600 font-bold hover:underline text-sm"
+                                className="text-amber-600 font-bold hover:underline text-[11px]"
                               >
                                 Upgrade to unlock full contact
                               </a>
                             </>
                           )}
                           <span className="text-slate-300">•</span>
-                          <span className="text-sm text-slate-400 flex items-center gap-1">
+                          <span className="text-[11px] text-slate-400 flex items-center gap-1">
                             <Clock className="w-3 h-3" /> Received {new Date(lead.submittedAt).toLocaleDateString()} at {new Date(lead.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
@@ -595,15 +595,15 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                       {/* Lead Status Badge */}
                       <div>
                         {isConverted ? (
-                          <span className="text-sm font-bold text-teal-700 bg-teal-50 border border-teal-200 px-3 py-1 rounded-full flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-teal-700 bg-teal-50 border border-teal-200 px-3 py-1 rounded-full flex items-center gap-1.5">
                             <UserCheck className="w-3.5 h-3.5 text-teal-600" /> Converted Client
                           </span>
                         ) : isContacted ? (
-                          <span className="text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full flex items-center gap-1.5">
                             <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" /> Contacted
                           </span>
                         ) : (
-                          <span className="text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5 text-emerald-600" /> New Inquiry
                           </span>
                         )}
@@ -611,7 +611,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                     </div>
 
                     {lead.message && (
-                      <div className="p-3 rounded-xl bg-slate-50 text-sm text-slate-700 border border-slate-100">
+                      <div className="p-3 rounded-xl bg-slate-50 text-xs text-slate-700 border border-slate-100">
                         <span className="font-semibold text-slate-800">Inquiry Message: </span>
                         "{lead.message}"
                       </div>
@@ -619,7 +619,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
 
                     {/* Action Controls: Mark Responded / Convert to Client */}
                     <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-                      <div className="text-sm text-slate-400 flex items-center gap-1.5">
+                      <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                         <span>Source: Locora Public Business Directory</span>
                         {lead.deliveredViaEmail && (
@@ -632,7 +632,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                           <button
                             onClick={() => handleMarkResponded(lead.id)}
                             disabled={actionLoadingId === lead.id}
-                            className="px-3 py-1.5 text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            className="px-3 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5 text-slate-600" />
                             <span>Mark Contacted</span>
@@ -643,7 +643,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                           <button
                             onClick={() => setConvertModalLead(lead)}
                             disabled={actionLoadingId === lead.id}
-                            className="px-3 py-1.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-2xs"
+                            className="px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-2xs"
                           >
                             <UserCheck className="w-3.5 h-3.5" />
                             <span>Convert to Client</span>
@@ -671,7 +671,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                 Every event recorded chronologically with visitor session, source, and metadata. No simulated entries.
               </p>
             </div>
-            <div className="text-sm font-mono text-slate-400">
+            <div className="text-xs font-mono text-slate-400">
               Disk Persistence: locora_directory_events.json
             </div>
           </div>
@@ -689,16 +689,16 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
               {eventsList.map((ev) => {
                 const badge = formatEventType(ev.eventType);
                 return (
-                  <div key={ev.id} className="p-4 hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
+                  <div key={ev.id} className="p-4 hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                     <div className="flex items-start sm:items-center gap-3">
-                      <span className={`px-2.5 py-1 rounded-full font-bold text-sm border shrink-0 ${badge.color}`}>
+                      <span className={`px-2.5 py-1 rounded-full font-bold text-[11px] border shrink-0 ${badge.color}`}>
                         {badge.label}
                       </span>
                       <div>
                         <div className="font-semibold text-slate-800">
                           {ev.eventType}
                         </div>
-                        <div className="text-sm text-slate-400 flex items-center gap-2 mt-0.5 font-mono">
+                        <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5 font-mono">
                           <span>Source: {ev.source || 'directory'}</span>
                           {ev.city && <span>• City: {ev.city}</span>}
                           {ev.category && <span>• Cat: {ev.category}</span>}
@@ -707,7 +707,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                       </div>
                     </div>
 
-                    <div className="text-right text-sm text-slate-400 shrink-0 font-mono">
+                    <div className="text-right text-[11px] text-slate-400 shrink-0 font-mono">
                       {new Date(ev.timestamp).toLocaleDateString()} {new Date(ev.timestamp).toLocaleTimeString()}
                     </div>
                   </div>
@@ -739,13 +739,13 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                     <Phone className="w-5 h-5" />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-slate-900">Telephone Inquiries (Tap-to-Call)</h5>
+                    <h5 className="text-xs font-bold text-slate-900">Telephone Inquiries (Tap-to-Call)</h5>
                     <p className="text-sm text-slate-500">Inbound direct mobile dialing</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <span className="text-base font-extrabold text-slate-900">{phoneClicks}</span>
-                  <span className="text-sm text-slate-400 block font-semibold">clicks</span>
+                  <span className="text-[10px] text-slate-400 block font-semibold">clicks</span>
                 </div>
               </div>
 
@@ -756,13 +756,13 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                     <FileText className="w-5 h-5" />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-slate-900">Direct Quote & Lead Inquiries</h5>
+                    <h5 className="text-xs font-bold text-slate-900">Direct Quote & Lead Inquiries</h5>
                     <p className="text-sm text-slate-500">Form submissions sent to business inbox</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <span className="text-base font-extrabold text-slate-900">{totalLeads}</span>
-                  <span className="text-sm text-slate-400 block font-semibold">requests</span>
+                  <span className="text-[10px] text-slate-400 block font-semibold">requests</span>
                 </div>
               </div>
 
@@ -773,23 +773,23 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                     <Globe className="w-5 h-5" />
                   </div>
                   <div>
-                    <h5 className="text-sm font-bold text-slate-900">Website Referral Backlinks</h5>
+                    <h5 className="text-xs font-bold text-slate-900">Website Referral Backlinks</h5>
                     <p className="text-sm text-slate-500">Direct SEO clicks to {activeBusiness.website || 'your website'}</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <span className="text-base font-extrabold text-slate-900">{websiteClicks}</span>
-                  <span className="text-sm text-slate-400 block font-semibold">referrals</span>
+                  <span className="text-[10px] text-slate-400 block font-semibold">referrals</span>
                 </div>
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
               <span className="flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 Zero Synthetic Data: All interaction logs reflect authentic user sessions.
               </span>
-              <span className="text-sm font-mono text-slate-400">
+              <span className="text-[11px] font-mono text-slate-400">
                 Updated Live
               </span>
             </div>
@@ -809,15 +809,15 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
               </p>
 
               <div className="space-y-3 pt-2">
-                <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between text-sm">
+                <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between text-xs">
                   <span className="text-slate-400">Network Cities</span>
                   <span className="font-extrabold text-white">{data?.citiesCount || 1} Metropolitan Areas</span>
                 </div>
-                <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between text-sm">
+                <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between text-xs">
                   <span className="text-slate-400">Published Listings</span>
                   <span className="font-extrabold text-white">{data?.totalPublishedListings || 1} Businesses</span>
                 </div>
-                <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between text-sm">
+                <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-between text-xs">
                   <span className="text-slate-400">Network Action Rate</span>
                   <span className="font-extrabold text-emerald-400">{data?.overallConversionRate || 0}%</span>
                 </div>
@@ -825,10 +825,10 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
             </div>
 
             <div className="pt-4 border-t border-slate-800 space-y-2">
-              <span className="text-sm font-semibold text-slate-400 block">
+              <span className="text-[11px] font-semibold text-slate-400 block">
                 Maximize Directory Inbound Volume:
               </span>
-              <ul className="text-sm text-slate-300 space-y-1">
+              <ul className="text-[11px] text-slate-300 space-y-1">
                 <li className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                   Keep business operating hours updated
@@ -863,21 +863,21 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
               </div>
               <button
                 onClick={() => setConvertModalLead(null)}
-                className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 text-xs font-bold p-1 cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleConfirmConvert} className="space-y-4">
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm space-y-1">
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-1">
                 <div className="font-bold text-slate-900">{convertModalLead.leadName}</div>
                 <div className="text-slate-500">{convertModalLead.serviceRequested}</div>
                 {convertModalLead.leadPhone && <div className="text-slate-600">{convertModalLead.leadPhone}</div>}
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
                   Estimated Customer Value / Booking Revenue ($)
                 </label>
                 <div className="relative">
@@ -889,10 +889,10 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                     value={convertRevenue}
                     onChange={(e) => setConvertRevenue(e.target.value)}
                     placeholder="e.g. 500"
-                    className="w-full text-sm pl-8 pr-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full text-xs pl-8 pr-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
-                <span className="text-sm text-slate-400 mt-1 block">
+                <span className="text-[10px] text-slate-400 mt-1 block">
                   This measures the direct financial ROI generated from the directory.
                 </span>
               </div>
@@ -901,14 +901,14 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                 <button
                   type="button"
                   onClick={() => setConvertModalLead(null)}
-                  className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={actionLoadingId === convertModalLead.id}
-                  className="px-4 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors cursor-pointer disabled:opacity-50 shadow-xs flex items-center gap-1.5"
+                  className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors cursor-pointer disabled:opacity-50 shadow-xs flex items-center gap-1.5"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Confirm Customer Conversion</span>

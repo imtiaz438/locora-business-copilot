@@ -205,7 +205,7 @@ export const LocoraLogo: React.FC<LocoraLogoProps> = ({
       </div>
       <div className="flex items-center gap-1 font-heading font-extrabold text-base tracking-tight">
         <span className={textColor}>Locora</span>
-        <span className="px-1.5 py-0.2 rounded-md bg-emerald-500/15 text-[#059669] text-sm font-mono font-bold uppercase tracking-wider">
+        <span className="px-1.5 py-0.2 rounded-md bg-emerald-500/15 text-[#059669] text-[11px] font-mono font-bold uppercase tracking-wider">
           AI
         </span>
       </div>

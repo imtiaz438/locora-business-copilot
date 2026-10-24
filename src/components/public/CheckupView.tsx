@@ -249,7 +249,7 @@ export const CheckupView: React.FC = () => {
 
         <div className="relative z-10 max-w-4xl mx-auto text-center space-y-6">
           {/* Eyebrow Pill */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#10b981]/15 border border-[#10b981]/30 text-[#6ee7b7] text-sm font-semibold font-heading tracking-wider uppercase">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#10b981]/15 border border-[#10b981]/30 text-[#6ee7b7] text-xs font-semibold font-heading tracking-wider uppercase">
             <Sparkles className="w-4 h-4 text-[#6ee7b7]" />
             <span>Real-Time Local Visibility Diagnostic</span>
           </div>
@@ -270,7 +270,7 @@ export const CheckupView: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Business Name */}
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-bold text-slate-700">
+                  <label className="block text-xs font-bold text-slate-700">
                     Business Name <span className="text-[#059669]">*</span>
                   </label>
                   <div className="relative">
@@ -285,14 +285,14 @@ export const CheckupView: React.FC = () => {
                       }}
                       onFocus={handleInputFocusOrChange}
                       placeholder="e.g. Metro Dental Care"
-                      className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
+                      className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
                     />
                   </div>
                 </div>
 
                 {/* Website */}
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-bold text-slate-700">
+                  <label className="block text-xs font-bold text-slate-700">
                     Website URL <span className="text-[#059669]">*</span>
                   </label>
                   <div className="relative">
@@ -307,7 +307,7 @@ export const CheckupView: React.FC = () => {
                       }}
                       onFocus={handleInputFocusOrChange}
                       placeholder="e.g. metrodental.com"
-                      className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
+                      className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
                     />
                   </div>
                 </div>
@@ -316,7 +316,7 @@ export const CheckupView: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* City / Location */}
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-bold text-slate-700">
+                  <label className="block text-xs font-bold text-slate-700">
                     City / Target Location
                   </label>
                   <div className="relative">
@@ -330,14 +330,14 @@ export const CheckupView: React.FC = () => {
                       }}
                       onFocus={handleInputFocusOrChange}
                       placeholder="e.g. Austin, TX"
-                      className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
+                      className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
                     />
                   </div>
                 </div>
 
                 {/* Business Category */}
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-bold text-slate-700">
+                  <label className="block text-xs font-bold text-slate-700">
                     Business Category
                   </label>
                   <select
@@ -347,7 +347,7 @@ export const CheckupView: React.FC = () => {
                       handleInputFocusOrChange();
                     }}
                     onFocus={handleInputFocusOrChange}
-                    className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
+                    className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
                   >
                     {COMMON_CATEGORIES.map((cat) => (
                       <option key={cat} value={cat}>
@@ -359,7 +359,7 @@ export const CheckupView: React.FC = () => {
               </div>
 
               {errorMessage && (
-                <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-sm flex items-start gap-2.5">
+                <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs flex items-start gap-2.5">
                   <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                   <span className="leading-relaxed">{errorMessage}</span>
                 </div>
@@ -386,7 +386,7 @@ export const CheckupView: React.FC = () => {
                 </button>
               </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-4 text-slate-500 text-sm pt-2">
+              <div className="flex flex-wrap items-center justify-center gap-4 text-slate-500 text-xs pt-2">
                 <span className="flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" /> Free instant scan
                 </span>
@@ -408,14 +408,14 @@ export const CheckupView: React.FC = () => {
           {/* Header Banner */}
           <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-[#047857] text-sm font-extrabold tabular-nums">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-[#047857] text-xs font-extrabold tabular-nums">
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" />
                 <span>Live Website Scan Complete</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
                 {businessName || 'Your Business'} Visibility Summary
               </h2>
-              <p className="text-sm sm:text-base text-slate-500">
+              <p className="text-xs sm:text-sm text-slate-500">
                 Audited Website: <span className="font-semibold text-slate-800">{auditResult.cleanDomain}</span>
                 {locationCity && <> • Target Location: <span className="font-semibold text-slate-800">{locationCity}</span></>}
               </p>
@@ -429,12 +429,12 @@ export const CheckupView: React.FC = () => {
                 }`}>
                   {auditResult.overallScore}
                 </div>
-                <div className="text-sm font-bold uppercase tracking-wider text-slate-400 mt-0.5">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">
                   Health Score
                 </div>
               </div>
 
-              <div className="border-l border-slate-200 pl-4 space-y-1 text-sm text-slate-600">
+              <div className="border-l border-slate-200 pl-4 space-y-1 text-xs text-slate-600">
                 <div>
                   <span className="font-bold text-[#059669]">{auditResult.passedCount}</span> Passed
                 </div>
@@ -457,13 +457,13 @@ export const CheckupView: React.FC = () => {
                   <Eye className="w-4 h-4 text-[#059669]" />
                   <h3 className="text-sm font-bold text-slate-900 font-heading">Google Search Snippet Preview</h3>
                 </div>
-                <span className="text-sm font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">Desktop / Mobile</span>
+                <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">Desktop / Mobile</span>
               </div>
 
               {/* Simulated Google Search Result */}
               <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-1 font-sans">
-                <div className="flex items-center gap-2 text-sm text-slate-600">
-                  <div className="w-4 h-4 rounded-full bg-slate-300 flex items-center justify-center text-sm">🌐</div>
+                <div className="flex items-center gap-2 text-xs text-slate-600">
+                  <div className="w-4 h-4 rounded-full bg-slate-300 flex items-center justify-center text-[10px]">🌐</div>
                   <span className="truncate">{auditResult.url || `https://${auditResult.cleanDomain}`}</span>
                 </div>
                 <h4 className="text-base text-[#1a0dab] hover:underline font-medium cursor-pointer line-clamp-1">
@@ -475,7 +475,7 @@ export const CheckupView: React.FC = () => {
                 </p>
               </div>
 
-              <div className="text-sm text-slate-500 space-y-1 pt-1">
+              <div className="text-xs text-slate-500 space-y-1 pt-1">
                 <p className="flex items-center gap-1.5">
                   {auditResult.crawlSummary.title ? (
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#059669] shrink-0" />
@@ -502,7 +502,7 @@ export const CheckupView: React.FC = () => {
                   <MapPin className="w-4 h-4 text-[#059669]" />
                   <h3 className="text-sm font-bold text-slate-900 font-heading">Google Maps 3-Pack Presence</h3>
                 </div>
-                <span className="text-sm bg-emerald-100 text-[#047857] px-2 py-0.5 rounded font-bold">Local Intent</span>
+                <span className="text-[10px] bg-emerald-100 text-[#047857] px-2 py-0.5 rounded font-bold">Local Intent</span>
               </div>
 
               <div className="p-4 bg-emerald-50/40 rounded-2xl border border-emerald-200 space-y-2">
@@ -513,7 +513,7 @@ export const CheckupView: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-sm pt-1 text-slate-600">
+                <div className="grid grid-cols-2 gap-2 text-xs pt-1 text-slate-600">
                   <div className="flex items-center gap-1.5">
                     <ShieldCheck className={`w-3.5 h-3.5 ${auditResult.crawlSummary.sslActive ? 'text-[#059669]' : 'text-rose-600'}`} />
                     <span>SSL Secure: {auditResult.crawlSummary.sslActive ? 'Yes' : 'No'}</span>
@@ -548,7 +548,7 @@ export const CheckupView: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               {auditResult.pillars.map((pillar) => (
                 <div key={pillar.key} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-1">
-                  <span className="text-sm font-bold text-slate-500 uppercase tracking-wider block truncate">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block truncate">
                     {pillar.label}
                   </span>
                   <span className={`text-2xl font-extrabold tabular-nums ${
@@ -556,7 +556,7 @@ export const CheckupView: React.FC = () => {
                   }`}>
                     {pillar.score}%
                   </span>
-                  <span className="text-sm text-slate-400 block">
+                  <span className="text-[10px] text-slate-400 block">
                     {pillar.passedCount} / {pillar.totalCount} tests passed
                   </span>
                 </div>
@@ -565,7 +565,7 @@ export const CheckupView: React.FC = () => {
 
             {/* Top 3 High-Impact Observations */}
             <div className="space-y-3 pt-2">
-              <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider">
+              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                 Top Priority Action Items Discovered
               </h4>
               <div className="space-y-2">
@@ -573,14 +573,14 @@ export const CheckupView: React.FC = () => {
                   .filter((p) => p.status === 'fail' || p.status === 'warning')
                   .slice(0, 3)
                   .map((item) => (
-                    <div key={item.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-3 text-sm">
+                    <div key={item.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-3 text-xs">
                       <AlertTriangle className={`w-4 h-4 mt-0.5 shrink-0 ${
                         item.status === 'fail' ? 'text-rose-600' : 'text-amber-600'
                       }`} />
                       <div className="space-y-0.5 flex-1">
                         <div className="font-bold text-slate-900 flex items-center justify-between">
                           <span>{item.name}</span>
-                          <span className={`text-sm font-bold px-2 py-0.5 rounded uppercase ${
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
                             item.impact === 'Critical' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'
                           }`}>
                             {item.impact} Impact
@@ -598,14 +598,14 @@ export const CheckupView: React.FC = () => {
           {/* 03 — UNLOCK YOUR FULL REPORT CTA CARD */}
           <div className="bg-gradient-to-br from-[#022c22] via-[#044a36] to-[#011a13] rounded-3xl p-8 sm:p-10 text-white shadow-2xl space-y-6 text-center border border-emerald-500/30">
             <div className="max-w-2xl mx-auto space-y-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-[#6ee7b7] text-sm font-extrabold">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-[#6ee7b7] text-xs font-extrabold">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Complete 40-Point Diagnostic Ready</span>
               </div>
               <h3 className="text-2xl sm:text-4xl font-extrabold font-heading text-white tracking-tight">
                 Unlock Your Full Report
               </h3>
-              <p className="text-sm sm:text-base text-emerald-100/90 leading-relaxed">
+              <p className="text-sm sm:text-sm text-emerald-100/90 leading-relaxed">
                 Connect your business to Locora AI to access your full 40-point technical audit, Search Console-powered visibility tracking, competitor intelligence, and 1-click AI fix generators.
               </p>
             </div>
@@ -621,7 +621,7 @@ export const CheckupView: React.FC = () => {
               </button>
             </div>
 
-            <div className="text-sm text-emerald-200/80 pt-1 flex flex-wrap items-center justify-center gap-4">
+            <div className="text-xs text-emerald-200/80 pt-1 flex flex-wrap items-center justify-center gap-4">
               <span>✓ Import audit directly to your workspace</span>
               <span>✓ Free account included</span>
               <span>✓ No credit card required</span>
@@ -636,7 +636,7 @@ export const CheckupView: React.FC = () => {
           <h2 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
             What the Audit Checks
           </h2>
-          <p className="text-sm sm:text-base text-slate-500 leading-relaxed">
+          <p className="text-sm sm:text-sm text-slate-500 leading-relaxed">
             The 40 points, grouped — so you can see exactly where local visibility is won and lost.
           </p>
         </div>
@@ -694,7 +694,7 @@ export const CheckupView: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
             <h3 className="text-base font-bold text-slate-900 font-heading">How it works</h3>
-            <ol className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-2 list-decimal list-inside">
+            <ol className="text-sm sm:text-sm text-slate-600 leading-relaxed space-y-2 list-decimal list-inside">
               <li>Enter your business name and website (30 seconds).</li>
               <li>We run the 40-point scan across the areas above (about a minute).</li>
               <li>You get a plain-English report: what&apos;s fine, what&apos;s broken, and what to fix first — prioritized by impact.</li>
@@ -702,7 +702,7 @@ export const CheckupView: React.FC = () => {
           </div>
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
             <h3 className="text-base font-bold text-slate-900 font-heading">What you get (and what you don&apos;t)</h3>
-            <ul className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-2 list-disc list-inside">
+            <ul className="text-sm sm:text-sm text-slate-600 leading-relaxed space-y-2 list-disc list-inside">
               <li>A complete visibility report you can keep, free.</li>
               <li>Prioritized fixes, not a 200-row spreadsheet.</li>
               <li>No account required to run the scan. No credit card. No &quot;free trial&quot; that bills you later.</li>
