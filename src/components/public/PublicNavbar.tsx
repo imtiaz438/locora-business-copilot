@@ -167,7 +167,7 @@ export const PublicNavbar: React.FC = () => {
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-900 font-heading flex items-center gap-1.5">
+                    <div className="text-sm font-bold text-slate-900 font-heading flex items-center gap-1.5">
                       <span>Explore All Products</span>
                       <ArrowRight className="w-3 h-3 text-[#059669]" />
                     </div>
@@ -183,7 +183,7 @@ export const PublicNavbar: React.FC = () => {
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-900 font-heading">AI Business Manager</div>
+                    <div className="text-sm font-bold text-slate-900 font-heading">AI Business Manager</div>
                     <div className="text-[11px] text-slate-500">Autonomous growth recommendations & action items</div>
                   </div>
                 </button>
@@ -196,7 +196,7 @@ export const PublicNavbar: React.FC = () => {
                     <MapPin className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-900 font-heading">Local SEO Copilot</div>
+                    <div className="text-sm font-bold text-slate-900 font-heading">Local SEO Copilot</div>
                     <div className="text-[11px] text-slate-500">Google Maps ranking, service pages & schemas</div>
                   </div>
                 </button>
@@ -209,7 +209,7 @@ export const PublicNavbar: React.FC = () => {
                     <Search className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-900 font-heading">AI Search Visibility</div>
+                    <div className="text-sm font-bold text-slate-900 font-heading">AI Search Visibility</div>
                     <div className="text-[11px] text-slate-500">Track mentions in ChatGPT, Perplexity & Copilot</div>
                   </div>
                 </button>
@@ -222,7 +222,7 @@ export const PublicNavbar: React.FC = () => {
                     <Star className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-900 font-heading">AI Reputation Manager</div>
+                    <div className="text-sm font-bold text-slate-900 font-heading">AI Reputation Manager</div>
                     <div className="text-[11px] text-slate-500">Reviews into customer insights & marketing</div>
                   </div>
                 </button>
@@ -235,7 +235,7 @@ export const PublicNavbar: React.FC = () => {
                     <Shield className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-900 font-heading">Competitor Intelligence</div>
+                    <div className="text-sm font-bold text-slate-900 font-heading">Competitor Intelligence</div>
                     <div className="text-[11px] text-slate-500">Spot gaps in rankings, services and reviews</div>
                   </div>
                 </button>
@@ -248,7 +248,7 @@ export const PublicNavbar: React.FC = () => {
                     <Users className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-900 font-heading">Agency AI Client Manager</div>
+                    <div className="text-sm font-bold text-slate-900 font-heading">Agency AI Client Manager</div>
                     <div className="text-[11px] text-slate-500">Multi-location and client retainer management</div>
                   </div>
                 </button>
@@ -280,7 +280,7 @@ export const PublicNavbar: React.FC = () => {
                     <Building className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-900 font-heading">Small Business Owners</div>
+                    <div className="text-sm font-bold text-slate-900 font-heading">Small Business Owners</div>
                     <div className="text-[11px] text-slate-500">More customers with zero technical headache</div>
                   </div>
                 </button>
@@ -293,7 +293,7 @@ export const PublicNavbar: React.FC = () => {
                     <Users className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-900 font-heading">Local SEO Agencies</div>
+                    <div className="text-sm font-bold text-slate-900 font-heading">Local SEO Agencies</div>
                     <div className="text-[11px] text-slate-500">AI Client Manager for 10-100+ accounts</div>
                   </div>
                 </button>
@@ -306,7 +306,7 @@ export const PublicNavbar: React.FC = () => {
                     <Compass className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-900 font-heading">Industry Blueprints</div>
+                    <div className="text-sm font-bold text-slate-900 font-heading">Industry Blueprints</div>
                     <div className="text-[11px] text-slate-500">Dental, HVAC, Legal, Roofing & Clinics</div>
                   </div>
                 </button>
@@ -338,7 +338,7 @@ export const PublicNavbar: React.FC = () => {
                     <FileText className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-900 font-heading">Guides & Tutorials</div>
+                    <div className="text-sm font-bold text-slate-900 font-heading">Guides & Tutorials</div>
                     <div className="text-[11px] text-slate-500">Step-by-step local growth strategies</div>
                   </div>
                 </button>
@@ -351,7 +351,7 @@ export const PublicNavbar: React.FC = () => {
                     <TrendingUp className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-900 font-heading">Case Studies</div>
+                    <div className="text-sm font-bold text-slate-900 font-heading">Case Studies</div>
                     <div className="text-[11px] text-slate-500">Verified revenue & ranking outcomes</div>
                   </div>
                 </button>
@@ -466,31 +466,31 @@ export const PublicNavbar: React.FC = () => {
             </button>
             <button
               onClick={() => navigateTo('products', '/products', 'ai-manager')}
-              className="text-left px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 pl-6"
+              className="text-left px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 pl-6"
             >
               · AI Business Manager
             </button>
             <button
               onClick={() => navigateTo('products', '/products', 'local-seo')}
-              className="text-left px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 pl-6"
+              className="text-left px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 pl-6"
             >
               · Local SEO & Maps Copilot
             </button>
             <button
               onClick={() => navigateTo('products', '/products', 'ai-visibility')}
-              className="text-left px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 pl-6"
+              className="text-left px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 pl-6"
             >
               · AI Search Visibility (GEO)
             </button>
             <button
               onClick={() => navigateTo('products', '/products', 'reputation')}
-              className="text-left px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 pl-6"
+              className="text-left px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 pl-6"
             >
               · AI Reputation & Reviews
             </button>
             <button
               onClick={() => navigateTo('products', '/products', 'competitors')}
-              className="text-left px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 pl-6"
+              className="text-left px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 pl-6"
             >
               · Competitor Radar
             </button>

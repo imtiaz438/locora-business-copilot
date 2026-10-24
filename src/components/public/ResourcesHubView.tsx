@@ -61,7 +61,7 @@ export const ResourcesHubView: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search guides, checklists, or keywords..."
-              className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#059669] shadow-xs"
+              className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#059669] shadow-xs"
             />
           </div>
 
@@ -115,7 +115,7 @@ export const ResourcesHubView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleSelectArticle(art.slug)}
-                  className="text-xs font-bold text-slate-900 hover:text-[#059669] flex items-center gap-1.5 cursor-pointer font-heading"
+                  className="text-sm font-bold text-slate-900 hover:text-[#059669] flex items-center gap-1.5 cursor-pointer font-heading"
                 >
                   <span>Read Guide</span>
                   <ArrowRight className="w-3.5 h-3.5" />

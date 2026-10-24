@@ -315,7 +315,7 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
                 <h4 className="text-base font-bold text-slate-900 font-heading">
                   Running Real-Time Business Analysis
                 </h4>
-                <p className="text-xs text-slate-500 font-sans">{analysisStep}</p>
+                <p className="text-sm text-slate-500 font-sans">{analysisStep}</p>
               </div>
               <div className="max-w-xs mx-auto pt-2">
                 <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
@@ -438,7 +438,7 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
                       className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all space-y-1.5"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-bold text-slate-900 font-heading">
+                        <span className="text-sm font-bold text-slate-900 font-heading">
                           {issue.title}
                         </span>
                         <span
@@ -453,7 +453,7 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
                           {issue.severity}
                         </span>
                       </div>
-                      <div className="text-xs text-slate-600 font-sans">
+                      <div className="text-sm text-slate-600 font-sans">
                         <span className="font-semibold text-slate-700">Evidence: </span>
                         {issue.evidence}
                       </div>
@@ -469,7 +469,7 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
               {/* 5. Locked Deeper Intelligence Teaser (Strict Boundary: No full dashboard exposure) */}
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-slate-700 text-xs font-bold font-heading">
+                  <div className="flex items-center gap-2 text-slate-700 text-sm font-bold font-heading">
                     <Lock className="w-3.5 h-3.5 text-slate-500" />
                     <span>Locora Growth Tools Available for {business.businessName} ({checkupData.totalOpportunitiesCount - 3} More Insights)</span>
                   </div>
@@ -507,7 +507,7 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
         {/* Conversion Action Footer */}
         <div className="p-5 sm:p-6 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-center sm:text-left space-y-0.5">
-            <span className="text-xs font-bold text-slate-900 block font-heading">
+            <span className="text-sm font-bold text-slate-900 block font-heading">
               Preserve this checkup & fix issues immediately
             </span>
             <span className="text-[11px] text-slate-500 block">

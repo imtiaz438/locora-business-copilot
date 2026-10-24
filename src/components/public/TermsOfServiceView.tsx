@@ -45,21 +45,21 @@ export const TermsOfServiceView: React.FC = () => {
             <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
               <Sparkles className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-bold text-slate-900">100% Content Ownership</p>
+                <p className="text-sm font-bold text-slate-900">100% Content Ownership</p>
                 <p className="text-[11px] text-slate-500">You retain full ownership of all documents & contracts built on Locora.</p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
               <CreditCard className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-bold text-slate-900">Transparent Billing</p>
+                <p className="text-sm font-bold text-slate-900">Transparent Billing</p>
                 <p className="text-[11px] text-slate-500">Cancel or upgrade your subscription plan anytime with zero penalties.</p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
               <ShieldCheck className="w-5 h-5 text-sky-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-bold text-slate-900">Reliable Service</p>
+                <p className="text-sm font-bold text-slate-900">Reliable Service</p>
                 <p className="text-[11px] text-slate-500">Reliable Cloud infrastructure engineered for business continuity.</p>
               </div>
             </div>
@@ -134,7 +134,7 @@ export const TermsOfServiceView: React.FC = () => {
             </h2>
             <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-                <p className="font-bold text-xs text-slate-900">Your Content Belongs To You</p>
+                <p className="font-bold text-sm text-slate-900">Your Content Belongs To You</p>
                 <p className="text-sm leading-relaxed text-slate-600">
                   As between you and Locora AI, you own all rights, title, and interest in the business data, customer records, invoices, proposals, and SEO assets generated using the Locora AI platform. Locora AI retains all ownership rights to the platform software, trademarks, logos, and underlying source code.
                 </p>

@@ -215,7 +215,7 @@ export const ContactView: React.FC = () => {
 
               {/* Social Channels */}
               <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
-                <p className="text-xs font-bold text-slate-900 mb-2">Follow Our Official Channels</p>
+                <p className="text-sm font-bold text-slate-900 mb-2">Follow Our Official Channels</p>
                 <div className="flex items-center gap-2">
                   <a
                     href="https://www.linkedin.com/company/locoracopilot"
@@ -243,7 +243,7 @@ export const ContactView: React.FC = () => {
             <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2 font-sans">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-[#059669]" />
-                <p className="text-xs font-bold text-slate-900">Need an Instant Answer?</p>
+                <p className="text-sm font-bold text-slate-900">Need an Instant Answer?</p>
               </div>
               <p className="text-[11px] text-slate-600 leading-relaxed">
                 Ask our live AI Business Copilot directly in your workspace.
@@ -284,61 +284,61 @@ export const ContactView: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Your Full Name *</label>
+                  <label className="text-sm font-semibold text-slate-700">Your Full Name *</label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="e.g. Sarah Jenkins"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Work Email Address *</label>
+                  <label className="text-sm font-semibold text-slate-700">Work Email Address *</label>
                   <input
                     type="email"
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="sarah@company.com"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Company / Business Name</label>
+                  <label className="text-sm font-semibold text-slate-700">Company / Business Name</label>
                   <input
                     type="text"
                     value={formData.company}
                     onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                     placeholder="e.g. Apex Growth Agency"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Phone Number (Optional)</label>
+                  <label className="text-sm font-semibold text-slate-700">Phone Number (Optional)</label>
                   <input
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="+1 (512) 000-0000"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Inquiry Type</label>
+                  <label className="text-sm font-semibold text-slate-700">Inquiry Type</label>
                   <select
                     value={formData.inquiryType}
                     onChange={(e) => setFormData({ ...formData, inquiryType: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
                   >
                     <option value="demo">Book 15-Min VIP Demo</option>
                     <option value="sales">Enterprise & Agency Sales</option>
@@ -348,11 +348,11 @@ export const ContactView: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-700">Est. Monthly Client Retainers</label>
+                  <label className="text-sm font-semibold text-slate-700">Est. Monthly Client Retainers</label>
                   <select
                     value={formData.budget}
                     onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
                   >
                     <option value="under1k">Under $1,000 / mo</option>
                     <option value="1k-5k">$1,000 - $5,000 / mo</option>
@@ -363,14 +363,14 @@ export const ContactView: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-700">Message / Details *</label>
+                <label className="text-sm font-semibold text-slate-700">Message / Details *</label>
                 <textarea
                   required
                   rows={4}
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   placeholder="Tell us about your agency workflow or any specific features you'd like to explore..."
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-[#059669] transition-all"
                 />
               </div>
 

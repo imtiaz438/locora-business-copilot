@@ -419,7 +419,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           <h2 className="text-xl sm:text-2xl font-extrabold font-heading text-slate-900 tracking-tight">
             Category Breakdown
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-sm sm:text-base text-slate-500 mt-1">
             Scores for Technical SEO, On-Page SEO, Local SEO, Content, Performance, and Structured Data derived deterministically from crawl conditions.
           </p>
         </div>
@@ -568,7 +568,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           <h3 className="text-xl sm:text-2xl font-extrabold font-heading text-slate-900 tracking-tight">
             High-Priority Findings Requiring Action
           </h3>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-sm sm:text-base text-slate-500 mt-1">
             Displaying the top issues discovered during the website scan.
           </p>
         </div>
@@ -662,7 +662,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
               <div key={pass.id} className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200/80 space-y-1">
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span className="font-bold text-xs text-slate-900 truncate font-heading">{pass.title}</span>
+                  <span className="font-bold text-sm text-slate-900 truncate font-heading">{pass.title}</span>
                 </div>
                 <p className="text-[11px] font-mono text-slate-600 truncate pl-5">
                   {pass.limitedEvidence}
@@ -684,7 +684,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
             <h3 className="text-lg sm:text-xl font-bold font-heading text-slate-900">
               Verified Public Information
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-sm text-slate-500 mt-0.5">
               Strictly extracted from public crawl signals. Missing fields are explicitly marked rather than assumed.
             </p>
           </div>
@@ -738,7 +738,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
             <h3 className="text-xl sm:text-2xl font-extrabold font-heading text-slate-900 tracking-tight">
               {gated.totalOpportunitiesCount} Total Opportunities Found
             </h3>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            <p className="text-sm sm:text-base text-slate-500 mt-1">
               Your website has {gated.totalOpportunitiesCount} opportunities. You have seen the top 3.
             </p>
           </div>
@@ -792,7 +792,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                   🔒 {gated.lockedOpportunitiesCount} Additional Opportunities Locked
                 </h4>
               </div>
-              <p className="text-xs sm:text-sm text-slate-600 font-sans">
+              <p className="text-sm sm:text-base text-slate-600 font-sans">
                 Create your free Locora workspace to see the complete analysis and turn these findings into actionable work.
               </p>
             </div>
@@ -850,7 +850,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           <h3 className="text-xl sm:text-2xl font-extrabold font-heading text-slate-900 tracking-tight">
             Verified Profiles & Live Telemetry
           </h3>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-sm sm:text-base text-slate-500 mt-1">
             Locora strictly rejects fabricated data. Locked modules only activate when you authenticate genuine data providers.
           </p>
         </div>
@@ -1034,7 +1034,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           <h3 className="text-xl sm:text-2xl font-extrabold font-heading text-slate-900 tracking-tight">
             How Locora Drives Growth After Signup
           </h3>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-sm sm:text-base text-slate-500 mt-1">
             Unlock complete audits for free, then automate your local growth with Pro and Agency tools.
           </p>
         </div>
@@ -1045,7 +1045,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
               <span className="font-extrabold text-sm font-heading text-slate-900">Free Tier</span>
               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-700">Free Forever</span>
             </div>
-            <p className="text-xs text-slate-500">Perfect for single business owners claiming their initial footprint.</p>
+            <p className="text-sm text-slate-500">Perfect for single business owners claiming their initial footprint.</p>
             <ul className="space-y-1.5 text-xs text-slate-700">
               <li className="flex items-center gap-1.5">✓ Full page-by-page audit results</li>
               <li className="flex items-center gap-1.5">✓ Confirm & store Business Truth</li>
@@ -1059,7 +1059,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
               <span className="font-extrabold text-sm font-heading text-emerald-950">Locora Pro</span>
               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white">Most Popular</span>
             </div>
-            <p className="text-xs text-slate-500">For ambitious local businesses dominating their market.</p>
+            <p className="text-sm text-slate-500">For ambitious local businesses dominating their market.</p>
             <ul className="space-y-1.5 text-xs text-slate-800">
               <li className="flex items-center gap-1.5">✓ 250 AI credits/mo for AI fixes & drafts</li>
               <li className="flex items-center gap-1.5">✓ Autonomous AI Manager & content drafts</li>
@@ -1073,7 +1073,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
               <span className="font-extrabold text-sm font-heading text-slate-900">Agency & Multi-Location</span>
               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800">Scale</span>
             </div>
-            <p className="text-xs text-slate-500">For marketing agencies and multi-location franchises.</p>
+            <p className="text-sm text-slate-500">For marketing agencies and multi-location franchises.</p>
             <ul className="space-y-1.5 text-xs text-slate-700">
               <li className="flex items-center gap-1.5">✓ Unlimited AI credits</li>
               <li className="flex items-center gap-1.5">✓ Multi-client workspaces (10 businesses)</li>

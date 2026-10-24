@@ -45,21 +45,21 @@ export const RefundPolicyView: React.FC = () => {
             <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
               <RefreshCw className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-bold text-slate-900">Cancel Anytime</p>
+                <p className="text-sm font-bold text-slate-900">Cancel Anytime</p>
                 <p className="text-[11px] text-slate-500">Stop your subscription directly via your dashboard settings wrapper.</p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
               <XCircle className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-bold text-slate-900">Final Sale Rules</p>
+                <p className="text-sm font-bold text-slate-900">Final Sale Rules</p>
                 <p className="text-[11px] text-slate-500">Sales are final once cloud-allocated AI generation credits are spent.</p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
               <ShieldCheck className="w-5 h-5 text-sky-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-bold text-slate-900">14-Day Discrepancies</p>
+                <p className="text-sm font-bold text-slate-900">14-Day Discrepancies</p>
                 <p className="text-[11px] text-slate-500">Dedicated manual review for duplicate billing or gateway errors.</p>
               </div>
             </div>

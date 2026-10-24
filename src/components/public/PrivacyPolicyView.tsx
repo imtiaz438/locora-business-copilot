@@ -45,21 +45,21 @@ export const PrivacyPolicyView: React.FC = () => {
             <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
               <Lock className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-bold text-slate-900">Zero Model Training</p>
+                <p className="text-sm font-bold text-slate-900">Zero Model Training</p>
                 <p className="text-[11px] text-slate-500">Your inputs are never used to train public AI models.</p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
               <Server className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-bold text-slate-900">Encrypted Storage</p>
+                <p className="text-sm font-bold text-slate-900">Encrypted Storage</p>
                 <p className="text-[11px] text-slate-500">AES-256 encryption at rest and TLS 1.3 in transit.</p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
               <UserCheck className="w-5 h-5 text-sky-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs font-bold text-slate-900">You Own Your Data</p>
+                <p className="text-sm font-bold text-slate-900">You Own Your Data</p>
                 <p className="text-[11px] text-slate-500">Export or delete your CRM records and documents anytime.</p>
               </div>
             </div>
@@ -142,11 +142,11 @@ export const PrivacyPolicyView: React.FC = () => {
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                  <p className="text-xs font-bold text-slate-900">Stripe Payment Gateway</p>
+                  <p className="text-sm font-bold text-slate-900">Stripe Payment Gateway</p>
                   <p className="text-[11px] text-slate-500">Handles PCI-DSS compliant credit card processing and subscription lifecycle.</p>
                 </div>
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                  <p className="text-xs font-bold text-slate-900">Google Cloud Platform & Firebase</p>
+                  <p className="text-sm font-bold text-slate-900">Google Cloud Platform & Firebase</p>
                   <p className="text-[11px] text-slate-500">Provides secure database storage, serverless hosting, and encrypted backups.</p>
                 </div>
               </div>

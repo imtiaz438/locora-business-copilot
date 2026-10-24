@@ -101,7 +101,7 @@ export const UseCasesHubView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleSelectUseCase(uc.slug)}
-                  className="text-xs font-bold text-slate-900 hover:text-[#059669] flex items-center gap-1.5 cursor-pointer font-heading"
+                  className="text-sm font-bold text-slate-900 hover:text-[#059669] flex items-center gap-1.5 cursor-pointer font-heading"
                 >
                   <span>Explore Workflow</span>
                   <ArrowRight className="w-3.5 h-3.5" />

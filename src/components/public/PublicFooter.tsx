@@ -106,7 +106,7 @@ export const PublicFooter: React.FC = () => {
             <h3 className="text-2xl font-bold font-heading text-slate-900">
               Get Weekly AI Local Business Strategies & SEO Prompts
             </h3>
-            <p className="text-xs text-slate-600 leading-relaxed max-w-xl font-sans">
+            <p className="text-sm text-slate-600 leading-relaxed max-w-xl font-sans">
               Join agency owners and service entrepreneurs receiving our weekly teardowns on closing local retainers with AI.
             </p>
           </div>
@@ -129,7 +129,7 @@ export const PublicFooter: React.FC = () => {
                       onChange={(e) => setNewsletterEmail(e.target.value)}
                       placeholder="Enter your work email address"
                       disabled={isSubmitting}
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#059669] transition-colors font-sans"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#059669] transition-colors font-sans"
                     />
                   </div>
                   <button
@@ -166,7 +166,7 @@ export const PublicFooter: React.FC = () => {
           {/* Brand Info & Social Media */}
           <div className="lg:col-span-1 space-y-4">
             <LocoraLogo size={30} className="flex-shrink-0" />
-            <p className="text-xs text-slate-600 leading-relaxed font-sans">
+            <p className="text-sm text-slate-600 leading-relaxed font-sans">
               The unified AI Operating System for agencies and local businesses. Automate proposals, local SEO, client CRM, and invoicing.
             </p>
 
@@ -206,7 +206,7 @@ export const PublicFooter: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 text-xs text-slate-600 pt-1 font-sans">
+            <div className="flex flex-col gap-2 text-sm text-slate-600 pt-1 font-sans">
               <span className="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-2xs">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" /> Security & privacy are core to our platform
               </span>
@@ -216,7 +216,7 @@ export const PublicFooter: React.FC = () => {
           {/* Layer 1: Product Features */}
           <div className="space-y-3 font-sans">
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Product Features</h4>
-            <ul className="space-y-2 text-xs text-slate-600">
+            <ul className="space-y-2 text-sm text-slate-600">
               <li>
                 <button onClick={() => navigateTo('/products', 'products')} className="font-bold text-[#059669] hover:text-[#047857] transition-colors cursor-pointer text-left flex items-center gap-1">
                   <span>All Products Suite</span>
@@ -274,7 +274,7 @@ export const PublicFooter: React.FC = () => {
           {/* Layer 2: Use Cases */}
           <div className="space-y-3 font-sans">
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Use Cases</h4>
-            <ul className="space-y-2 text-xs text-slate-600">
+            <ul className="space-y-2 text-sm text-slate-600">
               <li>
                 <button onClick={() => navigateTo('/use-cases/local-seo', 'usecase_local-seo')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
                   Local SEO & Google Maps
@@ -311,7 +311,7 @@ export const PublicFooter: React.FC = () => {
           {/* Layer 3 & 4: Industries & Educational Resources */}
           <div className="space-y-3 font-sans">
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Resources & SOPs</h4>
-            <ul className="space-y-2 text-xs text-slate-600">
+            <ul className="space-y-2 text-sm text-slate-600">
               <li>
                 <button onClick={() => navigateTo('/resources/how-to-improve-local-seo', 'resource_how-to-improve-local-seo')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
                   How to Improve Local SEO
@@ -343,7 +343,7 @@ export const PublicFooter: React.FC = () => {
           {/* Company & Legal */}
           <div className="space-y-3 font-sans">
             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Company</h4>
-            <ul className="space-y-2 text-xs text-slate-600">
+            <ul className="space-y-2 text-sm text-slate-600">
               <li>
                 <button onClick={() => navigateTo('/', 'home')} className="hover:text-[#059669] transition-colors cursor-pointer">
                   Home
@@ -404,7 +404,7 @@ export const PublicFooter: React.FC = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4 font-sans">
+        <div className="pt-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-sm text-slate-500 gap-4 font-sans">
           <p>© {new Date().getFullYear()} Locora AI Platform, Inc. All rights reserved.</p>
 
           <div className="flex items-center gap-6 flex-wrap">

@@ -184,7 +184,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
               <div className="p-5 bg-slate-50 border-l-4 border-emerald-600 rounded-r-2xl text-sm sm:text-base text-slate-800 font-medium leading-relaxed">
                 {useCase.editorialOverview.strategicValue}
               </div>
-              <p className="text-xs text-slate-500 font-sans">
+              <p className="text-sm text-slate-500 font-sans">
                 {useCase.editorialOverview.marketContext}
               </p>
             </div>
@@ -404,7 +404,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
                   onClick={() => setOpenFaq(isOpen ? null : i)}
                   className="w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-50 transition-colors"
                 >
-                  <span className="text-xs sm:text-sm font-bold font-heading text-slate-900">{faq.q}</span>
+                  <span className="text-sm sm:text-sm font-bold font-heading text-slate-900">{faq.q}</span>
                   <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${isOpen ? 'rotate-180 text-emerald-700' : ''}`} />
                 </button>
                 {isOpen && (
@@ -434,7 +434,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
               }}
               className="p-4 bg-white border border-slate-200 rounded-xl hover:border-emerald-600 text-left transition-all cursor-pointer space-y-1 shadow-2xs"
             >
-              <div className="flex items-center justify-between text-xs font-bold text-slate-900 font-heading">
+              <div className="flex items-center justify-between text-sm font-bold text-slate-900 font-heading">
                 <span>{ou.title}</span>
                 <ArrowRight className="w-3.5 h-3.5 text-emerald-700" />
               </div>

@@ -372,7 +372,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               <span className="bg-slate-200 px-1.5 py-0.5 rounded text-[10px]">2</span>
             </div>
             <div className="bg-white p-2.5 rounded-lg shadow-2xs space-y-1 border border-slate-200">
-              <div className="font-bold text-slate-900 text-xs">Westlake Estates HOA</div>
+              <div className="font-bold text-slate-900 text-sm">Westlake Estates HOA</div>
               <div className="text-[11px] text-emerald-700 font-bold">$12,000 · Retainer</div>
               <div className="text-[10px] text-slate-500">Commercial backflow testing</div>
             </div>
@@ -383,7 +383,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               <span className="bg-amber-200/80 px-1.5 py-0.5 rounded text-[10px]">1</span>
             </div>
             <div className="bg-white p-2.5 rounded-lg shadow-2xs space-y-1 border border-slate-200">
-              <div className="font-bold text-slate-900 text-xs">Downtown Boutique Hotel</div>
+              <div className="font-bold text-slate-900 text-sm">Downtown Boutique Hotel</div>
               <div className="text-[11px] text-emerald-700 font-bold">$8,500 · One-time</div>
               <div className="text-[10px] text-slate-500">Water heater manifold install</div>
             </div>
@@ -394,7 +394,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               <span className="bg-emerald-200/80 px-1.5 py-0.5 rounded text-[10px]">1</span>
             </div>
             <div className="bg-white p-2.5 rounded-lg shadow-2xs space-y-1 border border-slate-200">
-              <div className="font-bold text-slate-900 text-xs">Capital Medical Clinic</div>
+              <div className="font-bold text-slate-900 text-sm">Capital Medical Clinic</div>
               <div className="text-[11px] text-emerald-700 font-bold">$7,900 · Signed</div>
               <div className="text-[10px] text-emerald-600 font-semibold">Active Maintenance</div>
             </div>
@@ -456,7 +456,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               <span>City Permit &amp; Safety Expansion Tank</span>
               <span className="font-bold text-slate-900">$350.00</span>
             </div>
-            <div className="flex justify-between font-bold text-slate-900 pt-1 text-xs">
+            <div className="flex justify-between font-bold text-slate-900 pt-1 text-sm">
               <span>Total Balance Due</span>
               <span className="text-emerald-700">$2,800.00</span>
             </div>
@@ -741,7 +741,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               {/* Live UI Mockup Card */}
               <div className="lg:col-span-5 bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                  <span className="text-xs font-bold text-slate-900 font-heading">Locora AI Engine</span>
+                  <span className="text-sm font-bold text-slate-900 font-heading">Locora AI Engine</span>
                   <span className="text-[10px] px-2 py-0.5 bg-emerald-100 text-[#059669] rounded font-mono font-bold border border-emerald-200">
                     STATUS: READY
                   </span>
@@ -777,7 +777,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             <h3 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900">
               Dedicated Product Deep-Dives
             </h3>
-            <p className="text-xs sm:text-sm text-slate-600 font-sans">
+            <p className="text-sm sm:text-base text-slate-600 font-sans">
               Click any product to explore detailed guides, sample outputs, workflows, and automated deliverables.
             </p>
           </div>
@@ -817,7 +817,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                   <button
                     type="button"
                     onClick={() => navigateToFeature(feat.slug)}
-                    className="text-xs font-bold text-slate-900 hover:text-[#059669] flex items-center gap-1.5 cursor-pointer font-heading"
+                    className="text-sm font-bold text-slate-900 hover:text-[#059669] flex items-center gap-1.5 cursor-pointer font-heading"
                   >
                     <span>Read Guide</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -841,7 +841,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             <h3 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
               Locora AI vs. Traditional Tool Stacks
             </h3>
-            <p className="text-xs sm:text-sm text-slate-600 font-sans">
+            <p className="text-sm sm:text-base text-slate-600 font-sans">
               Stop paying $500+/month for 5 separate software subscriptions.
             </p>
           </div>
@@ -904,7 +904,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-white">
                 AI Business Manager
               </h2>
-              <p className="text-xs sm:text-sm text-slate-400 max-w-xl mt-1">
+              <p className="text-sm sm:text-base text-slate-400 max-w-xl mt-1">
                 Your autonomous daily business copilot. It synthesizes operational data overnight, prioritizes highest-revenue actions, and answers complex queries with full business context.
               </p>
             </div>
@@ -1021,7 +1021,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                 value={aiQuestion}
                 onChange={(e) => setAiQuestion(e.target.value)}
                 placeholder="Or type custom prompt: e.g. What should I do to rank #1 in Round Rock?"
-                className="flex-1 px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-sans"
+                className="flex-1 px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-sm sm:text-base text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-sans"
               />
               <button
                 type="submit"
@@ -1094,7 +1094,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             {/* Geo-Grid Heatmap Simulator */}
             <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-900 font-heading">Austin Metro 3-Pack Ranking Heatmap</span>
+                <span className="text-sm font-bold text-slate-900 font-heading">Austin Metro 3-Pack Ranking Heatmap</span>
                 <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold">Updated Daily</span>
               </div>
               <div className="grid grid-cols-3 gap-2 text-center text-xs">
@@ -1458,7 +1458,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                         />
                       </button>
                     ))}
-                    <span className="text-xs font-bold text-slate-700 ml-1.5">{testRating} Stars</span>
+                    <span className="text-sm font-bold text-slate-700 ml-1.5">{testRating} Stars</span>
                   </div>
                 </div>
               </div>
@@ -1484,7 +1484,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-700">Reply Voice &amp; Tone:</span>
+              <span className="text-sm font-bold text-slate-700">Reply Voice &amp; Tone:</span>
               <div className="flex gap-1.5">
                 {[
                   { id: 'seo', label: 'SEO-Optimized & Grateful' },
@@ -1546,7 +1546,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900">
                 Competitor Intelligence Radar
               </h2>
-              <p className="text-xs sm:text-sm text-slate-600 mt-1">
+              <p className="text-sm sm:text-base text-slate-600 mt-1">
                 Locora automatically scans your local rivals' services, review velocities, pricing clues, and search rankings.
               </p>
             </div>
@@ -1567,19 +1567,19 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Service Page Gap</span>
               <h4 className="font-bold text-sm text-slate-900">Competitor A has 4 pages you lack</h4>
-              <p className="text-xs text-slate-600">Targeting Tankless Water Heaters, Slab Leak Detection, Hydro-jetting &amp; Commercial Fixtures.</p>
+              <p className="text-sm text-slate-600">Targeting Tankless Water Heaters, Slab Leak Detection, Hydro-jetting &amp; Commercial Fixtures.</p>
             </div>
 
             <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Review Velocity Gap</span>
               <h4 className="font-bold text-sm text-slate-900">Competitor B gained 17 reviews this month</h4>
-              <p className="text-xs text-slate-600">You generated 3 reviews. Their velocity puts them in the top 3-pack within 45 days unless counter-acted.</p>
+              <p className="text-sm text-slate-600">You generated 3 reviews. Their velocity puts them in the top 3-pack within 45 days unless counter-acted.</p>
             </div>
 
             <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
               <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Search Keyword Gap</span>
               <h4 className="font-bold text-sm text-slate-900">Competitor C appears for 8 searches you miss</h4>
-              <p className="text-xs text-slate-600">Ranking for high-intent emergency phrases in Round Rock and Westlake.</p>
+              <p className="text-sm text-slate-600">Ranking for high-intent emergency phrases in Round Rock and Westlake.</p>
             </div>
           </div>
 
@@ -1607,7 +1607,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{comp.tier}</span>
                     <span className="font-black text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">{comp.mapsRank}</span>
                   </div>
-                  <div className="font-bold text-xs text-slate-900 font-heading truncate">{comp.name}</div>
+                  <div className="font-bold text-sm text-slate-900 font-heading truncate">{comp.name}</div>
                   <div className="space-y-1 text-[11px] text-slate-600">
                     <div className="flex justify-between">
                       <span>Review Velocity:</span>
@@ -1695,7 +1695,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                     {idx === 0 ? 'Sprint Active' : 'Queued'}
                   </span>
                 </div>
-                <div className="text-xs font-bold text-slate-800">{plan.title}</div>
+                <div className="text-sm font-bold text-slate-800">{plan.title}</div>
                 <div className="space-y-2">
                   {plan.tasks.map((t, i) => {
                     const taskKey = `${idx}-${i}`;
@@ -1787,7 +1787,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-white">
                 Agency AI Client Manager
               </h2>
-              <p className="text-xs sm:text-sm text-indigo-200 max-w-xl mt-1">
+              <p className="text-sm sm:text-base text-indigo-200 max-w-xl mt-1">
                 Manage 10, 50, or 100 local client accounts from a single command center with automated client triage, white-label audit PDFs, and bulk review reply workflows.
               </p>
             </div>

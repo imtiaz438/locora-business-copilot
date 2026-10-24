@@ -212,7 +212,7 @@ export const FeaturesView: React.FC = () => {
         {/* Live UI Mockup Card */}
         <div className="lg:col-span-5 bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-            <span className="text-xs font-bold text-slate-900 font-heading">Locora AI Engine</span>
+            <span className="text-sm font-bold text-slate-900 font-heading">Locora AI Engine</span>
             <span className="text-[10px] px-2 py-0.5 bg-emerald-100 text-[#059669] rounded font-mono font-bold border border-emerald-200">
               STATUS: READY
             </span>
@@ -246,7 +246,7 @@ export const FeaturesView: React.FC = () => {
           <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900">
             Dedicated Product Deep-Dives
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 font-sans">
+          <p className="text-sm sm:text-base text-slate-600 font-sans">
             Explore detailed feature guides, sample outputs, workflows, and automated deliverables.
           </p>
         </div>
@@ -277,7 +277,7 @@ export const FeaturesView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => navigateToFeature(feat.slug)}
-                  className="text-xs font-bold text-slate-900 hover:text-[#059669] flex items-center gap-1.5 cursor-pointer font-heading"
+                  className="text-sm font-bold text-slate-900 hover:text-[#059669] flex items-center gap-1.5 cursor-pointer font-heading"
                 >
                   <span>Feature Overview</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -308,7 +308,7 @@ export const FeaturesView: React.FC = () => {
           <h2 className="text-2xl sm:text-4xl font-bold font-heading text-slate-900">
             Locora AI vs. Traditional Tool Stacks
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 font-sans">
+          <p className="text-sm sm:text-base text-slate-600 font-sans">
             Stop paying $500+/month for 5 separate software subscriptions.
           </p>
         </div>

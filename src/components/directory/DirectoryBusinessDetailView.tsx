@@ -698,7 +698,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       ))}
                     </div>
                     <span className="text-sm font-bold text-slate-900">{rating.toFixed(1)}</span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-sm text-slate-500">
                       {reviewSourceLabel} Rating: <strong>{rating.toFixed(1)}</strong> based on <strong>{reviewCount}</strong> {reviewCount === 1 ? 'review' : 'reviews'}
                     </span>
                   </>
@@ -829,7 +829,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               <h3 className="text-xl font-black text-white font-heading tracking-tight">
                 Do you own or manage {business.businessName}?
               </h3>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
+              <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-sans">
                 Claim your free profile to update your services & hours, respond directly to customer quote requests, and see how Locora helps improve your local ranking on Google.
               </p>
             </div>
@@ -897,7 +897,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 About {business.businessName}
               </h2>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
                 {business.scrapedContent?.description ||
                   business.scrapedContent?.aboutSummary ||
                   `${business.businessName} provides ${business.categoryName} services throughout ${business.cityName || 'the local area'}. Dedicated to high quality customer outcomes.`}
@@ -959,7 +959,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                     <MapPin className="w-5 h-5 text-emerald-600" />
                     Google Maps & Location
                   </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-sm text-slate-500 mt-0.5">
                     {hasCoordinates
                       ? (isGbpConnected ? 'Verified coordinates from Google Business Profile' : 'Geocoded GPS coordinates')
                       : fullAddress
@@ -1039,7 +1039,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               ) : (
                 <div className="p-8 rounded-xl bg-slate-50 border border-slate-100 text-center">
                   <MapPin className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-xs font-bold text-slate-700">Map unavailable for this business</p>
+                  <p className="text-sm font-bold text-slate-700">Map unavailable for this business</p>
                   <p className="text-[11px] text-slate-400 mt-1">No verified physical location coordinates available.</p>
                 </div>
               )}
@@ -1053,7 +1053,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                     <MessageSquare className="w-5 h-5 text-emerald-600" />
                     Customer Reviews
                   </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">{reviewSourceLabel} Reviews</p>
+                  <p className="text-sm text-slate-500 mt-0.5">{reviewSourceLabel} Reviews</p>
                 </div>
 
                 {typeof rating === 'number' && rating > 0 && typeof reviewCount === 'number' && reviewCount > 0 && (
@@ -1085,7 +1085,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                     <div key={rev.id} className="p-4 rounded-xl bg-slate-50 border border-slate-100">
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div>
-                          <span className="text-xs font-bold text-slate-900 block">{rev.authorName}</span>
+                          <span className="text-sm font-bold text-slate-900 block">{rev.authorName}</span>
                           <span className="text-[10px] text-slate-400">
                             {rev.relativePublishTimeDescription || (rev.publishedAt ? new Date(rev.publishedAt).toLocaleDateString() : '')}
                           </span>
@@ -1102,7 +1102,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                             ))}
                           </div>
                           {rev.rating != null && (
-                            <span className="text-xs font-bold text-slate-800 ml-1">{Number(rev.rating).toFixed(1)}</span>
+                            <span className="text-sm font-bold text-slate-800 ml-1">{Number(rev.rating).toFixed(1)}</span>
                           )}
                         </div>
                       </div>
@@ -1182,7 +1182,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                 <h3 className="text-lg font-black text-slate-900 font-heading mt-0.5">
                   Connect with {business.businessName}
                 </h3>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-sm text-slate-500 mt-1">
                   Direct dispatch to business owner. No spam, no obligation.
                 </p>
               </div>
@@ -1214,7 +1214,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       onFocus={handleLeadInputFocus}
                       onChange={(e) => setQuoteForm({ ...quoteForm, fullName: e.target.value })}
                       placeholder="e.g. Sarah Jenkins"
-                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
@@ -1227,7 +1227,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       onFocus={handleLeadInputFocus}
                       onChange={(e) => setQuoteForm({ ...quoteForm, phone: e.target.value })}
                       placeholder="(512) 000-0000"
-                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
@@ -1238,7 +1238,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       value={quoteForm.email}
                       onChange={(e) => setQuoteForm({ ...quoteForm, email: e.target.value })}
                       placeholder="sarah@example.com"
-                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
@@ -1249,7 +1249,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       value={quoteForm.serviceNeed}
                       onChange={(e) => setQuoteForm({ ...quoteForm, serviceNeed: e.target.value })}
                       placeholder={business.categoryName}
-                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
@@ -1260,7 +1260,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       value={quoteForm.message}
                       onChange={(e) => setQuoteForm({ ...quoteForm, message: e.target.value })}
                       placeholder="Describe the issue, timeline, or consultation requirements..."
-                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
@@ -1474,7 +1474,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                     {relatedBusinesses.length}
                   </span>
                 </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-sm text-slate-500 mt-0.5">
                   Explore other verified and eligible service providers in this category.
                 </p>
               </div>
@@ -1597,7 +1597,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       value={claimName}
                       onChange={(e) => setClaimName(e.target.value)}
                       placeholder="e.g. Dr. John Smith"
-                      className="w-full text-xs px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-sm px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
@@ -1609,7 +1609,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       value={claimEmail}
                       onChange={(e) => setClaimEmail(e.target.value)}
                       placeholder="e.g. owner@smilesolutions.com.au"
-                      className="w-full text-xs px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-sm px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                     <span className="text-[10px] text-slate-400 mt-1 block">
                       Preferably using your business domain to accelerate instant verification.

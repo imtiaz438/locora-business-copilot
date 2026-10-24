@@ -304,7 +304,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                   setCityInputText(loc.city ? `${loc.city}${loc.state ? `, ${loc.state}` : ''}` : loc.formattedAddress);
                   setSelectedCity(resolvedCity ? resolvedCity.toLowerCase() : 'all');
                 }}
-                className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-emerald-600 focus:outline-none font-sans"
+                className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:border-emerald-600 focus:outline-none font-sans"
               />
             </div>
 
@@ -350,7 +350,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
               {selectedCategory !== 'all' ? `${selectedCategory.toUpperCase()} Providers` : 'All Verified Businesses'}
               {selectedCity !== 'all' ? ` in ${selectedCity.toUpperCase()}` : ''}
             </h2>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-sm text-slate-500 mt-1">
               Showing {listings.length} verified listings linked to real-time Google Business Profiles.
             </p>
           </div>
@@ -459,7 +459,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                               />
                             ))}
                           </div>
-                          <span className="text-xs font-bold text-slate-800">{rating.toFixed(1)}</span>
+                          <span className="text-sm font-bold text-slate-800">{rating.toFixed(1)}</span>
                           <span className="text-[11px] text-slate-400">({reviewsCount} Google {reviewsCount === 1 ? 'review' : 'reviews'})</span>
                         </>
                       ) : (
@@ -527,7 +527,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
             <h3 className="text-2xl font-black text-slate-900 font-heading tracking-tight">
               A Real, Verified Business Directory
             </h3>
-            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-sans">
+            <p className="text-sm sm:text-base text-slate-500 leading-relaxed font-sans">
               Connecting local residents directly with trusted professionals. No inflated broker fees or hidden commissions.
             </p>
           </div>
@@ -619,7 +619,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                     value={quoteForm.fullName}
                     onChange={(e) => setQuoteForm({ ...quoteForm, fullName: e.target.value })}
                     placeholder="e.g. John Miller"
-                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
 
@@ -632,7 +632,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                       value={quoteForm.phone}
                       onChange={(e) => setQuoteForm({ ...quoteForm, phone: e.target.value })}
                       placeholder="(512) 000-0000"
-                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                   <div>
@@ -642,7 +642,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                       value={quoteForm.email}
                       onChange={(e) => setQuoteForm({ ...quoteForm, email: e.target.value })}
                       placeholder="john@example.com"
-                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                 </div>
@@ -654,7 +654,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                     value={quoteForm.serviceNeed}
                     onChange={(e) => setQuoteForm({ ...quoteForm, serviceNeed: e.target.value })}
                     placeholder="e.g. Emergency Pipe Repair, Consultation"
-                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
 
@@ -665,7 +665,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                     value={quoteForm.message}
                     onChange={(e) => setQuoteForm({ ...quoteForm, message: e.target.value })}
                     placeholder="Briefly describe what you need done and when..."
-                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full text-sm px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
 

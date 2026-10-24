@@ -152,7 +152,7 @@ export const PricingPublicView: React.FC = () => {
               Explorer
             </div>
             <h3 className="text-2xl font-bold font-heading text-slate-900">Free Forever</h3>
-            <p className="text-xs text-slate-500 font-sans">
+            <p className="text-sm text-slate-500 font-sans">
               For business owners exploring what is holding their local growth back.
             </p>
 
@@ -218,7 +218,7 @@ export const PricingPublicView: React.FC = () => {
               Pro Growth
             </div>
             <h3 className="text-2xl font-bold font-heading text-slate-900">AI Business Manager</h3>
-            <p className="text-xs text-slate-500 font-sans">
+            <p className="text-sm text-slate-500 font-sans">
               For 1 business ready for proactive growth, Google Maps domination, and AI visibility.
             </p>
 
@@ -293,7 +293,7 @@ export const PricingPublicView: React.FC = () => {
               Agency Elite
             </div>
             <h3 className="text-2xl font-bold font-heading text-slate-900">AI Client Manager</h3>
-            <p className="text-xs text-slate-500 font-sans">
+            <p className="text-sm text-slate-500 font-sans">
               Manage 10, 50, or 100 local businesses with an autonomous AI client manager.
             </p>
 

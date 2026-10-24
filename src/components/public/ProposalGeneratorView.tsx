@@ -187,7 +187,7 @@ export const ProposalGeneratorView: React.FC = () => {
             <span>Generate a proposal</span>
             <ArrowRight className="w-4 h-4" />
           </button>
-          <p className="text-xs text-slate-500">
+          <p className="text-sm text-slate-500">
             See <a href="/pricing" className="text-[#059669] underline">pricing</a> or run the <a href="/checkup" className="text-[#059669] underline">free 40-point checkup</a> first.
           </p>
         </div>

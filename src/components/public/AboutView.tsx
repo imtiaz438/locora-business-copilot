@@ -46,7 +46,7 @@ export const AboutView: React.FC = () => {
                 1
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900">Speed & Simplicity First</p>
+                <p className="text-sm font-bold text-slate-900">Speed & Simplicity First</p>
                 <p className="text-[11px] text-slate-500">Generates structured client assets in under 3 seconds.</p>
               </div>
             </div>
@@ -56,7 +56,7 @@ export const AboutView: React.FC = () => {
                 2
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900">Strict Privacy & Security</p>
+                <p className="text-sm font-bold text-slate-900">Strict Privacy & Security</p>
                 <p className="text-[11px] text-slate-500">Client CRM records are never used to train public LLM models.</p>
               </div>
             </div>
@@ -66,7 +66,7 @@ export const AboutView: React.FC = () => {
                 3
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900">Measurable Revenue Impact</p>
+                <p className="text-sm font-bold text-slate-900">Measurable Revenue Impact</p>
                 <p className="text-[11px] text-slate-500">Every feature is designed to increase proposal win rates and client retention.</p>
               </div>
             </div>
@@ -89,14 +89,14 @@ export const AboutView: React.FC = () => {
       <div className="bg-white border border-slate-200 rounded-3xl p-8 text-center space-y-6 shadow-sm">
         <div className="max-w-2xl mx-auto space-y-2 font-sans">
           <h2 className="text-2xl font-bold font-heading text-slate-900">Locora AI Headquarters</h2>
-          <p className="text-xs text-slate-600">
+          <p className="text-sm text-slate-600">
             Operating from our central headquarters to power local service businesses and agencies globally.
           </p>
         </div>
 
         <div className="max-w-md mx-auto p-5 bg-slate-50 rounded-2xl border border-slate-200 font-sans text-center">
           <p className="text-sm font-bold text-slate-900">LocoraAI</p>
-          <p className="text-xs text-slate-600 mt-1">Serving local businesses across the United States</p>
+          <p className="text-sm text-slate-600 mt-1">Serving local businesses across the United States</p>
         </div>
 
         <button

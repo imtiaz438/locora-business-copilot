@@ -268,7 +268,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
               : 'LA'}
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-900">
+            <div className="text-sm font-bold text-slate-900">
               Written by {feature.authorName || 'The LocoraAI Team'}
             </div>
             <div className="text-[11px] text-slate-500">
@@ -425,7 +425,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
               <h2 className="text-xl sm:text-2xl font-bold font-heading">
                 {feature.sandbox?.heading || `Test ${feature.name} Live`}
               </h2>
-              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+              <p className="text-sm sm:text-base text-slate-400 mt-1">
                 {feature.sandbox?.subheading ||
                   'Select a preset industry scenario or enter your own parameters to generate an instant preview deliverable.'}
               </p>
@@ -548,7 +548,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
             <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900">
               Example Scenario: {feature.caseStudy.industry}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 font-sans">
+            <p className="text-sm sm:text-base text-slate-500 font-sans">
               An illustrative example of how this feature is used — not a real customer or verified result.
             </p>
           </div>
@@ -640,7 +640,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
           <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900">
             Frequently Asked Questions
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 font-sans">
+          <p className="text-sm sm:text-base text-slate-600 font-sans">
             Clear answers to common technical and operational questions.
           </p>
         </div>
@@ -658,7 +658,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
                   onClick={() => setOpenFaq(isOpen ? null : i)}
                   className="w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-50 transition-colors"
                 >
-                  <span className="text-xs sm:text-sm font-bold font-heading text-slate-900">
+                  <span className="text-sm sm:text-sm font-bold font-heading text-slate-900">
                     {faq.q}
                   </span>
                   <ChevronDown
@@ -694,7 +694,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
               }}
               className="p-4 bg-white border border-slate-200 rounded-xl hover:border-emerald-600 hover:bg-emerald-50/20 text-left transition-all cursor-pointer space-y-1.5 shadow-2xs"
             >
-              <div className="flex items-center justify-between text-xs font-bold text-slate-900 font-heading">
+              <div className="flex items-center justify-between text-sm font-bold text-slate-900 font-heading">
                 <span>{of.name}</span>
                 <ArrowRight className="w-3.5 h-3.5 text-emerald-700" />
               </div>
@@ -718,7 +718,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               onClick={handleLaunchTool}
-              className="px-8 py-3.5 bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer font-heading"
+              className="px-8 py-3.5 bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold text-sm sm:text-base rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer font-heading"
             >
               <span>{user ? 'Open in Workspace' : 'Get Started Free'}</span>
               <ArrowRight className="w-4 h-4" />

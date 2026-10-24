@@ -320,7 +320,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
           <div className="flex items-center gap-3">
             <div className={`w-3 h-3 rounded-full ${isListingActive ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
             <div>
-              <span className="text-xs font-bold text-slate-900 block">
+              <span className="text-sm font-bold text-slate-900 block">
                 {isListingActive
                   ? `Directory Status: ${biz?.isClaimed ? 'Active & Owner Verified' : 'Live Directory Listing'}`
                   : 'Processing Directory Profile'}
@@ -487,7 +487,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
               <h4 className="text-base font-bold font-heading text-slate-900">
                 Directory Customer Inquiries ({leadsList.length})
               </h4>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-sm text-slate-500 mt-0.5">
                 Every lead originated through your public listing is cataloged here with persistent storage and lifecycle tracking.
               </p>
             </div>
@@ -667,7 +667,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
               <h4 className="text-base font-bold font-heading text-slate-900">
                 Verifiable Event Audit Stream ({eventsList.length})
               </h4>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-sm text-slate-500 mt-0.5">
                 Every event recorded chronologically with visitor session, source, and metadata. No simulated entries.
               </p>
             </div>
@@ -726,7 +726,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
               <h4 className="text-base font-bold font-heading text-slate-900">
                 Customer Engagement Breakdown
               </h4>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-sm text-slate-500 mt-0.5">
                 Verifiable interaction channels tracked across your Locora public business listing.
               </p>
             </div>
@@ -739,7 +739,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                     <Phone className="w-5 h-5" />
                   </div>
                   <div>
-                    <h5 className="text-xs font-bold text-slate-900">Telephone Inquiries (Tap-to-Call)</h5>
+                    <h5 className="text-sm font-bold text-slate-900">Telephone Inquiries (Tap-to-Call)</h5>
                     <p className="text-[11px] text-slate-500">Inbound direct mobile dialing</p>
                   </div>
                 </div>
@@ -756,7 +756,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                     <FileText className="w-5 h-5" />
                   </div>
                   <div>
-                    <h5 className="text-xs font-bold text-slate-900">Direct Quote & Lead Inquiries</h5>
+                    <h5 className="text-sm font-bold text-slate-900">Direct Quote & Lead Inquiries</h5>
                     <p className="text-[11px] text-slate-500">Form submissions sent to business inbox</p>
                   </div>
                 </div>
@@ -773,7 +773,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                     <Globe className="w-5 h-5" />
                   </div>
                   <div>
-                    <h5 className="text-xs font-bold text-slate-900">Website Referral Backlinks</h5>
+                    <h5 className="text-sm font-bold text-slate-900">Website Referral Backlinks</h5>
                     <p className="text-[11px] text-slate-500">Direct SEO clicks to {activeBusiness.website || 'your website'}</p>
                   </div>
                 </div>
@@ -889,7 +889,7 @@ export const DirectoryLeadAnalyticsTab: React.FC<DirectoryLeadAnalyticsTabProps>
                     value={convertRevenue}
                     onChange={(e) => setConvertRevenue(e.target.value)}
                     placeholder="e.g. 500"
-                    className="w-full text-xs pl-8 pr-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full text-sm pl-8 pr-3 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
                 <span className="text-[10px] text-slate-400 mt-1 block">

@@ -45,22 +45,22 @@ export const SecurityOverviewView: React.FC = () => {
           <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-slate-100">
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1">
               <ShieldCheck className="w-6 h-6 text-emerald-600 mx-auto" />
-              <p className="text-xs font-bold text-slate-900">SOC 2 Type II</p>
+              <p className="text-sm font-bold text-slate-900">SOC 2 Type II</p>
               <p className="text-[10px] text-slate-500">Security & Privacy</p>
             </div>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1">
               <Lock className="w-6 h-6 text-indigo-600 mx-auto" />
-              <p className="text-xs font-bold text-slate-900">AES-256 / TLS 1.3</p>
+              <p className="text-sm font-bold text-slate-900">AES-256 / TLS 1.3</p>
               <p className="text-[10px] text-slate-500">Bank-Level Encryption</p>
             </div>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1">
               <Key className="w-6 h-6 text-sky-600 mx-auto" />
-              <p className="text-xs font-bold text-slate-900">PCI-DSS Level 1</p>
+              <p className="text-sm font-bold text-slate-900">PCI-DSS Level 1</p>
               <p className="text-[10px] text-slate-500">Stripe Billing Security</p>
             </div>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-1">
               <Globe className="w-6 h-6 text-amber-600 mx-auto" />
-              <p className="text-xs font-bold text-slate-900">Cloud Hosted</p>
+              <p className="text-sm font-bold text-slate-900">Cloud Hosted</p>
               <p className="text-[10px] text-slate-500">Google Cloud Infra</p>
             </div>
           </div>
@@ -110,7 +110,7 @@ export const SecurityOverviewView: React.FC = () => {
             <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-11">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-                  <div className="flex items-center gap-2 font-bold text-xs text-slate-900">
+                  <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
                     <Lock className="w-4 h-4 text-indigo-600" />
                     <span>Encryption In Transit</span>
                   </div>
@@ -120,7 +120,7 @@ export const SecurityOverviewView: React.FC = () => {
                 </div>
 
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-                  <div className="flex items-center gap-2 font-bold text-xs text-slate-900">
+                  <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
                     <Database className="w-4 h-4 text-emerald-600" />
                     <span>Encryption At Rest</span>
                   </div>

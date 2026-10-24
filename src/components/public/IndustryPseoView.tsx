@@ -1120,7 +1120,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
           {/* Controls */}
           <div className="lg:col-span-6 space-y-6">
             <div className="space-y-2">
-              <div className="flex justify-between text-xs font-bold text-slate-700">
+              <div className="flex justify-between text-sm font-bold text-slate-700">
                 <span>Current Monthly Leads / Inquiries:</span>
                 <span className="font-mono text-emerald-700">{monthlyLeads} leads/mo</span>
               </div>
@@ -1136,7 +1136,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
             </div>
 
             <div className="space-y-2">
-              <div className="flex justify-between text-xs font-bold text-slate-700">
+              <div className="flex justify-between text-sm font-bold text-slate-700">
                 <span>Average Value Per Client / Job ($):</span>
                 <span className="font-mono text-emerald-700">${avgTicket.toLocaleString()}</span>
               </div>
@@ -1291,7 +1291,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
               </p>
               <ul className="space-y-2 pt-1">
                 {currentIndustry.primaryKeywords.map((kw, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs font-semibold text-slate-800">
+                  <li key={i} className="flex items-start gap-2 text-sm font-semibold text-slate-800">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                     <span>{kw}</span>
                   </li>
@@ -1314,7 +1314,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
               </p>
               <ul className="space-y-2 pt-1">
                 {currentIndustry.secondaryKeywords.map((kw, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs font-semibold text-slate-800">
+                  <li key={i} className="flex items-start gap-2 text-sm font-semibold text-slate-800">
                     <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                     <span>{kw}</span>
                   </li>
@@ -1337,7 +1337,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
               </p>
               <ul className="space-y-2 pt-1">
                 {currentIndustry.longTailKeywords.map((kw, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs font-semibold text-slate-800">
+                  <li key={i} className="flex items-start gap-2 text-sm font-semibold text-slate-800">
                     <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                     <span>{kw}</span>
                   </li>

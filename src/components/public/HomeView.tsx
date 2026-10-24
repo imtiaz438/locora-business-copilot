@@ -361,7 +361,7 @@ export const HomeView: React.FC = () => {
                   onChange={(e) => setHeroInputUrl(e.target.value)}
                   onFocus={handleHeroInputInteraction}
                   placeholder="Enter website (e.g. yourbusiness.com)"
-                  className="w-full pl-10 pr-4 py-3 bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none font-sans"
+                  className="w-full pl-10 pr-4 py-3 bg-transparent text-sm sm:text-base text-slate-900 placeholder-slate-400 focus:outline-none font-sans"
                 />
               </div>
               <button
@@ -405,7 +405,7 @@ export const HomeView: React.FC = () => {
                     onChange={(e) => setHeroBusinessName(e.target.value)}
                     onFocus={handleHeroInputInteraction}
                     placeholder="e.g. Gotham Enterprises Ltd"
-                    className="w-full px-3 py-2 bg-white/90 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                    className="w-full px-3 py-2 bg-white/90 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                   />
                 </div>
                 <div>
@@ -416,7 +416,7 @@ export const HomeView: React.FC = () => {
                     onChange={(e) => setHeroLocation(e.target.value)}
                     onFocus={handleHeroInputInteraction}
                     placeholder="e.g. Dallas, TX"
-                    className="w-full px-3 py-2 bg-white/90 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                    className="w-full px-3 py-2 bg-white/90 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                   />
                 </div>
                 <div>
@@ -427,7 +427,7 @@ export const HomeView: React.FC = () => {
                     onChange={(e) => setHeroEmail(e.target.value)}
                     onFocus={handleHeroInputInteraction}
                     placeholder="you@company.com"
-                    className="w-full px-3 py-2 bg-white/90 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                    className="w-full px-3 py-2 bg-white/90 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                   />
                 </div>
               </div>
@@ -760,7 +760,7 @@ export const HomeView: React.FC = () => {
                             What is wrong with my website/business?
                           </h4>
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <p className="text-sm text-slate-500 mt-0.5">
                           Live diagnostic identified {publicAudit.discoveredIssues.length} real issues affecting search discovery, speed, and conversion.
                         </p>
                       </div>
@@ -828,7 +828,7 @@ export const HomeView: React.FC = () => {
                             5. Business Information Discovery
                           </h4>
                         </div>
-                        <p className="text-xs text-slate-600 mt-0.5">
+                        <p className="text-sm text-slate-600 mt-0.5">
                           Extracted actual publicly available business information from DOM, JSON-LD, and page metadata.
                         </p>
                       </div>
@@ -868,7 +868,7 @@ export const HomeView: React.FC = () => {
                           >
                             <div>
                               <div className="flex items-center justify-between gap-2 mb-1.5">
-                                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 font-heading">
+                                <div className="flex items-center gap-1.5 text-sm font-bold text-slate-700 font-heading">
                                   <Icon className="w-3.5 h-3.5 text-slate-400" />
                                   <span>{item.label}</span>
                                 </div>
@@ -921,7 +921,7 @@ export const HomeView: React.FC = () => {
                           6. Real SEO Analysis
                         </h4>
                       </div>
-                      <p className="text-xs text-slate-600 mt-0.5">
+                      <p className="text-sm text-slate-600 mt-0.5">
                         Technical, On-page, Content, and Structured Data analysis grounded in live crawler evidence.
                       </p>
                     </div>
@@ -1089,7 +1089,7 @@ export const HomeView: React.FC = () => {
                           7. Local SEO Analysis
                         </h4>
                       </div>
-                      <p className="text-xs text-slate-600 mt-0.5">
+                      <p className="text-sm text-slate-600 mt-0.5">
                         Local discovery signals, service areas, and authorized profile connectivity.
                       </p>
                     </div>
@@ -1177,7 +1177,7 @@ export const HomeView: React.FC = () => {
                           8. Performance & Speed Telemetry
                         </h4>
                       </div>
-                      <p className="text-xs text-slate-600 mt-0.5">
+                      <p className="text-sm text-slate-600 mt-0.5">
                         Direct server socket measurements and verified Google PageSpeed Insights integration.
                       </p>
                     </div>
@@ -1238,7 +1238,7 @@ export const HomeView: React.FC = () => {
                             External PageSpeed API Status
                           </h5>
                         </div>
-                        <p className="text-xs text-slate-600 font-sans">
+                        <p className="text-sm text-slate-600 font-sans">
                           {publicAudit.performanceAnalysis.statusMessage}
                         </p>
                         <p className="text-[11px] text-slate-400 font-sans pt-1">
@@ -1302,7 +1302,7 @@ export const HomeView: React.FC = () => {
                             Unlock Full Locora Platform to Fix & Monitor
                           </h4>
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <p className="text-sm text-slate-500 mt-0.5">
                           The free checkup diagnoses what is wrong. Your Locora workspace explains why, how to fix it, and tracks rankings 24/7.
                         </p>
                       </div>
@@ -1568,7 +1568,7 @@ export const HomeView: React.FC = () => {
             <h3 className="text-xl sm:text-2xl font-bold font-heading text-white">
               Want to see the interactive feature demos and workflow teardowns?
             </h3>
-            <p className="text-xs sm:text-sm text-emerald-100/80 font-sans max-w-xl">
+            <p className="text-sm sm:text-base text-emerald-100/80 font-sans max-w-xl">
               Explore our dedicated product page for interactive tools, AI business chat consoles, schema previews, and agency management modules.
             </p>
           </div>
@@ -1976,7 +1976,7 @@ export const HomeView: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-slate-100">
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-              <div className="flex items-center gap-2 text-slate-900 font-bold text-xs sm:text-sm font-heading">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-sm sm:text-sm font-heading">
                 <MapPin className="w-4 h-4 text-emerald-600" />
                 <span>Maps &amp; Local Pack Presence</span>
               </div>
@@ -1986,7 +1986,7 @@ export const HomeView: React.FC = () => {
             </div>
 
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-              <div className="flex items-center gap-2 text-slate-900 font-bold text-xs sm:text-sm font-heading">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-sm sm:text-sm font-heading">
                 <Activity className="w-4 h-4 text-emerald-600" />
                 <span>Technical Website Health</span>
               </div>
@@ -1996,7 +1996,7 @@ export const HomeView: React.FC = () => {
             </div>
 
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-              <div className="flex items-center gap-2 text-slate-900 font-bold text-xs sm:text-sm font-heading">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-sm sm:text-sm font-heading">
                 <Sparkles className="w-4 h-4 text-emerald-600" />
                 <span>Review &amp; Visibility Footprint</span>
               </div>
@@ -2054,7 +2054,7 @@ export const HomeView: React.FC = () => {
           <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 tracking-tight">
             Frequently Asked Questions
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600">
+          <p className="text-sm sm:text-base text-slate-600">
             Everything you need to know about Locora AI and your Business Brain.
           </p>
         </div>
@@ -2067,7 +2067,7 @@ export const HomeView: React.FC = () => {
             >
               <button
                 onClick={() => setExpandedFaq(expandedFaq === i ? null : i)}
-                className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 font-bold text-xs sm:text-sm text-slate-900 cursor-pointer font-heading"
+                className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-sm text-slate-900 cursor-pointer font-heading"
               >
                 <span>{faq.q}</span>
                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${expandedFaq === i ? 'rotate-180' : ''}`} />

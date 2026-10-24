@@ -214,7 +214,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
             {/* Interactive Progress Meter if checklists exist */}
             {allChecklistCount > 0 && (
               <div className="pt-4 border-t border-slate-100 space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-800 font-heading">
+                <div className="flex items-center justify-between text-sm font-bold text-slate-800 font-heading">
                   <span>Interactive Audit Progress</span>
                   <span className="text-emerald-700 font-extrabold">{progressPercent}%</span>
                 </div>
@@ -332,7 +332,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
                     <AlertTriangle className="w-4 h-4 text-amber-600" />
                     <span>Prerequisites & Watchouts</span>
                   </span>
-                  <ul className="space-y-2 text-xs text-slate-600">
+                  <ul className="space-y-2 text-sm text-slate-600">
                     {article.prosAndCons.cons.map((cn, i) => (
                       <li key={i} className="flex items-start gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0 mt-1.5" />
@@ -385,7 +385,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
                       onClick={() => setOpenFaq(isOpen ? null : i)}
                       className="w-full p-4 text-left flex items-center justify-between gap-4 cursor-pointer hover:bg-slate-100 transition-colors"
                     >
-                      <span className="text-xs sm:text-sm font-bold font-heading text-slate-900">{faq.q}</span>
+                      <span className="text-sm sm:text-sm font-bold font-heading text-slate-900">{faq.q}</span>
                       <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${isOpen ? 'rotate-180 text-emerald-700' : ''}`} />
                     </button>
                     {isOpen && (
@@ -420,7 +420,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
               <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded uppercase font-mono">
                 {oa.category}
               </span>
-              <h4 className="text-xs font-bold text-slate-900 font-heading line-clamp-2">{oa.title}</h4>
+              <h4 className="text-sm font-bold text-slate-900 font-heading line-clamp-2">{oa.title}</h4>
               <p className="text-[11px] text-slate-500 line-clamp-2 font-sans">{oa.summary}</p>
             </button>
           ))}

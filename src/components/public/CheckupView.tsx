@@ -285,7 +285,7 @@ export const CheckupView: React.FC = () => {
                       }}
                       onFocus={handleInputFocusOrChange}
                       placeholder="e.g. Metro Dental Care"
-                      className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
+                      className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
                     />
                   </div>
                 </div>
@@ -307,7 +307,7 @@ export const CheckupView: React.FC = () => {
                       }}
                       onFocus={handleInputFocusOrChange}
                       placeholder="e.g. metrodental.com"
-                      className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
+                      className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
                     />
                   </div>
                 </div>
@@ -330,7 +330,7 @@ export const CheckupView: React.FC = () => {
                       }}
                       onFocus={handleInputFocusOrChange}
                       placeholder="e.g. Austin, TX"
-                      className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
+                      className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
                     />
                   </div>
                 </div>
@@ -347,7 +347,7 @@ export const CheckupView: React.FC = () => {
                       handleInputFocusOrChange();
                     }}
                     onFocus={handleInputFocusOrChange}
-                    className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
+                    className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm sm:text-base text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
                   >
                     {COMMON_CATEGORIES.map((cat) => (
                       <option key={cat} value={cat}>
@@ -415,7 +415,7 @@ export const CheckupView: React.FC = () => {
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-heading">
                 {businessName || 'Your Business'} Visibility Summary
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500">
+              <p className="text-sm sm:text-base text-slate-500">
                 Audited Website: <span className="font-semibold text-slate-800">{auditResult.cleanDomain}</span>
                 {locationCity && <> • Target Location: <span className="font-semibold text-slate-800">{locationCity}</span></>}
               </p>
@@ -509,7 +509,7 @@ export const CheckupView: React.FC = () => {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h4 className="text-sm font-bold text-slate-900">{businessName}</h4>
-                    <p className="text-xs text-slate-500">{category} {locationCity && `• ${locationCity}`}</p>
+                    <p className="text-sm text-slate-500">{category} {locationCity && `• ${locationCity}`}</p>
                   </div>
                 </div>
 
@@ -533,7 +533,7 @@ export const CheckupView: React.FC = () => {
                 </div>
               </div>
 
-              <p className="text-xs text-slate-500">
+              <p className="text-sm text-slate-500">
                 Local ranking algorithms prioritize verified profiles with matching NAP (Name, Address, Phone), schema markup, and fast mobile responses.
               </p>
             </div>
