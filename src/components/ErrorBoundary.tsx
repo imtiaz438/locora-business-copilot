@@ -69,7 +69,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <h2 className="text-xl font-black font-heading text-slate-900 tracking-tight">
                 {this.props.fallbackTitle || 'Display Refresh Needed'}
               </h2>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              <p className="text-sm sm:text-sm text-slate-600 leading-relaxed">
                 {this.props.fallbackMessage ||
                   'The application encountered a display refresh state. Your workspace data is safely stored in the database.'}
               </p>
@@ -77,7 +77,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
             {/* Error detail (collapsible or discreet) */}
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-left">
-              <p className="text-[11px] font-mono text-slate-700 break-words line-clamp-3">
+              <p className="text-sm font-mono text-slate-700 break-words line-clamp-3">
                 {errorMessage}
               </p>
             </div>
@@ -86,7 +86,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <button
                 type="button"
                 onClick={this.handleReload}
-                className="w-full sm:w-auto px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
+                className="w-full sm:w-auto px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
               >
                 <RefreshCw className="w-4 h-4" />
                 <span>Reload View</span>
@@ -95,7 +95,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <button
                 type="button"
                 onClick={this.handleGoDashboard}
-                className="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition-colors flex items-center justify-center gap-2 cursor-pointer font-sans"
+                className="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm rounded-xl border border-slate-200 transition-colors flex items-center justify-center gap-2 cursor-pointer font-sans"
               >
                 <LayoutDashboard className="w-4 h-4 text-slate-600" />
                 <span>Dashboard</span>
@@ -104,7 +104,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <button
                 type="button"
                 onClick={this.handleGoHome}
-                className="w-full sm:w-auto px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-600 font-semibold text-xs rounded-xl border border-slate-200 transition-colors flex items-center justify-center gap-2 cursor-pointer font-sans"
+                className="w-full sm:w-auto px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-600 font-semibold text-sm rounded-xl border border-slate-200 transition-colors flex items-center justify-center gap-2 cursor-pointer font-sans"
               >
                 <Home className="w-4 h-4" />
                 <span>Home</span>

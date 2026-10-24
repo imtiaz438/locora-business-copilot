@@ -484,7 +484,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
               <div>
                 <h1 className="text-2xl font-bold font-heading text-slate-900">{user.name || 'Account User'}</h1>
                 <p className="text-sm text-slate-500 font-sans">{user.email}</p>
-                <div className="mt-1 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#059669] border border-emerald-200 text-[10px] font-bold uppercase font-heading">
+                <div className="mt-1 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#059669] border border-emerald-200 text-sm font-bold uppercase font-heading">
                   <Sparkles className="w-3 h-3" />
                   <span>{user.planTier} Plan Member</span>
                 </div>
@@ -496,7 +496,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                 logout();
                 setActiveTab('home');
               }}
-              className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer font-sans"
+              className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-sm font-bold transition-all flex items-center gap-2 cursor-pointer font-sans"
             >
               <LogOut className="w-4 h-4" />
               <span>Sign Out</span>
@@ -505,11 +505,11 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-1">
-              <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider font-heading">Company Name</p>
+              <p className="text-sm text-slate-500 font-semibold uppercase tracking-wider font-heading">Company Name</p>
               <p className="text-sm font-bold text-slate-900">{user.companyName || 'Not Set'}</p>
             </div>
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-1">
-              <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider font-heading">AI Copilot Credits</p>
+              <p className="text-sm text-slate-500 font-semibold uppercase tracking-wider font-heading">AI Copilot Credits</p>
               <p className="text-sm font-bold text-[#059669]">
                 {`${user.aiCreditsUsed} / ${user.monthlyAiCredits} Used`}
               </p>
@@ -519,14 +519,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
           <div className="pt-4 flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className="flex-1 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
+              className="flex-1 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
             >
               <LayoutDashboard className="w-4 h-4" />
               <span>Launch App Dashboard</span>
             </button>
             <button
               onClick={() => setActiveTab('pricing_public')}
-              className="py-3.5 px-5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition-colors cursor-pointer font-sans"
+              className="py-3.5 px-5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm rounded-xl border border-slate-200 transition-colors cursor-pointer font-sans"
             >
               Change Plan
             </button>
@@ -566,19 +566,19 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                 </p>
 
                 <div className="space-y-3 pt-2">
-                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15 text-xs text-white">
+                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15 text-sm text-white">
                     <div className="p-1.5 rounded-lg bg-emerald-400/20 text-emerald-300">
                       <ScanSearch className="w-4 h-4" />
                     </div>
                     <span className="font-medium">40-point live website &amp; SEO audit</span>
                   </div>
-                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15 text-xs text-white">
+                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15 text-sm text-white">
                     <div className="p-1.5 rounded-lg bg-emerald-400/20 text-emerald-300">
                       <BadgeCheck className="w-4 h-4" />
                     </div>
                     <span className="font-medium">100% real Google signals — zero fake data</span>
                   </div>
-                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15 text-xs text-white">
+                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15 text-sm text-white">
                     <div className="p-1.5 rounded-lg bg-emerald-400/20 text-emerald-300">
                       <Coins className="w-4 h-4" />
                     </div>
@@ -619,7 +619,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
             )}
           </div>
 
-          <div className="relative z-10 text-[11px] text-emerald-200/70 font-sans">
+          <div className="relative z-10 text-sm text-emerald-200/70 font-sans">
             © 2026 Locora AI. All rights reserved.
           </div>
         </div>
@@ -632,7 +632,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
               <button
                 type="button"
                 onClick={() => setIsSignUp(false)}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all cursor-pointer ${
                   !isSignUp ? 'bg-[#059669] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -641,7 +641,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
               <button
                 type="button"
                 onClick={() => setIsSignUp(true)}
-                className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all cursor-pointer ${
                   isSignUp ? 'bg-[#059669] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -669,11 +669,11 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
 
             {/* Pending Plan Upgrade Alert */}
             {pendingPlanAfterAuth && (
-              <div className="p-3.5 bg-amber-50 border border-amber-200/90 rounded-2xl text-xs font-semibold text-amber-900 font-sans flex items-start gap-2.5 animate-fadeIn shadow-xs">
+              <div className="p-3.5 bg-amber-50 border border-amber-200/90 rounded-2xl text-sm font-semibold text-amber-900 font-sans flex items-start gap-2.5 animate-fadeIn shadow-xs">
                 <Zap className="w-4 h-4 text-amber-600 shrink-0 mt-0.5 animate-pulse" />
                 <div className="space-y-0.5">
                   <span className="font-bold text-amber-950 block">Registration & Sign In Required</span>
-                  <span className="text-amber-800 text-[11px] font-normal leading-normal block">
+                  <span className="text-amber-800 text-sm font-normal leading-normal block">
                     To upgrade to the <strong className="uppercase font-bold text-amber-950">{pendingPlanAfterAuth.plan} Plan</strong>, please register an account or sign in first.
                   </span>
                 </div>
@@ -682,7 +682,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
 
             {/* Error Banner */}
             {errorMessage && (
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-xs font-semibold text-rose-700 font-sans flex items-start gap-2 animate-fadeIn">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-sm font-semibold text-rose-700 font-sans flex items-start gap-2 animate-fadeIn">
                 <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0 mt-1.5" />
                 <span>{errorMessage}</span>
               </div>
@@ -690,7 +690,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
 
             {/* Info Banner */}
             {resetInfoMsg && (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs font-semibold text-emerald-800 font-sans flex items-start gap-2 animate-fadeIn">
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-sm font-semibold text-emerald-800 font-sans flex items-start gap-2 animate-fadeIn">
                 <ShieldCheck className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
                 <span>{resetInfoMsg}</span>
               </div>
@@ -702,7 +702,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                 {forgotStep === 'request' && (
                   <form onSubmit={handleRequestMagicResetLink} className="space-y-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">Account Email Address</label>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">Account Email Address</label>
                       <input
                         type="email"
                         required
@@ -748,7 +748,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                 {forgotStep === 'verify' && (
                   <form onSubmit={handleVerifyAndResetPassword} className="space-y-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">New Password</label>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">New Password</label>
                       <div className="relative">
                         <input
                           type={showPassword ? 'text' : 'password'}
@@ -769,7 +769,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1.5">Confirm New Password</label>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1.5">Confirm New Password</label>
                       <input
                         type={showPassword ? 'text' : 'password'}
                         required
@@ -833,14 +833,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                 {/* Book Demo CTA Bar & Request Form */}
                 <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl space-y-3 font-sans">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5 font-heading">
+                    <span className="text-sm font-bold text-emerald-900 uppercase tracking-wider flex items-center gap-1.5 font-heading">
                       <ShieldCheck className="w-4 h-4 text-[#059669]" />
                       Try Demo Access
                     </span>
                     <button
                       type="button"
                       onClick={() => setShowBookDemo(!showBookDemo)}
-                      className="text-xs font-bold text-[#059669] hover:underline cursor-pointer"
+                      className="text-sm font-bold text-[#059669] hover:underline cursor-pointer"
                     >
                       {showBookDemo ? 'Hide Demo Form' : 'Book Demo CTA'}
                     </button>
@@ -848,13 +848,13 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
 
                   {!showBookDemo ? (
                     <div className="space-y-2">
-                      <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                      <p className="text-sm text-slate-700 leading-relaxed font-medium">
                         Want to test the full Locora AI Workspace? Request a guest demo password directly from the admin.
                       </p>
                       <button
                         type="button"
                         onClick={() => setShowBookDemo(true)}
-                        className="w-full py-2.5 px-3 bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                        className="w-full py-2.5 px-3 bg-[#059669] hover:bg-[#047857] text-white text-sm font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <Zap className="w-3.5 h-3.5" />
                         <span>Book Demo (Request Guest Password)</span>
@@ -863,18 +863,18 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                   ) : (
                     <form onSubmit={handleBookDemoSubmit} className="space-y-3 pt-1 border-t border-emerald-200/60">
                       {demoSuccessMsg && (
-                        <div className="p-2.5 bg-emerald-100 text-emerald-800 text-xs rounded-xl font-medium border border-emerald-200">
+                        <div className="p-2.5 bg-emerald-100 text-emerald-800 text-sm rounded-xl font-medium border border-emerald-200">
                           {demoSuccessMsg}
                         </div>
                       )}
                       {demoErrorMsg && (
-                        <div className="p-2.5 bg-rose-50 text-rose-700 text-xs rounded-xl font-medium border border-rose-200">
+                        <div className="p-2.5 bg-rose-50 text-rose-700 text-sm rounded-xl font-medium border border-rose-200">
                           {demoErrorMsg}
                         </div>
                       )}
 
                       <div>
-                        <label className="block text-[11px] font-semibold text-slate-700 mb-1">Sender Name</label>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Sender Name</label>
                         <input
                           type="text"
                           required
@@ -886,7 +886,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-semibold text-slate-700 mb-1">Sender Email</label>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Sender Email</label>
                         <input
                           type="email"
                           required
@@ -900,7 +900,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                       <button
                         type="submit"
                         disabled={demoSubmitting}
-                        className="w-full py-2 px-3 bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold rounded-lg shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        className="w-full py-2 px-3 bg-[#059669] hover:bg-[#047857] text-white text-sm font-bold rounded-lg shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                       >
                         {demoSubmitting ? 'Sending Request...' : 'Submit Demo Request to Admin'}
                       </button>
@@ -911,7 +911,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                 {/* Form Fields */}
                 <form onSubmit={handleSubmit} className="space-y-4 font-sans">
                   {isSignUp && pendingDirectoryClaim && (
-                    <div className="p-4 bg-emerald-50/95 border border-emerald-300 rounded-2xl text-xs text-emerald-950 space-y-3 shadow-xs animate-fadeIn">
+                    <div className="p-4 bg-emerald-50/95 border border-emerald-300 rounded-2xl text-sm text-emerald-950 space-y-3 shadow-xs animate-fadeIn">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-2.5">
                           <Sparkles className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
@@ -919,7 +919,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                             <span className="font-bold block text-emerald-900 font-heading text-sm">
                               🏢 Claiming Directory Profile: {pendingDirectoryClaim.businessName}
                             </span>
-                            <span className="text-slate-600 block leading-relaxed font-sans text-xs">
+                            <span className="text-slate-600 block leading-relaxed font-sans text-sm">
                               You are connecting your new Locora account directly as the verified owner of{' '}
                               <strong className="text-slate-900">{pendingDirectoryClaim.businessName}</strong>. This unlocks customer inquiries, verified reviews, and activates your Business Brain.
                             </span>
@@ -928,14 +928,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                         <button
                           type="button"
                           onClick={handleCancelDirectoryClaim}
-                          className="text-[11px] font-bold text-slate-600 hover:text-rose-600 px-2.5 py-1.5 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-lg shrink-0 transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
+                          className="text-sm font-bold text-slate-600 hover:text-rose-600 px-2.5 py-1.5 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-lg shrink-0 transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
                           title="Cancel claiming this business and create a fresh standard account"
                         >
                           <X className="w-3.5 h-3.5" />
                           <span>Cancel & Register Different Business</span>
                         </button>
                       </div>
-                      <div className="pt-2 border-t border-emerald-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-emerald-800">
+                      <div className="pt-2 border-t border-emerald-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-emerald-800">
                         <span>Not your business? Cancel above to register your own company or agency.</span>
                         <button
                           type="button"
@@ -952,7 +952,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                   )}
 
                   {isSignUp && pendingAudit && !pendingDirectoryClaim && (
-                    <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-950 flex items-start justify-between gap-2.5">
+                    <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-sm text-emerald-950 flex items-start justify-between gap-2.5">
                       <div className="flex items-start gap-2.5">
                         <Sparkles className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
                         <div className="space-y-0.5">
@@ -968,7 +968,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                       <button
                         type="button"
                         onClick={handleCancelPendingAudit}
-                        className="text-[11px] text-slate-500 hover:text-rose-600 p-1 rounded-md hover:bg-slate-100 transition-colors shrink-0 cursor-pointer"
+                        className="text-sm text-slate-500 hover:text-rose-600 p-1 rounded-md hover:bg-slate-100 transition-colors shrink-0 cursor-pointer"
                         title="Dismiss scan and register fresh business"
                       >
                         <X className="w-3.5 h-3.5" />
@@ -979,7 +979,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                   {isSignUp && (
                     <>
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Full Name</label>
                         <input
                           type="text"
                           required
@@ -991,7 +991,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-slate-700 mb-1">Company / Agency Name</label>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Company / Agency Name</label>
                         <input
                           type="text"
                           value={company}
@@ -1004,7 +1004,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                   )}
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Email Address</label>
                     <input
                       type="email"
                       required
@@ -1017,7 +1017,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-semibold text-slate-700">Password</label>
+                      <label className="block text-sm font-semibold text-slate-700">Password</label>
                       {!isSignUp && (
                         <button
                           type="button"
@@ -1026,7 +1026,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
                             setForgotStep('request');
                             setErrorMessage(null);
                           }}
-                          className="text-[11px] font-semibold text-[#059669] hover:underline cursor-pointer"
+                          className="text-sm font-semibold text-[#059669] hover:underline cursor-pointer"
                         >
                           Forgot password?
                         </button>
@@ -1075,7 +1075,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
             {/* Social Divider */}
             <div className="relative flex items-center justify-center py-1">
               <div className="border-t border-slate-200 w-full" />
-              <span className="bg-white px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap font-sans">
+              <span className="bg-white px-3 text-sm font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap font-sans">
                 Or continue with
               </span>
             </div>
@@ -1085,7 +1085,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
               <button
                 type="button"
                 onClick={() => handleOAuthConnect('google')}
-                className="py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs border border-slate-200 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+                className="py-2.5 px-3 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm border border-slate-200 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -1099,7 +1099,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
               <button
                 type="button"
                 onClick={() => handleOAuthConnect('linkedin')}
-                className="py-2.5 px-3 bg-[#0077b5] hover:bg-[#006097] text-white font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+                className="py-2.5 px-3 bg-[#0077b5] hover:bg-[#006097] text-white font-semibold text-sm rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
               >
                 <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                   <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.25V10.9H6.46M7.86 6.72a1.4 1.4 0 1 0 1.4 1.4 1.4 1.4 0 0 0-1.4-1.4z" />
@@ -1113,7 +1113,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
             <button
               type="button"
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-xs text-slate-600 font-medium hover:text-[#059669] transition-colors cursor-pointer"
+              className="text-sm text-slate-600 font-medium hover:text-[#059669] transition-colors cursor-pointer"
             >
               {isSignUp ? (
                 <span>Already registered? <strong className="text-[#059669]">Sign In</strong></span>

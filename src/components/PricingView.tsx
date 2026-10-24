@@ -160,7 +160,7 @@ export const PricingView: React.FC = () => {
     <div className="p-6 md:p-10 space-y-12 max-w-7xl mx-auto text-slate-900 font-sans">
       {/* Hero Header */}
       <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#059669]/10 border border-[#059669]/30 text-[#059669] text-xs font-semibold font-sans">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#059669]/10 border border-[#059669]/30 text-[#059669] text-sm font-semibold font-sans">
           <Sparkles className="w-4 h-4 text-[#059669]" />
           <span>Simple, Transparent Business Monetization & Pricing</span>
         </div>
@@ -173,7 +173,7 @@ export const PricingView: React.FC = () => {
 
         {/* Billing Cycle Switcher */}
         <div className="pt-4 flex items-center justify-center gap-3 font-sans">
-          <span className={`text-xs ${billingCycle === 'monthly' ? 'text-slate-900 font-bold' : 'text-slate-500'}`}>
+          <span className={`text-sm ${billingCycle === 'monthly' ? 'text-slate-900 font-bold' : 'text-slate-500'}`}>
             Monthly Billing
           </span>
           <button
@@ -187,10 +187,10 @@ export const PricingView: React.FC = () => {
             />
           </button>
           <div className="flex items-center gap-1.5">
-            <span className={`text-xs ${billingCycle === 'yearly' ? 'text-slate-900 font-bold' : 'text-slate-500'}`}>
+            <span className={`text-sm ${billingCycle === 'yearly' ? 'text-slate-900 font-bold' : 'text-slate-500'}`}>
               Annual Billing
             </span>
-            <span className="px-2 py-0.5 text-[10px] font-bold bg-[#059669]/10 text-[#059669] rounded-full border border-[#059669]/30">
+            <span className="px-2 py-0.5 text-sm font-bold bg-[#059669]/10 text-[#059669] rounded-full border border-[#059669]/30">
               SAVE 20%
             </span>
           </div>
@@ -213,7 +213,7 @@ export const PricingView: React.FC = () => {
               }`}
             >
               {plan.badge && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[#059669] text-white text-[10px] font-black tracking-wider uppercase shadow-2xs font-sans">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[#059669] text-white text-sm font-black tracking-wider uppercase shadow-2xs font-sans whitespace-nowrap">
                   {plan.badge}
                 </div>
               )}
@@ -224,31 +224,31 @@ export const PricingView: React.FC = () => {
                   <h3 className="text-xl font-bold font-heading text-slate-900 flex items-center justify-between">
                     <span>{plan.name}</span>
                     {isCurrentPlan && (
-                      <span className="text-[10px] px-2 py-0.5 bg-[#059669]/10 text-[#059669] border border-[#059669]/30 rounded font-semibold font-sans">
+                      <span className="text-sm px-2 py-0.5 bg-[#059669]/10 text-[#059669] border border-[#059669]/30 rounded font-semibold font-sans">
                         ACTIVE
                       </span>
                     )}
                   </h3>
-                  <p className="text-xs text-slate-500 min-h-[36px]">{plan.tagline}</p>
+                  <p className="text-sm text-slate-500 min-h-[36px]">{plan.tagline}</p>
 
                   <div className="pt-2 flex items-baseline gap-1">
                     <span className="text-4xl font-black font-heading text-slate-900">${price}</span>
-                    <span className="text-xs text-slate-500">/ month</span>
+                    <span className="text-sm text-slate-500">/ month</span>
                     {billingCycle === 'yearly' && price > 0 && (
-                      <span className="text-[10px] text-[#059669] ml-1 font-semibold">
+                      <span className="text-sm text-[#059669] ml-1 font-semibold">
                         (Billed annually)
                       </span>
                     )}
                   </div>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 mt-2">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 mt-2">
                     <Zap className="w-3.5 h-3.5 text-[#059669]" />
                     <span>{plan.aiCredits}</span>
                   </div>
                 </div>
 
                 {/* Features List */}
-                <div className="space-y-3 mb-6 text-xs">
-                  <p className="font-semibold text-slate-700 uppercase tracking-wider text-[11px] font-sans">
+                <div className="space-y-3 mb-6 text-sm">
+                  <p className="font-semibold text-slate-700 uppercase tracking-wider text-sm font-sans">
                     Included Capabilities:
                   </p>
                   {plan.features.map((feat, i) => (
@@ -283,7 +283,7 @@ export const PricingView: React.FC = () => {
                   }
                 }}
                 disabled={plan.ctaDisabled}
-                className={`w-full py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-sans ${
+                className={`w-full py-3 px-4 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer font-sans ${
                   plan.ctaDisabled
                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
                     : plan.popular
@@ -311,13 +311,13 @@ export const PricingView: React.FC = () => {
       <div className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 space-y-6 shadow-2xs font-sans">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
           <div className="space-y-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#059669]/10 text-[#059669] text-xs font-bold rounded-lg font-sans">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#059669]/10 text-[#059669] text-sm font-bold rounded-lg font-sans">
               <Calculator className="w-4 h-4" /> Agency ROI & Revenue Calculator
             </span>
             <h2 className="text-xl md:text-2xl font-bold font-heading text-slate-900 tracking-tight">
               Calculate How Much Money Locora AI Saves Your Business
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-sm text-slate-500">
               Locora AI automates proposals, SEO audits, client invoices, and communications in seconds instead of hours.
             </p>
           </div>
@@ -327,7 +327,7 @@ export const PricingView: React.FC = () => {
           {/* Sliders */}
           <div className="space-y-6">
             <div>
-              <div className="flex justify-between text-xs font-semibold text-slate-700 mb-2">
+              <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
                 <span>Active Clients / Leads Handled per Month:</span>
                 <span className="text-[#059669] font-bold text-sm">{clientsCount} Clients</span>
               </div>
@@ -342,7 +342,7 @@ export const PricingView: React.FC = () => {
             </div>
 
             <div>
-              <div className="flex justify-between text-xs font-semibold text-slate-700 mb-2">
+              <div className="flex justify-between text-sm font-semibold text-slate-700 mb-2">
                 <span>Your Average Billable Hourly Rate ($):</span>
                 <span className="text-[#059669] font-bold text-sm">${hourlyRate} / hour</span>
               </div>
@@ -362,22 +362,22 @@ export const PricingView: React.FC = () => {
           <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col justify-between space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 bg-white rounded-xl border border-slate-200">
-                <p className="text-[11px] text-slate-500 font-medium">Estimated Time Saved</p>
+                <p className="text-sm text-slate-500 font-medium">Estimated Time Saved</p>
                 <p className="text-2xl font-black font-heading text-slate-900">{totalHoursSaved} Hours</p>
-                <p className="text-[10px] text-slate-400">per month</p>
+                <p className="text-sm text-slate-400">per month</p>
               </div>
 
               <div className="p-3 bg-white rounded-xl border border-slate-200">
-                <p className="text-[11px] text-slate-500 font-medium">Monthly Value Generated</p>
+                <p className="text-sm text-slate-500 font-medium">Monthly Value Generated</p>
                 <p className="text-2xl font-black font-heading text-[#059669]">${estimatedRevenueSaved.toLocaleString()}</p>
-                <p className="text-[10px] text-slate-400">per month</p>
+                <p className="text-sm text-slate-400">per month</p>
               </div>
             </div>
 
             <div className="p-3.5 bg-white border border-slate-200 rounded-xl flex items-center justify-between">
-              <div className="text-xs">
+              <div className="text-sm">
                 <span className="font-bold text-slate-900 font-heading">Estimated ROI vs $29 Pro Plan:</span>
-                <p className="text-[11px] text-[#059669] font-semibold">
+                <p className="text-sm text-[#059669] font-semibold">
                   {Math.round((estimatedRevenueSaved / 29) * 100)}% Monthly Return on Investment
                 </p>
               </div>
@@ -391,7 +391,7 @@ export const PricingView: React.FC = () => {
                     setCheckoutModalPlan('pro');
                   }
                 }}
-                className="px-3 py-1.5 bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold rounded-lg shadow-2xs transition-colors cursor-pointer"
+                className="px-3 py-1.5 bg-[#059669] hover:bg-[#047857] text-white text-sm font-bold rounded-lg shadow-2xs transition-colors cursor-pointer"
               >
                 {user.planTier === 'agency' ? 'Manage Elite Plan' : user.planTier === 'pro' ? 'Upgrade to Agency' : 'Claim ROI Now'}
               </button>
@@ -407,7 +407,7 @@ export const PricingView: React.FC = () => {
             <HelpCircle className="w-5 h-5 text-[#059669]" />
             <span>Frequently Asked Questions</span>
           </h2>
-          <p className="text-xs text-slate-500">Everything you need to know about Locora AI subscriptions and billing.</p>
+          <p className="text-sm text-slate-500">Everything you need to know about Locora AI subscriptions and billing.</p>
         </div>
 
         <div className="space-y-3">
@@ -425,7 +425,7 @@ export const PricingView: React.FC = () => {
                 )}
               </button>
               {openFaq === idx && (
-                <div className="px-4 pb-4 text-xs text-slate-600 border-t border-slate-100 pt-3 leading-relaxed">
+                <div className="px-4 pb-4 text-sm text-slate-600 border-t border-slate-100 pt-3 leading-relaxed">
                   {faq.a}
                 </div>
               )}

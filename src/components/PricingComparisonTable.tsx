@@ -135,14 +135,14 @@ export const PricingComparisonTable: React.FC = () => {
   return (
     <div className="w-full bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden font-sans">
       <div className="p-6 sm:p-8 bg-slate-50 border-b border-slate-200">
-        <div className="flex items-center gap-2 text-emerald-700 text-xs font-bold uppercase tracking-wider font-heading mb-1">
+        <div className="flex items-center gap-2 text-emerald-700 text-sm font-bold uppercase tracking-wider font-heading mb-1">
           <Sparkles className="w-4 h-4" />
           <span>Full Feature Matrix</span>
         </div>
         <h3 className="text-xl sm:text-2xl font-bold font-heading text-slate-900">
           Compare Locora AI Tiers Side-by-Side
         </h3>
-        <p className="text-xs sm:text-sm text-slate-600 mt-1">
+        <p className="text-sm sm:text-sm text-slate-600 mt-1">
           From single business owners to high-output local marketing agencies.
         </p>
       </div>
@@ -150,26 +150,26 @@ export const PricingComparisonTable: React.FC = () => {
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[640px]">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-100/70 text-xs font-bold font-heading text-slate-700">
+            <tr className="border-b border-slate-200 bg-slate-100/70 text-sm font-bold font-heading text-slate-700">
               <th className="py-4 px-6 w-2/5">Capabilities & Tooling</th>
               <th className="py-4 px-6 text-center w-1/5 bg-slate-50/50">
                 <span className="block font-black text-slate-900">FREE</span>
-                <span className="text-[11px] font-normal text-slate-500">$0 forever</span>
+                <span className="text-sm font-normal text-slate-500">$0 forever</span>
               </th>
               <th className="py-4 px-6 text-center w-1/5 bg-emerald-50/40 text-emerald-950">
-                <span className="inline-block px-2 py-0.5 bg-[#059669] text-white text-[10px] font-bold rounded-full mb-1">
+                <span className="inline-block px-2 py-0.5 bg-[#059669] text-white text-sm font-bold rounded-full mb-1">
                   POPULAR
                 </span>
                 <span className="block font-black text-[#059669]">PRO</span>
-                <span className="text-[11px] font-normal text-emerald-700">$29 / mo</span>
+                <span className="text-sm font-normal text-emerald-700">$29 / mo</span>
               </th>
               <th className="py-4 px-6 text-center w-1/5 bg-indigo-50/40 text-indigo-950">
                 <span className="block font-black text-indigo-900">AGENCY</span>
-                <span className="text-[11px] font-normal text-indigo-700">$99 / mo</span>
+                <span className="text-sm font-normal text-indigo-700">$99 / mo</span>
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
+          <tbody className="divide-y divide-slate-100 text-sm text-slate-700">
             {COMPARISON_ROWS.map((row, idx) => (
               <tr
                 key={idx}

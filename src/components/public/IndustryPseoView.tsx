@@ -1031,7 +1031,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
   return (
     <div className="space-y-16 py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto font-sans bg-slate-50 text-slate-900">
       {/* Industry Selector Tabs Bar */}
-      <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-center gap-2 max-w-5xl mx-auto text-xs">
+      <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-center gap-2 max-w-5xl mx-auto text-sm">
         <span className="text-slate-400 font-bold px-2 flex items-center gap-1">
           <Globe className="w-3.5 h-3.5 text-emerald-600" />
           Select Industry:
@@ -1056,7 +1056,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
 
       {/* Hero Section */}
       <div className="text-center space-y-6 max-w-4xl mx-auto pt-4">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold uppercase tracking-wider font-heading">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-bold uppercase tracking-wider font-heading">
           {renderIcon(currentIndustry.iconName)}
           <span>Locora AI for {currentIndustry.category}</span>
         </div>
@@ -1071,11 +1071,11 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
 
         {/* Target Keywords Badges */}
         <div className="flex flex-wrap justify-center items-center gap-2 pt-2">
-          <span className="text-xs text-slate-400 font-medium">Pre-Tuned Ranking Keywords:</span>
+          <span className="text-sm text-slate-400 font-medium">Pre-Tuned Ranking Keywords:</span>
           {currentIndustry.targetKeywords.map((kw, i) => (
             <span
               key={i}
-              className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 text-[11px] font-semibold"
+              className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-700 text-sm font-semibold"
             >
               ✓ {kw}
             </span>
@@ -1105,7 +1105,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
       <div className="max-w-5xl mx-auto bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-xs font-bold font-heading uppercase mb-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-sm font-bold font-heading uppercase mb-1">
               <Calculator className="w-3.5 h-3.5 text-[#059669]" />
               <span>Interactive ROI & Time Savings Calculator</span>
             </div>
@@ -1113,7 +1113,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
               Calculate Projected Revenue Lift for {currentIndustry.name}
             </h2>
           </div>
-          <span className="text-xs text-slate-500 font-mono">Illustrative estimate — based on your inputs and an assumed lift</span>
+          <span className="text-sm text-slate-500 font-mono">Illustrative estimate — based on your inputs and an assumed lift</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
@@ -1156,14 +1156,14 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
           <div className="lg:col-span-6 p-6 bg-slate-900 text-white rounded-2xl space-y-4">
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-1">
-                <span className="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Illustrative Revenue Estimate*</span>
+                <span className="text-sm text-slate-400 uppercase font-bold tracking-wider">Illustrative Revenue Estimate*</span>
                 <div className="text-2xl sm:text-3xl font-extrabold font-heading text-emerald-400">
                   +${projectedExtraRevenue.toLocaleString()}
-                  <span className="text-xs text-slate-300 font-normal"> /mo</span>
+                  <span className="text-sm text-slate-300 font-normal"> /mo</span>
                 </div>
               </div>
             </div>
-            <p className="text-xs text-slate-300 border-t border-slate-800 pt-3">
+            <p className="text-sm text-slate-300 border-t border-slate-800 pt-3">
               *Illustrative projection assuming a 35% conversion lift from improved local SEO and faster proposals. Enter your own numbers — actual results vary by market and execution.
             </p>
           </div>
@@ -1185,7 +1185,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
           <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
             <button
               onClick={() => setActivePlaygroundTab('schema')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
                 activePlaygroundTab === 'schema' ? 'bg-[#059669] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -1193,7 +1193,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
             </button>
             <button
               onClick={() => setActivePlaygroundTab('proposal')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
                 activePlaygroundTab === 'proposal' ? 'bg-[#059669] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -1201,7 +1201,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
             </button>
             <button
               onClick={() => setActivePlaygroundTab('review')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
                 activePlaygroundTab === 'review' ? 'bg-[#059669] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -1212,8 +1212,8 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
 
         {/* Playground Content Display */}
         {activePlaygroundTab === 'schema' && (
-          <div className="bg-slate-950 text-slate-100 rounded-2xl p-4 space-y-3 font-mono text-xs border border-slate-800">
-            <div className="flex items-center justify-between text-slate-400 text-[11px] pb-2 border-b border-slate-800">
+          <div className="bg-slate-950 text-slate-100 rounded-2xl p-4 space-y-3 font-mono text-sm border border-slate-800">
+            <div className="flex items-center justify-between text-slate-400 text-sm pb-2 border-b border-slate-800">
               <span>Schema.org / {currentIndustry.schemaType} Code</span>
               <button
                 onClick={() => handleCopy(schemaJsonString)}
@@ -1230,7 +1230,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
         )}
 
         {activePlaygroundTab === 'proposal' && (
-          <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-4 text-xs font-sans">
+          <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-4 text-sm font-sans">
             <div className="flex items-center justify-between pb-2 border-b border-slate-200">
               <span className="font-bold text-slate-900 font-heading">Auto-Generated Proposal Deliverable</span>
               <button
@@ -1247,7 +1247,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
         )}
 
         {activePlaygroundTab === 'review' && (
-          <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-4 text-xs font-sans">
+          <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-4 text-sm font-sans">
             <div className="flex items-center justify-between pb-2 border-b border-slate-200">
               <span className="font-bold text-slate-900 font-heading">AI 5-Star Reputation Reply</span>
               <button
@@ -1267,7 +1267,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
       {/* Target Keyword Strategy & Search Intent Clusters */}
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-xs font-bold font-heading uppercase">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-sm font-bold font-heading uppercase">
             <Search className="w-3.5 h-3.5 text-[#059669]" />
             <span>Keyword Strategy & Intent Clusters</span>
           </div>
@@ -1283,7 +1283,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
           {/* Primary Cluster */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4 flex flex-col justify-between hover:border-emerald-300 transition-colors">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 text-emerald-900 rounded-lg text-xs font-bold font-heading">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 text-emerald-900 rounded-lg text-sm font-bold font-heading">
                 <span>Primary Cluster (Title & H1)</span>
               </div>
               <p className="text-sm text-slate-500">
@@ -1298,7 +1298,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
                 ))}
               </ul>
             </div>
-            <div className="pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-mono">
+            <div className="pt-3 border-t border-slate-100 text-sm text-slate-400 font-mono">
               Role: Page title, H1 & primary schema
             </div>
           </div>
@@ -1306,7 +1306,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
           {/* Secondary Cluster */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4 flex flex-col justify-between hover:border-emerald-300 transition-colors">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-900 rounded-lg text-xs font-bold font-heading">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-900 rounded-lg text-sm font-bold font-heading">
                 <span>Secondary Intent (Subheadings & Body)</span>
               </div>
               <p className="text-sm text-slate-500">
@@ -1321,7 +1321,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
                 ))}
               </ul>
             </div>
-            <div className="pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-mono">
+            <div className="pt-3 border-t border-slate-100 text-sm text-slate-400 font-mono">
               Role: H2 sections, service cards & copy
             </div>
           </div>
@@ -1329,7 +1329,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
           {/* Long-Tail Cluster */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4 flex flex-col justify-between hover:border-emerald-300 transition-colors">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-900 rounded-lg text-xs font-bold font-heading">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-900 rounded-lg text-sm font-bold font-heading">
                 <span>Long-Tail (FAQ & Voice Search)</span>
               </div>
               <p className="text-sm text-slate-500">
@@ -1344,7 +1344,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
                 ))}
               </ul>
             </div>
-            <div className="pt-3 border-t border-slate-100 text-[11px] text-slate-400 font-mono">
+            <div className="pt-3 border-t border-slate-100 text-sm text-slate-400 font-mono">
               Role: FAQ accordion, Q&A JSON-LD schema
             </div>
           </div>
@@ -1354,7 +1354,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
       {/* Answer Engine & Local Search FAQs */}
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-xs font-bold font-heading uppercase">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-sm font-bold font-heading uppercase">
             <HelpCircle className="w-3.5 h-3.5 text-[#059669]" />
             <span>Answer Engine Optimization (AEO)</span>
           </div>
@@ -1401,10 +1401,10 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
       {/* Footer Industry & Hub Interlinking Directory */}
       <div className="max-w-5xl mx-auto pt-8 border-t border-slate-200 space-y-6 text-center">
         <div className="space-y-2">
-          <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider font-heading">
+          <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider font-heading">
             Explore Locora AI by Industry Sector:
           </h4>
-          <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-xs">
+          <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm">
             {Object.values(INDUSTRY_DATABASE).map((ind) => (
               <button
                 key={ind.slug}
@@ -1418,7 +1418,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
         </div>
 
         {/* Cross-Site Hub Navigation */}
-        <div className="pt-4 border-t border-slate-100 flex flex-wrap justify-center items-center gap-4 text-xs text-slate-500">
+        <div className="pt-4 border-t border-slate-100 flex flex-wrap justify-center items-center gap-4 text-sm text-slate-500">
           <span className="font-semibold text-slate-400">Locora Platforms & Guides:</span>
           <a
             href="/resources"

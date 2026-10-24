@@ -112,7 +112,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
   return (
     <div className="bg-slate-50 text-slate-900 font-sans min-h-screen">
       {/* Breadcrumb Bar */}
-      <div className="border-b border-slate-200 bg-white/90 backdrop-blur-xs py-3.5 px-6 text-xs text-slate-500 sticky top-0 z-30 shadow-2xs">
+      <div className="border-b border-slate-200 bg-white/90 backdrop-blur-xs py-3.5 px-6 text-sm text-slate-500 sticky top-0 z-30 shadow-2xs">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
             <button onClick={() => setActiveTab('home')} className="hover:text-slate-900 cursor-pointer font-medium">
@@ -134,7 +134,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
 
           <button
             onClick={handleLaunchTool}
-            className="hidden sm:inline-block px-3.5 py-1 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+            className="hidden sm:inline-block px-3.5 py-1 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
           >
             {user ? 'Open in Workspace' : 'Get Started Free'}
           </button>
@@ -144,12 +144,12 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
       {/* Hero Section */}
       <section className="py-14 sm:py-18 px-6 max-w-5xl mx-auto space-y-6 text-left">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold font-heading uppercase tracking-wide">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-bold font-heading uppercase tracking-wide">
             <Target className="w-3.5 h-3.5 text-emerald-700" />
             <span>{useCase.category}</span>
           </div>
           {useCase.readingTime && (
-            <div className="inline-flex items-center gap-1 text-xs font-medium text-slate-500">
+            <div className="inline-flex items-center gap-1 text-sm font-medium text-slate-500">
               <Clock className="w-3.5 h-3.5 text-slate-400" />
               <span>{useCase.readingTime}</span>
             </div>
@@ -203,7 +203,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {useCase.whoIsThisFor.map((persona, i) => (
               <div key={i} className="p-6 bg-white border border-slate-200 rounded-2xl shadow-2xs space-y-2.5">
-                <span className="text-xs font-extrabold font-heading text-emerald-800 uppercase tracking-wider block">
+                <span className="text-sm font-extrabold font-heading text-emerald-800 uppercase tracking-wider block">
                   {persona.role}
                 </span>
                 <p className="text-sm text-slate-600 leading-relaxed font-sans">
@@ -225,7 +225,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {useCase.painPoints.map((pain, i) => (
               <div key={i} className="p-6 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-2xs">
-                <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 font-bold text-xs">
+                <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 font-bold text-sm">
                   0{i + 1}
                 </div>
                 <h3 className="text-base font-bold font-heading text-slate-900">{pain.title}</h3>
@@ -237,7 +237,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
 
         {/* Step-by-Step Implementation Framework */}
         <div className="space-y-6 pt-4">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-xs font-bold font-heading uppercase border border-emerald-200">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-sm font-bold font-heading uppercase border border-emerald-200">
             <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
             <span>Actionable Implementation Framework</span>
           </div>
@@ -249,14 +249,14 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
             {(useCase.stepByStepFramework || useCase.solutions).map((step: any, i: number) => (
               <div key={i} className="p-6 bg-white border border-slate-200 rounded-2xl space-y-3 shadow-2xs hover:border-emerald-300 transition-colors">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                  <span className="text-sm font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                     {step.step || `Step 0${i + 1}`}
                   </span>
                 </div>
                 <h3 className="text-base font-bold font-heading text-slate-900">{step.title}</h3>
                 <p className="text-sm text-slate-600 leading-relaxed font-sans">{step.description || step.desc}</p>
                 {step.proTip && (
-                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 font-sans">
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-900 font-sans">
                     <span className="font-bold">Pro Tip: </span>{step.proTip}
                   </div>
                 )}
@@ -280,7 +280,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
               </div>
               <ul className="space-y-2.5">
                 {useCase.prosAndCons.pros.map((p, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-slate-800 font-medium font-sans">
+                  <li key={i} className="flex items-start gap-2 text-sm text-slate-800 font-medium font-sans">
                     <Check className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
                     <span>{p}</span>
                   </li>
@@ -295,7 +295,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
               </div>
               <ul className="space-y-2.5">
                 {useCase.prosAndCons.cons.map((c, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-slate-600 font-sans">
+                  <li key={i} className="flex items-start gap-2 text-sm text-slate-600 font-sans">
                     <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0 mt-1.5" />
                     <span>{c}</span>
                   </li>
@@ -310,21 +310,21 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
       <section className="py-12 px-6 max-w-5xl mx-auto">
         <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-10 space-y-6">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-xs font-bold font-heading mb-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-bold font-heading mb-1">
               <BarChart3 className="w-3.5 h-3.5" />
               <span>Interactive ROI Estimator</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold font-heading">
               Estimate Your Revenue Lift with this Strategy
             </h2>
-            <p className="text-xs text-slate-400 font-sans">
+            <p className="text-sm text-slate-400 font-sans">
               Adjust the slider to simulate monthly client accounts or emergency job volume.
             </p>
           </div>
 
           <div className="p-6 bg-slate-950 border border-slate-800 rounded-2xl space-y-6">
             <div className="space-y-2">
-              <div className="flex justify-between text-xs font-bold">
+              <div className="flex justify-between text-sm font-bold">
                 <span>Active Target Accounts / Monthly Jobs:</span>
                 <span className="text-emerald-400 font-extrabold text-sm">{calculatorInput} Accounts</span>
               </div>
@@ -336,7 +336,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
                 onChange={(e) => handleRecalculate(Number(e.target.value))}
                 className="w-full accent-emerald-500 cursor-pointer"
               />
-              <div className="flex justify-between text-[11px] text-slate-500">
+              <div className="flex justify-between text-sm text-slate-500">
                 <span>1 client ($4.1k/mo)</span>
                 <span>10 clients ($41k/mo)</span>
                 <span>20 clients ($82k/mo)</span>
@@ -345,7 +345,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
 
             <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
-                <span className="text-xs text-slate-400 block uppercase font-bold tracking-wider">
+                <span className="text-sm text-slate-400 block uppercase font-bold tracking-wider">
                   Projected Monthly Revenue Lift:
                 </span>
                 <span className="text-2xl sm:text-3xl font-extrabold font-heading text-emerald-400">
@@ -354,7 +354,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
               </div>
               <button
                 onClick={handleLaunchTool}
-                className="px-6 py-3 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer font-heading"
+                className="px-6 py-3 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-sm rounded-xl transition-colors cursor-pointer font-heading"
               >
                 {user ? 'Open in Workspace' : 'Start Free (25 Credits)'}
               </button>
@@ -369,18 +369,18 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
           <h2 className="text-2xl font-extrabold font-heading text-slate-900">
             Illustrative Example
           </h2>
-          <p className="text-xs text-slate-500 font-sans max-w-5xl">
+          <p className="text-sm text-slate-500 font-sans max-w-5xl">
             An illustrative scenario showing how this use case could play out — not a real customer or verified result.
           </p>
           <div className="p-6 bg-white border border-slate-200 rounded-3xl space-y-4 shadow-xs">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans text-slate-700">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-sans text-slate-700">
               <p><strong>Challenge: </strong>{useCase.caseStudy.challenge}</p>
               <p><strong>Solution: </strong>{useCase.caseStudy.solution}</p>
             </div>
             <div className="grid grid-cols-3 gap-3 pt-2">
               {useCase.caseStudy.results.map((r, i) => (
                 <div key={i} className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
-                  <span className="text-[10px] text-slate-500 uppercase font-bold block">{r.label}</span>
+                  <span className="text-sm text-slate-500 uppercase font-bold block">{r.label}</span>
                   <span className="text-base font-extrabold text-slate-900 font-heading">{r.value}</span>
                 </div>
               ))}
@@ -420,7 +420,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
 
       {/* Related Use Cases */}
       <section className="py-12 px-6 max-w-5xl mx-auto border-t border-slate-200 space-y-6">
-        <h3 className="text-xs font-bold font-heading text-slate-800 uppercase tracking-wider">
+        <h3 className="text-sm font-bold font-heading text-slate-800 uppercase tracking-wider">
           Explore Other Use Cases
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -438,7 +438,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
                 <span>{ou.title}</span>
                 <ArrowRight className="w-3.5 h-3.5 text-emerald-700" />
               </div>
-              <p className="text-[11px] text-slate-500 line-clamp-2 font-sans">{ou.heroSubheadline}</p>
+              <p className="text-sm text-slate-500 line-clamp-2 font-sans">{ou.heroSubheadline}</p>
             </button>
           ))}
         </div>

@@ -10,7 +10,7 @@ export const AboutView: React.FC = () => {
     <div className="space-y-16 py-12 px-6 max-w-7xl mx-auto font-sans bg-slate-50 text-slate-900">
       {/* Hero Header */}
       <div className="text-center space-y-4 max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-semibold font-heading uppercase tracking-wider">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-semibold font-heading uppercase tracking-wider">
           <Building2 className="w-4 h-4 text-[#059669]" />
           <span>Our Story & Mission</span>
         </div>
@@ -42,32 +42,32 @@ export const AboutView: React.FC = () => {
 
           <div className="space-y-3 font-sans">
             <div className="flex gap-3">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-[#059669] border border-emerald-200 flex items-center justify-center flex-shrink-0 font-bold text-xs font-heading">
+              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-[#059669] border border-emerald-200 flex items-center justify-center flex-shrink-0 font-bold text-sm font-heading">
                 1
               </div>
               <div>
                 <p className="text-sm font-bold text-slate-900">Speed & Simplicity First</p>
-                <p className="text-[11px] text-slate-500">Generates structured client assets in under 3 seconds.</p>
+                <p className="text-sm text-slate-500">Generates structured client assets in under 3 seconds.</p>
               </div>
             </div>
 
             <div className="flex gap-3">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-[#059669] border border-emerald-200 flex items-center justify-center flex-shrink-0 font-bold text-xs font-heading">
+              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-[#059669] border border-emerald-200 flex items-center justify-center flex-shrink-0 font-bold text-sm font-heading">
                 2
               </div>
               <div>
                 <p className="text-sm font-bold text-slate-900">Strict Privacy & Security</p>
-                <p className="text-[11px] text-slate-500">Client CRM records are never used to train public LLM models.</p>
+                <p className="text-sm text-slate-500">Client CRM records are never used to train public LLM models.</p>
               </div>
             </div>
 
             <div className="flex gap-3">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-[#059669] border border-emerald-200 flex items-center justify-center flex-shrink-0 font-bold text-xs font-heading">
+              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-[#059669] border border-emerald-200 flex items-center justify-center flex-shrink-0 font-bold text-sm font-heading">
                 3
               </div>
               <div>
                 <p className="text-sm font-bold text-slate-900">Measurable Revenue Impact</p>
-                <p className="text-[11px] text-slate-500">Every feature is designed to increase proposal win rates and client retention.</p>
+                <p className="text-sm text-slate-500">Every feature is designed to increase proposal win rates and client retention.</p>
               </div>
             </div>
           </div>
@@ -101,7 +101,7 @@ export const AboutView: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('contact')}
-          className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl transition-all inline-flex items-center gap-2 cursor-pointer font-sans"
+          className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl transition-all inline-flex items-center gap-2 cursor-pointer font-sans"
         >
           <span>Get in Touch with Our Team</span>
           <ArrowRight className="w-4 h-4" />

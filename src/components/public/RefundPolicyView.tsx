@@ -13,12 +13,12 @@ export const RefundPolicyView: React.FC = () => {
         <div className="flex items-center justify-between">
           <button
             onClick={() => setActiveTab('home')}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-[#059669] transition-colors cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-[#059669] transition-colors cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-2xs"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Home</span>
           </button>
-          <span className="text-xs font-mono text-slate-400 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+          <span className="text-sm font-mono text-slate-400 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
             Last Updated: July 2026
           </span>
         </div>
@@ -28,7 +28,7 @@ export const RefundPolicyView: React.FC = () => {
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
           
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm font-semibold border border-emerald-200">
               <ShieldAlert className="w-3.5 h-3.5 text-emerald-600" />
               <span>Customer Protection</span>
             </div>
@@ -46,21 +46,21 @@ export const RefundPolicyView: React.FC = () => {
               <RefreshCw className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-bold text-slate-900">Cancel Anytime</p>
-                <p className="text-[11px] text-slate-500">Stop your subscription directly via your dashboard settings wrapper.</p>
+                <p className="text-sm text-slate-500">Stop your subscription directly via your dashboard settings wrapper.</p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
               <XCircle className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-bold text-slate-900">Final Sale Rules</p>
-                <p className="text-[11px] text-slate-500">Sales are final once cloud-allocated AI generation credits are spent.</p>
+                <p className="text-sm text-slate-500">Sales are final once cloud-allocated AI generation credits are spent.</p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
               <ShieldCheck className="w-5 h-5 text-sky-600 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-bold text-slate-900">14-Day Discrepancies</p>
-                <p className="text-[11px] text-slate-500">Dedicated manual review for duplicate billing or gateway errors.</p>
+                <p className="text-sm text-slate-500">Dedicated manual review for duplicate billing or gateway errors.</p>
               </div>
             </div>
           </div>
@@ -72,7 +72,7 @@ export const RefundPolicyView: React.FC = () => {
           {/* Section 1 */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold font-heading text-slate-900 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">1</span>
+              <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-sm font-bold flex items-center justify-center">1</span>
               Payment Processing Declarations
             </h2>
             <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
@@ -90,7 +90,7 @@ export const RefundPolicyView: React.FC = () => {
           {/* Section 2 */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold font-heading text-slate-900 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">2</span>
+              <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-sm font-bold flex items-center justify-center">2</span>
               Subscription Cancellations
             </h2>
             <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
@@ -109,7 +109,7 @@ export const RefundPolicyView: React.FC = () => {
           {/* Section 3 */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold font-heading text-slate-900 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">3</span>
+              <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-sm font-bold flex items-center justify-center">3</span>
               Refund Evaluation Standards
             </h2>
             <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
@@ -117,7 +117,7 @@ export const RefundPolicyView: React.FC = () => {
                 Because Locora AI allocates dedicated server processing nodes and incurs immediate, non-refundable third-party infrastructure computing expenses (including API tokens for Google Gemini processing models) upon asset generations, our refund protocol is structured as follows:
               </p>
               <div className="p-4 bg-amber-50/60 border border-amber-200 rounded-2xl text-amber-900 space-y-2 my-3">
-                <div className="flex items-center gap-2 font-bold text-xs text-amber-800">
+                <div className="flex items-center gap-2 font-bold text-sm text-amber-800">
                   <AlertCircle className="w-4 h-4 text-amber-600" />
                   <span>Standard Refund Thresholds</span>
                 </div>
@@ -133,7 +133,7 @@ export const RefundPolicyView: React.FC = () => {
           {/* Section 4 */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold font-heading text-slate-900 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">4</span>
+              <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-sm font-bold flex items-center justify-center">4</span>
               Exceptions & Technical Billing Discrepancies
             </h2>
             <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
@@ -153,14 +153,14 @@ export const RefundPolicyView: React.FC = () => {
           {/* Section 5 */}
           <section className="space-y-3">
             <h2 className="text-lg font-bold font-heading text-slate-900 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">5</span>
+              <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-sm font-bold flex items-center justify-center">5</span>
               How to Request Support & Billing Adjustments
             </h2>
             <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-4 pl-8">
               <p>
                 If you encounter a payment problem, duplicate billing notification, or want to verify an active adjustment evaluation, do not hesitate to contact our desk directly:
               </p>
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 text-xs text-slate-700">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 text-sm text-slate-700">
                 <p><strong>Primary Administrator:</strong> Imtiaz Hussain</p>
                 <p className="flex items-center gap-1.5">
                   <Mail className="w-3.5 h-3.5 text-emerald-600" />
@@ -174,7 +174,7 @@ export const RefundPolicyView: React.FC = () => {
                     setActiveTab('contact');
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-sm"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#059669] hover:bg-[#047857] text-white text-sm font-bold rounded-xl transition-colors cursor-pointer shadow-sm"
                 >
                   <MessageSquare className="w-4 h-4" />
                   <span>Open Billing Ticket</span>

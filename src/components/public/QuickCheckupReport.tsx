@@ -234,24 +234,24 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             {isCached ? (
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30 font-heading flex items-center gap-1">
+              <span className="px-2.5 py-0.5 rounded-full text-sm font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30 font-heading flex items-center gap-1">
                 <Clock className="w-3 h-3 text-amber-400" />
                 <span>Analyzed {audit.dataAge || 'recently'}</span>
               </span>
             ) : (
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-heading flex items-center gap-1">
+              <span className="px-2.5 py-0.5 rounded-full text-sm font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-heading flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>Live Real-Time Crawl</span>
               </span>
             )}
-            <span className="text-xs text-slate-400 font-mono">
+            <span className="text-sm text-slate-400 font-mono">
               Timestamp: {new Date(gated.scanMetadata.scanDateTime).toLocaleTimeString()}
             </span>
-            <span className="text-xs text-emerald-400 font-medium">
+            <span className="text-sm text-emerald-400 font-medium">
               • {gated.scanMetadata.pagesAnalyzedLabel}
             </span>
           </div>
-          <div className="text-xs text-slate-400">
+          <div className="text-sm text-slate-400">
             Target: <span className="text-slate-200 font-mono">{audit.url || audit.domain}</span>
           </div>
         </div>
@@ -263,7 +263,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
               type="button"
               onClick={onForceRefresh}
               disabled={isRefreshing}
-              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-medium flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
               title="Re-crawl this website right now and bypass the cache"
             >
               <RotateCw className={`w-3.5 h-3.5 text-emerald-400 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -274,7 +274,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           <button
             type="button"
             onClick={onCheckAnother}
-            className="px-3.5 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-all cursor-pointer border border-slate-700"
+            className="px-3.5 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-all cursor-pointer border border-slate-700"
           >
             Check Another Site
           </button>
@@ -285,7 +285,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
       <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-bold font-heading uppercase tracking-wider">
               <TrendingUp className="w-3.5 h-3.5" />
               <span>Diagnostic Report</span>
             </div>
@@ -294,11 +294,11 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
               Your Website Quick Checkup
             </h1>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-600 font-sans">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm text-slate-600 font-sans">
               <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
                 <Globe className="w-4 h-4 text-slate-500 shrink-0" />
                 <div className="truncate">
-                  <span className="text-[10px] text-slate-400 block font-medium">Website</span>
+                  <span className="text-sm text-slate-400 block font-medium">Website</span>
                   <span className="font-bold text-slate-900 truncate block">{audit.domain}</span>
                 </div>
               </div>
@@ -306,7 +306,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
               <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
                 <Clock className="w-4 h-4 text-slate-500 shrink-0" />
                 <div className="truncate">
-                  <span className="text-[10px] text-slate-400 block font-medium">Scan Date</span>
+                  <span className="text-sm text-slate-400 block font-medium">Scan Date</span>
                   <span className="font-bold text-slate-900 truncate block">
                     {new Date(gated.scanMetadata.scanDateTime).toLocaleDateString('en-US', {
                       month: 'short',
@@ -320,7 +320,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
               <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
                 <FileText className="w-4 h-4 text-slate-500 shrink-0" />
                 <div className="truncate">
-                  <span className="text-[10px] text-slate-400 block font-medium">Pages Analyzed</span>
+                  <span className="text-sm text-slate-400 block font-medium">Pages Analyzed</span>
                   <span className="font-bold text-slate-900 truncate block">{gated.scanMetadata.pagesAnalyzedLabel}</span>
                 </div>
               </div>
@@ -329,7 +329,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
 
           {/* Big Overall Score Block */}
           <div className="flex flex-col items-start lg:items-end gap-2 shrink-0">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 font-heading">
+            <span className="text-sm font-bold uppercase tracking-wider text-slate-500 font-heading">
               Overall Score
             </span>
             <div className="flex items-baseline gap-2 bg-slate-50 px-5 py-3.5 rounded-2xl border border-slate-200 shadow-xs">
@@ -338,7 +338,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
               </span>
               <span className="text-lg font-bold text-slate-400">/100</span>
               <span
-                className={`ml-3 px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wide ${
+                className={`ml-3 px-2.5 py-1 rounded-lg text-sm font-black uppercase tracking-wide ${
                   scoring.overallScore >= 80
                     ? 'bg-emerald-100 text-emerald-800'
                     : scoring.overallScore >= 55
@@ -353,7 +353,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
             <button
               type="button"
               onClick={() => setShowFormulaModal(!showFormulaModal)}
-              className="text-xs text-[#059669] hover:text-[#047857] font-semibold underline decoration-dotted flex items-center gap-1 cursor-pointer"
+              className="text-sm text-[#059669] hover:text-[#047857] font-semibold underline decoration-dotted flex items-center gap-1 cursor-pointer"
             >
               <span>{showFormulaModal ? 'Hide Scoring Formula' : 'View Scoring Formula'}</span>
               {showFormulaModal ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -363,15 +363,15 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
 
         {/* Explainable Formula Box */}
         {showFormulaModal && (
-          <div className="mt-6 p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-xs text-emerald-950 space-y-2">
+          <div className="mt-6 p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 text-sm text-emerald-950 space-y-2">
             <div className="font-bold flex items-center gap-1.5 text-emerald-900 font-heading">
               <Layers className="w-4 h-4 text-emerald-700" />
               <span>Explainable Deterministic Scoring Algorithm</span>
             </div>
-            <p className="font-mono text-[11px] bg-white p-2.5 rounded-xl border border-emerald-200/80 text-slate-800">
+            <p className="font-mono text-sm bg-white p-2.5 rounded-xl border border-emerald-200/80 text-slate-800">
               {scoring.formulaExplanation}
             </p>
-            <p className="text-[11px] text-emerald-800">
+            <p className="text-sm text-emerald-800">
               Every category score is computed directly from actual detected criteria (HTTPS ✓, Sitemap ✓, Canonical ✓, Robots.txt ✓, Broken links ✕).
               Zero random numbers. Full mathematical transparency. AI explains the score, but never invents it.
             </p>
@@ -379,34 +379,34 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
         )}
 
         {/* DATA SOURCE LABELS (Section 24: Real Source Identification & Missing Integrations) */}
-        <div className="mt-6 pt-5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="mt-6 pt-5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-sm">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-bold text-slate-700 uppercase tracking-wider text-[11px] font-heading mr-1">
+            <span className="font-bold text-slate-700 uppercase tracking-wider text-sm font-heading mr-1">
               Data Sources:
             </span>
-            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold flex items-center gap-1 text-[11px]">
+            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold flex items-center gap-1 text-sm">
               <Check className="w-3 h-3 text-emerald-600" />
               <span>Website Crawl</span>
             </span>
-            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold flex items-center gap-1 text-[11px]">
+            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold flex items-center gap-1 text-sm">
               <Check className="w-3 h-3 text-emerald-600" />
               <span>PageSpeed / TTFB Telemetry</span>
             </span>
-            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold flex items-center gap-1 text-[11px]">
+            <span className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold flex items-center gap-1 text-sm">
               <Check className="w-3 h-3 text-emerald-600" />
               <span>Calculated by Locora</span>
             </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 font-medium flex items-center gap-1 text-[11px]">
+            <span className="px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 font-medium flex items-center gap-1 text-sm">
               <AlertTriangle className="w-3 h-3 text-amber-600" />
               <span>⚠ Google Business Profile not connected</span>
             </span>
-            <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-600 font-medium flex items-center gap-1 text-[11px]">
+            <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-600 font-medium flex items-center gap-1 text-sm">
               <span>⚠ Search Console not connected</span>
             </span>
-            <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-600 font-medium flex items-center gap-1 text-[11px]">
+            <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-600 font-medium flex items-center gap-1 text-sm">
               <span>⚠ GA4 not connected</span>
             </span>
           </div>
@@ -444,7 +444,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                     </div>
                     <div>
                       <h4 className="font-bold text-slate-900 text-sm font-heading">{data.name}</h4>
-                      <span className="text-[10px] text-slate-400 capitalize font-medium">
+                      <span className="text-sm text-slate-400 capitalize font-medium">
                         {data.status === 'good' ? 'Passed Checks' : 'Needs Optimization'}
                       </span>
                     </div>
@@ -452,21 +452,21 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
 
                   <div className="text-right shrink-0">
                     <span className="text-xl font-black font-heading text-slate-900">{data.score}</span>
-                    <span className="text-xs font-semibold text-slate-400">/100</span>
+                    <span className="text-sm font-semibold text-slate-400">/100</span>
                   </div>
                 </div>
 
                 {/* Evidence snippet list */}
                 {checks.length > 0 && (
                   <div className="mt-4 pt-3 border-t border-slate-100 space-y-2">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold uppercase tracking-wider text-slate-400 text-[10px] font-heading">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-bold uppercase tracking-wider text-slate-400 text-sm font-heading">
                         Detected Signals
                       </span>
                       <button
                         type="button"
                         onClick={() => toggleCategory(data.id)}
-                        className="text-[#059669] hover:underline font-semibold flex items-center gap-0.5 cursor-pointer text-[11px]"
+                        className="text-[#059669] hover:underline font-semibold flex items-center gap-0.5 cursor-pointer text-sm"
                       >
                         <span>{isExpanded ? 'Collapse' : 'Inspect'}</span>
                         {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -476,18 +476,18 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                     {/* Compact Checklist */}
                     <div className="space-y-1.5">
                       {(isExpanded ? checks : checks.slice(0, 3)).map((chk) => (
-                        <div key={chk.id} className="flex items-start justify-between gap-2 text-xs">
+                        <div key={chk.id} className="flex items-start justify-between gap-2 text-sm">
                           <div className="flex items-center gap-1.5 min-w-0">
                             {chk.passed ? (
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                             ) : (
                               <XCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                             )}
-                            <span className={`truncate text-[11px] font-medium ${chk.passed ? 'text-slate-800' : 'text-slate-500'}`}>
+                            <span className={`truncate text-sm font-medium ${chk.passed ? 'text-slate-800' : 'text-slate-500'}`}>
                               {chk.name}
                             </span>
                           </div>
-                          <span className="text-[10px] font-mono text-slate-400 shrink-0">
+                          <span className="text-sm font-mono text-slate-400 shrink-0">
                             {chk.pointsAwarded}/{chk.maxPoints} pts
                           </span>
                         </div>
@@ -497,7 +497,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                       {isExpanded && (
                         <div className="mt-2 pt-2 border-t border-slate-200/60 space-y-1">
                           {checks.map((c) => (
-                            <div key={c.id} className="text-[10px] text-slate-500 font-mono bg-white p-1.5 rounded-md border border-slate-200/60">
+                            <div key={c.id} className="text-sm text-slate-500 font-mono bg-white p-1.5 rounded-md border border-slate-200/60">
                               <span className="font-bold text-slate-700">{c.name}:</span> {c.evidence}
                             </div>
                           ))}
@@ -516,7 +516,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
       <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-lg relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-3 max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-bold font-heading uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-sm font-bold font-heading uppercase tracking-wider">
               <MapPin className="w-3.5 h-3.5 text-purple-400" />
               <span>Local Visibility</span>
             </div>
@@ -530,7 +530,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                 <Lock className="w-4 h-4 text-purple-400 shrink-0" />
                 <span>Connect your Google Business Profile to unlock:</span>
               </div>
-              <ul className="space-y-1 text-xs text-slate-300 pl-6 list-disc font-sans">
+              <ul className="space-y-1 text-sm text-slate-300 pl-6 list-disc font-sans">
                 <li>Google profile health & audit diagnostics</li>
                 <li>Real customer reviews & AI review response workflows</li>
                 <li>Local search performance & keyword grid tracking</li>
@@ -539,7 +539,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
               </ul>
             </div>
 
-            <p className="text-[11px] text-slate-400 italic">
+            <p className="text-sm text-slate-400 italic">
               Locora never displays fake mock counts like &quot;126 reviews&quot;. Real analytics are loaded exclusively upon verified GBP connection.
             </p>
           </div>
@@ -548,12 +548,12 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
             <button
               type="button"
               onClick={() => onClaimAndUnlock('gbp')}
-              className="px-6 py-3.5 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer font-sans"
+              className="px-6 py-3.5 bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm sm:text-sm rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer font-sans"
             >
               <span>Connect Google Business Profile</span>
               <ArrowRight className="w-4 h-4" />
             </button>
-            <span className="text-[11px] text-slate-400">Included with your free Locora account</span>
+            <span className="text-sm text-slate-400">Included with your free Locora account</span>
           </div>
         </div>
       </div>
@@ -561,7 +561,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
       {/* 5. SECTION 14: PUBLIC FINDINGS (Standardized Format: Category, Severity, Title, Description, Evidence, Affected URL, Recommendation) */}
       <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold font-heading uppercase tracking-wider mb-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-sm font-bold font-heading uppercase tracking-wider mb-2">
             <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
             <span>Public Findings (Top Issues)</span>
           </div>
@@ -588,11 +588,11 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                 <div className="space-y-3">
                   {/* Category, Severity, Priority & Title */}
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                    <span className="w-5 h-5 rounded-full bg-slate-900 text-white font-bold text-sm flex items-center justify-center shrink-0">
                       {idx + 1}
                     </span>
                     <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                      className={`px-2 py-0.5 rounded text-sm font-black uppercase ${
                         isCritical
                           ? 'bg-rose-100 text-rose-800 border border-rose-200'
                           : 'bg-amber-100 text-amber-800 border border-amber-200'
@@ -600,10 +600,10 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                     >
                       {issue.severity}
                     </span>
-                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-heading">
+                    <span className="text-sm font-bold text-slate-500 uppercase tracking-wider font-heading">
                       {issue.category}
                     </span>
-                    <span className="text-xs text-slate-400 font-mono">
+                    <span className="text-sm text-slate-400 font-mono">
                       • Affected page: {issue.affectedUrl || 'Homepage (/)'}
                     </span>
                   </div>
@@ -617,21 +617,21 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                   </p>
 
                   {/* Limited Evidence */}
-                  <div className="p-3 bg-white/95 rounded-xl border border-slate-200/80 text-xs font-mono text-slate-700 flex items-start gap-2">
+                  <div className="p-3 bg-white/95 rounded-xl border border-slate-200/80 text-sm font-mono text-slate-700 flex items-start gap-2">
                     <span className="font-bold text-slate-400 shrink-0">Evidence:</span>
                     <span className="truncate">{issue.limitedEvidence}</span>
                   </div>
 
                   {/* Recommendation */}
                   {issue.recommendation && (
-                    <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200/80 text-xs text-emerald-950 flex items-start gap-2">
+                    <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200/80 text-sm text-emerald-950 flex items-start gap-2">
                       <span className="font-bold text-emerald-800 shrink-0 font-heading">Recommendation:</span>
                       <span>{issue.recommendation}</span>
                     </div>
                   )}
 
                   {/* Locked Details Indicator (Section 14) */}
-                  <div className="pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-200/60 font-sans">
+                  <div className="pt-2 flex items-center justify-between text-sm text-slate-400 border-t border-slate-200/60 font-sans">
                     <span className="flex items-center gap-1.5 text-slate-500">
                       <Lock className="w-3.5 h-3.5 text-amber-600" />
                       <span>Full technical explanation, code-level implementation, and subpage impact locked</span>
@@ -639,7 +639,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                     <button
                       type="button"
                       onClick={() => onClaimAndUnlock('issue_detail')}
-                      className="text-[#059669] hover:underline font-bold text-xs cursor-pointer"
+                      className="text-[#059669] hover:underline font-bold text-sm cursor-pointer"
                     >
                       Unlock Details →
                     </button>
@@ -652,7 +652,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
 
         {/* Passed Checks Sample */}
         <div className="pt-4 border-t border-slate-100">
-          <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider font-heading mb-3 flex items-center gap-1.5">
+          <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider font-heading mb-3 flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
             <span>Passed Health Checks (Sample)</span>
           </h4>
@@ -664,7 +664,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span className="font-bold text-sm text-slate-900 truncate font-heading">{pass.title}</span>
                 </div>
-                <p className="text-[11px] font-mono text-slate-600 truncate pl-5">
+                <p className="text-sm font-mono text-slate-600 truncate pl-5">
                   {pass.limitedEvidence}
                 </p>
               </div>
@@ -677,7 +677,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
       <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-800 text-xs font-bold font-heading uppercase tracking-wider mb-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-800 text-sm font-bold font-heading uppercase tracking-wider mb-1">
               <Building2 className="w-3.5 h-3.5 text-blue-600" />
               <span>Public Business Footprint Discovery</span>
             </div>
@@ -690,31 +690,31 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
           <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-            <span className="text-slate-400 block text-[10px] font-medium mb-1">Business Name</span>
+            <span className="text-slate-400 block text-sm font-medium mb-1">Business Name</span>
             <span className="font-bold text-slate-900 block truncate">{audit.businessName}</span>
-            <span className="text-[10px] text-slate-400 font-mono mt-1 block">Source: Website Crawl</span>
+            <span className="text-sm text-slate-400 font-mono mt-1 block">Source: Website Crawl</span>
           </div>
 
           <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-            <span className="text-slate-400 block text-[10px] font-medium mb-1">Direct Phone</span>
+            <span className="text-slate-400 block text-sm font-medium mb-1">Direct Phone</span>
             <span className="font-bold text-slate-900 block truncate">
               {audit.detectedBusinessData.phone || <span className="text-amber-600 font-normal">Not found on website</span>}
             </span>
-            <span className="text-[10px] text-slate-400 font-mono mt-1 block">Source: Website Crawl</span>
+            <span className="text-sm text-slate-400 font-mono mt-1 block">Source: Website Crawl</span>
           </div>
 
           <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-            <span className="text-slate-400 block text-[10px] font-medium mb-1">Address / Region</span>
+            <span className="text-slate-400 block text-sm font-medium mb-1">Address / Region</span>
             <span className="font-bold text-slate-900 block truncate">
               {audit.detectedBusinessData.address || <span className="text-amber-600 font-normal">Not found on website</span>}
             </span>
-            <span className="text-[10px] text-slate-400 font-mono mt-1 block">Source: Website Crawl</span>
+            <span className="text-sm text-slate-400 font-mono mt-1 block">Source: Website Crawl</span>
           </div>
 
           <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-            <span className="text-slate-400 block text-[10px] font-medium mb-1">LocalBusiness Schema</span>
+            <span className="text-slate-400 block text-sm font-medium mb-1">LocalBusiness Schema</span>
             <span className="font-bold block truncate">
               {audit.detectedBusinessData.hasLocalBusinessSchema ? (
                 <span className="text-emerald-700">✓ JSON-LD Detected</span>
@@ -722,7 +722,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                 <span className="text-rose-600 font-normal">Not found on website</span>
               )}
             </span>
-            <span className="text-[10px] text-slate-400 font-mono mt-1 block">Source: JSON-LD Crawl</span>
+            <span className="text-sm text-slate-400 font-mono mt-1 block">Source: JSON-LD Crawl</span>
           </div>
         </div>
       </div>
@@ -731,7 +731,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
       <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-bold font-heading uppercase tracking-wider mb-2">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Opportunities & Value Gating</span>
             </div>
@@ -743,7 +743,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
             </p>
           </div>
 
-          <div className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 font-mono shrink-0">
+          <div className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-sm font-bold text-slate-700 font-mono shrink-0">
             {gated.lockedOpportunitiesCount} additional opportunities locked
           </div>
         </div>
@@ -757,24 +757,24 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="w-6 h-6 rounded-full bg-[#059669] text-white font-bold text-xs flex items-center justify-center font-mono">
+                  <span className="w-6 h-6 rounded-full bg-[#059669] text-white font-bold text-sm flex items-center justify-center font-mono">
                     {opp.priority}
                   </span>
-                  <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200">
+                  <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-sm font-bold border border-emerald-200">
                     {opp.impact}
                   </span>
                 </div>
                 <h4 className="text-sm font-bold text-slate-900 font-heading leading-snug">
                   {opp.title}
                 </h4>
-                <p className="text-xs text-slate-500 font-mono">
+                <p className="text-sm text-slate-500 font-mono">
                   Evidence: {opp.limitedEvidence}
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-400 font-medium text-[11px]">{opp.category}</span>
-                <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold text-[10px]">
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-sm">
+                <span className="text-slate-400 font-medium text-sm">{opp.category}</span>
+                <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold text-sm">
                   {opp.difficulty}
                 </span>
               </div>
@@ -800,7 +800,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
             <button
               type="button"
               onClick={() => onClaimAndUnlock('opportunities')}
-              className="px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-2 shrink-0 cursor-pointer font-sans"
+              className="px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-xs transition-all flex items-center gap-2 shrink-0 cursor-pointer font-sans"
             >
               <span>Unlock Complete Analysis</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -808,16 +808,16 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 select-none opacity-60 pointer-events-none">
-            <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs text-slate-400 blur-[0.5px]">
+            <div className="p-3 bg-white rounded-xl border border-slate-200 text-sm text-slate-400 blur-[0.5px]">
               🔒 Service Subpage Keyword Cannibalization
             </div>
-            <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs text-slate-400 blur-[0.5px]">
+            <div className="p-3 bg-white rounded-xl border border-slate-200 text-sm text-slate-400 blur-[0.5px]">
               🔒 High-Resolution Hero Image Compression (WebP)
             </div>
-            <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs text-slate-400 blur-[0.5px]">
+            <div className="p-3 bg-white rounded-xl border border-slate-200 text-sm text-slate-400 blur-[0.5px]">
               🔒 Local 3-Pack Schema FAQ Blocks
             </div>
-            <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs text-slate-400 blur-[0.5px]">
+            <div className="p-3 bg-white rounded-xl border border-slate-200 text-sm text-slate-400 blur-[0.5px]">
               🔒 Broken Internal Link Redirect Chains
             </div>
           </div>
@@ -827,7 +827,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
         <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 space-y-2">
           <div className="flex items-center gap-2">
             <Compass className="w-4 h-4 text-[#059669]" />
-            <h4 className="text-xs font-bold text-[#059669] uppercase tracking-wider font-heading">
+            <h4 className="text-sm font-bold text-[#059669] uppercase tracking-wider font-heading">
               Next-Step Recommendation • Priority: {gated.nextStepRecommendation.primaryFocus}
             </h4>
           </div>
@@ -843,7 +843,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
       {/* 8. SECTION 30: LOCKED CONNECTED INTELLIGENCE PREVIEWS (STRICT ANTI-FAKE-DATA COMPLIANCE) */}
       <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold font-heading uppercase tracking-wider mb-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-sm font-bold font-heading uppercase tracking-wider mb-2">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
             <span>Connected Integrations & Locked Previews</span>
           </div>
@@ -860,11 +860,11 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold font-heading text-slate-900 flex items-center gap-1.5">
+                <span className="text-sm font-extrabold font-heading text-slate-900 flex items-center gap-1.5">
                   <TrendingUp className="w-4 h-4 text-slate-600" />
                   Competitor Intelligence
                 </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-200 flex items-center gap-1">
+                <span className="px-2 py-0.5 rounded text-sm font-bold bg-amber-100 text-amber-900 border border-amber-200 flex items-center gap-1">
                   <Lock className="w-3 h-3 text-amber-700" />
                   Requires Integration
                 </span>
@@ -873,7 +873,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                 Connect your Google and Search data to unlock competitor and visibility analysis.
               </p>
             </div>
-            <div className="pt-3 border-t border-slate-200/80 text-[11px] text-slate-400 font-mono">
+            <div className="pt-3 border-t border-slate-200/80 text-sm text-slate-400 font-mono">
               Status: No competitor estimates or simulated percentages shown without authenticated source data.
             </div>
           </div>
@@ -882,11 +882,11 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold font-heading text-slate-900 flex items-center gap-1.5">
+                <span className="text-sm font-extrabold font-heading text-slate-900 flex items-center gap-1.5">
                   <Building2 className="w-4 h-4 text-slate-600" />
                   Google Business Profile
                 </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-700 border border-slate-300">
+                <span className="px-2 py-0.5 rounded text-sm font-bold bg-slate-200 text-slate-700 border border-slate-300">
                   Not connected
                 </span>
               </div>
@@ -894,7 +894,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                 Your website contains local-business signals. Connect your Google Business Profile to unlock Google profile health, reviews, local performance, profile insights, and ongoing monitoring.
               </p>
             </div>
-            <div className="pt-3 border-t border-slate-200/80 text-[11px] text-slate-400 font-mono">
+            <div className="pt-3 border-t border-slate-200/80 text-sm text-slate-400 font-mono">
               Status: Reviews and GBP health remain gated until genuine profile authorization is granted.
             </div>
           </div>
@@ -903,11 +903,11 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold font-heading text-slate-900 flex items-center gap-1.5">
+                <span className="text-sm font-extrabold font-heading text-slate-900 flex items-center gap-1.5">
                   <MapPin className="w-4 h-4 text-slate-600" />
                   Local Rankings
                 </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-700 border border-slate-300">
+                <span className="px-2 py-0.5 rounded text-sm font-bold bg-slate-200 text-slate-700 border border-slate-300">
                   No data collected
                 </span>
               </div>
@@ -915,7 +915,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                 No ranking data has been collected yet. Connect Google Search Console or rank telemetry in your Locora workspace to begin tracking your local keyword positions.
               </p>
             </div>
-            <div className="pt-3 border-t border-slate-200/80 text-[11px] text-slate-400 font-mono">
+            <div className="pt-3 border-t border-slate-200/80 text-sm text-slate-400 font-mono">
               Status: Locora never generates fake rank numbers or simulated traffic swings.
             </div>
           </div>
@@ -925,7 +925,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
       {/* 9. SECTION 29: NEXT STEP — "Create your free Locora workspace." */}
       <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-10 space-y-8 border border-slate-800 shadow-xl">
         <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-bold font-heading">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-sm font-bold font-heading">
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
             <span>Next Step</span>
           </div>
@@ -993,10 +993,10 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
         {/* CTA Button Row */}
         <div className="pt-6 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-0.5">
-            <span className="text-xs font-bold text-slate-300 block font-heading">
+            <span className="text-sm font-bold text-slate-300 block font-heading">
               Zero risk • Free forever plan available
             </span>
-            <span className="text-xs text-slate-500 block">
+            <span className="text-sm text-slate-500 block">
               No credit card required • Preserves your audit data automatically
             </span>
           </div>
@@ -1005,7 +1005,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
             <button
               type="button"
               onClick={() => onClaimAndUnlock('save_and_improve')}
-              className="px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer font-sans"
+              className="px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm sm:text-sm rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer font-sans"
             >
               <span>Save & Improve My Business</span>
               <ArrowRight className="w-4 h-4" />
@@ -1013,14 +1013,14 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
             <button
               type="button"
               onClick={() => onClaimAndUnlock('claim_and_grow')}
-              className="px-5 py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer font-sans"
+              className="px-5 py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer font-sans"
             >
               <span>Claim & Grow With Locora</span>
             </button>
             <button
               type="button"
               onClick={onCheckAnother}
-              className="px-4 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs rounded-xl transition-all cursor-pointer font-sans"
+              className="px-4 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-sm rounded-xl transition-all cursor-pointer font-sans"
             >
               Check Another Website
             </button>
@@ -1043,10 +1043,10 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
             <div className="flex items-center justify-between">
               <span className="font-extrabold text-sm font-heading text-slate-900">Free Tier</span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-700">Free Forever</span>
+              <span className="px-2 py-0.5 rounded text-sm font-bold bg-slate-200 text-slate-700">Free Forever</span>
             </div>
             <p className="text-sm text-slate-500">Perfect for single business owners claiming their initial footprint.</p>
-            <ul className="space-y-1.5 text-xs text-slate-700">
+            <ul className="space-y-1.5 text-sm text-slate-700">
               <li className="flex items-center gap-1.5">✓ Full page-by-page audit results</li>
               <li className="flex items-center gap-1.5">✓ Confirm & store Business Truth</li>
               <li className="flex items-center gap-1.5">✓ Connect Google Business Profile</li>
@@ -1057,10 +1057,10 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           <div className="p-5 rounded-2xl bg-emerald-50/50 border border-emerald-200 ring-1 ring-emerald-300 space-y-3 relative">
             <div className="flex items-center justify-between">
               <span className="font-extrabold text-sm font-heading text-emerald-950">Locora Pro</span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white">Most Popular</span>
+              <span className="px-2 py-0.5 rounded text-sm font-bold bg-emerald-600 text-white">Most Popular</span>
             </div>
             <p className="text-sm text-slate-500">For ambitious local businesses dominating their market.</p>
-            <ul className="space-y-1.5 text-xs text-slate-800">
+            <ul className="space-y-1.5 text-sm text-slate-800">
               <li className="flex items-center gap-1.5">✓ 250 AI credits/mo for AI fixes & drafts</li>
               <li className="flex items-center gap-1.5">✓ Autonomous AI Manager & content drafts</li>
               <li className="flex items-center gap-1.5">✓ AI-assisted review replies (you approve)</li>
@@ -1071,10 +1071,10 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
             <div className="flex items-center justify-between">
               <span className="font-extrabold text-sm font-heading text-slate-900">Agency & Multi-Location</span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800">Scale</span>
+              <span className="px-2 py-0.5 rounded text-sm font-bold bg-purple-100 text-purple-800">Scale</span>
             </div>
             <p className="text-sm text-slate-500">For marketing agencies and multi-location franchises.</p>
-            <ul className="space-y-1.5 text-xs text-slate-700">
+            <ul className="space-y-1.5 text-sm text-slate-700">
               <li className="flex items-center gap-1.5">✓ Unlimited AI credits</li>
               <li className="flex items-center gap-1.5">✓ Multi-client workspaces (10 businesses)</li>
               <li className="flex items-center gap-1.5">✓ Agency branding & custom logo</li>
@@ -1087,7 +1087,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
       {/* 9. SECTION 25: PRIMARY CTA (Sell Ongoing Value) */}
       <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-10 space-y-6">
         <div className="max-w-2xl space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-bold font-heading">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-sm font-bold font-heading">
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
             <span>Turn Audit Findings into Growth</span>
           </div>
@@ -1102,10 +1102,10 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
         {/* Primary CTA Buttons */}
         <div className="pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
-            <span className="text-xs font-bold text-white block font-heading">
+            <span className="text-sm font-bold text-white block font-heading">
               Ready to turn these findings into fixes?
             </span>
-            <span className="text-xs text-slate-400 block">
+            <span className="text-sm text-slate-400 block">
               Free plan • No credit card required • Import your audit in one click
             </span>
           </div>
@@ -1114,7 +1114,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
             <button
               type="button"
               onClick={() => onClaimAndUnlock('save_and_improve')}
-              className="px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer font-sans"
+              className="px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm sm:text-sm rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer font-sans"
             >
               <span>Save & Improve My Business</span>
               <ArrowRight className="w-4 h-4" />
@@ -1122,14 +1122,14 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
             <button
               type="button"
               onClick={() => onClaimAndUnlock('claim_and_grow')}
-              className="px-5 py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer font-sans"
+              className="px-5 py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer font-sans"
             >
               <span>Claim & Grow With Locora</span>
             </button>
             <button
               type="button"
               onClick={onCheckAnother}
-              className="px-4 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs rounded-xl transition-all cursor-pointer font-sans"
+              className="px-4 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-sm rounded-xl transition-all cursor-pointer font-sans"
             >
               Check Another Website
             </button>

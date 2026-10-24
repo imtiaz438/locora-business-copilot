@@ -86,7 +86,7 @@ export const ProposalGeneratorView: React.FC = () => {
       {/* Hero */}
       <section className="relative overflow-hidden bg-[#04241c] px-6 py-20 sm:py-24">
         <div className="relative z-10 max-w-4xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#10b981]/15 border border-[#10b981]/30 text-[#6ee7b7] text-xs font-semibold font-heading tracking-wider uppercase">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#10b981]/15 border border-[#10b981]/30 text-[#6ee7b7] text-sm font-semibold font-heading tracking-wider uppercase">
             <Sparkles className="w-4 h-4 text-[#6ee7b7]" />
             <span>SEO Proposal Generator</span>
           </div>

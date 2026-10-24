@@ -365,38 +365,38 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
       replaces: 'HubSpot ($50/mo) or Salesforce ($100/mo)',
       stats: '4 Active Deals · $28,400 Pipeline Value',
       previewComponent: (
-        <div className="grid grid-cols-3 gap-3 text-xs">
+        <div className="grid grid-cols-3 gap-3 text-sm">
           <div className="bg-slate-100 p-3 rounded-xl space-y-2 border border-slate-200">
             <div className="font-bold text-slate-700 flex justify-between">
               <span>New Leads</span>
-              <span className="bg-slate-200 px-1.5 py-0.5 rounded text-[10px]">2</span>
+              <span className="bg-slate-200 px-1.5 py-0.5 rounded text-sm">2</span>
             </div>
             <div className="bg-white p-2.5 rounded-lg shadow-2xs space-y-1 border border-slate-200">
               <div className="font-bold text-slate-900 text-sm">Westlake Estates HOA</div>
-              <div className="text-[11px] text-emerald-700 font-bold">$12,000 · Retainer</div>
-              <div className="text-[10px] text-slate-500">Commercial backflow testing</div>
+              <div className="text-sm text-emerald-700 font-bold">$12,000 · Retainer</div>
+              <div className="text-sm text-slate-500">Commercial backflow testing</div>
             </div>
           </div>
           <div className="bg-amber-50/70 p-3 rounded-xl space-y-2 border border-amber-200">
             <div className="font-bold text-amber-900 flex justify-between">
               <span>Proposal Sent</span>
-              <span className="bg-amber-200/80 px-1.5 py-0.5 rounded text-[10px]">1</span>
+              <span className="bg-amber-200/80 px-1.5 py-0.5 rounded text-sm">1</span>
             </div>
             <div className="bg-white p-2.5 rounded-lg shadow-2xs space-y-1 border border-slate-200">
               <div className="font-bold text-slate-900 text-sm">Downtown Boutique Hotel</div>
-              <div className="text-[11px] text-emerald-700 font-bold">$8,500 · One-time</div>
-              <div className="text-[10px] text-slate-500">Water heater manifold install</div>
+              <div className="text-sm text-emerald-700 font-bold">$8,500 · One-time</div>
+              <div className="text-sm text-slate-500">Water heater manifold install</div>
             </div>
           </div>
           <div className="bg-emerald-50/70 p-3 rounded-xl space-y-2 border border-emerald-200">
             <div className="font-bold text-emerald-900 flex justify-between">
               <span>Won Client</span>
-              <span className="bg-emerald-200/80 px-1.5 py-0.5 rounded text-[10px]">1</span>
+              <span className="bg-emerald-200/80 px-1.5 py-0.5 rounded text-sm">1</span>
             </div>
             <div className="bg-white p-2.5 rounded-lg shadow-2xs space-y-1 border border-slate-200">
               <div className="font-bold text-slate-900 text-sm">Capital Medical Clinic</div>
-              <div className="text-[11px] text-emerald-700 font-bold">$7,900 · Signed</div>
-              <div className="text-[10px] text-emerald-600 font-semibold">Active Maintenance</div>
+              <div className="text-sm text-emerald-700 font-bold">$7,900 · Signed</div>
+              <div className="text-sm text-emerald-600 font-semibold">Active Maintenance</div>
             </div>
           </div>
         </div>
@@ -409,22 +409,22 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
       replaces: 'PandaDoc ($49/mo) or Proposify ($49/mo)',
       stats: '60-Sec Drafting · Digital Signature Ready',
       previewComponent: (
-        <div className="bg-white border border-slate-200 rounded-xl p-4 text-xs space-y-3 shadow-2xs">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 text-sm space-y-3 shadow-2xs">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <div>
-              <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Proposal SOW #2026-44</span>
+              <span className="text-sm font-bold text-emerald-600 uppercase tracking-wider">Proposal SOW #2026-44</span>
               <h5 className="font-bold text-slate-900">Commercial Hydro-Jetting &amp; Preventative Maintenance</h5>
             </div>
-            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded-full">Ready to Send</span>
+            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-sm rounded-full">Ready to Send</span>
           </div>
-          <div className="space-y-1.5 text-slate-600 text-[11px]">
+          <div className="space-y-1.5 text-slate-600 text-sm">
             <div>• <strong>Phase 1:</strong> Full camera inspection of all main lines (48 hours)</div>
             <div>• <strong>Phase 2:</strong> 4,000 PSI high-pressure hydro-jetting cleanout</div>
             <div>• <strong>Deliverables:</strong> Digital inspection video + 12-month zero-clog guarantee</div>
           </div>
           <div className="flex items-center justify-between pt-2 border-t border-slate-100">
             <span className="font-bold text-slate-900">Total Fixed Investment: $3,450.00</span>
-            <span className="text-[11px] text-slate-400">Includes 1-Click Client E-Sign</span>
+            <span className="text-sm text-slate-400">Includes 1-Click Client E-Sign</span>
           </div>
         </div>
       ),
@@ -436,18 +436,18 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
       replaces: 'FreshBooks ($30/mo) or QuickBooks Online ($35/mo)',
       stats: 'Stripe Powered · 0% Locora Transaction Surcharge',
       previewComponent: (
-        <div className="bg-white border border-slate-200 rounded-xl p-4 text-xs space-y-3 shadow-2xs">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 text-sm space-y-3 shadow-2xs">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-md bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">P</div>
+              <div className="w-6 h-6 rounded-md bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">P</div>
               <div>
                 <h5 className="font-bold text-slate-900">INVOICE #INV-1092</h5>
-                <span className="text-[10px] text-slate-500">Issued: Sept 08, 2026 · Due in 14 Days</span>
+                <span className="text-sm text-slate-500">Issued: Sept 08, 2026 · Due in 14 Days</span>
               </div>
             </div>
-            <span className="px-2 py-0.5 bg-blue-100 text-blue-800 font-bold text-[10px] rounded-full">Sent · Unpaid</span>
+            <span className="px-2 py-0.5 bg-blue-100 text-blue-800 font-bold text-sm rounded-full">Sent · Unpaid</span>
           </div>
-          <div className="space-y-1 text-[11px] text-slate-700">
+          <div className="space-y-1 text-sm text-slate-700">
             <div className="flex justify-between py-1 border-b border-slate-100">
               <span>Emergency Water Heater Replacement (50 Gal)</span>
               <span className="font-bold text-slate-900">$2,450.00</span>
@@ -471,16 +471,16 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
       replaces: 'CoSchedule or Monday.com marketing boards',
       stats: 'Automated Scheduling · Campaign Templates',
       previewComponent: (
-        <div className="grid grid-cols-2 gap-3 text-xs">
+        <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-1.5">
-            <span className="text-[10px] font-bold text-[#059669] uppercase">Sept 12 · GBP Update</span>
+            <span className="text-sm font-bold text-[#059669] uppercase">Sept 12 · GBP Update</span>
             <div className="font-bold text-slate-900">Fall Freeze Pipe Protection Guide</div>
-            <p className="text-[11px] text-slate-600">Pre-drafted post with local Austin freeze tips and direct call button.</p>
+            <p className="text-sm text-slate-600">Pre-drafted post with local Austin freeze tips and direct call button.</p>
           </div>
           <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
-            <span className="text-[10px] font-bold text-slate-500 uppercase">Sept 19 · Review Blast</span>
+            <span className="text-sm font-bold text-slate-500 uppercase">Sept 19 · Review Blast</span>
             <div className="font-bold text-slate-900">Automated SMS Review Request Wave</div>
-            <p className="text-[11px] text-slate-600">Dispatches review requests to last 30 completed customer jobs.</p>
+            <p className="text-sm text-slate-600">Dispatches review requests to last 30 completed customer jobs.</p>
           </div>
         </div>
       ),
@@ -492,20 +492,20 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
       replaces: 'LegalZoom contractor templates ($39/mo)',
       stats: 'Attorney-Drafted Templates · Secure Storage',
       previewComponent: (
-        <div className="space-y-2 text-xs">
+        <div className="space-y-2 text-sm">
           <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-emerald-600" />
               <span className="font-bold text-slate-800">Standard Residential Service Agreement 2026.pdf</span>
             </div>
-            <span className="text-[10px] font-bold text-slate-500">142 KB</span>
+            <span className="text-sm font-bold text-slate-500">142 KB</span>
           </div>
           <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-emerald-600" />
               <span className="font-bold text-slate-800">Commercial Subcontractor NDA &amp; Insurance Waiver.pdf</span>
             </div>
-            <span className="text-[10px] font-bold text-slate-500">198 KB</span>
+            <span className="text-sm font-bold text-slate-500">198 KB</span>
           </div>
         </div>
       ),
@@ -517,26 +517,26 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
       replaces: 'AgencyAnalytics ($79/mo)',
       stats: 'White-Label Branding · Automated Monthly PDF',
       previewComponent: (
-        <div className="bg-slate-900 text-white p-4 rounded-xl space-y-3 text-xs">
+        <div className="bg-slate-900 text-white p-4 rounded-xl space-y-3 text-sm">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
             <div>
-              <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Monthly Client Summary</span>
+              <span className="text-sm text-emerald-400 font-bold uppercase tracking-wider">Monthly Client Summary</span>
               <h5 className="font-bold text-white">Austin Premier Plumbing · August 2026</h5>
             </div>
-            <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 font-bold text-[10px] rounded-full">+34% Growth</span>
+            <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 font-bold text-sm rounded-full">+34% Growth</span>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="bg-slate-800 p-2 rounded-lg">
               <div className="text-emerald-400 font-bold text-sm">#1</div>
-              <div className="text-[10px] text-slate-400">Maps 3-Pack</div>
+              <div className="text-sm text-slate-400">Maps 3-Pack</div>
             </div>
             <div className="bg-slate-800 p-2 rounded-lg">
               <div className="text-emerald-400 font-bold text-sm">+14</div>
-              <div className="text-[10px] text-slate-400">New 5-Stars</div>
+              <div className="text-sm text-slate-400">New 5-Stars</div>
             </div>
             <div className="bg-slate-800 p-2 rounded-lg">
               <div className="text-emerald-400 font-bold text-sm">$18.2K</div>
-              <div className="text-[10px] text-slate-400">Inbound Est.</div>
+              <div className="text-sm text-slate-400">Inbound Est.</div>
             </div>
           </div>
         </div>
@@ -582,12 +582,12 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#047857]/20 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 text-center space-y-6 max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#10b981]/15 border border-[#10b981]/30 text-[#6ee7b7] text-xs font-semibold font-heading tracking-wider uppercase">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#10b981]/15 border border-[#10b981]/30 text-[#6ee7b7] text-sm font-semibold font-heading tracking-wider uppercase">
             <Sparkles className="w-4 h-4 text-[#6ee7b7]" />
             <span>The Complete Locora Product Suite</span>
           </div>
 
-          <h1 className="text-4xl sm:text-[54px] lg:text-[60px] font-bold font-heading text-white tracking-tight leading-[1.12]">
+          <h1 className="text-4xl sm:text-sm lg:text-sm font-bold font-heading text-white tracking-tight leading-[1.12]">
             Autonomous AI Engines Built for <span className="text-[#6ee7b7]">Local Dominance</span>
           </h1>
 
@@ -601,7 +601,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                 setActiveTab('signup');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer"
+              className="px-6 py-3.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm sm:text-sm rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer"
             >
               <span>Start Free Explorer Tier</span>
               <ArrowRight className="w-4 h-4" />
@@ -611,7 +611,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                 setActiveTab('pricing_public');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-xl border border-white/20 transition-all cursor-pointer"
+              className="px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-sm sm:text-sm rounded-xl border border-white/20 transition-all cursor-pointer"
             >
               View Plans &amp; Tiers
             </button>
@@ -621,7 +621,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
         {/* Quick Nav Sub-Pages / Navigation Pills */}
         <div className="max-w-5xl mx-auto mt-10 pt-6 border-t border-emerald-800/60">
           <div className="text-center mb-3">
-            <span className="text-[11px] uppercase tracking-wider text-emerald-300/80 font-semibold font-heading">
+            <span className="text-sm uppercase tracking-wider text-emerald-300/80 font-semibold font-heading">
               Quick Jump to Product Modules
             </span>
           </div>
@@ -633,7 +633,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                 <button
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
-                  className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs transition-all flex items-center gap-2 cursor-pointer ${
+                  className={`px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-sm transition-all flex items-center gap-2 cursor-pointer ${
                     isActive
                       ? 'bg-white text-emerald-950 shadow-md scale-105 font-bold'
                       : 'bg-emerald-950/70 text-emerald-100 hover:bg-emerald-900/90 border border-emerald-800/50 font-medium'
@@ -652,7 +652,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
       <section id="dedicated-products" className="max-w-6xl mx-auto px-6 space-y-16 scroll-mt-24">
         {/* Section Header */}
         <div className="text-center space-y-4 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-semibold font-heading uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-semibold font-heading uppercase tracking-wider">
             <Sparkles className="w-4 h-4 text-[#059669]" />
             <span>Dedicated Product Guides &amp; Content Pages</span>
           </div>
@@ -673,7 +673,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               <button
                 key={m.id}
                 onClick={() => setSelectedCoreModule(m.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${
                   isSelected
                     ? 'bg-[#059669] text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -692,7 +692,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
           return (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-white border border-slate-200 rounded-3xl p-8 shadow-md items-center">
               <div className="lg:col-span-7 space-y-6">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-[#059669] rounded-full text-xs font-bold border border-emerald-200">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-[#059669] rounded-full text-sm font-bold border border-emerald-200">
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Interactive Product Spotlight</span>
                 </div>
@@ -711,7 +711,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
 
                 <div className="space-y-2.5 pt-2">
                   {currentModule.bullets.map((b, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                    <div key={i} className="flex items-center gap-2 text-sm font-medium text-slate-700">
                       <CheckCircle2 className="w-4 h-4 text-[#059669] flex-shrink-0" />
                       <span>{b}</span>
                     </div>
@@ -721,7 +721,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                 <div className="pt-4 flex flex-wrap gap-3 font-sans">
                   <button
                     onClick={() => navigateToFeature(currentModule.slug)}
-                    className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer font-heading"
+                    className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer font-heading"
                   >
                     <span>Read Complete {currentModule.name} Guide</span>
                     <ArrowRight className="w-4 h-4" />
@@ -731,7 +731,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                       setActiveTab('signup');
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-xl border border-slate-200 transition-colors cursor-pointer"
+                    className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold rounded-xl border border-slate-200 transition-colors cursor-pointer"
                   >
                     Start Free Explorer Tier
                   </button>
@@ -742,27 +742,27 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               <div className="lg:col-span-5 bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                   <span className="text-sm font-bold text-slate-900 font-heading">Locora AI Engine</span>
-                  <span className="text-[10px] px-2 py-0.5 bg-emerald-100 text-[#059669] rounded font-mono font-bold border border-emerald-200">
+                  <span className="text-sm px-2 py-0.5 bg-emerald-100 text-[#059669] rounded font-mono font-bold border border-emerald-200">
                     STATUS: READY
                   </span>
                 </div>
 
-                <div className="space-y-3 text-xs font-sans">
+                <div className="space-y-3 text-sm font-sans">
                   <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1 shadow-2xs">
-                    <p className="text-[10px] text-slate-500 uppercase font-bold">Input Context</p>
+                    <p className="text-sm text-slate-500 uppercase font-bold">Input Context</p>
                     <p className="text-slate-800 font-medium">Business: Vance Plumbing &amp; Heating (Austin, TX)</p>
                   </div>
 
                   <div className="p-3 bg-white rounded-xl border border-emerald-200 space-y-2 shadow-2xs">
-                    <p className="text-[10px] text-[#059669] uppercase font-bold">AI Output Preview</p>
-                    <p className="text-slate-600 text-[11px] leading-relaxed italic">
+                    <p className="text-sm text-[#059669] uppercase font-bold">AI Output Preview</p>
+                    <p className="text-slate-600 text-sm leading-relaxed italic">
                       &quot;Locora Copilot analyzed local Austin competition and generated 3 custom service packages ($1,500 - $3,200), itemizing emergency call-out landing pages and GBP local search schema.&quot;
                     </p>
                   </div>
                 </div>
 
                 <div className="pt-2 text-center">
-                  <p className="text-[11px] text-slate-500 font-sans">
+                  <p className="text-sm text-slate-500 font-sans">
                     Powered by Groq Ultra-Fast LPU &amp; Multi-Model Switcher
                   </p>
                 </div>
@@ -790,10 +790,10 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                    <span className="text-sm font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                       {feat.badge}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-medium">{feat.readingTime}</span>
+                    <span className="text-sm text-slate-400 font-medium">{feat.readingTime}</span>
                   </div>
 
                   <h4 className="text-lg font-bold font-heading text-slate-900 group-hover:text-[#059669] transition-colors leading-snug">
@@ -806,7 +806,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
 
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {feat.targetKeywords?.slice(0, 2).map((kw, i) => (
-                      <span key={i} className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium">
+                      <span key={i} className="text-sm bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium">
                         {kw}
                       </span>
                     ))}
@@ -825,7 +825,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                   <button
                     type="button"
                     onClick={() => navigateToFeature(feat.slug)}
-                    className="px-3 py-1.5 bg-emerald-50 hover:bg-[#059669] text-emerald-800 hover:text-white rounded-lg text-xs font-bold transition-all cursor-pointer"
+                    className="px-3 py-1.5 bg-emerald-50 hover:bg-[#059669] text-emerald-800 hover:text-white rounded-lg text-sm font-bold transition-all cursor-pointer"
                   >
                     Try Sandbox →
                   </button>
@@ -847,7 +847,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
           </div>
 
           <div className="overflow-x-auto bg-white border border-slate-200 rounded-3xl shadow-sm">
-            <table className="w-full text-left border-collapse text-xs font-sans">
+            <table className="w-full text-left border-collapse text-sm font-sans">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-100 text-slate-800 font-heading">
                   <th className="p-4 font-bold">Feature / Tool</th>
@@ -897,7 +897,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
         <div className="bg-gradient-to-br from-slate-900 to-slate-950 text-white rounded-3xl p-8 sm:p-12 shadow-2xl space-y-8 border border-slate-800">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold font-heading uppercase tracking-wider mb-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-sm font-bold font-heading uppercase tracking-wider mb-2">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Product 01 · Central Command &amp; Copilot</span>
               </div>
@@ -914,7 +914,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                 setActiveTab('signup');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 font-sans"
+              className="px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 font-sans"
             >
               <span>Test on Your Business</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -926,14 +926,14 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             <div className="flex items-center justify-between border-b border-slate-700 pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="font-bold text-xs text-slate-200">Autonomous Morning Intelligence Briefing</span>
+                <span className="font-bold text-sm text-slate-200">Autonomous Morning Intelligence Briefing</span>
               </div>
-              <span className="text-[11px] text-slate-400">Processed at 4:15 AM · Austin, TX</span>
+              <span className="text-sm text-slate-400">Processed at 4:15 AM · Austin, TX</span>
             </div>
 
             <div className="text-sm font-bold text-white">Good morning Mike 👋 Here is what happened overnight:</div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-slate-300">
               <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 flex items-start gap-2.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <div>
@@ -962,37 +962,37 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
           </div>
 
           {/* Real-time Business Vitals */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
             <div className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 space-y-1">
               <div className="text-slate-400 font-medium">Local Visibility</div>
               <div className="text-emerald-400 font-bold text-lg">↑ 18.4%</div>
-              <div className="text-[11px] text-slate-500">Google Maps 3-Pack rank velocity</div>
+              <div className="text-sm text-slate-500">Google Maps 3-Pack rank velocity</div>
             </div>
             <div className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 space-y-1">
               <div className="text-slate-400 font-medium">Reviews Analyzed</div>
               <div className="text-emerald-400 font-bold text-lg">+12 New</div>
-              <div className="text-[11px] text-slate-500">Sentiment score 4.8 / 5.0</div>
+              <div className="text-sm text-slate-500">Sentiment score 4.8 / 5.0</div>
             </div>
             <div className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 space-y-1">
               <div className="text-slate-400 font-medium">High-Intent Traffic</div>
               <div className="text-emerald-400 font-bold text-lg">↑ 9.2%</div>
-              <div className="text-[11px] text-slate-500">From localized service pages</div>
+              <div className="text-sm text-slate-500">From localized service pages</div>
             </div>
             <div className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/60 space-y-1">
               <div className="text-slate-400 font-medium">AI Search Share</div>
               <div className="text-emerald-400 font-bold text-lg">64 / 100</div>
-              <div className="text-[11px] text-slate-500">ChatGPT, Perplexity &amp; Gemini citations</div>
+              <div className="text-sm text-slate-500">ChatGPT, Perplexity &amp; Gemini citations</div>
             </div>
           </div>
 
           {/* Interactive "Ask Locora" Box */}
           <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-4 sm:p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400 font-heading">
+              <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-emerald-400 font-heading">
                 <Brain className="w-4 h-4" />
                 <span>Live Interactive Demo · Ask Locora Anything</span>
               </div>
-              <span className="text-[11px] text-slate-400 hidden sm:inline">Powered by Business Brain Knowledge Graph</span>
+              <span className="text-sm text-slate-400 hidden sm:inline">Powered by Business Brain Knowledge Graph</span>
             </div>
 
             {/* Quick Prompt Pills */}
@@ -1001,7 +1001,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                 <button
                   key={idx}
                   onClick={() => handleAskLocora(q)}
-                  className="px-3 py-1.5 bg-slate-900/90 hover:bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-300 hover:text-white transition-all text-left cursor-pointer flex items-center gap-1.5"
+                  className="px-3 py-1.5 bg-slate-900/90 hover:bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-300 hover:text-white transition-all text-left cursor-pointer flex items-center gap-1.5"
                 >
                   <Sparkles className="w-3 h-3 text-emerald-400 shrink-0" />
                   <span>{q}</span>
@@ -1026,7 +1026,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               <button
                 type="submit"
                 disabled={isAnswering}
-                className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 font-sans"
+                className="px-6 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0 font-sans"
               >
                 {isAnswering ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 <span>Ask Locora</span>
@@ -1046,7 +1046,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
       <section id="local-seo" className="max-w-6xl mx-auto px-6 space-y-8 scroll-mt-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           <div className="space-y-5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-bold font-heading uppercase tracking-wider">
               <MapPin className="w-3.5 h-3.5" />
               <span>Product 02 · Google Maps 3-Pack Domination</span>
             </div>
@@ -1059,17 +1059,17 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
 
             <div className="space-y-3 pt-2">
               <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-1.5">
-                <div className="flex items-center gap-2 text-rose-600 font-bold text-xs font-heading">
+                <div className="flex items-center gap-2 text-rose-600 font-bold text-sm font-heading">
                   <X className="w-4 h-4" />
                   <span>The Old Way (Legacy SEO Tools)</span>
                 </div>
-                <p className="text-xs text-slate-500 font-mono">
+                <p className="text-sm text-slate-500 font-mono">
                   Error 404 / Missing meta description / 23 schema warnings ❌
                 </p>
               </div>
 
               <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl shadow-xs space-y-2">
-                <div className="flex items-center gap-2 text-[#059669] font-bold text-xs font-heading">
+                <div className="flex items-center gap-2 text-[#059669] font-bold text-sm font-heading">
                   <CheckCircle2 className="w-4 h-4" />
                   <span>The Locora Way (AI Growth Diagnosis)</span>
                 </div>
@@ -1082,7 +1082,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                       setActiveTab('signup');
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className="px-4 py-2 bg-[#059669] text-white text-xs font-bold rounded-xl shadow-2xs hover:bg-[#047857] transition-all cursor-pointer font-sans flex items-center gap-1.5"
+                    className="px-4 py-2 bg-[#059669] text-white text-sm font-bold rounded-xl shadow-2xs hover:bg-[#047857] transition-all cursor-pointer font-sans flex items-center gap-1.5"
                   >
                     <span>Audit Your Website Free</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -1095,9 +1095,9 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-bold text-slate-900 font-heading">Austin Metro 3-Pack Ranking Heatmap</span>
-                <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold">Updated Daily</span>
+                <span className="text-sm text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold">Updated Daily</span>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="grid grid-cols-3 gap-2 text-center text-sm">
                 {[
                   { area: 'North Austin', rank: '#2', color: 'bg-emerald-100 text-emerald-900 border-emerald-300' },
                   { area: 'Round Rock', rank: '#4', color: 'bg-amber-100 text-amber-900 border-amber-300' },
@@ -1111,7 +1111,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                 ].map((pin, i) => (
                   <div key={i} className={`p-2.5 rounded-xl border ${pin.color} space-y-0.5 shadow-2xs`}>
                     <div className="text-base font-black font-heading">{pin.rank}</div>
-                    <div className="text-[10px] truncate">{pin.area}</div>
+                    <div className="text-sm truncate">{pin.area}</div>
                   </div>
                 ))}
               </div>
@@ -1126,7 +1126,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                   <MapPin className="w-4 h-4 text-[#059669]" />
                   <span>Live Google Maps 3-Pack Radar</span>
                 </h4>
-                <span className="text-[10px] px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded-full">
+                <span className="text-sm px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded-full">
                   Active Tracking
                 </span>
               </div>
@@ -1138,12 +1138,12 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                   { term: 'Commercial Drain Cleaning', current: '#2', target: '#1', diff: 'Dominating', trend: 'leader' },
                   { term: 'Tankless Water Heater Installation', current: '#8', target: '#3', diff: '+5 spots needed', trend: 'action' },
                 ].map((row, i) => (
-                  <div key={i} className="p-3 bg-slate-50 rounded-xl flex items-center justify-between text-xs border border-slate-100">
+                  <div key={i} className="p-3 bg-slate-50 rounded-xl flex items-center justify-between text-sm border border-slate-100">
                     <div>
                       <div className="font-bold text-slate-900">{row.term}</div>
-                      <div className="text-[11px] text-slate-500">Current 3-Pack Rank: <span className="font-bold text-slate-900">{row.current}</span></div>
+                      <div className="text-sm text-slate-500">Current 3-Pack Rank: <span className="font-bold text-slate-900">{row.current}</span></div>
                     </div>
-                    <span className={`px-2.5 py-1 font-bold rounded-lg text-[11px] ${
+                    <span className={`px-2.5 py-1 font-bold rounded-lg text-sm ${
                       row.trend === 'leader'
                         ? 'bg-emerald-100 text-emerald-800'
                         : row.trend === 'rising'
@@ -1162,12 +1162,12 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <Layers className="w-4 h-4 text-emerald-400" />
-                  <span className="font-bold text-xs">Automated LocalBusiness JSON-LD Schema</span>
+                  <span className="font-bold text-sm">Automated LocalBusiness JSON-LD Schema</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => setSchemaTab('visual')}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-lg text-sm font-bold transition-all cursor-pointer ${
                       schemaTab === 'visual' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -1175,7 +1175,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                   </button>
                   <button
                     onClick={() => setSchemaTab('code')}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-lg text-sm font-bold transition-all cursor-pointer ${
                       schemaTab === 'code' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
                     }`}
                   >
@@ -1196,14 +1196,14 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               </div>
 
               {schemaTab === 'visual' ? (
-                <div className="space-y-2 text-xs text-slate-300 font-sans">
+                <div className="space-y-2 text-sm text-slate-300 font-sans">
                   <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700 flex justify-between items-center">
                     <span>Schema Entity Type</span>
                     <span className="font-bold text-emerald-400">PlumbingService &amp; LocalBusiness</span>
                   </div>
                   <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700 flex justify-between items-center">
                     <span>Geo Coordinates</span>
-                    <span className="font-mono text-[11px] text-slate-300">30.2672° N, -97.7431° W (Austin)</span>
+                    <span className="font-mono text-sm text-slate-300">30.2672° N, -97.7431° W (Austin)</span>
                   </div>
                   <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700 flex justify-between items-center">
                     <span>Target Service Radius</span>
@@ -1214,11 +1214,11 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                       <span>Schema.org &amp; Google Rich Results Compliant</span>
                     </span>
-                    <span className="text-[10px] font-bold bg-emerald-500/20 px-2 py-0.5 rounded">VALID</span>
+                    <span className="text-sm font-bold bg-emerald-500/20 px-2 py-0.5 rounded">VALID</span>
                   </div>
                 </div>
               ) : (
-                <pre className="p-3 bg-slate-950 rounded-xl text-[11px] font-mono text-emerald-400 overflow-x-auto max-h-56 scrollbar-thin">
+                <pre className="p-3 bg-slate-950 rounded-xl text-sm font-mono text-emerald-400 overflow-x-auto max-h-56 scrollbar-thin">
                   {sampleJsonLd}
                 </pre>
               )}
@@ -1232,7 +1232,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
         <div className="bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-950 text-white rounded-3xl p-8 sm:p-12 shadow-2xl space-y-8 border border-emerald-900/40">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="space-y-3 max-w-xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold font-heading uppercase tracking-wider">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-sm font-bold font-heading uppercase tracking-wider">
                 <Search className="w-3.5 h-3.5" />
                 <span>Product 03 · Generative Engine Optimization (GEO)</span>
               </div>
@@ -1246,20 +1246,20 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
 
             <div className="bg-white/10 backdrop-blur-md border border-white/15 p-6 rounded-3xl flex items-center gap-6 shrink-0">
               <div>
-                <div className="text-xs text-emerald-300 font-bold uppercase tracking-wider">AI Visibility Index</div>
+                <div className="text-sm text-emerald-300 font-bold uppercase tracking-wider">AI Visibility Index</div>
                 <div className="text-4xl sm:text-5xl font-black text-white font-heading mt-1">
                   64<span className="text-2xl text-emerald-400">/100</span>
                 </div>
-                <div className="text-[11px] text-slate-300 mt-1">4 Optimization Opportunities Detected</div>
+                <div className="text-sm text-slate-300 mt-1">4 Optimization Opportunities Detected</div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
             <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-emerald-400 font-bold">ChatGPT Search</span>
-                <span className="text-[10px] text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded">68% Share</span>
+                <span className="text-sm text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded">68% Share</span>
               </div>
               <p className="text-slate-300 leading-relaxed">Missing LocalBusiness opening hours schema citation. Recommended fix prepared.</p>
             </div>
@@ -1267,7 +1267,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-emerald-400 font-bold">Perplexity AI</span>
-                <span className="text-[10px] text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded">72% Share</span>
+                <span className="text-sm text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded">72% Share</span>
               </div>
               <p className="text-slate-300 leading-relaxed">Cited in 2 of 5 emergency Austin queries. Adding structured FAQ markup will increase citation rate.</p>
             </div>
@@ -1275,7 +1275,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-emerald-400 font-bold">Microsoft Copilot</span>
-                <span className="text-[10px] text-amber-300 bg-amber-950 px-2 py-0.5 rounded">54% Share</span>
+                <span className="text-sm text-amber-300 bg-amber-950 px-2 py-0.5 rounded">54% Share</span>
               </div>
               <p className="text-slate-300 leading-relaxed">Requires verified service radius documentation across Bing Places and Apple Maps.</p>
             </div>
@@ -1283,7 +1283,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-emerald-400 font-bold">Google Gemini</span>
-                <span className="text-[10px] text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded">81% Share</span>
+                <span className="text-sm text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded">81% Share</span>
               </div>
               <p className="text-slate-300 leading-relaxed">Review volume meets threshold for local carousel. Keyword velocity high.</p>
             </div>
@@ -1292,11 +1292,11 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
           {/* Interactive AI Recommendation Query Simulator */}
           <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider font-heading flex items-center gap-2">
+              <div className="text-sm font-bold text-emerald-400 uppercase tracking-wider font-heading flex items-center gap-2">
                 <Bot className="w-4 h-4" />
                 <span>Simulate AI Engine Recommendation</span>
               </div>
-              <span className="text-[11px] text-slate-400">Click a query to see the AI output</span>
+              <span className="text-sm text-slate-400">Click a query to see the AI output</span>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -1307,7 +1307,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                 <button
                   key={idx}
                   onClick={() => setSelectedGeoQuery(idx)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all cursor-pointer ${
                     selectedGeoQuery === idx
                       ? 'bg-emerald-600 text-white shadow-xs'
                       : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
@@ -1318,7 +1318,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               ))}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 text-xs">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 text-sm">
               <div className="p-4 bg-slate-950 rounded-xl border border-rose-900/50 space-y-2">
                 <span className="text-rose-400 font-bold flex items-center gap-1.5">
                   <X className="w-3.5 h-3.5" />
@@ -1346,7 +1346,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
       {/* 05 — PRODUCT 04: AI REPUTATION & REVIEW INTELLIGENCE */}
       <section id="reputation" className="max-w-6xl mx-auto px-6 space-y-8 scroll-mt-24">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-bold font-heading uppercase tracking-wider">
             <Star className="w-3.5 h-3.5" />
             <span>Product 04 · Review Intelligence</span>
           </div>
@@ -1360,37 +1360,37 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-xs">
-            <div className="flex items-center gap-2 text-emerald-700 font-bold text-xs font-heading">
+            <div className="flex items-center gap-2 text-emerald-700 font-bold text-sm font-heading">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               <span>What Customers Praise (Positive Clusters)</span>
             </div>
-            <ul className="space-y-2 text-xs text-slate-700">
+            <ul className="space-y-2 text-sm text-slate-700">
               <li className="flex items-center gap-2">✓ Fast same-day emergency response (mentioned 42x)</li>
               <li className="flex items-center gap-2">✓ Friendly, courteous, clean-shoe technicians (mentioned 31x)</li>
               <li className="flex items-center gap-2">✓ Upfront, honest flat-rate pricing without hidden fees (mentioned 28x)</li>
             </ul>
-            <div className="pt-2 text-[11px] text-slate-500 italic">
+            <div className="pt-2 text-sm text-slate-500 italic">
               Locora automatically includes these exact praised phrases in your local landing page copy.
             </div>
           </div>
 
           <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-xs">
-            <div className="flex items-center gap-2 text-rose-700 font-bold text-xs font-heading">
+            <div className="flex items-center gap-2 text-rose-700 font-bold text-sm font-heading">
               <Shield className="w-4 h-4 text-rose-600" />
               <span>What Customers Complain About (Operational Gaps)</span>
             </div>
-            <ul className="space-y-2 text-xs text-slate-700">
+            <ul className="space-y-2 text-sm text-slate-700">
               <li className="flex items-center gap-2">• Weekend scheduling and emergency phone answering delays</li>
               <li className="flex items-center gap-2">• Lack of SMS arrival window notifications before visits</li>
             </ul>
-            <div className="pt-2 text-[11px] text-slate-500 italic">
+            <div className="pt-2 text-sm text-slate-500 italic">
               Locora flags these root operational causes so you can fix them before they harm review velocity.
             </div>
           </div>
 
           <div className="bg-emerald-50 border border-emerald-200 rounded-3xl p-6 space-y-4 shadow-xs flex flex-col justify-between">
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-[#059669] font-bold text-xs font-heading">
+              <div className="flex items-center gap-2 text-[#059669] font-bold text-sm font-heading">
                 <Sparkles className="w-4 h-4" />
                 <span>Locora Revenue Opportunity</span>
               </div>
@@ -1403,7 +1403,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                 setActiveTab('signup');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="w-full py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-2xs transition-all cursor-pointer font-sans"
+              className="w-full py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-2xs transition-all cursor-pointer font-sans"
             >
               Start Free Reputation Checkup →
             </button>
@@ -1419,14 +1419,14 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                 Interactive Test Drive: 1-Click Contextual Review Reply Generator
               </h4>
             </div>
-            <span className="text-[10px] text-slate-500">Pick review &amp; tone below</span>
+            <span className="text-sm text-slate-500">Pick review &amp; tone below</span>
           </div>
 
           <div className="bg-slate-50/80 rounded-2xl border border-slate-200/90 p-4 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-4">
                 <div className="space-y-0.5">
-                  <label className="text-[11px] font-bold text-slate-700">Reviewer Name:</label>
+                  <label className="text-sm font-bold text-slate-700">Reviewer Name:</label>
                   <input
                     type="text"
                     value={testAuthor}
@@ -1435,11 +1435,11 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                       setGeneratedReply(null);
                     }}
                     placeholder="e.g. Alex Morgan"
-                    className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-xs text-slate-800 focus:outline-none focus:border-emerald-500"
+                    className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-sm text-slate-800 focus:outline-none focus:border-emerald-500"
                   />
                 </div>
                 <div className="space-y-0.5">
-                  <label className="text-[11px] font-bold text-slate-700 block">Rating:</label>
+                  <label className="text-sm font-bold text-slate-700 block">Rating:</label>
                   <div className="flex items-center gap-1 pt-0.5">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <button
@@ -1462,13 +1462,13 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                   </div>
                 </div>
               </div>
-              <span className="text-[11px] text-slate-500 italic">
+              <span className="text-sm text-slate-500 italic">
                 Test with any customer feedback
               </span>
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-700">Customer Review Text:</label>
+              <label className="text-sm font-bold text-slate-700">Customer Review Text:</label>
               <textarea
                 rows={2}
                 value={testReviewText}
@@ -1497,7 +1497,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                       setSelectedTone(tone.id);
                       setGeneratedReply(null);
                     }}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-1 rounded-lg text-sm font-bold transition-all cursor-pointer ${
                       selectedTone === tone.id
                         ? 'bg-slate-900 text-white'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -1512,7 +1512,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             <button
               onClick={generateSampleReply}
               disabled={isGeneratingReply}
-              className="px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans shrink-0"
+              className="px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer font-sans shrink-0"
             >
               {isGeneratingReply ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
               <span>Generate AI Response</span>
@@ -1522,11 +1522,11 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
           {generatedReply && (
             <div className="p-4 bg-emerald-50/80 border border-emerald-300 rounded-2xl space-y-2 animate-in fade-in-50">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                <span className="text-sm font-bold text-emerald-900 flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-[#059669]" />
                   <span>Ready-to-Publish Reply</span>
                 </span>
-                <span className="text-[10px] text-emerald-700 font-bold">Optimized for Google Maps Algorithm</span>
+                <span className="text-sm text-emerald-700 font-bold">Optimized for Google Maps Algorithm</span>
               </div>
               <p className="text-sm text-slate-800 leading-relaxed italic">{generatedReply}</p>
             </div>
@@ -1539,7 +1539,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
         <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 shadow-lg space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider mb-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-[#059669] text-sm font-bold font-heading uppercase tracking-wider mb-2">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Product 05 · Competitive Advantage</span>
               </div>
@@ -1556,7 +1556,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                 setActiveTab('signup');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer font-sans shrink-0 flex items-center gap-2"
+              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl shadow-sm transition-all cursor-pointer font-sans shrink-0 flex items-center gap-2"
             >
               <span>Scan Competitors Free</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -1565,19 +1565,19 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Service Page Gap</span>
+              <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Service Page Gap</span>
               <h4 className="font-bold text-sm text-slate-900">Competitor A has 4 pages you lack</h4>
               <p className="text-sm text-slate-600">Targeting Tankless Water Heaters, Slab Leak Detection, Hydro-jetting &amp; Commercial Fixtures.</p>
             </div>
 
             <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Review Velocity Gap</span>
+              <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Review Velocity Gap</span>
               <h4 className="font-bold text-sm text-slate-900">Competitor B gained 17 reviews this month</h4>
               <p className="text-sm text-slate-600">You generated 3 reviews. Their velocity puts them in the top 3-pack within 45 days unless counter-acted.</p>
             </div>
 
             <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Search Keyword Gap</span>
+              <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Search Keyword Gap</span>
               <h4 className="font-bold text-sm text-slate-900">Competitor C appears for 8 searches you miss</h4>
               <p className="text-sm text-slate-600">Ranking for high-intent emergency phrases in Round Rock and Westlake.</p>
             </div>
@@ -1586,10 +1586,10 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
           {/* Interactive 3-Way Competitor Comparison Matrix */}
           <div className="space-y-4 pt-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 font-heading">
+              <span className="text-sm font-bold uppercase tracking-wider text-slate-500 font-heading">
                 Austin Local Market Comparison Matrix
               </span>
-              <span className="text-[11px] text-slate-400">Click a business to view vulnerability report</span>
+              <span className="text-sm text-slate-400">Click a business to view vulnerability report</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1604,11 +1604,11 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{comp.tier}</span>
-                    <span className="font-black text-xs text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">{comp.mapsRank}</span>
+                    <span className="text-sm font-bold uppercase tracking-wider text-slate-500">{comp.tier}</span>
+                    <span className="font-black text-sm text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">{comp.mapsRank}</span>
                   </div>
                   <div className="font-bold text-sm text-slate-900 font-heading truncate">{comp.name}</div>
-                  <div className="space-y-1 text-[11px] text-slate-600">
+                  <div className="space-y-1 text-sm text-slate-600">
                     <div className="flex justify-between">
                       <span>Review Velocity:</span>
                       <span className="font-bold text-slate-800">{comp.reviewVelocity}</span>
@@ -1626,7 +1626,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               ))}
             </div>
 
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-1.5">
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-sm space-y-1.5">
               <span className="font-bold text-slate-900 font-heading">
                 Locora Counter-Strategy for {competitors[selectedCompetitorIndex].name}:
               </span>
@@ -1641,7 +1641,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
       {/* 07 — PRODUCT 06: AUTONOMOUS 30-DAY GROWTH CADENCE */}
       <section id="growth-plan" className="max-w-6xl mx-auto px-6 space-y-8 scroll-mt-24">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-bold font-heading uppercase tracking-wider">
             <TrendingUp className="w-3.5 h-3.5" />
             <span>Product 06 · Automated Execution Sprints</span>
           </div>
@@ -1690,8 +1690,8 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-black text-xs text-slate-900 font-heading">{plan.week}</span>
-                  <span className="px-2 py-0.5 bg-emerald-50 text-[#059669] text-[10px] font-bold rounded-full">
+                  <span className="font-black text-sm text-slate-900 font-heading">{plan.week}</span>
+                  <span className="px-2 py-0.5 bg-emerald-50 text-[#059669] text-sm font-bold rounded-full">
                     {idx === 0 ? 'Sprint Active' : 'Queued'}
                   </span>
                 </div>
@@ -1709,7 +1709,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                             [taskKey]: !prev[taskKey],
                           }))
                         }
-                        className="flex items-start gap-2 text-xs text-slate-700 cursor-pointer select-none"
+                        className="flex items-start gap-2 text-sm text-slate-700 cursor-pointer select-none"
                       >
                         <div
                           className={`w-4 h-4 rounded border mt-0.5 shrink-0 flex items-center justify-center transition-all ${
@@ -1733,7 +1733,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                       content: plan.assetContent,
                     })
                   }
-                  className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all cursor-pointer font-sans flex items-center justify-center gap-1.5"
+                  className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm rounded-xl transition-all cursor-pointer font-sans flex items-center justify-center gap-1.5"
                 >
                   <Eye className="w-3.5 h-3.5 text-slate-600" />
                   <span>Preview Asset</span>
@@ -1766,7 +1766,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setPreviewAssetModal(null)}
-                className="px-4 py-2 bg-slate-900 text-white font-bold text-xs rounded-xl cursor-pointer"
+                className="px-4 py-2 bg-slate-900 text-white font-bold text-sm rounded-xl cursor-pointer"
               >
                 Done
               </button>
@@ -1780,7 +1780,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
         <div className="bg-indigo-950 text-white rounded-3xl p-8 sm:p-12 shadow-2xl space-y-8 border border-indigo-900/40">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-indigo-900/80 pb-6">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold font-heading uppercase tracking-wider mb-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-sm font-bold font-heading uppercase tracking-wider mb-2">
                 <Users className="w-3.5 h-3.5" />
                 <span>Product 07 · For Agencies &amp; Multi-Location Franchises</span>
               </div>
@@ -1794,7 +1794,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
 
             <button
               onClick={() => setCheckoutModalPlan('agency', 'monthly')}
-              className="px-5 py-2.5 bg-white text-indigo-950 hover:bg-indigo-50 font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer font-sans shrink-0 flex items-center gap-2"
+              className="px-5 py-2.5 bg-white text-indigo-950 hover:bg-indigo-50 font-bold text-sm rounded-xl shadow-sm transition-all cursor-pointer font-sans shrink-0 flex items-center gap-2"
             >
               <span>Get Agency Tier ($99/mo)</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -1804,30 +1804,30 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div className="bg-indigo-900/60 border border-indigo-800 p-6 rounded-2xl space-y-2 text-center">
               <span className="text-3xl font-black text-rose-400 font-heading">3 Clients</span>
-              <div className="text-xs font-bold text-rose-300 uppercase tracking-wider">Need Immediate Action</div>
-              <p className="text-[11px] text-indigo-200">Negative review spike or ranking drop flagged by overnight crawl.</p>
+              <div className="text-sm font-bold text-rose-300 uppercase tracking-wider">Need Immediate Action</div>
+              <p className="text-sm text-indigo-200">Negative review spike or ranking drop flagged by overnight crawl.</p>
             </div>
 
             <div className="bg-indigo-900/60 border border-indigo-800 p-6 rounded-2xl space-y-2 text-center">
               <span className="text-3xl font-black text-amber-400 font-heading">4 Clients</span>
-              <div className="text-xs font-bold text-amber-300 uppercase tracking-wider">High Upsell Opportunity</div>
-              <p className="text-[11px] text-indigo-200">Local competitor slipping in 3-Pack; ready for new location landing pages.</p>
+              <div className="text-sm font-bold text-amber-300 uppercase tracking-wider">High Upsell Opportunity</div>
+              <p className="text-sm text-indigo-200">Local competitor slipping in 3-Pack; ready for new location landing pages.</p>
             </div>
 
             <div className="bg-indigo-900/60 border border-indigo-800 p-6 rounded-2xl space-y-2 text-center">
               <span className="text-3xl font-black text-emerald-400 font-heading">3 Clients</span>
-              <div className="text-xs font-bold text-emerald-300 uppercase tracking-wider">Healthy &amp; Dominating</div>
-              <p className="text-[11px] text-indigo-200">Top 3 Maps ranking maintained, automated review velocity exceeding targets.</p>
+              <div className="text-sm font-bold text-emerald-300 uppercase tracking-wider">Healthy &amp; Dominating</div>
+              <p className="text-sm text-indigo-200">Top 3 Maps ranking maintained, automated review velocity exceeding targets.</p>
             </div>
           </div>
 
           {/* Interactive Multi-Client Triage Cockpit */}
           <div className="bg-indigo-900/40 border border-indigo-800/80 rounded-2xl p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-indigo-200 uppercase tracking-wider font-heading">
+              <span className="text-sm font-bold text-indigo-200 uppercase tracking-wider font-heading">
                 Multi-Location Client Cockpit (Interactive Switcher)
               </span>
-              <span className="text-[11px] text-indigo-300">Switch client account below</span>
+              <span className="text-sm text-indigo-300">Switch client account below</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1842,9 +1842,9 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-indigo-300 truncate">{cl.industry}</span>
+                    <span className="text-sm text-indigo-300 truncate">{cl.industry}</span>
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      className={`text-sm font-bold px-2 py-0.5 rounded-full ${
                         cl.status === 'healthy'
                           ? 'bg-emerald-500/20 text-emerald-300'
                           : cl.status === 'action'
@@ -1856,14 +1856,14 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                     </span>
                   </div>
                   <div className="font-bold text-sm text-white">{cl.name}</div>
-                  <div className="text-xs text-indigo-200">{cl.rank}</div>
+                  <div className="text-sm text-indigo-200">{cl.rank}</div>
                 </div>
               ))}
             </div>
 
             <div className="p-4 bg-indigo-900/80 rounded-xl border border-indigo-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
-                <span className="font-bold text-xs text-white">
+                <span className="font-bold text-sm text-white">
                   Client Status: {agencyClients[selectedClientIndex].name}
                 </span>
                 <p className="text-sm text-indigo-200 leading-relaxed font-sans">
@@ -1873,7 +1873,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
 
               <button
                 onClick={() => setShowAgencyReportModal(true)}
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer font-sans shrink-0 flex items-center gap-1.5"
+                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm rounded-xl shadow-xs transition-all cursor-pointer font-sans shrink-0 flex items-center gap-1.5"
               >
                 <FileText className="w-3.5 h-3.5" />
                 <span>Preview White-Label Audit PDF</span>
@@ -1902,13 +1902,13 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               </button>
             </div>
 
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 text-xs">
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 text-sm">
               <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                 <div>
-                  <div className="text-[10px] uppercase font-bold text-slate-400">Client Account</div>
+                  <div className="text-sm uppercase font-bold text-slate-400">Client Account</div>
                   <div className="font-bold text-slate-900">{agencyClients[selectedClientIndex].name}</div>
                 </div>
-                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded text-[10px]">
+                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-bold rounded text-sm">
                   Generated in 3.2s
                 </span>
               </div>
@@ -1922,7 +1922,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => setShowAgencyReportModal(false)}
-                className="px-4 py-2 bg-slate-900 text-white font-bold text-xs rounded-xl cursor-pointer"
+                className="px-4 py-2 bg-slate-900 text-white font-bold text-sm rounded-xl cursor-pointer"
               >
                 Close Preview
               </button>
@@ -1934,7 +1934,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
       {/* 09 — PRODUCT 08: INTEGRATED EXECUTION SUITE */}
       <section id="execution-suite" className="max-w-6xl mx-auto px-6 space-y-8 scroll-mt-24">
         <div className="text-center space-y-3 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-300 text-slate-700 text-xs font-bold font-heading uppercase tracking-wider">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-300 text-slate-700 text-sm font-bold font-heading uppercase tracking-wider">
             <Sliders className="w-3.5 h-3.5" />
             <span>Product 08 · Built-In Operational Tools</span>
           </div>
@@ -1953,7 +1953,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               <button
                 key={tool.id}
                 onClick={() => setActiveExecutionTool(idx)}
-                className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
                   activeExecutionTool === idx
                     ? 'bg-slate-900 text-white shadow-xs'
                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
@@ -1966,7 +1966,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div className="space-y-4">
-              <div className="inline-block px-2.5 py-1 bg-emerald-50 text-[#059669] font-bold text-[11px] rounded-lg">
+              <div className="inline-block px-2.5 py-1 bg-emerald-50 text-[#059669] font-bold text-sm rounded-lg">
                 Replaces: {executionTools[activeExecutionTool].replaces}
               </div>
               <h3 className="text-2xl font-extrabold font-heading text-slate-900">
@@ -1975,7 +1975,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-sans">
                 {executionTools[activeExecutionTool].desc}
               </p>
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 flex items-center gap-2">
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-sm font-bold text-slate-800 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-[#059669]" />
                 <span>{executionTools[activeExecutionTool].stats}</span>
               </div>
@@ -1985,7 +1985,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                     setActiveTab('signup');
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
-                  className="px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+                  className="px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <span>Included in Free Explorer Tier</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -1994,7 +1994,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             </div>
 
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-inner">
-              <div className="text-[10px] uppercase font-bold text-slate-400 mb-3 tracking-wider">
+              <div className="text-sm uppercase font-bold text-slate-400 mb-3 tracking-wider">
                 Live Module Preview
               </div>
               {executionTools[activeExecutionTool].previewComponent}
@@ -2007,7 +2007,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
       <section className="max-w-6xl mx-auto px-6">
         <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-12 shadow-md space-y-6">
           <div className="max-w-3xl space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-bold font-heading uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-bold font-heading uppercase tracking-wider">
               <Brain className="w-3.5 h-3.5" />
               <span>Technical Architecture</span>
             </div>
@@ -2019,7 +2019,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2 text-xs">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2 text-sm">
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
               <span className="font-bold text-slate-900 font-heading">1. Data Ingestion</span>
               <p className="text-slate-600">Connects to your Google Business Profile, website crawls, reviews, and competitor signals.</p>

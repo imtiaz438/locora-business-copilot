@@ -99,7 +99,7 @@ export const PublicFooter: React.FC = () => {
           <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
           <div className="lg:col-span-7 space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm font-semibold border border-emerald-200">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Locora Growth Dispatch</span>
             </div>
@@ -113,7 +113,7 @@ export const PublicFooter: React.FC = () => {
 
           <div className="lg:col-span-5 flex flex-col justify-center">
             {subscribed ? (
-              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs font-semibold flex items-center gap-2">
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-sm font-semibold flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                 <span>You're subscribed! Check your inbox for our Top 25 AI Proposal Prompts.</span>
               </div>
@@ -135,7 +135,7 @@ export const PublicFooter: React.FC = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-5 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer disabled:opacity-70 font-heading"
+                    className="px-5 py-3 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer disabled:opacity-70 font-heading"
                   >
                     {isSubmitting ? (
                       <>
@@ -151,11 +151,11 @@ export const PublicFooter: React.FC = () => {
                   </button>
                 </div>
                 {errorMsg && (
-                  <p className="text-[11px] text-rose-600 font-medium">{errorMsg}</p>
+                  <p className="text-sm text-rose-600 font-medium">{errorMsg}</p>
                 )}
               </form>
             )}
-            <p className="text-[11px] text-slate-500 mt-2 flex items-center gap-1 font-sans">
+            <p className="text-sm text-slate-500 mt-2 flex items-center gap-1 font-sans">
               <Lock className="w-3 h-3 text-slate-400" /> No spam. Unsubscribe anytime with 1 click.
             </p>
           </div>
@@ -172,7 +172,7 @@ export const PublicFooter: React.FC = () => {
 
             {/* Social Links */}
             <div className="pt-2 space-y-2">
-              <p className="text-[11px] font-bold text-slate-800 uppercase tracking-wider font-heading">
+              <p className="text-sm font-bold text-slate-800 uppercase tracking-wider font-heading">
                 Follow Locora AI
               </p>
               <div className="flex items-center gap-2 flex-wrap">
@@ -215,12 +215,12 @@ export const PublicFooter: React.FC = () => {
 
           {/* Layer 1: Product Features */}
           <div className="space-y-3 font-sans">
-            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Product Features</h4>
+            <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-heading">Product Features</h4>
             <ul className="space-y-2 text-sm text-slate-600">
               <li>
                 <button onClick={() => navigateTo('/products', 'products')} className="font-bold text-[#059669] hover:text-[#047857] transition-colors cursor-pointer text-left flex items-center gap-1">
                   <span>All Products Suite</span>
-                  <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-sm font-bold">New</span>
+                  <span className="text-sm px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-sm font-bold">New</span>
                 </button>
               </li>
               <li>
@@ -273,7 +273,7 @@ export const PublicFooter: React.FC = () => {
 
           {/* Layer 2: Use Cases */}
           <div className="space-y-3 font-sans">
-            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Use Cases</h4>
+            <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-heading">Use Cases</h4>
             <ul className="space-y-2 text-sm text-slate-600">
               <li>
                 <button onClick={() => navigateTo('/use-cases/local-seo', 'usecase_local-seo')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
@@ -310,7 +310,7 @@ export const PublicFooter: React.FC = () => {
 
           {/* Layer 3 & 4: Industries & Educational Resources */}
           <div className="space-y-3 font-sans">
-            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Resources & SOPs</h4>
+            <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-heading">Resources & SOPs</h4>
             <ul className="space-y-2 text-sm text-slate-600">
               <li>
                 <button onClick={() => navigateTo('/resources/how-to-improve-local-seo', 'resource_how-to-improve-local-seo')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
@@ -342,7 +342,7 @@ export const PublicFooter: React.FC = () => {
 
           {/* Company & Legal */}
           <div className="space-y-3 font-sans">
-            <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-heading">Company</h4>
+            <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-heading">Company</h4>
             <ul className="space-y-2 text-sm text-slate-600">
               <li>
                 <button onClick={() => navigateTo('/', 'home')} className="hover:text-[#059669] transition-colors cursor-pointer">
@@ -381,7 +381,7 @@ export const PublicFooter: React.FC = () => {
         {/* Featured On — badge line (moved from the homepage hero strip at
             the founder's request): small badges in one line, corner-aligned. */}
         <div className="pt-8 mt-8 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-slate-400">
             Featured On
           </p>
           <div className="flex items-center gap-6 flex-wrap justify-center sm:justify-end">

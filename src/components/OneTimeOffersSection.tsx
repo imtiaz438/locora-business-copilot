@@ -147,14 +147,14 @@ export const OneTimeOffersSection: React.FC<OneTimeOffersSectionProps> = ({
     <div className={`space-y-8 font-sans ${className}`}>
       {/* Header */}
       <div className="text-center space-y-3 max-w-2xl mx-auto">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-xs font-semibold font-heading uppercase tracking-wider">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-[#059669] text-sm font-semibold font-heading uppercase tracking-wider">
           <ShoppingBag className="w-3.5 h-3.5" />
           <span>Locora Growth Store</span>
         </div>
         <h3 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 tracking-tight">
           One-Time Upgrades & Growth Add-Ons
         </h3>
-        <p className="text-xs sm:text-sm text-slate-600">
+        <p className="text-sm sm:text-sm text-slate-600">
           Need extra AI execution fuel, an executive client audit, or curated local leads? Add what you need without changing your plan.
         </p>
       </div>
@@ -171,7 +171,7 @@ export const OneTimeOffersSection: React.FC<OneTimeOffersSectionProps> = ({
               }`}
             >
               {item.popular && (
-                <div className="absolute -top-3 left-6 px-2.5 py-0.5 bg-[#059669] text-white text-[10px] font-black uppercase tracking-wider rounded-full shadow-xs">
+                <div className="absolute -top-3 left-6 px-2.5 py-0.5 bg-[#059669] text-white text-sm font-black uppercase tracking-wider rounded-full shadow-xs">
                   Most Requested
                 </div>
               )}
@@ -181,7 +181,7 @@ export const OneTimeOffersSection: React.FC<OneTimeOffersSectionProps> = ({
                   <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${item.iconBg}`}>
                     <IconComp className="w-5 h-5" />
                   </div>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-heading">
+                  <span className="text-sm font-bold text-slate-500 uppercase tracking-wider font-heading">
                     {item.badge}
                   </span>
                 </div>
@@ -190,7 +190,7 @@ export const OneTimeOffersSection: React.FC<OneTimeOffersSectionProps> = ({
                   <h4 className="text-base font-bold font-heading text-slate-900 leading-snug">
                     {item.title}
                   </h4>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  <p className="text-sm text-slate-500 mt-1 leading-relaxed">
                     {item.tagline}
                   </p>
                 </div>
@@ -199,14 +199,14 @@ export const OneTimeOffersSection: React.FC<OneTimeOffersSectionProps> = ({
                   <span className="text-2xl sm:text-3xl font-black font-heading text-slate-900">
                     {item.price}
                   </span>
-                  <span className="text-[11px] text-slate-500 ml-1 font-medium">
+                  <span className="text-sm text-slate-500 ml-1 font-medium">
                     {item.priceSuffix}
                   </span>
                 </div>
 
                 <div className="space-y-2 pt-2 border-t border-slate-100">
                   {item.highlights.map((h, i) => (
-                    <div key={i} className="flex items-start gap-2 text-xs text-slate-700">
+                    <div key={i} className="flex items-start gap-2 text-sm text-slate-700">
                       <CheckCircle2 className="w-3.5 h-3.5 text-[#059669] shrink-0 mt-0.5" />
                       <span className="leading-tight">{h}</span>
                     </div>
@@ -217,7 +217,7 @@ export const OneTimeOffersSection: React.FC<OneTimeOffersSectionProps> = ({
               <div className="pt-6">
                 <button
                   onClick={item.onAction}
-                  className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer font-sans ${
+                  className={`w-full py-2.5 px-4 rounded-xl font-bold text-sm shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer font-sans ${
                     item.popular
                       ? 'bg-[#059669] hover:bg-[#047857] text-white'
                       : 'bg-slate-900 hover:bg-slate-800 text-white'

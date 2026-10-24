@@ -246,7 +246,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
       {/* Top Banner / Breadcrumb */}
-      <div className="bg-slate-900 text-white border-b border-slate-800 py-3 px-4 sm:px-8 text-xs flex items-center justify-between">
+      <div className="bg-slate-900 text-white border-b border-slate-800 py-3 px-4 sm:px-8 text-sm flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5" /> Locora Certified Directory
@@ -262,7 +262,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
       {/* Directory Hero Search Header */}
       <div className="bg-gradient-to-b from-slate-900 to-slate-850 text-white pt-12 pb-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
         <div className="max-w-5xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm font-semibold">
             <Sparkles className="w-3.5 h-3.5" /> Verified Local Service Pros
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white font-heading">
@@ -310,7 +310,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
 
             <button
               type="submit"
-              className="w-full md:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans flex-shrink-0"
+              className="w-full md:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer font-sans flex-shrink-0"
             >
               <Search className="w-4 h-4" />
               Search
@@ -319,7 +319,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
 
           {/* Quick Categories Bar */}
           <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
-            <span className="text-xs text-slate-400 font-medium mr-1">Popular:</span>
+            <span className="text-sm text-slate-400 font-medium mr-1">Popular:</span>
             {['All', 'Dentist / Dental Clinic', 'Plumbing Services', 'HVAC & Air Conditioning', 'Roofing & Gutters', 'Legal Services & Lawyers', 'Software & AI Marketing', 'Other'].map((cat) => {
               const val = cat.toLowerCase() === 'all' ? 'all' : cat.toLowerCase();
               const isSelected = selectedCategory === val || (selectedCategory === 'all' && cat === 'All');
@@ -328,7 +328,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                   key={cat}
                   type="button"
                   onClick={() => setSelectedCategory(val)}
-                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                  className={`px-3 py-1 rounded-full text-sm font-semibold transition-all cursor-pointer ${
                     isSelected
                       ? 'bg-emerald-500 text-white shadow-xs'
                       : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
@@ -356,11 +356,11 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
           </div>
 
           <div className="flex items-center gap-3">
-            <label className="text-xs text-slate-500 font-medium whitespace-nowrap">Filter Category:</label>
+            <label className="text-sm text-slate-500 font-medium whitespace-nowrap">Filter Category:</label>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 max-w-[280px]"
+              className="text-sm font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 max-w-[280px]"
             >
               <option value="all">All Categories</option>
               {combinedCategoriesList.map((c) => (
@@ -384,14 +384,14 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                 ? 'No directory listings yet.'
                 : 'No matching business listings found'}
             </h3>
-            <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+            <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">
               {selectedCategory === 'all' && selectedCity === 'all' && !searchQuery.trim()
                 ? 'No businesses are currently published in the directory.'
                 : 'Try broadening your search term, selecting a different category, or resetting your location filter.'}
             </p>
             <button
               onClick={() => { setSelectedCategory('all'); setSelectedCity('all'); setCityInputText(''); setSearchQuery(''); }}
-              className="mt-4 px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800 cursor-pointer"
+              className="mt-4 px-4 py-2 bg-slate-900 text-white text-sm font-bold rounded-lg hover:bg-slate-800 cursor-pointer"
             >
               Reset Filters
             </button>
@@ -424,17 +424,17 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                   <div className="p-5 border-b border-slate-100 flex-1">
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           {biz.categoryName}
                         </span>
                         {biz.isClaimed && (
-                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                             <ShieldCheck className="w-3 h-3 text-emerald-700" /> Claimed
                           </span>
                         )}
                       </div>
                       {isPremium && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-extrabold bg-amber-50 text-amber-700 border border-amber-200">
                           <CheckCircle2 className="w-3 h-3 text-amber-500" /> Featured Pro
                         </span>
                       )}
@@ -460,10 +460,10 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                             ))}
                           </div>
                           <span className="text-sm font-bold text-slate-800">{rating.toFixed(1)}</span>
-                          <span className="text-[11px] text-slate-400">({reviewsCount} Google {reviewsCount === 1 ? 'review' : 'reviews'})</span>
+                          <span className="text-sm text-slate-400">({reviewsCount} Google {reviewsCount === 1 ? 'review' : 'reviews'})</span>
                         </>
                       ) : (
-                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                        <div className="flex items-center gap-1.5 text-sm text-slate-400">
                           <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
                           <span>No reviews connected yet</span>
                         </div>
@@ -471,13 +471,13 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                     </div>
 
                     {/* City & Address - Real Location */}
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-2.5">
+                    <div className="flex items-center gap-1.5 text-sm text-slate-500 mt-2.5">
                       <MapPin className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                       <span className="truncate">{locationDisplay}</span>
                     </div>
 
                     {/* Scraped / About snippet */}
-                    <p className="text-xs text-slate-600 mt-3 line-clamp-2 leading-relaxed">
+                    <p className="text-sm text-slate-600 mt-3 line-clamp-2 leading-relaxed">
                       {biz.scrapedContent?.description || biz.scrapedContent?.aboutSummary || 'Verified local service provider offering certified customer satisfaction and quality work.'}
                     </p>
 
@@ -485,7 +485,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                     {biz.scrapedContent?.serviceTags && biz.scrapedContent.serviceTags.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-3">
                         {biz.scrapedContent.serviceTags.slice(0, 3).map((tag, idx) => (
-                          <span key={idx} className="text-[10px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                          <span key={idx} className="text-sm font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
                             {tag}
                           </span>
                         ))}
@@ -498,7 +498,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                     <button
                       type="button"
                       onClick={(e) => handleOpenQuoteModal(biz, e)}
-                      className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       Request Free Quote
@@ -540,7 +540,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
               <h4 className="text-sm font-bold text-slate-900 font-heading">
                 Verified Google Reviews
               </h4>
-              <p className="text-xs text-slate-500 leading-relaxed font-sans">
+              <p className="text-sm text-slate-500 leading-relaxed font-sans">
                 Real customer ratings synchronized directly from Google Business Profiles, filtering out spam or fake feedback.
               </p>
             </div>
@@ -552,7 +552,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
               <h4 className="text-sm font-bold text-slate-900 font-heading">
                 Direct Contact & Quotes
               </h4>
-              <p className="text-xs text-slate-500 leading-relaxed font-sans">
+              <p className="text-sm text-slate-500 leading-relaxed font-sans">
                 Call pros directly or send instant quote requests. Your inquiry goes straight to the owner with zero middleman markup.
               </p>
             </div>
@@ -564,7 +564,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
               <h4 className="text-sm font-bold text-slate-900 font-heading">
                 Live Hours & Availability
               </h4>
-              <p className="text-xs text-slate-500 leading-relaxed font-sans">
+              <p className="text-sm text-slate-500 leading-relaxed font-sans">
                 Up-to-date operating schedules, verified addresses, and service specializations so you get help when you need it.
               </p>
             </div>
@@ -578,7 +578,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
           <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 border border-slate-200 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">
+                <span className="text-sm font-bold uppercase tracking-wider text-emerald-600">
                   Instant Quote Request
                 </span>
                 <h3 className="text-lg font-black text-slate-900 font-heading">
@@ -599,12 +599,12 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
                 <h4 className="text-base font-bold text-slate-900">Request Delivered!</h4>
-                <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
+                <p className="text-sm text-slate-600 max-w-sm mx-auto leading-relaxed">
                   {quoteResponseMsg || 'Your service inquiry was forwarded directly to the business owner.'}
                 </p>
                 <button
                   onClick={() => setActiveQuoteBiz(null)}
-                  className="px-6 py-2.5 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800"
+                  className="px-6 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800"
                 >
                   Close Window
                 </button>
@@ -612,7 +612,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
             ) : (
               <form onSubmit={handleSubmitQuote} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Your Full Name *</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Your Full Name *</label>
                   <input
                     type="text"
                     required
@@ -625,7 +625,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Phone Number *</label>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Phone Number *</label>
                     <input
                       type="tel"
                       required
@@ -636,7 +636,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Email Address</label>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Email Address</label>
                     <input
                       type="email"
                       value={quoteForm.email}
@@ -648,7 +648,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Service Needed</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Service Needed</label>
                   <input
                     type="text"
                     value={quoteForm.serviceNeed}
@@ -659,7 +659,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Project Details / Message</label>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Project Details / Message</label>
                   <textarea
                     rows={3}
                     value={quoteForm.message}
@@ -673,14 +673,14 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setActiveQuoteBiz(null)}
-                    className="px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-900"
+                    className="px-4 py-2 text-sm font-bold text-slate-600 hover:text-slate-900"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submittingQuote}
-                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {submittingQuote ? (
                       <>

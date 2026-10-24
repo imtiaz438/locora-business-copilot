@@ -285,11 +285,11 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
                 <h3 className="text-base sm:text-lg font-extrabold font-heading text-white tracking-tight">
                   Free Local Business Checkup
                 </h3>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="px-2 py-0.5 rounded text-sm font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   LIVE GROWTH AUDIT
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-sm text-slate-400">
                 Audited entity: <span className="text-white font-semibold">{business.businessName}</span>
               </p>
             </div>
@@ -326,21 +326,21 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
           ) : checkupData ? (
             <>
               {/* 1. Basic Discovered Business Information */}
-              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Business Name</span>
+                  <span className="text-sm uppercase font-bold text-slate-400 block">Business Name</span>
                   <span className="font-bold text-slate-800 truncate block">{checkupData.discoveredData.name}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Category</span>
+                  <span className="text-sm uppercase font-bold text-slate-400 block">Category</span>
                   <span className="font-semibold text-slate-700 truncate block">{checkupData.discoveredData.category}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Primary Location</span>
+                  <span className="text-sm uppercase font-bold text-slate-400 block">Primary Location</span>
                   <span className="font-semibold text-slate-700 truncate block">{checkupData.discoveredData.address || 'Melbourne, VIC'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Schema Status</span>
+                  <span className="text-sm uppercase font-bold text-slate-400 block">Schema Status</span>
                   <span className={`inline-flex items-center gap-1 font-bold ${checkupData.discoveredData.schemaDetected ? 'text-emerald-700' : 'text-amber-700'}`}>
                     {checkupData.discoveredData.schemaDetected ? 'Verified Detected' : 'Missing Schema'}
                   </span>
@@ -351,10 +351,10 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
               <div className="flex flex-col sm:flex-row items-center justify-between gap-6 p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 text-white shadow-sm">
                 <div className="space-y-1 text-center sm:text-left">
                   <div className="flex items-center justify-center sm:justify-start gap-2">
-                    <span className="text-xs uppercase tracking-wider font-bold text-emerald-400 font-heading">
+                    <span className="text-sm uppercase tracking-wider font-bold text-emerald-400 font-heading">
                       Calculated Local Health Score
                     </span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-white/10 text-slate-300">
+                    <span className="px-2 py-0.5 rounded text-sm font-bold bg-white/10 text-slate-300">
                       Deterministic
                     </span>
                   </div>
@@ -365,7 +365,7 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
                       ? 'Moderate Local Foundation • Gaps Present'
                       : 'High Risk of Revenue Leakage'}
                   </h4>
-                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-[11px] text-slate-400 pt-1">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-sm text-slate-400 pt-1">
                     <span className="inline-flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5 text-slate-400" />
                       Scan Date: {checkupData.scanTimestamp}
@@ -382,7 +382,7 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
                     <span className="text-3xl font-black text-emerald-400 font-heading block">
                       {checkupData.overallScore}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                    <span className="text-sm text-slate-400 font-bold uppercase tracking-wider block">
                       Out of 100
                     </span>
                   </div>
@@ -392,30 +392,30 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
               {/* 3. Category Scores */}
               <div>
                 <div className="flex items-center justify-between mb-2.5">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 font-heading">
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-slate-500 font-heading">
                     Category Breakdown
                   </h4>
-                  <span className="text-[11px] text-slate-400">Weighted real-data benchmarks</span>
+                  <span className="text-sm text-slate-400">Weighted real-data benchmarks</span>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
-                    <span className="text-[10px] text-slate-500 font-semibold block truncate">Technical SEO</span>
+                    <span className="text-sm text-slate-500 font-semibold block truncate">Technical SEO</span>
                     <span className="text-lg font-black text-slate-900 font-heading">{checkupData.categoryScores.technicalSeo}%</span>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
-                    <span className="text-[10px] text-slate-500 font-semibold block truncate">On-Page SEO</span>
+                    <span className="text-sm text-slate-500 font-semibold block truncate">On-Page SEO</span>
                     <span className="text-lg font-black text-slate-900 font-heading">{checkupData.categoryScores.onPageSeo}%</span>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
-                    <span className="text-[10px] text-slate-500 font-semibold block truncate">Local Signals</span>
+                    <span className="text-sm text-slate-500 font-semibold block truncate">Local Signals</span>
                     <span className="text-lg font-black text-slate-900 font-heading">{checkupData.categoryScores.localSignals}%</span>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
-                    <span className="text-[10px] text-slate-500 font-semibold block truncate">Performance</span>
+                    <span className="text-sm text-slate-500 font-semibold block truncate">Performance</span>
                     <span className="text-lg font-black text-slate-900 font-heading">{checkupData.categoryScores.performance}%</span>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center col-span-2 sm:col-span-1">
-                    <span className="text-[10px] text-slate-500 font-semibold block truncate">Structured Data</span>
+                    <span className="text-sm text-slate-500 font-semibold block truncate">Structured Data</span>
                     <span className="text-lg font-black text-slate-900 font-heading">{checkupData.categoryScores.structuredData}%</span>
                   </div>
                 </div>
@@ -424,11 +424,11 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
               {/* 4. 2–3 Highest Priority Issues with limited evidence */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 font-heading flex items-center gap-1.5">
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-slate-900 font-heading flex items-center gap-1.5">
                     <AlertTriangle className="w-4 h-4 text-amber-500" />
                     Top Priority Improvement Areas ({checkupData.priorityIssues.length} of {checkupData.totalOpportunitiesCount})
                   </h4>
-                  <span className="text-[11px] font-bold text-slate-400">Actionable Opportunities</span>
+                  <span className="text-sm font-bold text-slate-400">Actionable Opportunities</span>
                 </div>
 
                 <div className="space-y-2.5">
@@ -442,7 +442,7 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
                           {issue.title}
                         </span>
                         <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                          className={`px-2 py-0.5 rounded text-sm font-bold uppercase tracking-wider ${
                             issue.severity === 'critical'
                               ? 'bg-rose-100 text-rose-800'
                               : issue.severity === 'warning'
@@ -457,7 +457,7 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
                         <span className="font-semibold text-slate-700">Evidence: </span>
                         {issue.evidence}
                       </div>
-                      <div className="text-[11px] text-slate-500">
+                      <div className="text-sm text-slate-500">
                         <span className="font-semibold text-slate-600">Impact: </span>
                         {issue.impact}
                       </div>
@@ -473,9 +473,9 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
                     <Lock className="w-3.5 h-3.5 text-slate-500" />
                     <span>Locora Growth Tools Available for {business.businessName} ({checkupData.totalOpportunitiesCount - 3} More Insights)</span>
                   </div>
-                  <span className="text-[10px] text-slate-400 font-semibold">Included When Claimed</span>
+                  <span className="text-sm text-slate-400 font-semibold">Included When Claimed</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] text-slate-500">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-slate-500">
                   <div className="p-2 rounded-lg bg-white border border-slate-200 flex items-center gap-2">
                     <Lock className="w-3 h-3 text-slate-400 shrink-0" />
                     <span className="truncate">Google Maps 3-Pack Heatmap</span>
@@ -492,7 +492,7 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
               </div>
 
               {/* 6. Sources Attribution */}
-              <div className="pt-2 flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
+              <div className="pt-2 flex flex-wrap items-center gap-2 text-sm text-slate-400">
                 <span className="font-bold uppercase tracking-wider">Data Sources:</span>
                 {checkupData.sources.map((src, i) => (
                   <span key={i} className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">
@@ -510,7 +510,7 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
             <span className="text-sm font-bold text-slate-900 block font-heading">
               Preserve this checkup & fix issues immediately
             </span>
-            <span className="text-[11px] text-slate-500 block">
+            <span className="text-sm text-slate-500 block">
               Free plan available • No credit card required • Instant setup
             </span>
           </div>
@@ -520,7 +520,7 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
               id="claim-grow-btn"
               type="button"
               onClick={handleClaimAndGrow}
-              className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+              className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-bold text-sm transition-colors cursor-pointer"
             >
               Claim & Grow With Locora
             </button>
@@ -528,7 +528,7 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
               id="save-improve-btn"
               type="button"
               onClick={handleSaveAndImprove}
-              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all shadow-sm flex items-center gap-2 cursor-pointer font-sans"
+              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-all shadow-sm flex items-center gap-2 cursor-pointer font-sans"
             >
               <span>Save & Improve My Business</span>
               <ArrowRight className="w-3.5 h-3.5" />

@@ -329,7 +329,7 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
   return (
     <div ref={containerRef} className="relative w-full space-y-1 font-sans">
       {label && (
-        <label htmlFor={id} className="block text-xs font-bold text-slate-700">
+        <label htmlFor={id} className="block text-sm font-bold text-slate-700">
           {label}
         </label>
       )}
@@ -355,7 +355,7 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
           }}
           placeholder={placeholder}
           autoComplete="off"
-          className={className || "w-full pl-9 pr-14 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-900 focus:bg-white focus:border-[#059669] focus:ring-1 focus:ring-[#059669] focus:outline-none transition-all"}
+          className={className || "w-full pl-9 pr-14 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:bg-white focus:border-[#059669] focus:ring-1 focus:ring-[#059669] focus:outline-none transition-all"}
         />
 
         <div className="absolute right-2.5 flex items-center gap-1">
@@ -373,7 +373,7 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
       </div>
 
       {helperText && (
-        <p className="text-[10px] text-slate-400 flex items-center gap-1">
+        <p className="text-sm text-slate-400 flex items-center gap-1">
           <span>{helperText}</span>
         </p>
       )}
@@ -382,13 +382,13 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
       {isOpen && (
         <div className="absolute z-50 left-0 right-0 mt-1 max-h-64 overflow-y-auto bg-white rounded-xl border border-slate-200 shadow-xl py-1 divide-y divide-slate-100">
           {isLoading && predictions.length === 0 ? (
-            <div className="p-4 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
+            <div className="p-4 text-center text-sm text-slate-500 flex items-center justify-center gap-2">
               <Loader2 className="w-3.5 h-3.5 animate-spin text-[#059669]" />
               <span>Searching places & addresses...</span>
             </div>
           ) : predictions.length > 0 ? (
             <>
-              <div className="px-3 py-1.5 bg-slate-50/80 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+              <div className="px-3 py-1.5 bg-slate-50/80 text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
                 <span>Address & Location Suggestions</span>
                 <span className="text-emerald-700 font-normal">Cities, States & Streets</span>
               </div>
@@ -404,11 +404,11 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
                 >
                   <MapPin className="w-4 h-4 text-slate-400 group-hover:text-[#059669] shrink-0 mt-0.5 transition-colors" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-800 group-hover:text-emerald-950 truncate">
+                    <p className="text-sm font-bold text-slate-800 group-hover:text-emerald-950 truncate">
                       {p.mainText || p.description}
                     </p>
                     {p.secondaryText && (
-                      <p className="text-[11px] text-slate-500 truncate">
+                      <p className="text-sm text-slate-500 truncate">
                         {p.secondaryText}
                       </p>
                     )}
@@ -417,13 +417,13 @@ export const GoogleAddressAutocomplete: React.FC<GoogleAddressAutocompleteProps>
               ))}
             </>
           ) : (
-            <div className="p-3 text-center text-xs text-slate-500">
+            <div className="p-3 text-center text-sm text-slate-500">
               <span>No direct match. Press enter or type manually.</span>
             </div>
           )}
 
           {/* Attribution */}
-          <div className="px-3 py-1 bg-slate-50 text-[10px] text-slate-400 flex items-center justify-between font-mono">
+          <div className="px-3 py-1 bg-slate-50 text-sm text-slate-400 flex items-center justify-between font-mono">
             <span>Verified Places & Geocoding</span>
             <span className="text-slate-400">Live Global Search</span>
           </div>
