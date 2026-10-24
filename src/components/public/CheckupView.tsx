@@ -469,7 +469,7 @@ export const CheckupView: React.FC = () => {
                 <h4 className="text-base text-[#1a0dab] hover:underline font-medium cursor-pointer line-clamp-1">
                   {auditResult.crawlSummary.title || `${businessName} | ${category} in ${locationCity || 'Local Area'}`}
                 </h4>
-                <p className="text-xs text-[#4d5156] line-clamp-2 leading-relaxed">
+                <p className="text-sm text-[#4d5156] line-clamp-2 leading-relaxed">
                   {auditResult.crawlSummary.description ||
                     `Visit ${businessName} for top-rated ${category.toLowerCase()} services in ${locationCity || 'your area'}. Contact us today to learn more.`}
                 </p>
@@ -605,7 +605,7 @@ export const CheckupView: React.FC = () => {
               <h3 className="text-2xl sm:text-4xl font-extrabold font-heading text-white tracking-tight">
                 Unlock Your Full Report
               </h3>
-              <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
+              <p className="text-sm sm:text-base text-emerald-100/90 leading-relaxed">
                 Connect your business to Locora AI to access your full 40-point technical audit, Search Console-powered visibility tracking, competitor intelligence, and 1-click AI fix generators.
               </p>
             </div>
@@ -636,7 +636,7 @@ export const CheckupView: React.FC = () => {
           <h2 className="text-2xl sm:text-3xl font-bold font-heading text-slate-900">
             What the Audit Checks
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-500 leading-relaxed">
             The 40 points, grouped — so you can see exactly where local visibility is won and lost.
           </p>
         </div>
@@ -645,7 +645,7 @@ export const CheckupView: React.FC = () => {
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold text-sm">01</div>
             <h3 className="text-base font-bold text-slate-900 font-heading">Your Website</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 leading-relaxed">
               Mobile-friendliness, page speed signals, title and meta coverage, heading structure, image optimization, SSL, and whether search engines — and AI crawlers — can actually read your pages.
             </p>
           </div>
@@ -653,7 +653,7 @@ export const CheckupView: React.FC = () => {
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold text-sm">02</div>
             <h3 className="text-base font-bold text-slate-900 font-heading">Your Google Business Profile</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 leading-relaxed">
               Completeness score, category match, name compliance (suspension-risk check), address configuration, hours accuracy, photo coverage, and posting activity.
             </p>
           </div>
@@ -661,7 +661,7 @@ export const CheckupView: React.FC = () => {
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold text-sm">03</div>
             <h3 className="text-base font-bold text-slate-900 font-heading">Reviews &amp; Reputation</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 leading-relaxed">
               Review count vs. local competitors, rating trend, response rate, and platform coverage across Google, Yelp, and Facebook.
             </p>
           </div>
@@ -669,7 +669,7 @@ export const CheckupView: React.FC = () => {
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold text-sm">04</div>
             <h3 className="text-base font-bold text-slate-900 font-heading">Maps &amp; Local Visibility</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 leading-relaxed">
               Where you actually appear in local results for your core services, duplicate-listing detection, and citation consistency.
             </p>
           </div>
@@ -677,7 +677,7 @@ export const CheckupView: React.FC = () => {
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold text-sm">05</div>
             <h3 className="text-base font-bold text-slate-900 font-heading">AI Search Readiness</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 leading-relaxed">
               Whether ChatGPT, Gemini, and Perplexity can find and recommend you: crawler access, structured data, profile completeness, and review signals.
             </p>
           </div>
@@ -685,7 +685,7 @@ export const CheckupView: React.FC = () => {
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#059669] flex items-center justify-center font-bold text-sm">06</div>
             <h3 className="text-base font-bold text-slate-900 font-heading">Competitors</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 leading-relaxed">
               Your scores benchmarked against the businesses outranking you locally — so you know the gap in concrete terms, not vague advice.
             </p>
           </div>
@@ -694,7 +694,7 @@ export const CheckupView: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
             <h3 className="text-base font-bold text-slate-900 font-heading">How it works</h3>
-            <ol className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-2 list-decimal list-inside">
+            <ol className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-2 list-decimal list-inside">
               <li>Enter your business name and website (30 seconds).</li>
               <li>We run the 40-point scan across the areas above (about a minute).</li>
               <li>You get a plain-English report: what&apos;s fine, what&apos;s broken, and what to fix first — prioritized by impact.</li>
@@ -702,7 +702,7 @@ export const CheckupView: React.FC = () => {
           </div>
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
             <h3 className="text-base font-bold text-slate-900 font-heading">What you get (and what you don&apos;t)</h3>
-            <ul className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-2 list-disc list-inside">
+            <ul className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-2 list-disc list-inside">
               <li>A complete visibility report you can keep, free.</li>
               <li>Prioritized fixes, not a 200-row spreadsheet.</li>
               <li>No account required to run the scan. No credit card. No &quot;free trial&quot; that bills you later.</li>
@@ -722,31 +722,31 @@ export const CheckupView: React.FC = () => {
         <div className="space-y-4">
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
             <h3 className="text-sm font-bold text-slate-900 font-heading">Is it really free?</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 leading-relaxed">
               Yes. The full 40-point audit costs nothing and needs no signup.
             </p>
           </div>
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
             <h3 className="text-sm font-bold text-slate-900 font-heading">How long does it take?</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 leading-relaxed">
               About a minute for the scan, after 30 seconds of input.
             </p>
           </div>
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
             <h3 className="text-sm font-bold text-slate-900 font-heading">Do I need to connect my Google account?</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 leading-relaxed">
               No. The free audit works from public data.
             </p>
           </div>
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
             <h3 className="text-sm font-bold text-slate-900 font-heading">Will this work for service-area businesses?</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 leading-relaxed">
               Yes — the audit detects service-area setups (hidden address) and checks them correctly.
             </p>
           </div>
           <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2">
             <h3 className="text-sm font-bold text-slate-900 font-heading">What happens after the audit?</h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-sm text-slate-600 leading-relaxed">
               You get the report. Optionally, create a free account to track your score over time or run deeper scans.
             </p>
           </div>

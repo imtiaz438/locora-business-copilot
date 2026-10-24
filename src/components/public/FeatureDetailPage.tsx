@@ -311,7 +311,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
                   className="flex items-start gap-3 p-3.5 bg-white border border-slate-200 rounded-xl"
                 >
                   <CheckCircle2 className="w-4 h-4 text-emerald-700 mt-0.5 shrink-0" />
-                  <span className="text-xs text-slate-700 font-medium leading-relaxed">{cap}</span>
+                  <span className="text-sm text-slate-700 font-medium leading-relaxed">{cap}</span>
                 </div>
               ))}
             </div>
@@ -353,7 +353,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
                 </span>
               </div>
               <h3 className="text-base font-bold font-heading text-slate-900">{step.title}</h3>
-              <p className="text-xs text-slate-600 leading-relaxed font-sans">{step.description}</p>
+              <p className="text-sm text-slate-600 leading-relaxed font-sans">{step.description}</p>
               {step.proTip && (
                 <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-[11px] text-amber-900 font-sans leading-relaxed">
                   <span className="font-bold">Pro Tip: </span>
@@ -385,7 +385,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
             </div>
             <ul className="space-y-3">
               {feature.prosAndCons.pros.map((pro, i) => (
-                <li key={i} className="flex items-start gap-2.5 text-xs text-slate-800 font-medium font-sans leading-relaxed">
+                <li key={i} className="flex items-start gap-2.5 text-sm text-slate-800 font-medium font-sans leading-relaxed">
                   <Check className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
                   <span>{pro}</span>
                 </li>
@@ -401,7 +401,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
             </div>
             <ul className="space-y-3">
               {feature.prosAndCons.cons.map((con, i) => (
-                <li key={i} className="flex items-start gap-2.5 text-xs text-slate-600 font-sans leading-relaxed">
+                <li key={i} className="flex items-start gap-2.5 text-sm text-slate-600 font-sans leading-relaxed">
                   <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0 mt-1.5" />
                   <span>{con}</span>
                 </li>
@@ -520,7 +520,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
                   )}
                 </button>
               </div>
-              <pre className="whitespace-pre-wrap font-sans text-xs text-slate-200 leading-relaxed overflow-x-auto">
+              <pre className="whitespace-pre-wrap font-sans text-sm text-slate-200 leading-relaxed overflow-x-auto">
                 {sandboxResult}
               </pre>
             </div>
@@ -559,7 +559,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
                 <span className="text-xs uppercase font-bold text-rose-600 tracking-wider">
                   The Challenge
                 </span>
-                <p className="text-xs text-slate-700 leading-relaxed font-sans">
+                <p className="text-sm text-slate-700 leading-relaxed font-sans">
                   {feature.caseStudy.challenge}
                 </p>
               </div>
@@ -567,7 +567,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
                 <span className="text-xs uppercase font-bold text-emerald-700 tracking-wider">
                   The Solution
                 </span>
-                <p className="text-xs text-slate-700 leading-relaxed font-sans">
+                <p className="text-sm text-slate-700 leading-relaxed font-sans">
                   {feature.caseStudy.solution}
                 </p>
               </div>
@@ -609,7 +609,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
             </h3>
             <ul className="space-y-3">
               {feature.bestPractices?.map((bp, i) => (
-                <li key={i} className="text-xs text-slate-700 font-sans leading-relaxed flex items-start gap-2">
+                <li key={i} className="text-sm text-slate-700 font-sans leading-relaxed flex items-start gap-2">
                   <span className="text-emerald-700 font-bold mt-0.5">•</span>
                   <span>{bp}</span>
                 </li>
@@ -624,7 +624,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
             </h3>
             <ul className="space-y-3">
               {feature.commonMistakes?.map((cm, i) => (
-                <li key={i} className="text-xs text-slate-700 font-sans leading-relaxed flex items-start gap-2">
+                <li key={i} className="text-sm text-slate-700 font-sans leading-relaxed flex items-start gap-2">
                   <span className="text-rose-500 font-bold mt-0.5">•</span>
                   <span>{cm}</span>
                 </li>
@@ -668,7 +668,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
                   />
                 </button>
                 {isOpen && (
-                  <div className="px-5 pb-5 pt-1 text-xs text-slate-600 leading-relaxed font-sans border-t border-slate-100">
+                  <div className="px-5 pb-5 pt-1 text-sm text-slate-600 leading-relaxed font-sans border-t border-slate-100">
                     {faq.a}
                   </div>
                 )}
@@ -712,7 +712,7 @@ export const FeatureDetailPage: React.FC<FeatureDetailPageProps> = ({ slug }) =>
           <h2 className="text-2xl sm:text-3xl font-extrabold font-heading tracking-tight">
             Ready to Put {feature.name} to Work?
           </h2>
-          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
+          <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-sans">
             Start with 25 free AI Copilot credits. No credit card required. Generate live audits, proposals, schema, and review replies.
           </p>
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">

@@ -43,7 +43,7 @@ const PricingFaqSection: React.FC<{ onOpenRefund: () => void }> = ({ onOpenRefun
       {/* Refund / cancellation note */}
       <div className="max-w-3xl mx-auto bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex items-start gap-3 text-left">
         <CheckCircle2 className="w-5 h-5 text-[#059669] flex-shrink-0 mt-0.5" />
-        <div className="text-xs text-slate-700 leading-relaxed">
+        <div className="text-sm text-slate-700 leading-relaxed">
           <span className="font-bold text-slate-900">Cancel anytime — no long-term lock-in.</span>{' '}
           Purchases are final once AI credits are spent; unused plans are eligible for a manual billing review within 14 days.
           {' '}<button
@@ -71,7 +71,7 @@ const PricingFaqSection: React.FC<{ onOpenRefund: () => void }> = ({ onOpenRefun
                   <ChevronDown className={`w-4 h-4 text-[#059669] flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
                 </button>
                 {open && (
-                  <div className="px-5 pb-4 text-xs text-slate-600 leading-relaxed">{item.a}</div>
+                  <div className="px-5 pb-4 text-sm text-slate-600 leading-relaxed">{item.a}</div>
                 )}
               </div>
             );

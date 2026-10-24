@@ -612,7 +612,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                     {issue.title}
                   </h4>
 
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-sans">
+                  <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-sans">
                     {issue.description}
                   </p>
 
@@ -834,7 +834,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           <h5 className="text-base font-bold font-heading text-slate-900">
             {gated.nextStepRecommendation.headline}
           </h5>
-          <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-sans">
+          <p className="text-sm sm:text-base text-slate-700 leading-relaxed font-sans">
             {gated.nextStepRecommendation.summary}
           </p>
         </div>
@@ -869,7 +869,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                   Requires Integration
                 </span>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed font-sans">
+              <p className="text-sm text-slate-600 leading-relaxed font-sans">
                 Connect your Google and Search data to unlock competitor and visibility analysis.
               </p>
             </div>
@@ -890,7 +890,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                   Not connected
                 </span>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed font-sans">
+              <p className="text-sm text-slate-600 leading-relaxed font-sans">
                 Your website contains local-business signals. Connect your Google Business Profile to unlock Google profile health, reviews, local performance, profile insights, and ongoing monitoring.
               </p>
             </div>
@@ -911,7 +911,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
                   No data collected
                 </span>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed font-sans">
+              <p className="text-sm text-slate-600 leading-relaxed font-sans">
                 No ranking data has been collected yet. Connect Google Search Console or rank telemetry in your Locora workspace to begin tracking your local keyword positions.
               </p>
             </div>
@@ -932,7 +932,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           <h3 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold font-heading text-white tracking-tight">
             Create your free Locora workspace.
           </h3>
-          <p className="text-xs sm:text-sm text-slate-300 max-w-2xl font-sans leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-300 max-w-2xl font-sans leading-relaxed">
             Take immediate action on this diagnosis. Create an account to preserve this crawl, claim your business identity, and unlock autonomous growth tools.
           </p>
         </div>
@@ -944,7 +944,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
               1
             </div>
             <h4 className="font-bold text-white text-sm font-heading">Save this audit</h4>
-            <p className="text-xs text-slate-400 font-sans leading-relaxed">
+            <p className="text-sm text-slate-400 font-sans leading-relaxed">
               Preserve this scan permanently in your workspace history and monitor improvements over time.
             </p>
           </div>
@@ -954,7 +954,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
               2
             </div>
             <h4 className="font-bold text-white text-sm font-heading">Unlock complete findings</h4>
-            <p className="text-xs text-slate-400 font-sans leading-relaxed">
+            <p className="text-sm text-slate-400 font-sans leading-relaxed">
               View all {gated.totalOpportunitiesCount} opportunities, subpage crawl breakdowns, and exact code fix snippets.
             </p>
           </div>
@@ -964,7 +964,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
               3
             </div>
             <h4 className="font-bold text-white text-sm font-heading">Build your Business Brain</h4>
-            <p className="text-xs text-slate-400 font-sans leading-relaxed">
+            <p className="text-sm text-slate-400 font-sans leading-relaxed">
               Verify your business facts into a canonical Business Truth that powers tailored AI content and actions.
             </p>
           </div>
@@ -974,7 +974,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
               4
             </div>
             <h4 className="font-bold text-white text-sm font-heading">Connect Google</h4>
-            <p className="text-xs text-slate-400 font-sans leading-relaxed">
+            <p className="text-sm text-slate-400 font-sans leading-relaxed">
               Link your Google Business Profile and Search Console with Live Sync to populate actual verified metrics.
             </p>
           </div>
@@ -984,7 +984,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
               5
             </div>
             <h4 className="font-bold text-white text-sm font-heading">Start ongoing monitoring</h4>
-            <p className="text-xs text-slate-400 font-sans leading-relaxed">
+            <p className="text-sm text-slate-400 font-sans leading-relaxed">
               Receive 24/7 automated alerts when metadata shifts, pages return errors, or rankings fluctuate.
             </p>
           </div>
@@ -1094,7 +1094,7 @@ export const QuickCheckupReport: React.FC<QuickCheckupReportProps> = ({
           <h3 className="text-2xl sm:text-3xl font-extrabold font-heading text-white tracking-tight">
             Unlock your complete audit, save your results, and start improving your business with Locora.
           </h3>
-          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
+          <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-sans">
             Your website has {gated.totalOpportunitiesCount} opportunities. You have seen the top 3. Create your free Locora workspace to see the complete analysis and turn these findings into actionable work.
           </p>
         </div>

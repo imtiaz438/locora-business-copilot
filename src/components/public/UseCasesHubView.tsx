@@ -83,7 +83,7 @@ export const UseCasesHubView: React.FC = () => {
                   {uc.title}
                 </h3>
 
-                <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">
+                <p className="text-sm text-slate-600 leading-relaxed line-clamp-3">
                   {uc.heroSubheadline}
                 </p>
 

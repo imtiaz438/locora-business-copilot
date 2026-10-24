@@ -27,10 +27,10 @@ export const AboutView: React.FC = () => {
         <div className="space-y-4">
           <LocoraLogo className="w-14 h-14 flex-shrink-0 drop-shadow-xs" />
           <h2 className="text-2xl font-bold font-heading text-slate-900">Why We Built Locora AI</h2>
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-sans">
+          <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-sans">
             In 2024, our founders ran a digital growth agency in Austin, Texas. Every week, our account managers spent 20+ hours manually drafting proposals, creating Google Business schema markup, copying client invoices, and assembling PDF strategy roadmaps.
           </p>
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-sans">
+          <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-sans">
             Existing software was either too complex, fragmented across 6 expensive subscriptions, or produced generic AI gibberish. We built Locora AI to combine multi-model AI accuracy with crisp, white-label client operations.
           </p>
         </div>
@@ -78,7 +78,7 @@ export const AboutView: React.FC = () => {
       <div className="space-y-8">
         <div className="text-center space-y-2 max-w-2xl mx-auto">
           <h2 className="text-2xl sm:text-4xl font-bold font-heading text-slate-900">Built by Practitioners</h2>
-          <p className="text-xs sm:text-sm text-slate-600 font-sans leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-600 font-sans leading-relaxed">
             LocoraAI is built and run by a small team of engineers and local-search practitioners.
             Every feature ships from real agency workflows — and everything we publish speaks as one team.
           </p>

@@ -75,7 +75,7 @@ export const TermsOfServiceView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">1</span>
               Acceptance & Eligibility
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
               <p>
                 By creating an account, accessing, or using Locora AI, you agree to be bound by these Terms. If you are entering into this agreement on behalf of a company or legal entity, you represent that you have the authority to bind such entity. You must be at least 18 years of age to use this platform.
               </p>
@@ -90,7 +90,7 @@ export const TermsOfServiceView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">2</span>
               Description of Services
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
               <p>
                 Locora AI provides an integrated software-as-a-service (SaaS) business operating system featuring:
               </p>
@@ -112,7 +112,7 @@ export const TermsOfServiceView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">3</span>
               Subscription Plans, Billing & Cancellation
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
               <p>
                 Locora AI offers recurring subscription tiers (Free Explorer, Pro Growth at $29/mo or $249/yr billed annually, and Agency Elite at $99/mo or $790/yr billed annually).
               </p>
@@ -132,10 +132,10 @@ export const TermsOfServiceView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">4</span>
               Intellectual Property & Content Ownership
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
                 <p className="font-bold text-xs text-slate-900">Your Content Belongs To You</p>
-                <p className="text-xs leading-relaxed text-slate-600">
+                <p className="text-sm leading-relaxed text-slate-600">
                   As between you and Locora AI, you own all rights, title, and interest in the business data, customer records, invoices, proposals, and SEO assets generated using the Locora AI platform. Locora AI retains all ownership rights to the platform software, trademarks, logos, and underlying source code.
                 </p>
               </div>
@@ -150,7 +150,7 @@ export const TermsOfServiceView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">5</span>
               Acceptable Use Policy
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
               <p>You agree not to use Locora AI to:</p>
               <ul className="list-disc pl-5 space-y-1.5 text-slate-600">
                 <li>Violate any applicable local, state, national, or international laws or regulations.</li>
@@ -169,7 +169,7 @@ export const TermsOfServiceView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">6</span>
               Limitation of Liability & Warranty Disclaimer
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
               <p>
                 LOCORA AI IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED. IN NO EVENT SHALL LOCORA AI PLATFORM, INC. BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF YOUR USE OF THE PLATFORM.
               </p>
@@ -184,7 +184,7 @@ export const TermsOfServiceView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">7</span>
               Questions & Legal Contact
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed pl-8 space-y-3">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed pl-8 space-y-3">
               <p>For questions or notices regarding these Terms of Service, please reach out to our legal department:</p>
               <div className="pt-2 flex flex-wrap items-center gap-3">
                 <a

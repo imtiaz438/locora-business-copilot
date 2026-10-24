@@ -172,7 +172,7 @@ export const FeaturesView: React.FC = () => {
             {currentModule.tagline}
           </p>
 
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-sans">
+          <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-sans">
             {currentModule.description}
           </p>
 
@@ -268,7 +268,7 @@ export const FeaturesView: React.FC = () => {
                   {feat.name}
                 </h3>
 
-                <p className="text-xs text-slate-600 leading-relaxed line-clamp-3 font-sans">
+                <p className="text-sm text-slate-600 leading-relaxed line-clamp-3 font-sans">
                   {feat.heroSubheadline}
                 </p>
               </div>

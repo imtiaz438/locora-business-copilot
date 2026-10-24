@@ -181,7 +181,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
 
             <div className="space-y-4 text-sm sm:text-base text-slate-700 leading-relaxed font-sans">
               <p>{useCase.editorialOverview.problemStatement}</p>
-              <div className="p-5 bg-slate-50 border-l-4 border-emerald-600 rounded-r-2xl text-xs sm:text-sm text-slate-800 font-medium leading-relaxed">
+              <div className="p-5 bg-slate-50 border-l-4 border-emerald-600 rounded-r-2xl text-sm sm:text-base text-slate-800 font-medium leading-relaxed">
                 {useCase.editorialOverview.strategicValue}
               </div>
               <p className="text-xs text-slate-500 font-sans">
@@ -206,7 +206,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
                 <span className="text-xs font-extrabold font-heading text-emerald-800 uppercase tracking-wider block">
                   {persona.role}
                 </span>
-                <p className="text-xs text-slate-600 leading-relaxed font-sans">
+                <p className="text-sm text-slate-600 leading-relaxed font-sans">
                   {persona.description}
                 </p>
               </div>
@@ -229,7 +229,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
                   0{i + 1}
                 </div>
                 <h3 className="text-base font-bold font-heading text-slate-900">{pain.title}</h3>
-                <p className="text-xs text-slate-600 leading-relaxed font-sans">{pain.desc}</p>
+                <p className="text-sm text-slate-600 leading-relaxed font-sans">{pain.desc}</p>
               </div>
             ))}
           </div>
@@ -254,7 +254,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
                   </span>
                 </div>
                 <h3 className="text-base font-bold font-heading text-slate-900">{step.title}</h3>
-                <p className="text-xs text-slate-600 leading-relaxed font-sans">{step.description || step.desc}</p>
+                <p className="text-sm text-slate-600 leading-relaxed font-sans">{step.description || step.desc}</p>
                 {step.proTip && (
                   <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 font-sans">
                     <span className="font-bold">Pro Tip: </span>{step.proTip}
@@ -408,7 +408,7 @@ export const UseCaseDetailPage: React.FC<UseCaseDetailPageProps> = ({ slug }) =>
                   <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${isOpen ? 'rotate-180 text-emerald-700' : ''}`} />
                 </button>
                 {isOpen && (
-                  <div className="px-5 pb-5 pt-1 text-xs text-slate-600 leading-relaxed font-sans border-t border-slate-100">
+                  <div className="px-5 pb-5 pt-1 text-sm text-slate-600 leading-relaxed font-sans border-t border-slate-100">
                     {faq.a}
                   </div>
                 )}

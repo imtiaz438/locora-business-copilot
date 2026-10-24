@@ -75,7 +75,7 @@ export const RefundPolicyView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">1</span>
               Payment Processing Declarations
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
               <p>
                 Locora AI utilizes <strong>Whop</strong> as our official payment processing gateway and digital membership management partner. Whop executes all secure checkout transactions, handles currency conversions, manages regional compliance configurations, and processes sales tax calculations. 
               </p>
@@ -93,7 +93,7 @@ export const RefundPolicyView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">2</span>
               Subscription Cancellations
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
               <p>
                 All paid software tiers (Pro and Agency options) are established on recurring, automated renewal cycles based on your selected framework (monthly or annual increments). You maintain complete, absolute control over your plan allocation:
               </p>
@@ -112,7 +112,7 @@ export const RefundPolicyView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">3</span>
               Refund Evaluation Standards
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
               <p>
                 Because Locora AI allocates dedicated server processing nodes and incurs immediate, non-refundable third-party infrastructure computing expenses (including API tokens for Google Gemini processing models) upon asset generations, our refund protocol is structured as follows:
               </p>
@@ -121,7 +121,7 @@ export const RefundPolicyView: React.FC = () => {
                   <AlertCircle className="w-4 h-4 text-amber-600" />
                   <span>Standard Refund Thresholds</span>
                 </div>
-                <p className="text-xs leading-relaxed text-amber-800">
+                <p className="text-sm leading-relaxed text-amber-800">
                   All transactional purchases are final and non-refundable once accounts have actively spent allocated AI Copilot token balances. If you establish a subscription plan but do not interact with the platform or generate any data records, you are legally entitled to request an evaluation review within <strong>14 days</strong> of the invoice event date.
                 </p>
               </div>
@@ -136,7 +136,7 @@ export const RefundPolicyView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">4</span>
               Exceptions & Technical Billing Discrepancies
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
               <p>
                 We are committed to absolute billing fairness. Complete manual adjustments or direct refund events will be instantly approved and processed regardless of usage thresholds for the following situations:
               </p>
@@ -156,7 +156,7 @@ export const RefundPolicyView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">5</span>
               How to Request Support & Billing Adjustments
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-4 pl-8">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-4 pl-8">
               <p>
                 If you encounter a payment problem, duplicate billing notification, or want to verify an active adjustment evaluation, do not hesitate to contact our desk directly:
               </p>

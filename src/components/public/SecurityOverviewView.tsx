@@ -79,7 +79,7 @@ export const SecurityOverviewView: React.FC = () => {
                 Server-Side API Key Isolation & AI Safety
               </h2>
             </div>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-11">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-11">
               <p>
                 Locora AI strictly adheres to full-stack architecture principles. Secret API keys (such as Google Gemini API keys) are stored securely in server-side environment configurations and are <strong>never exposed to client browser network tabs</strong>.
               </p>
@@ -88,7 +88,7 @@ export const SecurityOverviewView: React.FC = () => {
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   <span>Zero Direct Client SDK Calls</span>
                 </div>
-                <p className="text-xs leading-relaxed text-emerald-800">
+                <p className="text-sm leading-relaxed text-emerald-800">
                   All requests pass through validated Express server endpoints (`/api/*`), enforcing authentication checks, rate limiting, and sanitization before communicating with LLM providers.
                 </p>
               </div>
@@ -107,14 +107,14 @@ export const SecurityOverviewView: React.FC = () => {
                 Data Encryption (At Rest & In Transit)
               </h2>
             </div>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-11">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-11">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
                   <div className="flex items-center gap-2 font-bold text-xs text-slate-900">
                     <Lock className="w-4 h-4 text-indigo-600" />
                     <span>Encryption In Transit</span>
                   </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
+                  <p className="text-sm text-slate-600 leading-relaxed">
                     All web traffic to and from Locora AI is enforced via TLS 1.3 with HTTP Strict Transport Security (HSTS), securing passwords and API payloads.
                   </p>
                 </div>
@@ -124,7 +124,7 @@ export const SecurityOverviewView: React.FC = () => {
                     <Database className="w-4 h-4 text-emerald-600" />
                     <span>Encryption At Rest</span>
                   </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">
+                  <p className="text-sm text-slate-600 leading-relaxed">
                     Database storage (Google Cloud Firestore / Cloud SQL) encrypts data on disk using AES-256 bit encryption keys managed by Cloud KMS.
                   </p>
                 </div>
@@ -144,7 +144,7 @@ export const SecurityOverviewView: React.FC = () => {
                 Payment Security & PCI-DSS Compliance
               </h2>
             </div>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-11">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-11">
               <p>
                 Locora AI integrates directly with <strong>Stripe</strong> for all credit card transactions, plan upgrades, and recurring billing.
               </p>
@@ -168,7 +168,7 @@ export const SecurityOverviewView: React.FC = () => {
                 Infrastructure Reliability & Automated Backups
               </h2>
             </div>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-11">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-11">
               <p>
                 Locora AI is hosted across multi-region Cloud Run containerized clusters with automated horizontal scaling, health probes, and redundant database replication.
               </p>
@@ -201,7 +201,7 @@ export const SecurityOverviewView: React.FC = () => {
                 Vulnerability Disclosure & Security Contact
               </h2>
             </div>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed pl-11 space-y-3">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed pl-11 space-y-3">
               <p>
                 If you believe you have discovered a potential security vulnerability in Locora AI, we encourage you to report it to our security response team promptly.
               </p>

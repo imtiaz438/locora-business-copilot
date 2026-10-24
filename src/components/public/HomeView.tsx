@@ -465,7 +465,7 @@ export const HomeView: React.FC = () => {
                   style={{ width: `${((crawlProgressStage + 1) / 4) * 100}%` }}
                 />
               </div>
-              <p className="text-xs text-emerald-100/90 leading-relaxed font-mono text-[11px]">
+              <p className="text-sm text-emerald-100/90 leading-relaxed font-mono text-[11px]">
                 {crawlStages[crawlProgressStage]}
               </p>
             </div>
@@ -799,7 +799,7 @@ export const HomeView: React.FC = () => {
                                       {issue.title}
                                     </h5>
                                   </div>
-                                  <p className="text-xs text-slate-600 font-sans leading-relaxed pt-1">
+                                  <p className="text-sm text-slate-600 font-sans leading-relaxed pt-1">
                                     {issue.description}
                                   </p>
                                 </div>
@@ -1102,7 +1102,7 @@ export const HomeView: React.FC = () => {
                           {publicAudit.localSeoAnalysis.googleBusinessProfileNotice.headline}
                         </h5>
                       </div>
-                      <p className="text-xs text-amber-900/90 leading-relaxed font-sans">
+                      <p className="text-sm text-amber-900/90 leading-relaxed font-sans">
                         {publicAudit.localSeoAnalysis.googleBusinessProfileNotice.explanation}
                       </p>
                       <div className="pt-2 border-t border-amber-200/70 flex items-center justify-between text-xs">
@@ -1323,7 +1323,7 @@ export const HomeView: React.FC = () => {
                               <h5 className="text-sm font-bold text-slate-900 font-heading">
                                 {teaser.title}
                               </h5>
-                              <p className="text-xs text-slate-600 leading-relaxed font-sans">
+                              <p className="text-sm text-slate-600 leading-relaxed font-sans">
                                 {teaser.teaserDescription}
                               </p>
                             </div>
@@ -1355,7 +1355,7 @@ export const HomeView: React.FC = () => {
                         <h4 className="text-xl sm:text-2xl font-bold font-heading text-white tracking-tight">
                           Turn These Findings Into Customers with Locora
                         </h4>
-                        <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed font-sans">
+                        <p className="text-sm sm:text-base text-emerald-100/90 leading-relaxed font-sans">
                           Claiming your audit saves your findings and initializes your autonomous Business Brain.
                           Locora AI will immediately prioritize your highest-ROI fixes and generate copy-paste ready Schema.org code.
                         </p>
@@ -1411,7 +1411,7 @@ export const HomeView: React.FC = () => {
                   <h4 className="text-base font-bold font-heading text-slate-900">
                     1. Technical SEO & Headers
                   </h4>
-                  <p className="text-xs text-slate-600 leading-relaxed font-sans">
+                  <p className="text-sm text-slate-600 leading-relaxed font-sans">
                     Scans live title tags, meta descriptions, canonical declarations, H1 heading structure, and image alt text compliance.
                   </p>
                 </div>
@@ -1423,7 +1423,7 @@ export const HomeView: React.FC = () => {
                   <h4 className="text-base font-bold font-heading text-slate-900">
                     2. Speed & TTFB Latency
                   </h4>
-                  <p className="text-xs text-slate-600 leading-relaxed font-sans">
+                  <p className="text-sm text-slate-600 leading-relaxed font-sans">
                     Measures real-time server handshake time, HTML transfer size, and HTTPS security protocol validation.
                   </p>
                 </div>
@@ -1435,7 +1435,7 @@ export const HomeView: React.FC = () => {
                   <h4 className="text-base font-bold font-heading text-slate-900">
                     3. Local Schema & Footprint
                   </h4>
-                  <p className="text-xs text-slate-600 leading-relaxed font-sans">
+                  <p className="text-sm text-slate-600 leading-relaxed font-sans">
                     Detects Schema.org LocalBusiness JSON-LD markup, direct telephone links, and physical address discovery in live HTML.
                   </p>
                 </div>
@@ -1468,7 +1468,7 @@ export const HomeView: React.FC = () => {
           <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-slate-900 tracking-tight">
             Six Intelligent Engines. One Clean System.
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 font-sans leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-600 font-sans leading-relaxed">
             Locora brings your SEO, AI search presence, reputation, competitor radar, and daily business operations together under an autonomous Business Brain.
           </p>
         </div>
@@ -1537,7 +1537,7 @@ export const HomeView: React.FC = () => {
                     <h3 className="text-base font-bold font-heading text-slate-900 group-hover:text-[#059669] transition-colors">
                       {engine.title}
                     </h3>
-                    <p className="text-xs text-slate-600 mt-1.5 leading-relaxed font-sans">
+                    <p className="text-sm text-slate-600 mt-1.5 leading-relaxed font-sans">
                       {engine.desc}
                     </p>
                   </div>
@@ -1592,7 +1592,7 @@ export const HomeView: React.FC = () => {
           <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-slate-900 tracking-tight">
             From Checkup to Growth in Five Steps
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 font-sans leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-600 font-sans leading-relaxed">
             No guesswork, no fake numbers. Every step is powered by your real business data.
           </p>
         </div>
@@ -1640,7 +1640,7 @@ export const HomeView: React.FC = () => {
                   <span className="text-4xl font-extrabold font-heading text-emerald-100">{s.step}</span>
                 </div>
                 <h3 className="text-sm font-bold font-heading text-slate-900">{s.title}</h3>
-                <p className="text-xs text-slate-600 font-sans leading-relaxed">{s.desc}</p>
+                <p className="text-sm text-slate-600 font-sans leading-relaxed">{s.desc}</p>
               </div>
             ))}
           </div>
@@ -1668,7 +1668,7 @@ export const HomeView: React.FC = () => {
           <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-slate-900 tracking-tight">
             The Locora Verified Local Business Directory
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 font-sans leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-600 font-sans leading-relaxed">
             Connect with high-intent local customers looking for accredited service professionals. Every listing is fortified with Google Business Profile synchronization, Schema.org LocalBusiness structured data, verified reviews, and Generative Engine Optimization (GEO) citations across 2026 AI search engines.
           </p>
         </div>
@@ -1680,7 +1680,7 @@ export const HomeView: React.FC = () => {
               <BadgeCheck className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold font-heading text-slate-900">Accredited Trust Badge</h3>
-            <p className="text-xs text-slate-600 leading-relaxed font-sans">
+            <p className="text-sm text-slate-600 leading-relaxed font-sans">
               Google Business Profile synchronization, active operating hours, license verification, and authentic reviews give consumers instant confidence over unverified competitors.
             </p>
           </div>
@@ -1690,7 +1690,7 @@ export const HomeView: React.FC = () => {
               <Bot className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold font-heading text-slate-900">2026 AI Search (GEO)</h3>
-            <p className="text-xs text-slate-600 leading-relaxed font-sans">
+            <p className="text-sm text-slate-600 leading-relaxed font-sans">
               Engineered with full Schema.org structured data and entity graph markup, enabling ChatGPT, Google Gemini, and Perplexity to cite and recommend your business in conversational search.
             </p>
           </div>
@@ -1700,7 +1700,7 @@ export const HomeView: React.FC = () => {
               <MapPin className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold font-heading text-slate-900">Hyper-Local SEO Pages</h3>
-            <p className="text-xs text-slate-600 leading-relaxed font-sans">
+            <p className="text-sm text-slate-600 leading-relaxed font-sans">
               Programmatic city and category hubs (e.g. Austin Dentists, Miami HVAC) built to index cleanly on search engines and capture organic high-intent local customer queries.
             </p>
           </div>
@@ -1710,7 +1710,7 @@ export const HomeView: React.FC = () => {
               <DollarSign className="w-5 h-5" />
             </div>
             <h3 className="text-base font-bold font-heading text-slate-900">0% Commission Leads</h3>
-            <p className="text-xs text-slate-600 leading-relaxed font-sans">
+            <p className="text-sm text-slate-600 leading-relaxed font-sans">
               Customers call, visit, or submit free quote requests straight into your business CRM. Zero broker commissions, zero lead auctions, and zero hidden referral fees.
             </p>
           </div>
@@ -1748,7 +1748,7 @@ export const HomeView: React.FC = () => {
                   <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span>Wilmington, Delaware 19801 • Serving Nationwide Healthcare Practices</span>
                 </p>
-                <p className="text-xs text-slate-300/90 leading-relaxed font-sans pt-1">
+                <p className="text-sm text-slate-300/90 leading-relaxed font-sans pt-1">
                   U.S.-based recruitment platform specializing in healthcare and mental health staffing, connecting therapists, social workers, nurse practitioners, and physical therapists across the United States.
                 </p>
               </div>
@@ -1800,7 +1800,7 @@ export const HomeView: React.FC = () => {
             <div className="lg:col-span-5 space-y-6">
               <div className="space-y-2">
                 <h4 className="text-lg font-bold font-heading text-white">Explore By Service Category</h4>
-                <p className="text-xs text-slate-400 leading-relaxed font-sans">
+                <p className="text-sm text-slate-400 leading-relaxed font-sans">
                   Explore the LocoraAI directory by service category. Every listing is a real business profile with its live Google presence — no paid placements, no inflated counts.
                 </p>
               </div>
@@ -1863,7 +1863,7 @@ export const HomeView: React.FC = () => {
           <h2 className="text-3xl sm:text-4xl font-extrabold font-heading text-slate-900 tracking-tight">
             Engineered For Your Specific Business Model
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 font-sans leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-600 font-sans leading-relaxed">
             Locora comes pre-trained with playbooks and metrics calibrated for local service trades, clinical practices, and high-velocity agencies.
           </p>
         </div>
@@ -1927,7 +1927,7 @@ export const HomeView: React.FC = () => {
                     <h3 className="text-base font-bold font-heading text-slate-900">{item.industry}</h3>
                     <p className="text-[11px] font-medium text-emerald-700 mt-0.5">{item.examples}</p>
                   </div>
-                  <p className="text-xs text-slate-600 leading-relaxed font-sans">{item.desc}</p>
+                  <p className="text-sm text-slate-600 leading-relaxed font-sans">{item.desc}</p>
                 </div>
                 <div className="pt-3 border-t border-slate-100">
                   <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1 font-heading">
@@ -1980,7 +1980,7 @@ export const HomeView: React.FC = () => {
                 <MapPin className="w-4 h-4 text-emerald-600" />
                 <span>Maps &amp; Local Pack Presence</span>
               </div>
-              <p className="text-xs text-slate-500 leading-relaxed font-sans">
+              <p className="text-sm text-slate-500 leading-relaxed font-sans">
                 Live Google Maps search observations, NAP citation accuracy, and LocalBusiness schema markup verification.
               </p>
             </div>
@@ -1990,7 +1990,7 @@ export const HomeView: React.FC = () => {
                 <Activity className="w-4 h-4 text-emerald-600" />
                 <span>Technical Website Health</span>
               </div>
-              <p className="text-xs text-slate-500 leading-relaxed font-sans">
+              <p className="text-sm text-slate-500 leading-relaxed font-sans">
                 Real TLS/SSL handshake validation, server TTFB latency measurement, heading tag structure, and mobile readiness.
               </p>
             </div>
@@ -2000,7 +2000,7 @@ export const HomeView: React.FC = () => {
                 <Sparkles className="w-4 h-4 text-emerald-600" />
                 <span>Review &amp; Visibility Footprint</span>
               </div>
-              <p className="text-xs text-slate-500 leading-relaxed font-sans">
+              <p className="text-sm text-slate-500 leading-relaxed font-sans">
                 Unanswered review detection, customer sentiment flags, competitor keyword gaps, and 2026 AI search discovery readiness.
               </p>
             </div>
@@ -2034,7 +2034,7 @@ export const HomeView: React.FC = () => {
             <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900 tracking-tight">
               Predictable Plans for Solo Businesses & Agencies
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 font-sans max-w-xl leading-relaxed">
+            <p className="text-sm sm:text-base text-slate-600 font-sans max-w-xl leading-relaxed">
               Explore our flexible subscription plans—including our free Forever Explorer plan, Pro AI Growth ($29/mo), and multi-client Agency Elite ($99/mo)—with full feature comparisons and guarantees.
             </p>
           </div>
@@ -2073,7 +2073,7 @@ export const HomeView: React.FC = () => {
                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${expandedFaq === i ? 'rotate-180' : ''}`} />
               </button>
               {expandedFaq === i && (
-                <div className="px-4 sm:px-5 pb-5 text-xs text-slate-600 leading-relaxed border-t border-slate-100 pt-3 font-sans">
+                <div className="px-4 sm:px-5 pb-5 text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3 font-sans">
                   {faq.a}
                 </div>
               )}

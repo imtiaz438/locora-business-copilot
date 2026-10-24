@@ -75,7 +75,7 @@ export const PrivacyPolicyView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">1</span>
               Information We Collect
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
               <p>
                 We collect information necessary to provide you with our local service copilot capabilities, manage subscription accounts, and deliver personalized AI business tools:
               </p>
@@ -96,7 +96,7 @@ export const PrivacyPolicyView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">2</span>
               How We Use Your Information
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
               <p>Locora AI uses your data strictly for legitimate operational purposes:</p>
               <ul className="list-disc pl-5 space-y-1.5 text-slate-600">
                 <li>To generate custom proposals, local SEO schemas, invoice PDFs, and automated CRM records.</li>
@@ -115,13 +115,13 @@ export const PrivacyPolicyView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">3</span>
               AI Model Processing & Confidentiality
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
               <div className="p-4 bg-emerald-50/60 border border-emerald-200 rounded-2xl text-emerald-900 space-y-2">
                 <div className="flex items-center gap-2 font-bold text-xs text-emerald-800">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                   <span>Strict Server-Side AI Execution Guarantee</span>
                 </div>
-                <p className="text-xs leading-relaxed text-emerald-800">
+                <p className="text-sm leading-relaxed text-emerald-800">
                   All AI Copilot queries are executed through secure, enterprise-grade server-side APIs (Google Gemini API). Your inputs, prompts, customer details, and business financials are processed ephemerally and are <strong>NEVER used to train foundational AI models</strong>.
                 </p>
               </div>
@@ -136,7 +136,7 @@ export const PrivacyPolicyView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">4</span>
               Third-Party Service Providers
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
               <p>
                 We do not sell, rent, or trade your personal data. We share data only with trusted infrastructure subprocessors required to operate our service:
               </p>
@@ -161,7 +161,7 @@ export const PrivacyPolicyView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">5</span>
               Your Data Rights & Control
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed space-y-3 pl-8">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed space-y-3 pl-8">
               <p>Under applicable data protection laws (including GDPR and CCPA), you maintain full control over your business records:</p>
               <ul className="list-disc pl-5 space-y-1.5 text-slate-600">
                 <li><strong>Access & Export:</strong> Download complete CSV/JSON backups of your CRM contacts, invoices, and proposals from your settings page.</li>
@@ -189,7 +189,7 @@ export const PrivacyPolicyView: React.FC = () => {
               <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-bold flex items-center justify-center">6</span>
               Contact Privacy Team
             </h2>
-            <div className="text-xs sm:text-sm text-slate-600 leading-relaxed pl-8 space-y-3">
+            <div className="text-sm sm:text-base text-slate-600 leading-relaxed pl-8 space-y-3">
               <p>If you have any questions, concerns, or data requests regarding this Privacy Policy, please contact us:</p>
               <div className="flex flex-col sm:flex-row gap-4 pt-2">
                 <a

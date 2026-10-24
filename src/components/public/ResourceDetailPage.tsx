@@ -251,7 +251,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
                 {section.heading}
               </h2>
 
-              <div className="space-y-3 text-sm text-slate-700 leading-relaxed font-sans">
+              <div className="space-y-3 text-base text-slate-700 leading-relaxed font-sans">
                 {section.content.map((p, pIdx) => (
                   <p key={pIdx}>{p}</p>
                 ))}
@@ -355,7 +355,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
               <h3 className="text-xl sm:text-2xl font-bold font-heading text-white">
                 {article.ctaHeadline}
               </h3>
-              <p className="text-xs text-slate-300 leading-relaxed font-sans">
+              <p className="text-sm text-slate-300 leading-relaxed font-sans">
                 {article.ctaDescription}
               </p>
             </div>
@@ -389,7 +389,7 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
                       <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${isOpen ? 'rotate-180 text-emerald-700' : ''}`} />
                     </button>
                     {isOpen && (
-                      <div className="px-4 pb-4 pt-1 text-xs text-slate-600 leading-relaxed font-sans border-t border-slate-200">
+                      <div className="px-4 pb-4 pt-1 text-sm text-slate-600 leading-relaxed font-sans border-t border-slate-200">
                         {faq.a}
                       </div>
                     )}

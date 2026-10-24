@@ -267,7 +267,7 @@ export const ContactView: React.FC = () => {
                 <CheckCircle2 className="w-6 h-6" />
               </div>
               <h2 className="text-2xl font-bold font-heading text-slate-900">Message Received!</h2>
-              <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
+              <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
                 Thank you, <strong>{formData.name}</strong>. Your inquiry reference ticket ID is <span className="font-mono text-[#059669] font-bold">{ticketId}</span>. Our growth specialist will contact you shortly at <strong>{formData.email}</strong>.
               </p>
 

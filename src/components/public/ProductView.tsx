@@ -705,7 +705,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                   {currentModule.tagline}
                 </p>
 
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-sans">
+                <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-sans">
                   {currentModule.description}
                 </p>
 
@@ -800,7 +800,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                     {feat.name}
                   </h4>
 
-                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-3 font-sans">
+                  <p className="text-sm text-slate-600 leading-relaxed line-clamp-3 font-sans">
                     {feat.heroSubheadline}
                   </p>
 
@@ -1034,7 +1034,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             </form>
 
             {aiResponse && (
-              <div className="p-4 bg-slate-900/90 border border-emerald-500/30 rounded-xl text-xs text-slate-200 leading-relaxed space-y-2 animate-in fade-in-50 whitespace-pre-line font-sans">
+              <div className="p-4 bg-slate-900/90 border border-emerald-500/30 rounded-xl text-sm text-slate-200 leading-relaxed space-y-2 animate-in fade-in-50 whitespace-pre-line font-sans">
                 {aiResponse}
               </div>
             )}
@@ -1073,7 +1073,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                   <CheckCircle2 className="w-4 h-4" />
                   <span>The Locora Way (AI Growth Diagnosis)</span>
                 </div>
-                <p className="text-xs text-slate-800 leading-relaxed font-sans">
+                <p className="text-sm text-slate-800 leading-relaxed font-sans">
                   "Your business is losing an estimated 38 calls/month because 4 high-demand service pages lack neighborhood geotags in Austin. We generated ready-to-publish service copy and injected LocalBusiness JSON-LD markup."
                 </p>
                 <div className="pt-1 flex gap-2">
@@ -1394,7 +1394,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                 <Sparkles className="w-4 h-4" />
                 <span>Locora Revenue Opportunity</span>
               </div>
-              <p className="text-xs text-slate-800 leading-relaxed font-sans">
+              <p className="text-sm text-slate-800 leading-relaxed font-sans">
                 "Customers repeatedly praise 'same-day water heater repair,' but your homepage does not mention it in the hero headline. Updating this headline will lift visitor conversion by an estimated 14%."
               </p>
             </div>
@@ -1477,7 +1477,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                   setGeneratedReply(null);
                 }}
                 placeholder="Enter or paste customer feedback to test response generation..."
-                className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-emerald-500 leading-relaxed"
+                className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-emerald-500 leading-relaxed"
               />
             </div>
           </div>
@@ -1528,7 +1528,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                 </span>
                 <span className="text-[10px] text-emerald-700 font-bold">Optimized for Google Maps Algorithm</span>
               </div>
-              <p className="text-xs text-slate-800 leading-relaxed italic">{generatedReply}</p>
+              <p className="text-sm text-slate-800 leading-relaxed italic">{generatedReply}</p>
             </div>
           )}
         </div>
@@ -1760,7 +1760,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-700 whitespace-pre-line leading-relaxed max-h-72 overflow-y-auto">
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-700 whitespace-pre-line leading-relaxed max-h-72 overflow-y-auto">
               {previewAssetModal.content}
             </div>
             <div className="flex justify-end gap-2 pt-2">
@@ -1866,7 +1866,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
                 <span className="font-bold text-xs text-white">
                   Client Status: {agencyClients[selectedClientIndex].name}
                 </span>
-                <p className="text-xs text-indigo-200 leading-relaxed font-sans">
+                <p className="text-sm text-indigo-200 leading-relaxed font-sans">
                   {agencyClients[selectedClientIndex].health}
                 </p>
               </div>
@@ -1972,7 +1972,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
               <h3 className="text-2xl font-extrabold font-heading text-slate-900">
                 {executionTools[activeExecutionTool].title}
               </h3>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-sans">
+              <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-sans">
                 {executionTools[activeExecutionTool].desc}
               </p>
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 flex items-center gap-2">
@@ -2014,7 +2014,7 @@ Fix: Activate automated 30-minute arrival SMS notifications to convert future 3-
             <h2 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900">
               The Locora Business Brain: How It Works
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-sans">
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-sans">
               Unlike generic LLM wrappers that forget your details on every prompt, Locora builds a persistent semantic knowledge graph of your local business:
             </p>
           </div>

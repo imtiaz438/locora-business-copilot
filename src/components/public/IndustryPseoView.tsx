@@ -1177,7 +1177,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
             <h2 className="text-xl font-bold font-heading text-slate-900">
               Interactive Deliverables Playground for {currentIndustry.name}
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-sm text-slate-500">
               Preview the real deliverables Locora AI creates for this trade in seconds.
             </p>
           </div>
@@ -1274,7 +1274,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
           <h2 className="text-2xl font-bold font-heading text-slate-900">
             Search Demand & Intent Architecture for {currentIndustry.name}
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto">
             Categorized by intent tier: Primary core terms for page positioning, secondary service phrases for topical depth, and long-tail conversational angles for Answer Engine discovery.
           </p>
         </div>
@@ -1286,7 +1286,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-100 text-emerald-900 rounded-lg text-xs font-bold font-heading">
                 <span>Primary Cluster (Title & H1)</span>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm text-slate-500">
                 Core commercial intent keywords driving authoritative page positioning and primary rank tracking.
               </p>
               <ul className="space-y-2 pt-1">
@@ -1309,7 +1309,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-900 rounded-lg text-xs font-bold font-heading">
                 <span>Secondary Intent (Subheadings & Body)</span>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm text-slate-500">
                 High-intent specific services, feature scopes, and local modifier combinations for topical authority.
               </p>
               <ul className="space-y-2 pt-1">
@@ -1332,7 +1332,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 text-amber-900 rounded-lg text-xs font-bold font-heading">
                 <span>Long-Tail (FAQ & Voice Search)</span>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm text-slate-500">
                 Conversational, question-format queries optimized for Google AI Overviews, Perplexity, and voice queries.
               </p>
               <ul className="space-y-2 pt-1">
@@ -1361,7 +1361,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
           <h2 className="text-2xl font-bold font-heading text-slate-900">
             Frequently Asked Questions for {currentIndustry.name}
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto">
             Direct answers to the most common search queries, optimized for Google featured snippets and conversational Answer Engines.
           </p>
         </div>
@@ -1388,7 +1388,7 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
                   />
                 </button>
                 {isOpen && (
-                  <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 font-sans">
+                  <div className="px-5 pb-5 pt-1 text-sm sm:text-base text-slate-600 leading-relaxed border-t border-slate-100 font-sans">
                     {faq.answer}
                   </div>
                 )}
