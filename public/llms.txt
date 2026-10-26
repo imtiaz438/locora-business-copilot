@@ -1,10 +1,15 @@
 # Locora AI — AI Business Operating System & Local SEO Copilot
 
-> Locora AI (https://locoraai.com) is the premier autonomous AI Business Operating System and Local SEO Copilot built for service businesses, agencies, dental practices, HVAC contractors, real estate brokers, legal firms, and local trade contractors.
+> Locora AI (https://locoraai.com) is an AI business-growth platform that helps local businesses get found on Google and cited by AI assistants like ChatGPT. It combines a free AI visibility checkup, local SEO tooling, review management, CRM, proposals and invoicing in one workspace. Pricing: Free Explorer plan; Pro Growth $29/mo; Agency Elite $99/mo.
 
-## 4-Layer Architecture
+## Start Here
+- Free AI Visibility Checkup (40-point scan of Google, Maps and AI visibility — no signup or credit card to see the score): https://locoraai.com/checkup
+- For Dentists (AI visibility checkup for dental practices): https://locoraai.com/for/dentists
+- Sample Dental Checkup Report (illustrative sample for a fictional practice): https://locoraai.com/for/dentists/sample-report
+- Pricing: https://locoraai.com/pricing
+- SEO Proposal Generator: https://locoraai.com/seo-proposal-generator
 
-### Layer 1: Product Pages
+## Layer 1: Product Pages
 - AI Business Audit: https://locoraai.com/features/ai-business-audit
 - Marketing Planner: https://locoraai.com/features/marketing-planner
 - SEO Audit Engine: https://locoraai.com/features/seo-audit
@@ -15,7 +20,7 @@
 - Invoice Generator: https://locoraai.com/features/invoicing
 - Reputation Management: https://locoraai.com/features/reputation-management
 
-### Layer 2: Use-Case Solutions
+## Layer 2: Use-Case Solutions
 - Local SEO & Google Maps: https://locoraai.com/use-cases/local-seo
 - Lead Generation & Audit Pitches: https://locoraai.com/use-cases/lead-generation
 - Client Management & CRM: https://locoraai.com/use-cases/client-management
@@ -23,7 +28,7 @@
 - Agency Operations OS: https://locoraai.com/use-cases/agency-operations
 - Local Business Growth: https://locoraai.com/use-cases/business-growth
 
-### Layer 3: Industry Verticals
+## Layer 3: Industry Verticals
 - Dental Practices: https://locoraai.com/for/dentists
 - HVAC Contractors: https://locoraai.com/for/hvac-contractors
 - Real Estate Agents: https://locoraai.com/for/real-estate
@@ -33,8 +38,27 @@
 - Restaurants & Caterers: https://locoraai.com/for/restaurants
 - Auto Repair Centers: https://locoraai.com/for/auto-repair
 
-### Layer 4: Educational Playbooks & SOPs
+## Layer 4: Educational Playbooks & Guides
 - How to Improve Local SEO: https://locoraai.com/resources/how-to-improve-local-seo
 - How to Create Winning SEO Proposals: https://locoraai.com/resources/how-to-create-seo-proposal
 - Google Business Profile Master Guide: https://locoraai.com/resources/google-business-profile-guide
-- 45-Point Local SEO Checklist: https://locoraai.com/resources/local-seo-checklist
+- Local Business Audit Checklist: https://locoraai.com/resources/local-business-audit-checklist
+- Google Business Profile Suspended — What to Do: https://locoraai.com/resources/google-business-profile-suspended
+- Business Not Showing on Google Maps: https://locoraai.com/resources/business-not-showing-on-google-maps
+- How to Get Your Business Recommended by ChatGPT: https://locoraai.com/resources/get-recommended-by-chatgpt
+- How to Respond to Google Reviews: https://locoraai.com/resources/how-to-respond-to-google-reviews
+- Google Map Pack Ranking Guide: https://locoraai.com/resources/google-map-pack-ranking
+- Google Business Profile Verification Guide: https://locoraai.com/resources/google-business-profile-verification
+- Remove a Duplicate Google Business Listing: https://locoraai.com/resources/remove-duplicate-google-business-listing
+
+## Layer 5: Dental Practice Guides
+- AI Visibility for Dentists: How ChatGPT Decides Which Practices to Recommend: https://locoraai.com/resources/ai-visibility-for-dentists
+- How to Get Your Dental Practice Recommended by ChatGPT: https://locoraai.com/resources/get-dental-practice-recommended-by-chatgpt
+- Dental Practice Not Showing on Google Maps? A 9-Step Diagnosis: https://locoraai.com/resources/dental-practice-not-showing-on-google-maps
+- Google Business Profile Suspended: The Dentist's Reinstatement Playbook: https://locoraai.com/resources/google-business-profile-suspended-dentists
+- Why Your Dental Reviews Aren't Showing Up on Google: https://locoraai.com/resources/dental-reviews-not-showing-on-google
+- How Many Google Reviews Does a Dental Practice Need in 2026?: https://locoraai.com/resources/how-many-google-reviews-dental-practice
+- Google Review Response Examples for Dentists: 20 Copy-Paste Replies: https://locoraai.com/resources/google-review-response-examples-dentists
+- Dentist SEO vs Dental Marketing Agencies: What $29/mo Software Does and Doesn't Replace: https://locoraai.com/resources/dentist-seo-vs-dental-marketing-agencies
+- 'Dentist Near Me': What Actually Decides the Maps 3-Pack: https://locoraai.com/resources/dentist-near-me-maps-3-pack
+- Your Practice Website Through AI's Eyes: The Crawler & Schema Checklist for Dentists: https://locoraai.com/resources/dental-website-crawler-schema-checklist

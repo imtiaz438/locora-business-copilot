@@ -173,6 +173,8 @@
 
 ## 6. Official Sitemap & Resource URL Directory
 - Homepage: https://locoraai.com/
+- Free AI Visibility Checkup: https://locoraai.com/checkup
+- SEO Proposal Generator: https://locoraai.com/seo-proposal-generator
 - Features Directory: https://locoraai.com/features
 - Proposal Generator: https://locoraai.com/features/ai-proposal-generator
 - SEO Audit Engine: https://locoraai.com/features/seo-audit
@@ -181,9 +183,15 @@
 - AI Business Audit: https://locoraai.com/features/ai-business-audit
 - Marketing Planner: https://locoraai.com/features/marketing-planner
 - Use Cases Hub: https://locoraai.com/use-cases
+- For Dentists: https://locoraai.com/for/dentists
+- Sample Dental Checkup Report (illustrative): https://locoraai.com/for/dentists/sample-report
 - Resources & Playbooks: https://locoraai.com/resources
+- AI Visibility for Dentists (pillar guide): https://locoraai.com/resources/ai-visibility-for-dentists
+- How to Get Your Business Recommended by ChatGPT: https://locoraai.com/resources/get-recommended-by-chatgpt
+- Full guide index for AI crawlers: https://locoraai.com/llms.txt
 - Pricing & Plans: https://locoraai.com/pricing
 - About & Mission: https://locoraai.com/about
-- Facebook: https://facebook.com/locoraai
-- Instagram: https://instagram.com/locoraai
+- YouTube: https://www.youtube.com/@LocoraAIHQ
+- Facebook: https://www.facebook.com/profile.php?id=61593321283379
+- LinkedIn: https://www.linkedin.com/company/locoracopilot
 
