@@ -60,6 +60,7 @@ import { SecurityOverviewView } from './components/public/SecurityOverviewView';
 import { RefundPolicyView } from './components/public/RefundPolicyView';
 import { CheckupView } from './components/public/CheckupView';
 import { ProposalGeneratorView } from './components/public/ProposalGeneratorView';
+import { SampleDentalReportView } from './components/public/SampleDentalReportView';
 import { DirectoryHubView } from './components/directory/DirectoryHubView';
 import { DirectoryBusinessDetailView } from './components/directory/DirectoryBusinessDetailView';
 import { applyPageMetadata } from './utils/seoMetadata';
@@ -72,6 +73,7 @@ const PATH_TO_TAB: Record<string, string> = {
   'checkup': 'checkup',
   'checkup/': 'checkup',
   'seo-proposal-generator': 'seo_proposal_generator',
+  'for/dentists/sample-report': 'dentist_sample_report',
   'products': 'products',
   'product': 'products',
   'features': 'features',
@@ -370,6 +372,7 @@ const MainContent: React.FC = () => {
     }
 
     // Dynamic Layer 3: Industry & Agency Pages
+    if (activeTab === 'dentist_sample_report') return <SampleDentalReportView />;
     if (activeTab === 'agency_landing') return <IndustryPseoView industrySlug="agencies" />;
     if (activeTab === 'industry_pseo') return <IndustryPseoView />;
 

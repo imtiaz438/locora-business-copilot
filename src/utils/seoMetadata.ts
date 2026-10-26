@@ -648,6 +648,19 @@ export function resolveRouteMetadata(
     };
   }
 
+  // 2b. Sample dental report — noindex sales asset, resolved before the
+  // generic industry branch so the slug is never treated as an industry.
+  if (cleanPath === 'for/dentists/sample-report') {
+    return {
+      title: 'Sample AI Visibility Report for Dentists | LocoraAI',
+      description:
+        'An illustrative sample of the LocoraAI checkup report for a fictional dental practice: score, website health, Google profile, Maps, reviews, AI visibility, competitors and prioritised fixes.',
+      canonicalUrl: 'https://locoraai.com/for/dentists/sample-report',
+      noIndex: true,
+      isDashboard: false,
+    };
+  }
+
   // 3. Industry Pages (/for/*)
   if (cleanPath.startsWith('for/')) {
     const industrySlug = cleanPath.replace(/^for\//, '').trim();

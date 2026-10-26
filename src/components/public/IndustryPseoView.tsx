@@ -1264,6 +1264,29 @@ export const IndustryPseoView: React.FC<IndustryPseoViewProps> = ({
         )}
       </div>
 
+      {/* Dentists only: link to the sample checkup report (noindex sales asset) */}
+      {activeSlug === 'dentists' && (
+        <div className="max-w-5xl mx-auto mt-10">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-3xl p-8 flex flex-col sm:flex-row items-center gap-5">
+            <div className="flex-1 space-y-1.5 text-center sm:text-left">
+              <h3 className="text-lg font-bold text-slate-900 font-heading">
+                See exactly what your checkup report looks like
+              </h3>
+              <p className="text-sm text-slate-600 leading-relaxed font-sans">
+                A full sample report for a fictional Austin dental practice — the score,
+                the findings, and the prioritised fix list your own free checkup produces.
+              </p>
+            </div>
+            <a
+              href="/for/dentists/sample-report"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#059669] hover:bg-[#047857] text-white font-bold text-sm rounded-xl shadow-sm transition-all cursor-pointer font-heading whitespace-nowrap"
+            >
+              View the Sample Report →
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Target Keyword Strategy & Search Intent Clusters */}
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="text-center space-y-2">

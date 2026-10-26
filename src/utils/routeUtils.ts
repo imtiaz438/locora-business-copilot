@@ -18,6 +18,7 @@ export const TAB_TO_PATH: Record<string, string> = {
   home: '/',
   checkup: '/checkup',
   seo_proposal_generator: '/seo-proposal-generator',
+  dentist_sample_report: '/for/dentists/sample-report',
   products: '/products',
   product: '/products',
   features: '/features',
@@ -459,6 +460,12 @@ export function resolveRouteFromPath(rawPath: string, isApp: boolean = false, is
 
   // 4. Industry pSEO Pages:
   // Handles: /for/:slug, /industries/:slug, /industry/:slug
+  // Sample dental report (noindex sales asset) — must resolve before the
+  // generic /for/:slug industry handler below.
+  if (cleanPath === 'for/dentists/sample-report') {
+    return { targetTab: 'dentist_sample_report', canonicalPath: '/for/dentists/sample-report', isCanonical: true };
+  }
+
   const industryPrefixes = ['for/', 'industries/', 'industry/'];
   for (const prefix of industryPrefixes) {
     if (cleanPath.startsWith(prefix)) {
