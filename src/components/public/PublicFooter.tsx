@@ -400,6 +400,9 @@ export const PublicFooter: React.FC = () => {
             <a href="https://fazier.com" target="_blank" rel="noopener noreferrer" title="Launched on Fazier" className="opacity-70 hover:opacity-100 transition-opacity">
               <img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=light" alt="Launched on Fazier" style={{ height: '22px', width: 'auto' }} draggable={false} />
             </a>
+            <a href="https://launchpadly.co/startup/locoraai?ref=badge" target="_blank" rel="noopener noreferrer" title="Listed on Launchpadly" className="opacity-70 hover:opacity-100 transition-opacity" data-launchpadly-badge="locoraai" data-launchpadly-badge-variant="listed-on">
+              <img src="https://launchpadly.co/embed/badges/startup/locoraai.svg?variant=listed-on" alt="Launchpadly Startup Directory" style={{ height: '22px', width: 'auto', display: 'block', border: 0 }} draggable={false} />
+            </a>
           </div>
         </div>
 
