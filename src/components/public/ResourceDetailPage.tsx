@@ -129,9 +129,17 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
     setTimeout(() => setCopiedCodeSnippet(null), 2000);
   };
 
-  const otherArticles = Object.values(SEO_RESOURCES_DATABASE).filter(
-    (a) => a.slug !== article.slug
-  );
+  const otherArticles = Object.values(SEO_RESOURCES_DATABASE)
+    .filter((a) => a.slug !== article.slug)
+    .sort((x, y) => {
+      const rel = article.relatedSlugs ?? [];
+      const xi = rel.indexOf(x.slug);
+      const yi = rel.indexOf(y.slug);
+      if (xi === -1 && yi === -1) return 0;
+      if (xi === -1) return 1;
+      if (yi === -1) return -1;
+      return xi - yi;
+    });
 
   return (
     <div className="bg-slate-50 text-slate-900 font-sans min-h-screen">

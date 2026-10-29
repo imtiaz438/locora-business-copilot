@@ -72,9 +72,20 @@ export function buildArticleStaticHtml(slug: string): string {
         .map((f) => `<div>\n<h3>${escapeHtml(f.q)}</h3>\n<p>${escapeHtml(f.a)}</p>\n</div>`)
         .join('\n')}\n</section>`
     : '';
+  const related = a.relatedSlugs?.length
+    ? `<nav aria-label="Related guides">\n<h2>Related guides</h2>\n<ul>\n${a.relatedSlugs
+        .filter((s) => SEO_RESOURCES_DATABASE[s])
+        .map(
+          (s) =>
+            `  <li><a href="https://locoraai.com/resources/${escapeHtml(s)}">${escapeHtml(
+              SEO_RESOURCES_DATABASE[s].title
+            )}</a></li>`
+        )
+        .join('\n')}\n</ul>\n</nav>`
+    : '';
   return `<article>\n<header>\n<p>${escapeHtml(a.category)} · ${escapeHtml(a.readingTime)} · Published ${escapeHtml(
     a.publishedDate
-  )}</p>\n<h1>${escapeHtml(a.title)}</h1>\n<p>${escapeHtml(a.summary)}</p>\n</header>\n${toc}\n${sections}\n${prosCons}\n${faqs}\n</article>`;
+  )}</p>\n<h1>${escapeHtml(a.title)}</h1>\n<p>${escapeHtml(a.summary)}</p>\n</header>\n${toc}\n${sections}\n${prosCons}\n${faqs}\n${related}\n</article>`;
 }
 
 /** TechArticle JSON-LD, mirroring the client-side schema in ResourceDetailPage.tsx. */

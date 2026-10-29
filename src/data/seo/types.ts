@@ -119,6 +119,7 @@ export interface SeoResourceArticle {
   metaTitle: string;
   metaDescription: string;
   targetKeywords: string[];
+  relatedSlugs?: string[];
   targetTab: string;
   ctaText: string;
   ctaHeadline: string;

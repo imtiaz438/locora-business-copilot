@@ -3,6 +3,7 @@ import { SeoResourceArticle } from './types';
 export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
   'how-to-improve-local-seo': {
     slug: 'how-to-improve-local-seo',
+    relatedSlugs: ['how-to-create-seo-proposal', 'google-business-profile-suspended', 'remove-duplicate-google-business-listing', 'google-map-pack-ranking'],
     title: 'How to Improve Local SEO: The Complete 2026 Masterclass Guide',
     category: 'Local SEO',
     readingTime: '12 min read',
@@ -125,6 +126,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'how-to-create-seo-proposal': {
     slug: 'how-to-create-seo-proposal',
+    relatedSlugs: ['local-business-audit-checklist', 'how-to-improve-local-seo', 'google-business-profile-guide'],
     title: 'How to Create an SEO Proposal That Closes: 3-Tier SOW Blueprint',
     category: 'Proposals & Sales',
     readingTime: '10 min read',
@@ -226,6 +228,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'google-business-profile-guide': {
     slug: 'google-business-profile-guide',
+    relatedSlugs: ['google-business-profile-suspended', 'google-business-profile-verification', 'remove-duplicate-google-business-listing', 'business-not-showing-on-google-maps'],
     title: 'Google Business Profile Optimization Guide (2026 Edition)',
     category: 'Google Business',
     readingTime: '11 min read',
@@ -316,6 +319,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'local-business-audit-checklist': {
     slug: 'local-business-audit-checklist',
+    relatedSlugs: ['google-business-profile-guide', 'how-to-create-seo-proposal', 'business-not-showing-on-google-maps'],
     title: 'The Ultimate 40-Point Local Business Audit Checklist',
     category: 'Checklists & SOPs',
     readingTime: '13 min read',
@@ -441,6 +445,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'google-business-profile-suspended': {
     slug: 'google-business-profile-suspended',
+    relatedSlugs: ['google-business-profile-verification', 'remove-duplicate-google-business-listing', 'google-business-profile-guide'],
     title: 'Google Business Profile Suspended? How to Get Reinstated (2026 Guide)',
     category: 'Google Business',
     readingTime: '9 min read',
@@ -541,6 +546,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'business-not-showing-on-google-maps': {
     slug: 'business-not-showing-on-google-maps',
+    relatedSlugs: ['google-map-pack-ranking', 'google-business-profile-guide', 'remove-duplicate-google-business-listing'],
     title: 'Why Is My Business Not Showing Up on Google Maps? (7-Point Diagnostic)',
     category: 'Google Business',
     readingTime: '8 min read',
@@ -861,6 +867,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'google-map-pack-ranking': {
     slug: 'google-map-pack-ranking',
+    relatedSlugs: ['business-not-showing-on-google-maps', 'google-business-profile-guide', 'how-to-improve-local-seo'],
     title: 'How to Rank in the Google Map Pack: 2026 Ranking Factors Guide',
     category: 'Local SEO',
     readingTime: '10 min read',
@@ -958,6 +965,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'google-business-profile-verification': {
     slug: 'google-business-profile-verification',
+    relatedSlugs: ['google-business-profile-suspended', 'remove-duplicate-google-business-listing', 'google-business-profile-guide'],
     title: 'Google Business Profile Verification Stuck or Failed? How to Fix It (2026)',
     category: 'Google Business',
     readingTime: '8 min read',
@@ -1045,6 +1053,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'remove-duplicate-google-business-listing': {
     slug: 'remove-duplicate-google-business-listing',
+    relatedSlugs: ['google-business-profile-suspended', 'google-business-profile-verification', 'google-business-profile-guide'],
     title: 'How to Remove a Duplicate Google Business Listing (2026 Guide)',
     category: 'Google Business',
     readingTime: '7 min read',
@@ -1126,6 +1135,18 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
       {
         q: 'A competitor created a fake duplicate of my business. What do I do?',
         a: 'Report it through "Suggest an edit" and through Business Profile support with evidence: your business license, your canonical listing, and documentation showing the duplicate\'s information is false. Document everything in case it recurs.'
+      },
+      {
+        q: 'How do I clean up duplicate business listings online?',
+        a: 'Start by finding every version: search Google Maps for your business name, old names, phone number, and address, then check the major directories and data aggregators that feed Google. Pick the listing with the most reviews and the most accurate details as the survivor, report each duplicate for merging into it, and fix the information at the source — aggregator data that stays wrong will keep regenerating duplicates.'
+      },
+      {
+        q: 'How do I remove a duplicate Google My Business listing?',
+        a: 'On the duplicate, choose "Suggest an edit," then "Close or remove," then "Duplicate of another place," and select your main profile. Google My Business is now called Google Business Profile, but the steps are the same. Google reviews the request rather than removing it instantly, so expect days to a few weeks, and keep screenshots of both listings until the merge completes.'
+      },
+      {
+        q: 'What if I do not manage the duplicate listing?',
+        a: 'You can still report it: use "Suggest an edit" as a public user, or contact Business Profile support with evidence — your business license, the URL of your real listing, and proof of which details on the duplicate are wrong. Unclaimed duplicates are the slowest to resolve, but support can merge them when the evidence is clear.'
       }
     ]
   },
