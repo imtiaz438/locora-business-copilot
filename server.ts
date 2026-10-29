@@ -18351,7 +18351,8 @@ async function handleHtmlRequest(req: express.Request, res: express.Response, vi
         // the footer once React mounts (it lives there now).
         if (req.path === '/' && isCrawler) {
           const badgeHtml =
-            '<a href="https://fazier.com" target="_blank" rel="noopener noreferrer" title="Launched on Fazier"><img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=light" alt="Launched on Fazier" /></a>';
+            '<a href="https://fazier.com" target="_blank" rel="noopener noreferrer" title="Launched on Fazier"><img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=light" alt="Launched on Fazier" /></a>' +
+            '<a href="https://launchpadly.co/startup/locoraai?ref=badge" target="_blank" rel="noopener noreferrer" title="Listed on Launchpadly" data-launchpadly-badge="locoraai" data-launchpadly-badge-variant="listed-on"><img src="https://launchpadly.co/embed/badges/startup/locoraai.svg?variant=listed-on" alt="Launchpadly Startup Directory" /></a>';
           html = html.replace('<div id="root"></div>', `<div id="root">${badgeHtml}</div>`);
           // Static homepage content for non-JS crawlers / AI bots, built
           // from the same data the React homepage renders (see
