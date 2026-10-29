@@ -1693,6 +1693,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'dentist-seo-vs-dental-marketing-agencies': {
     slug: 'dentist-seo-vs-dental-marketing-agencies',
+    relatedSlugs: ['dentist-seo-vs-google-ads'],
     title: 'Dentist SEO vs Dental Marketing Agencies: What $29/mo Software Does and Doesn\'t Replace',
     category: 'Local SEO',
     readingTime: '8 min read',
@@ -1797,6 +1798,107 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
       {
         q: 'What does LocoraAI cost, and is there a free option?',
         a: 'The 40-point checkup for dentists is free, and you can see your score and top issues with no signup or credit card. Pro, which adds the ongoing tooling — repeat checkups, review-reply drafting, content and proposal tools — is $29/mo. There are no promised outcomes attached to either; the checkup simply shows you where your practice stands.'
+      }
+    ]
+  },
+
+  'dentist-seo-vs-google-ads': {
+    slug: 'dentist-seo-vs-google-ads',
+    title: 'Dentist SEO vs Google Ads: Renting Patients or Building Visibility?',
+    category: 'Local SEO',
+    readingTime: '7 min read',
+    publishedDate: 'November 2026',
+    authorName: 'The LocoraAI Team',
+    authorRole: 'Local Search Experts',
+    metaTitle: 'Dentist SEO vs Google Ads: Renting Patients or Building Visibility? | LocoraAI',
+    metaDescription: 'Dentist SEO vs Google Ads: what paid ads do well, what they stop doing the day spend stops, what organic Maps and review visibility builds over time, and how to sequence the two — starting with a free checkup.',
+    targetKeywords: ['dentist seo vs google ads', 'google ads for dentists', 'dental seo or google ads', 'should dentists run google ads'],
+    relatedSlugs: ['dentist-seo-vs-dental-marketing-agencies', 'dentist-near-me-maps-3-pack', 'dental-practice-not-showing-on-google-maps'],
+    targetTab: 'local_seo',
+    ctaText: 'Run My Free Dental Checkup',
+    ctaHeadline: 'Find Out Which Gap You Actually Have',
+    ctaDescription: 'Before you spend on either channel, run the free 40-point checkup for dentists: see how your practice shows up on Google, Maps, and AI answers — no signup or credit card needed to see your score and top issues.',
+    summary: 'An honest channel comparison for practice owners: what Google Ads genuinely does well, what ad spend never builds, what organic visibility compounds into over time, the true cost shape of each channel, and how to sequence them — starting with a free checkup.',
+    tableOfContents: [
+      { id: 'two-arrivals', title: '1. Two Different Ways a Patient Arrives' },
+      { id: 'what-ads-do-well', title: '2. What Google Ads Does Well' },
+      { id: 'what-ads-dont-build', title: '3. What Ad Spend Does Not Build' },
+      { id: 'what-seo-builds', title: '4. What SEO Builds Instead' },
+      { id: 'cost-shape', title: '5. Cost Shape: Rent vs a Continuing Layer' },
+      { id: 'sequencing', title: '6. Sequencing: Which Channel First?' }
+    ],
+    sections: [
+      {
+        id: 'two-arrivals',
+        heading: '1. Two Different Ways a Patient Arrives',
+        content: [
+          'The paid arrival looks like this: a patient searches for a dentist, sees a sponsored result at the top of the page, clicks it, and lands on your website. That visit exists because your campaign was switched on and funded at that moment. You rented a position at the exact second of the search, and the rental ended with the click.',
+          'The organic arrival is different. The same patient finds your Google Business Profile inside the Maps 3-pack, reads your reviews, sees your practice named in an AI assistant\'s answer, or reaches your site through the ordinary search results. Nobody paid per click for that presence. It was built — a complete profile, a steady flow of answered reviews, consistent information everywhere, pages that answer patient questions — and it greets every searcher, not only the ones an advertising budget happened to reach.'
+        ],
+        keyTakeaway: 'Same patient, two doors: one you rent by the click, one you build and keep.'
+      },
+      {
+        id: 'what-ads-do-well',
+        heading: '2. What Google Ads Does Well',
+        content: [
+          'Speed is the honest headline. A campaign can put a practice in front of searching patients today — and for a new practice with empty chairs, a second location launch, or a deliberate push on a high-value service like implants or emergency care, that immediacy is sometimes exactly what the situation calls for. Targeting is the second strength: ads can be aimed at a tight geography, at searches showing clear treatment intent, and at the hours your phones are actually staffed.',
+          'Control is the third. You can watch spend against enquiries service by service, adjust budgets as chairs fill, and pause everything instantly when the schedule is full. Ads are a lever with a handle, and there are moments — a quiet month, a new associate to feed, a competitor\'s closure sending patients looking — when pulling that lever is the right business decision. Any honest comparison has to start by admitting this channel is genuinely good at what it does.'
+        ],
+        keyTakeaway: 'Ads buy speed, targeting, and an on/off switch. For empty chairs right now, that combination is hard to beat.'
+      },
+      {
+        id: 'what-ads-dont-build',
+        heading: '3. What Ad Spend Does Not Build',
+        content: [
+          'Here is the limit that matters: advertising is not an input to the organic systems. Your Maps ranking, your profile\'s completeness and standing, your review count and how you answer reviews, and whether AI assistants can find and cite your practice — none of these move because you bought ads. A practice can advertise heavily for a year and find its Maps position and review profile exactly where they started, because those are earned signals, and ad spend is not one of them.',
+          'The second limit follows from the first: the day the spend stops, the visibility it bought stops with it, because nothing was accumulated. And there is a quieter problem while the ads are running — paid clicks land patients on your profile and your website as they are. If the profile is incomplete, the hours are wrong, or the reviews are thin and unanswered, advertising amplifies a weak first impression at paid prices. Ads multiply whatever already exists, including the problems.'
+        ],
+        keyTakeaway: 'Ad spend builds no Maps rank, no reviews, and no AI citations — and rented visibility evaporates the day the budget does.'
+      },
+      {
+        id: 'what-seo-builds',
+        heading: '4. What SEO Builds Instead',
+        content: [
+          'The organic side of the comparison is a set of assets that persist. A complete and accurate Google Business Profile. A review habit that keeps fresh reviews arriving and every one of them answered. Consistent name, address, and phone information across the web, so Google trusts the entity it is ranking. Service pages that answer the questions patients actually ask. Our companion guides cover the mechanics in depth — how the Maps 3-pack is decided, and what to do when a practice is not showing on Google Maps at all.',
+          'The newest layer of that same base is AI answers. When a patient asks an assistant which dentist to choose, the practices it names are the ones it can find, verify, and cite — which is the same profile, review, and web footprint, read by a different machine. This base is slow to build and correspondingly slow to lose. That is the entire trade: organic visibility asks for patience up front and then keeps working on the days you do nothing, while ads work instantly and only on the days you pay.'
+        ],
+        keyTakeaway: 'SEO builds assets that stay — profile, reviews, listings, citations. Slower to build, and still working when you stop.'
+      },
+      {
+        id: 'cost-shape',
+        heading: '5. Cost Shape: Rent vs a Continuing Layer',
+        content: [
+          'Compare the shapes rather than the slogans. Advertising cost is variable and perpetual: it changes with your market and the services you promote, and it continues for exactly as long as you want the visibility — no longer. We will not print a per-click or monthly figure here, because any number would be a guess dressed as data; your market\'s real prices are visible inside your own ad account within minutes, and those are the only ones worth budgeting from.',
+          'The organic layer\'s cost shape is different: effort, plus tooling, continued over time. The watching-and-drafting part of that work is software-priced — LocoraAI Pro is $29/mo after the free checkup — and the rest is human time: yours, your team\'s, or hired help for fixes and content. Neither channel is free. The honest difference is the residue: stop paying for ads and nothing remains; pause the organic work and the profile, reviews, and citations you built are still there, still greeting searchers.'
+        ],
+        keyTakeaway: 'Rent that stops the day you stop paying, versus a layer that leaves assets behind. The only price quoted here is our own: free checkup, Pro $29/mo.'
+      },
+      {
+        id: 'sequencing',
+        heading: '6. Sequencing: Which Channel First?',
+        content: [
+          'For most practices the answer is an order, not a winner. If chairs are empty now and your profile is in decent shape, ads make a rational bridge — patients this month, while the slower organic base gets built underneath. If the practice is stable but its organic presence is weak, SEO comes first: fix the profile, the reviews, and the listings before renting traffic, and let ads enter later, aimed only at the high-value searches the organic base has not reached yet. In both situations the first step is the same — run the free 40-point dental checkup and see which gap you actually have, because spending on either channel before that diagnosis is guessing.',
+          'One separation is worth keeping clean. This article compared channels — where patients come from. A different question sits underneath it: who should do the work, you, software, an agency, or a hybrid? That is the subject of our companion article, Dentist SEO vs Dental Marketing Agencies, and the two decisions go better in that order: choose the channel first, then choose whose hands do the work.'
+        ],
+        keyTakeaway: 'Bridge with ads if chairs are empty; build with SEO if they are not. Either way, diagnose first with the free checkup.'
+      }
+    ],
+    faqs: [
+      {
+        q: 'Should a new dental practice run Google Ads or invest in SEO first?',
+        a: 'Usually ads as a short bridge and SEO from day one, in parallel if the budget allows one hero effort: a new practice has no organic base, so ads are the only way to be visible immediately — but every month spent only renting is a month the profile, reviews, and listings could have been compounding. If you must choose one first, choose based on the chairs: empty schedule, ads first with SEO basics started the same week; a bookable schedule inherited or bought, SEO first.'
+      },
+      {
+        q: 'Does running Google Ads help my Google Maps ranking?',
+        a: 'No. Ads and Maps rankings are separate systems: your position in the Maps 3-pack is driven by your profile, your relevance to the search, your reviews, and the consistency of your information — not by advertising spend. Ads can send patients to your profile, but they do not move the profile up the organic results.'
+      },
+      {
+        q: 'If I stop paying for ads, what visibility do I keep?',
+        a: 'Only what you built organically: your Google Business Profile and its Maps presence, your reviews and your replies to them, your listings, your website\'s rankings, and any AI-answer citations you have earned. The sponsored positions disappear with the spend. That asymmetry — everything rented vanishes, everything built remains — is the core of the channel decision.'
+      },
+      {
+        q: 'Can I run both — and if so, what should each one be for?',
+        a: 'Yes, and most growing practices end up there. Give ads the jobs that need speed or precision: filling specific gaps in the schedule, promoting a high-value service, covering a new location while its organic presence matures. Give SEO the base: profile, reviews, listings, and content that keep the practice findable every day without a meter running. Run the free checkup first so each channel is aimed at a diagnosed gap rather than a hunch.'
       }
     ]
   },
