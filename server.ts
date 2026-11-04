@@ -172,6 +172,25 @@ app.use((req, res, next) => {
     return res.redirect(301, `https://locoraai.com${req.originalUrl}`);
   }
 
+  // 2026-11-04: canonical URLs are non-slash (canonical tags + sitemap), but
+  // trailing-slash variants also served 200 via the SPA fallback, so Google
+  // split impressions across both forms (GSC 28d to Nov 2: local-business-
+  // audit-checklist 120 impressions non-slash + 66 slash). 301 slash ->
+  // non-slash on the main domain so ranking signals consolidate on the
+  // canonical URL. Root, API, and asset paths are untouched.
+  if (
+    !isAppHost &&
+    !isDirectoryHost &&
+    (req.method === 'GET' || req.method === 'HEAD') &&
+    req.path.length > 1 &&
+    req.path.endsWith('/') &&
+    !req.path.startsWith('/api/') &&
+    !req.path.startsWith('/assets/')
+  ) {
+    const qs = req.originalUrl.slice(req.path.length);
+    return res.redirect(301, `https://locoraai.com${req.path.replace(/\/+$/, '')}${qs}`);
+  }
+
   // B6 (2026-10-24): directory subdomain retired. It duplicated the main
   // domain's directory and earned search impressions for other businesses'
   // names (GSC: "west town auto repair", 16 impressions). All human traffic

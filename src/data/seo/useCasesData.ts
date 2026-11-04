@@ -3,147 +3,163 @@ import { SeoUseCaseItem } from './types';
 export const SEO_USE_CASES_DATABASE: Record<string, SeoUseCaseItem> = {
   'local-seo': {
     slug: 'local-seo',
-    title: 'Local SEO & Google Maps Dominance',
+    title: 'Local SEO & AI Visibility Checkup',
     category: 'Local Business Growth',
-    metaTitle: 'Automated Google Maps Ranking Tool & Local SEO Software | Locora AI',
-    metaDescription: 'Complete guide to automated local search ranking and Google Business Profile automation software. Discover how AI copilot tools boost map pack dominance and phone calls.',
+    metaTitle: 'Free Local SEO Checkup — Google Maps, Reviews & AI Visibility | LocoraAI',
+    metaDescription: 'Run a free 40-point checkup for your local business: Google Business Profile & Maps visibility, website SEO, reviews, competitors, and AI search visibility. No signup, results in about 60 seconds.',
     targetKeywords: [
-      'automated Google Maps ranking tool for agencies',
-      'all-in-one local SEO and CRM platform',
-      'Google Business Profile automation software',
-      'automated local search ranking software',
-      'AI driven local visibility tool',
-      'local ranking software for multi-location businesses',
-      'how to automate my local SEO'
+      'free local seo checkup',
+      'google maps visibility check',
+      'local business visibility audit',
+      'ai visibility check for local businesses',
+      'google business profile checkup',
+      'why is my business not showing on google maps'
     ],
-    heroHeadline: 'How Modern Service Businesses Dominate Google Maps 3-Pack Rankings',
-    heroSubheadline: 'Discover the systematic blueprint for capturing high-intent local phone calls, outranking legacy competitors, and turning Google Business Profile into your #1 customer acquisition channel.',
-    readingTime: '11 min read',
-    publishedDate: 'August 2026',
+    heroHeadline: 'See Exactly Why Customers Can\'t Find Your Business',
+    heroSubheadline: 'Run the free 40-point LocoraAI checkup: Google Maps and Business Profile visibility, website SEO, reviews, competitors, and how AI assistants like ChatGPT see you — scored and prioritized in about 60 seconds. No signup.',
+    readingTime: '4 min read',
+    publishedDate: 'October 2026',
     targetTab: 'local_seo',
-    ctaText: 'Test Local SEO Blueprint Sandbox',
+    ctaText: 'Run the Free Checkup',
     editorialOverview: {
-      problemStatement: 'Over 80% of local service consumers choose a provider from the top 3 results displayed on Google Maps. If your business is stuck on page 2 or hidden beneath aggregator directories, you are losing thousands of dollars in high-margin emergency service inquiries every single week.',
-      strategicValue: 'Dominating local SEO requires aligning three core search signals: Proximity (geo-coordinates and verified physical address), Prominence (review velocity and local authority backlinks), and Relevance (accurate GBP category structure and JSON-LD entity schema).',
-      marketContext: 'Legacy SEO tactics like generic blog posts or national backlink blasts fail completely in local search. Success in 2026 demands hyper-local suburb landing pages and verified schema entity signals.'
+      problemStatement: 'Most local businesses have no reliable way to see what customers see: where they appear on Google Maps, what their Business Profile is missing, which reviews are working against them, or whether AI assistants mention them at all. So they guess — and usually fix the wrong things first.',
+      strategicValue: 'The checkup replaces guessing with a diagnosis. It scores five areas — Business Profile and Maps visibility, website SEO and schema, reviews and reputation, local competitors, and AI search visibility — and returns a prioritized fix list ordered by impact, so the first thing you work on is the thing that matters most.',
+      marketContext: 'Customers now find local businesses two ways: Google search and Maps, and AI assistants that recommend businesses by name. The full method behind the fixes is covered in our guide, "How to Improve Local SEO" (locoraai.com/resources/how-to-improve-local-seo). This page is the shortcut: measure first, then work the list.'
     },
     whoIsThisFor: [
       {
         role: 'Local Service Business Owners',
-        description: 'Plumbers, electricians, roofers, dentists, and lawyers looking to double their inbound phone inquiries without relying on expensive lead brokers.'
+        description: 'Dentists, plumbers, electricians, roofers, lawyers, and other local services that depend on being found first in their area.'
       },
       {
         role: 'Digital Marketing Agencies',
-        description: 'Agency founders who want to deliver measurable, high-ROI local rankings for client retainers ranging from $1,500 to $4,000/month.'
+        description: 'Agencies that audit local clients and want a repeatable, evidence-based starting point for every engagement.'
       },
       {
-        role: 'Multi-Location Franchise Operators',
-        description: 'Managers responsible for maintaining consistent NAP data, reviews, and schema markup across 5 to 50+ regional storefronts.'
+        role: 'Multi-Location Operators',
+        description: 'Businesses with several locations that need to spot which storefronts are underperforming, and why.'
       }
     ],
     painPoints: [
       {
-        title: 'Hidden on Page 2 of Google Maps',
-        desc: 'Competitors with worse service and fewer credentials rank above you simply because their categories and citations are better optimized.'
+        title: 'Not Showing Up on Google Maps',
+        desc: 'Competitors appear in the Map Pack while your business is missing or buried — and you can\'t tell whether it\'s your categories, your reviews, or your profile data.'
       },
       {
-        title: 'Skyrocketing Pay-Per-Click Ad Costs',
-        desc: 'Paying $80 to $150+ per click on Google Ads because organic visibility is nonexistent.'
+        title: 'Guessing What to Fix First',
+        desc: 'Advice is everywhere, but none of it is about your business. Without a diagnosis, time and money go to changes that don\'t move visibility.'
       },
       {
-        title: 'Confusing, Broken Schema Code',
-        desc: 'Trying to manually write JSON-LD code and causing syntax errors that prevent rich snippet display in search results.'
+        title: 'Invisible to AI Assistants',
+        desc: 'Customers increasingly ask ChatGPT and similar tools for recommendations. Most businesses have never checked whether they are mentioned — or what is said about them.'
       }
     ],
     solutions: [
       {
-        step: 'Step 1: Foundational Audit',
-        title: 'Audit Core Web Vitals & Local Schema Health',
-        desc: 'Scan your website domain to identify missing LocalBusiness markup, slow mobile LCP speeds, and click-to-call friction.'
+        step: 'Step 1: Profile & Maps',
+        title: 'Google Business Profile & Maps Visibility',
+        desc: 'Profile completeness, category alignment, and how your business surfaces in local map results.'
       },
       {
-        step: 'Step 2: GBP Category Structuring',
-        title: 'Align Google Business Profile Categories',
-        desc: 'Match your primary and secondary categories to the exact search queries driving the highest local search volume.'
+        step: 'Step 2: Website & Schema',
+        title: 'Website SEO & Schema Health',
+        desc: 'Technical and on-page SEO signals, including the LocalBusiness structured data that search engines and AI tools read.'
       },
       {
-        step: 'Step 3: Automated Review Velocity',
-        title: 'Deploy Automated Review Replies & Request SOPs',
-        desc: 'Systematize review collection so you consistently gain 5-10 new positive reviews each month with keyword-rich responses.'
+        step: 'Step 3: Reviews & Reputation',
+        title: 'Reviews & Reputation',
+        desc: 'Review volume, rating, and response coverage — the trust signals customers and ranking systems both weigh.'
       },
       {
-        step: 'Step 4: Hyper-Local Suburb Expansion',
-        title: 'Launch Geotargeted Service Area Landing Pages',
-        desc: 'Create dedicated location sub-pages for surrounding towns and zip codes with unique entity schema.'
+        step: 'Step 4: Competitors',
+        title: 'Local Competitor Benchmark',
+        desc: 'How your visibility stacks up against the nearby competitors customers actually choose between.'
+      },
+      {
+        step: 'Step 5: AI Visibility',
+        title: 'AI Search Visibility',
+        desc: 'Whether AI assistants like ChatGPT, Gemini, and Perplexity mention or recommend your business for the searches that matter.'
       }
     ],
     stepByStepFramework: [
       {
         stepNumber: 1,
-        title: 'Claim & Verify All Physical Google Business Profiles',
-        description: 'Ensure exact legal business name, street address, local phone number, and opening hours match state licensing.',
-        proTip: 'Never use a virtual PO box or co-working space address without dedicated staff, as Google regularly suspends these.'
+        title: 'Enter Your Business',
+        description: 'Add your business name and website. No signup, no card, nothing to install.',
+        proTip: 'Use the exact legal business name as it appears on your Google Business Profile so the results line up.'
       },
       {
         stepNumber: 2,
-        title: 'Deploy Valid JSON-LD LocalBusiness Schema',
-        description: 'Embed structured entity data containing geo-coordinates, accepted currencies, and service area polygons into your website.',
-        proTip: 'Test your URL in Google’s Rich Results Test tool to guarantee 0 errors and 0 warnings.'
+        title: 'The Scan Runs (About 60 Seconds)',
+        description: 'LocoraAI checks your profile, website, reviews, competitors, and AI visibility against the 40-point framework.',
+        proTip: 'The same business can look very different on Google Maps and in AI answers — the checkup scores both.'
       },
       {
         stepNumber: 3,
-        title: 'Build Consistent Local Citations & Directory Listings',
-        description: 'Standardize your Name, Address, and Phone (NAP) across Yelp, YellowPages, Better Business Bureau, and local Chamber of Commerce directories.',
-        proTip: 'Even a minor discrepancy (e.g. "Suite 100" vs "Ste 100") can dilute algorithmic trust.'
+        title: 'Read Your Prioritized Gap List',
+        description: 'Findings come back ordered by impact, each with what is wrong and why it matters — not a raw dump of technical warnings.',
+        proTip: 'Start at the top of the list. The first items are the ones most likely to be costing you customers.'
       },
       {
         stepNumber: 4,
-        title: 'Execute Weekly GBP Photo & Post Updates',
-        description: 'Upload real photos of your team, fleet trucks, completed projects, and office exterior at least once a week.',
-        proTip: 'Geo-tagged photos taken on mobile devices provide native EXIF metadata that supports local search relevance.'
+        title: 'Fix in Order, Then Re-Check',
+        description: 'Work through the list — yourself, with your team, or inside LocoraAI — then run the checkup again to confirm the gaps closed.',
+        proTip: 'For the full method behind any fix, see the guide: How to Improve Local SEO.'
       }
     ],
     prosAndCons: {
       pros: [
-        'Generates organic, highly qualified inbound phone calls with zero ongoing cost per click',
-        'Builds long-term enterprise value and brand dominance in your local municipality',
-        'Local 3-Pack rankings convert at 3x higher rates than traditional banner or social media ads',
-        'Creates an impenetrable barrier to entry against newer, less established competitors'
+        'Free, with no signup, and results in about 60 seconds',
+        'Covers AI search visibility alongside Google Maps — the two ways customers now find you',
+        'Every finding is prioritized by impact, so you know what to do first',
+        'Benchmarks you against the local competitors customers compare you with'
       ],
       cons: [
-        'Requires 4 to 12 weeks of consistent optimization before full ranking impact is achieved',
-        'Physical distance from the searcher is an algorithmic constraint outside of web control',
-        'Algorithm updates require ongoing maintenance and active review monitoring'
+        'A checkup diagnoses; it does not do the fixing for you',
+        'Some factors, like how close you are to the searcher, cannot be changed by any tool',
+        'Visibility improves over weeks of consistent fixes — no honest tool can promise instant rankings'
       ]
     },
     bestPractices: [
-      'Respond to every single customer review within 24 hours.',
-      'Create dedicated sub-pages for every major suburb within a 25-mile radius.',
-      'Ensure your website header prominently displays a clickable "tel:" phone link.',
-      'Never engage in shady private blog network (PBN) backlink buying.'
+      'Fix findings in the order the checkup prioritizes them — impact first, cosmetics last.',
+      'Respond to every customer review, including the negative ones.',
+      'Keep your Business Profile name, address, phone, and hours identical everywhere they appear online.',
+      'Re-run the checkup after major fixes to confirm the gaps actually closed.'
     ],
     caseStudy: {
-      businessName: 'Vance Plumbing & Rooter',
-      industry: 'Plumbing & Emergency Services',
+      businessName: 'Sample Dental Studio — illustrative example',
+      industry: 'Dental practice',
       location: 'Austin, TX',
-      challenge: 'Stuck at #14 on Google Maps, spending $4,500/month on Google Ads with declining profit margins.',
-      solution: 'Deployed Plumber JSON-LD schema, restructured GBP categories, and launched an automated SMS review collection sequence.',
-      timeSpentBefore: '15 hours/month managing Google Ads and manual outreach',
-      timeSpentAfter: '1 hour/month monitoring automated Locora Local SEO',
+      challenge: 'A typical first question: why do nearby practices show up in Google Maps and AI recommendations while this one does not?',
+      solution: 'The free checkup scored the practice across all five areas and returned its gaps in priority order — the same sample report you can browse on our dentists page.',
+      timeSpentBefore: 'Guesswork — no clear picture of which fixes matter',
+      timeSpentAfter: 'One prioritized list, starting with the highest-impact gap',
       results: [
-        { label: 'Map Pack Position', value: '#1 in Austin' },
-        { label: 'Organic Inbound Calls', value: '184 Calls/Month' },
-        { label: 'Ad Spend Reduced', value: '$3,200/mo Saved' }
+        { label: 'Overall Visibility Score', value: '68/100' },
+        { label: 'Areas Checked', value: '5' },
+        { label: 'Time to Results', value: '~60 seconds' }
       ]
     },
     faqs: [
       {
-        q: 'How long does it take to rank in the Google Maps 3-Pack?',
-        a: 'Most local businesses see noticeable ranking improvements within 30 to 60 days following proper schema implementation, category alignment, and consistent review collection.'
+        q: 'How much does the checkup cost?',
+        a: 'It is free. No signup and no card are required — you enter your business, the scan runs, and you get the full prioritized results.'
       },
       {
-        q: 'Can I do local SEO for multiple cities with just one physical location?',
-        a: 'Yes! By creating dedicated, geotargeted service area landing pages with accurate LocalBusiness schema, you can rank in surrounding suburbs without needing multiple physical offices.'
+        q: 'What exactly does the checkup examine?',
+        a: 'Five areas across 40 checks: Google Business Profile and Maps visibility, website SEO and schema, reviews and reputation, local competitor benchmarking, and AI search visibility across assistants like ChatGPT, Gemini, and Perplexity.'
+      },
+      {
+        q: 'How is this different from the "How to Improve Local SEO" guide?',
+        a: 'The guide teaches the full method, step by step (locoraai.com/resources/how-to-improve-local-seo). This page is its practical companion: it measures your business against that method and tells you which parts apply to you, and in what order.'
+      },
+      {
+        q: 'Will the checkup itself improve my rankings?',
+        a: 'No — and be wary of any tool that promises that. The checkup shows you what is holding your visibility back and in what order to fix it. Rankings improve when the fixes are made and given time to register.'
+      },
+      {
+        q: 'What happens after I see my results?',
+        a: 'You can work through the fix list yourself, hand it to your team or agency, or continue inside LocoraAI, where the findings turn into a prioritized growth plan with the tools to execute it.'
       }
     ]
   },
