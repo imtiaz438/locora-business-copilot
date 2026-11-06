@@ -165,10 +165,23 @@ app.use((req, res, next) => {
     hHost.startsWith('directory.') ||
     rHost.startsWith('directory.') ||
     (Array.isArray(req.subdomains) && req.subdomains.includes('directory'));
-  const isWwwHost = allHosts.includes('www.locoraai.com');
+  const isWwwHost = rHost === 'www.locoraai.com';
 
-  // 301 permanently redirect www.locoraai.com to canonical bare domain (locoraai.com)
-  if (isWwwHost) {
+  // 301 permanently redirect www.locoraai.com to canonical bare domain
+  // (locoraai.com). Scoped 2026-11-06: exact-host match on the effective
+  // request hostname (req.hostname honors x-forwarded-host under
+  // 'trust proxy'; the old check substring-matched the concatenated
+  // host headers, so any forwarded header merely containing the string
+  // could fire it). Page requests only: /api/ and /assets/ on www keep
+  // their existing handling, mirroring the trailing-slash rule below —
+  // a 301 also rewrites POSTs to GETs in most clients, which would
+  // break www API calls.
+  if (
+    isWwwHost &&
+    (req.method === 'GET' || req.method === 'HEAD') &&
+    !req.path.startsWith('/api/') &&
+    !req.path.startsWith('/assets/')
+  ) {
     return res.redirect(301, `https://locoraai.com${req.originalUrl}`);
   }
 
