@@ -182,7 +182,14 @@ app.use((req, res, next) => {
     !req.path.startsWith('/api/') &&
     !req.path.startsWith('/assets/')
   ) {
-    return res.redirect(301, `https://locoraai.com${req.originalUrl}`);
+    // 2026-11-10: strip a trailing slash in the same hop, so a www+slash
+    // URL (e.g. www.locoraai.com/for/med-spas/) lands on the canonical
+    // bare non-slash URL in one 301 instead of chaining www -> bare-slash
+    // -> bare non-slash. Root, query string preserved.
+    const wwwPath =
+      req.path.length > 1 ? req.path.replace(/\/+$/, '') : req.path;
+    const wwwQs = req.originalUrl.slice(req.path.length);
+    return res.redirect(301, `https://locoraai.com${wwwPath}${wwwQs}`);
   }
 
   // 2026-11-04: canonical URLs are non-slash (canonical tags + sitemap), but

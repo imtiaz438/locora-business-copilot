@@ -235,7 +235,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
     publishedDate: 'August 2026',
     authorName: 'The LocoraAI Team',
     authorRole: 'Local Search Experts',
-    metaTitle: 'Google Business Profile Guide 2026: Setup, Optimization & Map Pack | Locora AI',
+    metaTitle: 'Google Business Profile Guide 2026: Setup & Optimization | Locora AI',
     metaDescription: 'Step-by-step master guide to optimizing your Google Business Profile (GBP) for maximum local search ranking, phone calls, and 5-star reviews.',
     targetKeywords: ['Google Business Profile guide', 'GBP optimization checklist', 'rank on Google Maps', 'Google My Business setup', 'local map pack ranking'],
     targetTab: 'local_seo',
