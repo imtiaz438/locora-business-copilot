@@ -18388,7 +18388,7 @@ async function handleHtmlRequest(req: express.Request, res: express.Response, vi
       const ua = ((req.headers['user-agent'] as string) || '').toLowerCase();
       const isCrawler =
         !ua ||
-        /bot|spider|crawler|gptbot|claudebot|perplexity|chatgpt|oai-searchbot|bytespider|facebookexternalhit|meta-externalagent|twitterbot|linkedinbot|slackbot|whatsapp|telegrambot|slurp|ia_archiver|cohere|mistralai|deepseek|prerender|lighthouse/.test(ua);
+        /bot|spider|crawler|gptbot|claudebot|perplexity|chatgpt|oai-searchbot|bytespider|facebookexternalhit|meta-externalagent|twitterbot|linkedinbot|slackbot|whatsapp|telegrambot|slurp|ia_archiver|cohere|mistralai|deepseek|prerender|lighthouse|inspectiontool/.test(ua);
 
       if (cleanPath && isCrawler && !metadata.isDashboard && !isAppHost && fs.existsSync(directHtmlPath)) {
         html = fs.readFileSync(directHtmlPath, 'utf-8');
