@@ -17,6 +17,7 @@ const resolveMxAsync = promisify(dns.resolveMx);
 import { resolveRouteMetadata, injectMetadataIntoHtml } from './src/utils/seoMetadata.ts';
 import { SEO_RESOURCES_DATABASE } from './src/data/seo/resourcesData.ts';
 import { getPageStaticHtml } from './scripts/prerenderPages.ts';
+import { buildBizStaticHtml } from './src/lib/seo/bizStatic.ts';
 import { getOrCreateUser } from './src/db/users.ts';
 import * as dbService from './src/db/service.ts';
 import * as onboardingService from './server/onboardingService.ts';
@@ -18337,6 +18338,20 @@ async function handleHtmlRequest(req: express.Request, res: express.Response, vi
   }
   const metadata = resolveRouteMetadata(req.path, effectiveHost, entitySnapshot);
 
+  // /biz/<slug>: resolve the slug against the same published snapshot the
+  // metadata came from. A known slug gets static body content for crawlers
+  // (production branch below); an unknown slug gets a real HTTP 404 instead
+  // of today's 200 shell — the other half of the soft-404 pattern. When the
+  // snapshot failed to load we cannot tell known from unknown, so behavior
+  // falls back to the plain shell rather than 404ing real listings.
+  const bizSlugMatch = req.path.match(/^\/biz\/([^/]+)\/?$/);
+  const bizSlug = bizSlugMatch ? bizSlugMatch[1].toLowerCase() : null;
+  const bizEntity =
+    bizSlug && entitySnapshot
+      ? entitySnapshot.businesses.find((b) => b.slug.toLowerCase() === bizSlug) || null
+      : null;
+  const bizNotFound = Boolean(bizSlug && entitySnapshot && !bizEntity && !isAppHost);
+
   // Set X-Robots-Tag header
   if (metadata.noIndex || metadata.isDashboard || isAppHost) {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
@@ -18404,7 +18419,42 @@ async function handleHtmlRequest(req: express.Request, res: express.Response, vi
             html = html.replace('<div id="root">', `<div id="root">\n${homeStatic}\n`);
           }
         }
+        // Directory business pages (/biz/<slug>): the detail view fetches
+        // its listing client-side, so non-JS crawlers otherwise receive an
+        // empty #root and the page reads as a soft 404. Inject static
+        // content built from the listing's real fields (src/lib/seo/
+        // bizStatic.ts), fetching the one full listing — the same data
+        // path as GET /api/directory/business/:slugOrId — so the body
+        // carries the recorded description and review texts, not just
+        // name-and-address. Crawlers only, mirroring the homepage
+        // injection above; human browsers keep the clean shell.
+        if (bizEntity && isCrawler && !metadata.isDashboard && !isAppHost) {
+          let fullListing: any = null;
+          try {
+            fullListing = await dbService.getDirectoryListingBySlugOrId(bizEntity.slug);
+            if (!fullListing) {
+              fullListing = getDirectoryListingBySlug(bizEntity.slug) || null;
+            }
+          } catch (err) {
+            console.warn('[handleHtmlRequest] Full listing fetch failed for /biz/' + bizEntity.slug + ':', err);
+          }
+          const bizStatic = buildBizStaticHtml(bizEntity, fullListing);
+          if (bizStatic) {
+            if (html.includes('<div id="root"></div>')) {
+              html = html.replace('<div id="root"></div>', `<div id="root">\n${bizStatic}\n</div>`);
+            } else {
+              html = html.replace('<div id="root">', `<div id="root">\n${bizStatic}\n`);
+            }
+          }
+        }
       }
+    }
+    // Unknown /biz/<slug>: real 404 status. The body is the same shell with
+    // the existing not-found metadata (noindex is already set above via
+    // metadata.noIndex / X-Robots-Tag), so browsers still land on the app's
+    // own not-found experience — only the status code becomes truthful.
+    if (bizNotFound) {
+      return res.status(404).send(html);
     }
     return res.send(html);
   } catch (err) {

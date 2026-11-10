@@ -320,20 +320,20 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
   'local-business-audit-checklist': {
     slug: 'local-business-audit-checklist',
     relatedSlugs: ['google-business-profile-guide', 'how-to-create-seo-proposal', 'business-not-showing-on-google-maps'],
-    title: 'The Ultimate 40-Point Local Business Audit Checklist',
+    title: 'Free Local Business Audit Checklist',
     category: 'Checklists & SOPs',
     readingTime: '13 min read',
     publishedDate: 'August 2026',
     authorName: 'The LocoraAI Team',
     authorRole: 'Local Search Experts',
     metaTitle: 'Free 40-Point Local Business Audit Checklist (Interactive) | LocoraAI',
-    metaDescription: 'Audit your business free in your browser: 40 interactive checks — site speed, Google Business Profile, schema, citations, mobile conversion.',
+    metaDescription: 'Free local business audit checklist: check your site speed, Google Business Profile, schema, citations and mobile — tick each item off as you go.',
     targetKeywords: ['local business audit checklist', 'local SEO audit SOP', 'agency audit template', 'website health checklist', 'local marketing audit'],
     targetTab: 'website_review',
     ctaText: 'Test Interactive Audit Checklist in Sandbox',
     ctaHeadline: 'Run Automated 7-Point Audits in 10 Seconds',
     ctaDescription: 'Skip manual spreadsheet audits. Use Locora AI to scan any URL and produce white-label diagnostic teardowns instantly.',
-    summary: 'An exhaustive, interactive 40-point diagnostic checklist covering technical performance, local search entity schema, Google Business Profile attributes, citation integrity, and mobile conversion funnels.',
+    summary: 'Work through the checks that decide whether customers find you: your site\'s speed, your Google Business Profile, your schema, your citations, and how your site converts on a phone. Tick each item off as you verify it — your progress is tracked as you go, right here in your browser. No download, no signup.',
     prosAndCons: {
       pros: [
         'Standardizes quality assurance across all agency client onboarding audits',
@@ -348,13 +348,25 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
       ]
     },
     tableOfContents: [
+      { id: 'start', title: 'Start Here — How to Use This Checklist' },
       { id: 'technical', title: '1. Technical Performance & Core Web Vitals' },
       { id: 'onpage', title: '2. On-Page SEO & Local Keyword Targeting' },
       { id: 'schema', title: '3. LocalBusiness Entity Schema & Structured Data' },
       { id: 'gbp', title: '4. Google Business Profile & Map Pack Signals' },
-      { id: 'conversion', title: '5. Mobile User Experience & Conversion Funnel' }
+      { id: 'conversion', title: '5. Mobile User Experience & Conversion Funnel' },
+      { id: 'citations', title: '6. Citations & Directory Consistency' },
+      { id: 'reviews', title: '7. Reviews & Reputation' }
     ],
     sections: [
+      {
+        id: 'start',
+        heading: 'Start Here — It Takes About a Minute per Section',
+        content: [
+          'Start now: open your website on your phone, work down the first section and tick off what already passes. Whatever is left unticked is your fix list, in priority order.',
+          'Prefer not to check by hand? LocoraAI\'s free checkup scans your business automatically — the checklist below shows everything it looks at, and everything you can verify yourself.'
+        ],
+        keyTakeaway: 'Tick off what already passes as you go; whatever remains unticked, in section order, is your prioritised fix list.'
+      },
       {
         id: 'technical',
         heading: '1. Technical Performance & Core Web Vitals',
@@ -368,7 +380,9 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
           'Cumulative Layout Shift (CLS) score below 0.1',
           'SSL / HTTPS certificate active with 100% secure resource loading',
           'Mobile viewport meta tag configured for responsive scaling',
-          'Clean XML sitemap submitted to Google Search Console'
+          'Clean XML sitemap submitted to Google Search Console',
+          'No mixed-content warnings — every page resource loads over HTTPS',
+          'Top pages return no 404 errors and use no unnecessary redirect chains'
         ]
       },
       {
@@ -384,7 +398,9 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
           'Meta description under 155 characters with clear click-to-call CTA',
           'Single H1 tag on every page matching the primary service keyword',
           'Dedicated sub-pages for all major adjacent suburbs within service radius',
-          'Internal links connecting suburb pages to primary service categories'
+          'Internal links connecting suburb pages to primary service categories',
+          'Every service page shows a clear call-to-action above the fold',
+          'All images carry descriptive alt text'
         ]
       },
       {
@@ -412,7 +428,9 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
           'Primary category aligned with top 3 local competitors in target city',
           '100% NAP consistency between website footer and GBP listing',
           'Active review response rate exceeding 90% across all customer ratings',
-          'At least 20+ high-resolution, geo-tagged photos uploaded to profile'
+          'At least 20+ high-resolution, geo-tagged photos uploaded to profile',
+          'GBP services list completed with every service the business offers',
+          'GBP Q&A section seeded with answers to the business\'s most common questions'
         ]
       },
       {
@@ -427,7 +445,41 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
           'Click-to-call phone number sticky in mobile header',
           'Contact form requires 4 or fewer fields on mobile screens',
           'Prominent trust badges (BBB, state license #, insurance proof) displayed',
-          'Real customer 5-star testimonials visible above the fold on service pages'
+          'Real customer 5-star testimonials visible above the fold on service pages',
+          'Quote or contact route tested end-to-end on a real phone within the last 30 days'
+        ]
+      },
+      {
+        id: 'citations',
+        heading: '6. Citations & Directory Consistency',
+        content: [
+          'Your citations are the copies of your business name, address, and phone number (NAP) held by directories, maps platforms, and data aggregators. Search engines cross-check them against your Google Business Profile: when the copies agree, the business looks established; when they conflict — an old address here, a different phone number there — the listing looks unreliable, and the directories themselves can send customers to the wrong place.',
+          'Work through the major directories and aggregators your customers actually use, correct every mismatch at the source, and hunt down duplicates. A duplicate listing splits your reviews and your visibility, so flag every one you find for removal or merging.'
+        ],
+        keyTakeaway: 'Every directory copy of your name, address, and phone should match your Google Business Profile exactly — and duplicates should be merged or removed.',
+        checklistItems: [
+          'Primary directories and data aggregators carry a name, address, and phone identical to GBP',
+          'Duplicate listings found and flagged for removal or merging',
+          'Apple Maps and Bing Places listings claimed, with details matching GBP',
+          'Directory categories consistent with the GBP primary category',
+          'Phone number format identical everywhere — no tracking-number mismatch on the website itself',
+          'Business hours consistent across the top directories'
+        ]
+      },
+      {
+        id: 'reviews',
+        heading: '7. Reviews & Reputation',
+        content: [
+          'Reviews are the public record customers read before they ever reach your website — and part of the raw material AI assistants draw on when they describe a business. An audit that stops at the profile and the pages misses the evidence most buyers actually act on.',
+          'Benchmark your count and average rating against the competitors customers compare you with, make sure every recent review has a response, and confirm there is a working route — a direct link or QR code — that invites every customer to review you, not only the ones you expect to be happy.'
+        ],
+        keyTakeaway: 'Know your review count and rating against your top local competitors, respond to everything recent, and keep an always-on, ungated route for new reviews.',
+        checklistItems: [
+          'Review count and average rating checked against the top 3 local competitors',
+          'Responses posted to all reviews received in the last 90 days',
+          'Working review-request route (direct link or QR code) in active use',
+          'No review gating — every customer is invited to review, not only happy ones',
+          'Reviews visible on, or linked from, the business website'
         ]
       }
     ],
@@ -2643,6 +2695,268 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
       {
         q: 'Where does LocoraAI fit if we already have an agency or a marketing hire?',
         a: 'Underneath either one, as the monitoring layer: continuous visibility checkups across Google, Maps, and AI answers, early detection when something drifts, and drafted review replies. The checkup is free, Free Explorer is $0, and Pro is $29/mo. It gives an in-house owner leverage and gives you independent verification of an agency\'s reported progress — it replaces neither party\'s judgement or production.'
+      }
+    ]
+  },
+  'how-dentists-get-recommended-by-chatgpt': {
+    slug: 'how-dentists-get-recommended-by-chatgpt',
+    relatedSlugs: ['ai-visibility-for-dentists', 'get-dental-practice-recommended-by-chatgpt', 'google-business-profile-guide'],
+    title: 'How Dentists Get Recommended by ChatGPT: What an 18-Answer Test Actually Showed',
+    category: 'Local SEO',
+    readingTime: '10 min read',
+    publishedDate: 'November 2026',
+    authorName: 'The LocoraAI Team',
+    authorRole: 'Local Search Experts',
+    metaTitle: 'How Dentists Get Recommended by ChatGPT: Study | LocoraAI',
+    metaDescription: 'We asked ChatGPT, Google AI and Gemini to recommend dentists 18 times. Half the practices in our pilot sample were never named. Here is what the named ones had in common — and the playbook that follows.',
+    targetKeywords: ['what AI tools help dentists get recommended by ChatGPT', 'how dentists get recommended by ChatGPT', 'how to get my dental practice recommended by AI', 'dentist AI visibility'],
+    targetTab: 'local_seo',
+    ctaText: 'Run My Free Checkup',
+    ctaHeadline: 'Find Out Whether AI Recommends Your Practice',
+    ctaDescription: 'LocoraAI\'s free checkup audits your Google presence and your AI visibility together and shows you the gaps in the order this playbook fixes them — no signup or credit card needed to see your score and top issues.',
+    summary: 'We asked ChatGPT, Google\'s AI Overview and Gemini to recommend dentists 18 times and recorded which of the 10 practices in our Logan, Utah pilot sample (November 2026) they named. Half were never named once. Here are the findings, what the answers reveal about how AI tools pick practices, and the playbook that follows.',
+    tableOfContents: [
+      { id: 'the-test', title: '1. The Test: 10 Practices, 18 AI Answers' },
+      { id: 'findings-invisibility', title: '2. What We Found: Invisibility, Reviews, and Three Different Shortlists' },
+      { id: 'findings-gaps', title: '3. What We Found: Different Games, Missing Websites, and Invented Facts' },
+      { id: 'what-ai-pulls-from', title: '4. What the AI Answers Actually Pull From' },
+      { id: 'the-playbook', title: '5. The Playbook: What to Do, in Order' },
+      { id: 'where-you-stand', title: '6. Find Out Where Your Practice Stands' }
+    ],
+    sections: [
+      {
+        id: 'the-test',
+        heading: '1. The Test: 10 Practices, 18 AI Answers',
+        content: [
+          'Patients have started asking AI assistants the question they used to type into Google: "Who is the best dentist near me?" ChatGPT, Google\'s AI Overview and Gemini now answer with a shortlist of named practices. If your practice is not on that list, you do not exist for that patient — no matter how good your website is.',
+          'Rather than guess how those shortlists get built, we ran a small, honest test. This article shares what we found in our 10-practice Logan, Utah pilot sample (November 2026), what the answers themselves reveal about how AI tools pick practices, and the playbook that follows from the evidence.',
+          'We took a sample of 10 dental practices in one city — Logan, Utah — spanning general dentistry, orthodontics, endodontics, periodontics and pediatric dentistry. We then asked three AI tools (ChatGPT, Google\'s AI Overview and Gemini) six questions a patient might ask.',
+          'The six questions were: Who is the best dentist in Logan, UT? Who is a good family dentist in Logan, UT? Who is a good orthodontist in Logan, UT? Who offers dental implants in Logan, UT? I have a toothache — who is an emergency dentist in Logan, UT? And who is a good dentist near Utah State University in Logan, UT?',
+          'That is 18 AI answers. We recorded every practice named, in order. Separately, we ran the five core searches on Google ("dentist in Logan, UT", "best dentist in Logan, UT", and so on) and recorded which of the 10 practices appeared in the Map Pack or the top 30 results. Everything below comes from those two passes. It is a pilot sample of 10 practices in one city — treat the findings as directional, not as universal laws.'
+        ],
+        keyTakeaway: 'A 10-practice Logan, Utah pilot (November 2026): six patient questions put to ChatGPT, Google\'s AI Overview and Gemini — 18 answers, every named practice recorded — plus a Google Map Pack and top-30 pass over the same 10 practices.'
+      },
+      {
+        id: 'findings-invisibility',
+        heading: '2. What We Found: Invisibility, Reviews, and Three Different Shortlists',
+        content: [
+          'Half the practices were invisible to AI. Only 5 of the 10 sampled practices were named by any AI tool, in any of the 18 answers. The other five — real practices with Google listings and reviews — were never recommended once.',
+          'Reviews alone did not decide it. One practice in the sample has 473 Google reviews and a perfect 5.0 rating. It received zero AI mentions across all 18 answers. The most-reviewed practice in the sample (732 reviews, also 5.0 stars) was named exactly once. Review volume is clearly part of the picture — Google\'s AI answers displayed star ratings and review counts next to the practices they named — but a big review count by itself did not buy a recommendation. One caveat: two of the high-review practices in our sample are specialists, and our six questions included no root-canal question, so specialists were partly tested outside their specialty. The 473-review practice, though, is a general practice — and it was still shut out.',
+          'The three AI tools do not agree with each other. Each tool produced a different shortlist for the same question. The most-named practice in the sample earned most of its mentions from a single tool while being nearly absent from the others. Being "visible to AI" is not one thing — it is at least three separate tests, and a practice can pass one and fail the rest.'
+        ],
+        keyTakeaway: 'Only 5 of 10 practices were named at all; a 473-review, 5.0-star general practice got zero mentions; and each AI tool produced a different shortlist for the same question.'
+      },
+      {
+        id: 'findings-gaps',
+        heading: '3. What We Found: Different Games, Missing Websites, and Invented Facts',
+        content: [
+          'Google search and AI answers are different games. Across the five core Google searches, only 1 of the 10 practices — the orthodontist, on the orthodontist search — appeared in a Map Pack at all. Meanwhile the AI tools named practices that Google search could not find: an implants specialist in the sample does not appear in the Map Pack or the top 30 results for "dental implants in Logan, UT", yet ChatGPT named it second for the implants question. Winning Google does not automatically win AI, and losing Google does not automatically lose AI.',
+          'A missing website did not disqualify a practice — but it is still a hole. That same implants specialist has no website link on its Google listing at all (the listing literally shows "Add website"), and ChatGPT recommended it anyway. So AI tools will surface a practice from listing and review data alone. But note the other half of that finding: the practice is invisible in Google search for its own core service, and a patient who wants to check it out has nowhere to land. AI found it despite the gap, not because the gap is fine.',
+          'AI answers can be wrong about you — check what they say. In the emergency-dentist answer, ChatGPT displayed a phone number containing "555" — the pattern reserved for fictional numbers — for one practice. In other words, the AI confidently showed patients a number that does not work. If you never ask the AI tools about your own practice, you will never know what they are telling your patients.',
+          'Same brand, wrong practice. The AI tools repeatedly recommended a different location of a multi-location brand — not the location in our sample. If you run or belong to a multi-location practice, each location\'s online identity has to stand on its own, or the AI will happily send patients to the wrong office.'
+        ],
+        keyTakeaway: 'Map Pack visibility and AI visibility diverge; a practice with no website link was still recommended by ChatGPT; one AI answer showed a non-working 555 phone number; and multi-location brands risk AI sending patients to the wrong office.'
+      },
+      {
+        id: 'what-ai-pulls-from',
+        heading: '4. What the AI Answers Actually Pull From',
+        content: [
+          'We cannot see inside these tools, and anyone who claims an exact recipe is guessing. But the 18 answers themselves show their workings.',
+          'Listing data. Google\'s AI answers printed each named practice\'s rating, review count and address — the contents of a complete, accurate business listing.',
+          'Review substance, not just counts. ChatGPT\'s answers described practices in patient-experience language — gentle, good with kids, easy to reach, upfront about prices. That language mirrors what patients write in reviews, which is one reason the content of your reviews matters, not only the total.',
+          'Service clarity. Answers matched practices to the specific service in the question — implants, orthodontics, emergencies. Practices were described by what they clearly offer, in plain words.',
+          'The open web. The answers blended listing facts with descriptions that only exist on practice websites and directories — names, services, positioning. A practice that says clearly what it does, and where, gives the tools something accurate to repeat.'
+        ],
+        keyTakeaway: 'Observed in the answers themselves: complete listing data, the substance of reviews, plainly stated services, and consistent facts across the open web. No exact recipe exists — anyone claiming one is guessing.'
+      },
+      {
+        id: 'the-playbook',
+        heading: '5. The Playbook: What to Do, in Order',
+        content: [
+          'Step 1 — Complete your Google Business Profile like it is your homepage. Correct primary category (the implants specialist above is listed under a precise "dental implants periodontist" category, and it surfaced for the implants question), every service listed, hours, photos — and a working website link. Our Google Business Profile guide walks through the full setup.',
+          'Step 2 — Give each high-value service its own clear page. Implants, orthodontics, emergency care, Invisalign: one page each, in plain language, saying who it is for and what it costs in shape if not in numbers. In our Google pass, the sampled practices that did show up in results for service searches were showing up with dedicated service pages. AI answers describe services in plain words — give them plain words to work with.',
+          'Step 3 — Make your name, address and phone identical everywhere. Your listing, your website, directories, your socials. Inconsistent details are how AI tools merge you with another location — or invent details, like a 555 phone number, to fill a gap.',
+          'Step 4 — Build reviews steadily, and respond to them. Keep asking, keep the flow recent, and reply. But take the review finding seriously: reviews are necessary groundwork, not a guarantee. Pair them with the steps above instead of treating the count as the whole strategy. Our guide on how many Google reviews a dental practice needs explains how to find your real local benchmark.',
+          'Step 5 — Let the crawlers in and structure your site. Make sure AI crawlers are not blocked and your site carries basic structured data (schema) identifying your practice, services and location. Our dental website crawler and schema checklist covers this in order. Honest note from our sample: no single technical factor explained the winners — the practices named most often had the basics stacked together, not one magic item.',
+          'Step 6 — If you have multiple locations, build each one separately. Separate listing, separate reviews, separate service pages per location. Otherwise, as the wrong-location finding showed, the AI recommends whichever location\'s data is strongest and sends your patients there.',
+          'Step 7 — Test yourself the way a patient would, every month. Open fresh sessions in ChatGPT, Google and Gemini. Ask the six question types above for your city. Write down who gets named — and check every fact the tools state about your practice, especially your phone number. Visibility you never measure is visibility you are guessing about.',
+          'Step 8 — Don\'t neglect the Map Pack while you chase AI. Only 1 of our 10 practices appeared in any Map Pack — that is paid-attention territory you are also probably missing. The factors are different but the groundwork overlaps; our breakdown of what decides the Maps 3-Pack for dentists covers it.'
+        ],
+        keyTakeaway: 'In order: a complete Google Business Profile, a clear page per high-value service, identical name, address and phone everywhere, steady answered reviews, crawler access and schema, a separate identity per location, monthly self-testing, and the Map Pack basics underneath.'
+      },
+      {
+        id: 'where-you-stand',
+        heading: '6. Find Out Where Your Practice Stands',
+        content: [
+          'Everything in this article started with one question: does AI recommend us at all? LocoraAI\'s free checkup answers that for your practice — it audits your Google presence and your AI visibility together and shows you the gaps in the order this playbook fixes them.',
+          'For the deeper mechanics, read next: AI Visibility for Dentists, on how ChatGPT decides which practices to recommend, and our step-by-step guide to getting your dental practice recommended by ChatGPT. More guides for dental practices live on our page for dentists.'
+        ],
+        keyTakeaway: 'Start by finding out whether AI recommends your practice at all — the free checkup audits your Google presence and AI visibility together and orders the gaps the way this playbook fixes them.'
+      }
+    ],
+    faqs: [
+      {
+        q: 'How do I check whether ChatGPT recommends my dental practice?',
+        a: 'Open ChatGPT in a fresh, logged-out session and ask the questions a patient would ask — "best dentist in [your city]", "emergency dentist in [your city]", and the same for your highest-value services. Repeat in Google\'s AI Overview and Gemini, because the three tools give different shortlists. Do it monthly, and note every detail the tools state about you; in our pilot test, one AI answer displayed a fabricated 555 phone number for a practice.'
+      },
+      {
+        q: 'Do more Google reviews guarantee that AI will recommend my practice?',
+        a: 'No. In our 10-practice Logan, Utah pilot sample (November 2026), a general practice with 473 reviews and a 5.0 rating received zero mentions across 18 AI answers, and the sample\'s most-reviewed practice (732 reviews) was named once. Reviews matter — AI answers display ratings and counts — but they work together with listing completeness, service clarity and your wider web presence, not instead of them.'
+      },
+      {
+        q: 'Can AI recommend a practice that has no website?',
+        a: 'It happened in our test: a periodontics practice with no website link on its Google listing was named second by ChatGPT for the dental-implants question. But the same practice was invisible in Google search for that service, and patients had nowhere to land. Treat an AI mention without a website as luck, not a strategy — a complete listing and a real website remain the groundwork.'
+      },
+      {
+        q: 'Why does AI keep recommending a different location of our brand?',
+        a: 'Because the tools build each answer from the strongest, clearest data they can find, and locations with thin or merged data lose to the location with the complete listing, the most reviews and the clearest pages. Give every location its own complete listing, its own review flow and its own service pages so each one can be recommended on its own merits.'
+      }
+    ]
+  },
+  'dental-marketing-software-vs-agency': {
+    slug: 'dental-marketing-software-vs-agency',
+    relatedSlugs: ['dentist-seo-vs-dental-marketing-agencies', 'dental-agency-vs-in-house-marketing', 'ai-visibility-for-dentists'],
+    title: 'Dental Marketing Software vs Agency: What Each One Actually Does for Your Practice',
+    category: 'Local SEO',
+    readingTime: '10 min read',
+    publishedDate: 'November 2026',
+    authorName: 'The LocoraAI Team',
+    authorRole: 'Local Search Experts',
+    metaTitle: 'Dental Marketing Software vs Agency: Honest Guide | LocoraAI',
+    metaDescription: 'Dental marketing software or a full-service agency? What each one actually does, where each falls short, how the costs differ in shape, and a decision framework for practices — including where LocoraAI honestly fits.',
+    targetKeywords: ['dental marketing software vs agency', 'should I hire a dental marketing agency or use software', 'dental marketing agency alternative'],
+    targetTab: 'local_seo',
+    ctaText: 'Run My Free Dental Checkup',
+    ctaHeadline: 'Start With the Diagnosis',
+    ctaDescription: 'LocoraAI\'s free checkup shows where your practice stands today — your Google presence, your AI visibility, and the specific gaps in the order they should be fixed. If the list is mostly basics, start with software; if the basics are clean, hire help with your eyes open.',
+    summary: 'Software or a full-service agency? What each one actually does day to day for a dental practice, where each genuinely falls short, how their costs differ in shape rather than slogans, where LocoraAI honestly fits, and a decision framework — including the hybrid most practices end up with.',
+    tableOfContents: [
+      { id: 'two-different-jobs', title: '1. Two Different Jobs, Often Sold as One' },
+      { id: 'what-software-does-well', title: '2. What Software Actually Does Well' },
+      { id: 'what-software-does-not-do', title: '3. What Software Honestly Does Not Do' },
+      { id: 'what-agency-does-well', title: '4. What an Agency Actually Does Well' },
+      { id: 'where-agencies-fall-short', title: '5. Where Agencies Fall Short' },
+      { id: 'cost-shape', title: '6. How the Costs Actually Compare — in Shape' },
+      { id: 'where-locoraai-fits', title: '7. Where LocoraAI Fits — Stated Plainly' },
+      { id: 'decision-framework', title: '8. The Decision Framework' },
+      { id: 'start-with-diagnosis', title: '9. Start With the Diagnosis, Whichever Route You Choose' }
+    ],
+    sections: [
+      {
+        id: 'two-different-jobs',
+        heading: '1. Two Different Jobs, Often Sold as One',
+        content: [
+          'Every dental practice eventually faces the same fork in the road. Patient flow needs to grow, the front desk is already stretched, and two very different offers are on the table: a marketing agency that promises to "handle everything," and marketing software that promises to automate it. Both sides\' sales material will tell you the other option is a waste of money. Neither is telling you the whole story.',
+          'This is the honest version: what each option actually does day to day, where each one genuinely falls short, how their costs differ in shape (any article quoting you a universal agency price is making it up), and a framework for deciding — including the hybrid most practices end up with.',
+          'An agency sells you a team and their judgment: strategists, writers, designers and ads specialists who plan campaigns and execute them for you, across many clients at once.',
+          'Marketing software sells you leverage on your own work: tools that audit, track, prompt and automate the recurring tasks of being found — your Google profile, your reviews, your website\'s signals, and now your visibility in AI answers — so a small team can keep them done consistently.',
+          'They overlap in the middle (both will touch your profile and your website), but they are not substitutes. Software does not think for you. An agency does not give you systems you own. The right question is not "which is better?" but "which of my gaps is a doing gap, and which is a thinking gap?"'
+        ],
+        keyTakeaway: 'An agency sells a team and its judgment; software sells leverage on the recurring work of being found. Decide which gap you actually have — a doing gap or a thinking gap.'
+      },
+      {
+        id: 'what-software-does-well',
+        heading: '2. What Software Actually Does Well',
+        content: [
+          'Recurring visibility work. Checking your profile is complete, your details are consistent, your reviews are flowing and answered, your site can be crawled and understood — these are weekly, unglamorous tasks. Software is built for exactly this: it does not forget, does not go on holiday, and does not bill you per check.',
+          'Measurement. Where do you rank, who does AI recommend in your city, what changed this month? Software answers with data on demand instead of a quarterly report you have to interpret.',
+          'Speed. You can start today, see your current gaps today, and fix the first one today. There is no onboarding call, no discovery phase, no waiting for a slot in a production schedule.',
+          'Ownership. The accounts, the data and the improvements live in your practice. Cancel the subscription and your profile, reviews and content are still yours.'
+        ],
+        keyTakeaway: 'Software excels at the recurring, unglamorous visibility work: consistent checks, on-demand measurement, same-day starts, and improvements your practice owns.'
+      },
+      {
+        id: 'what-software-does-not-do',
+        heading: '3. What Software Honestly Does Not Do',
+        content: [
+          'It does not set strategy. Software will show you that you are invisible for implants in your city. Deciding whether implants should be your growth bet — that is judgment, and it stays yours (or an adviser\'s).',
+          'It does not create for you at an agency\'s level. A full rebrand, a video campaign, a PR push, a designed-from-scratch website: tools assist, but they do not replace a creative team.',
+          'It does not run your ads. Paid campaigns need budgets, targeting decisions and ongoing management. Some agencies earn their fee exactly here.',
+          'It requires someone\'s time. An hour or two a week from you or a team member to act on what it surfaces. Software with no operator is a dashboard nobody opens.'
+        ],
+        keyTakeaway: 'Software does not set strategy, replace a creative team, or run ads — and it still needs an hour or two of someone\'s time each week to act on what it finds.'
+      },
+      {
+        id: 'what-agency-does-well',
+        heading: '4. What an Agency Actually Does Well',
+        content: [
+          'Breadth in one contract. Design, copy, ads, social, web development — skills no single hire and no single tool covers, available without recruiting anyone.',
+          'Done-for-you execution. If nobody in the practice has time to even supervise marketing, an agency\'s work still ships. For a practice drowning in operations, that is a real benefit, not a luxury.',
+          'Experience across practices. A dental-specialist agency has watched many practices try the same things. Pattern recognition — what tends to work for an ortho launch, a second location, a fee-for-service transition — is the most defensible part of their fee.',
+          'Campaigns, not just maintenance. Launches, events, new-service pushes and seasonal drives are projects with a beginning and an end. Agencies are structured for projects; software is structured for the ongoing baseline underneath them.'
+        ],
+        keyTakeaway: 'An agency earns its place on breadth, done-for-you execution, cross-practice pattern recognition, and project-shaped campaign work.'
+      },
+      {
+        id: 'where-agencies-fall-short',
+        heading: '5. Where Agencies Fall Short',
+        content: [
+          'Your account is one of many. The senior person sells; juniors execute; priorities follow their largest clients. This is not villainy, it is arithmetic — but it means your practice\'s urgency is rarely their urgency.',
+          'The cost shape never sleeps. An agency is a fixed monthly commitment whether that month produced a campaign or a holding pattern. And when the contract ends, what stops is not just the work — often the reporting, the dashboards and the know-how leave with them, because the systems were theirs.',
+          'Generic playbooks. The same package sold to every practice in every city. If your market, your services or your stage differ, a template does not bend to fit.',
+          'Visibility basics get upsold. Profile management, review requests, local listings — the recurring groundwork software does well — is sometimes packaged as premium "SEO services" at team prices, when it is precisely the work software exists to do at software prices.'
+        ],
+        keyTakeaway: 'Watch for divided attention, a retainer that bills in quiet months, one-size playbooks, and recurring basics repackaged at team prices.'
+      },
+      {
+        id: 'cost-shape',
+        heading: '6. How the Costs Actually Compare — in Shape',
+        content: [
+          'We will not quote agency fees, because they vary too widely to quote honestly, and any specific number here would be invented. Compare the shapes instead.',
+          'Software is a subscription: a known, flat monthly cost (LocoraAI\'s Pro plan is $29/month, and our checkup is free) that stays the same whether you run one check or fifty. It scales with your usage of tooling, not with hours.',
+          'An agency is a retainer: a materially larger fixed monthly commitment that buys people\'s time and judgment. Its value depends entirely on how much of that judgment your practice actually needs and uses.',
+          'The hidden third cost is your team\'s time. Software shifts work to you (a little, consistently). An agency shifts work away from you (at a price). Price both options including that time, or the comparison is rigged from the start.',
+          'The fair question is never "which is cheaper?" It is "what am I actually buying — recurring execution, or senior judgment — and am I paying judgment prices for execution work?"'
+        ],
+        keyTakeaway: 'Compare shapes, not slogans: a flat subscription for recurring execution versus a larger retainer for people\'s judgment — and count your own team\'s time in both columns.'
+      },
+      {
+        id: 'where-locoraai-fits',
+        heading: '7. Where LocoraAI Fits — Stated Plainly',
+        content: [
+          'LocoraAI is software, and it sits in the software column of this comparison. It runs the recurring visibility work for local practices: the free checkup audits how your practice shows up on Google and whether AI assistants like ChatGPT recommend you, and the platform helps you work through the gaps it finds — profile, reviews, and the signals AI tools read.',
+          'What it does not do: it will not design your brand, shoot your videos, manage an ads budget, or replace a strategist. If your practice needs those things and has nobody to do them, you need people — an agency, a freelancer, or a hire — possibly with software underneath. If your gap is that the visibility basics are undone, inconsistent or unmeasured, software is the proportionate tool, and it costs a small fraction of a retainer because it is one.',
+          'We would rather tell you that plainly than pretend a $29/month tool replaces a team. Articles that blur this line are selling something.'
+        ],
+        keyTakeaway: 'LocoraAI is software for the recurring visibility baseline — it does not design brands, shoot video, manage ads, or replace a strategist, and this article will not pretend otherwise.'
+      },
+      {
+        id: 'decision-framework',
+        heading: '8. The Decision Framework',
+        content: [
+          'Choose software first if your Google profile, reviews or website basics are incomplete or inconsistent (fix the foundation before buying campaigns to amplify it); if you or a team member can give marketing an hour or two a week; if you want to see your visibility — rankings, AI recommendations, gaps — before deciding where bigger money should go; or if your budget is real but small and needs to be spent on execution gaps, not retainers.',
+          'Choose an agency if the foundation is already solid and your gap is creative or strategic — a rebrand, a launch, a multi-channel campaign; if literally nobody in the practice can supervise marketing, so done-for-you is the requirement, not the preference; if you are running meaningful paid-media spend that needs professional management; or if you are opening or acquiring locations and need coordinated rollout work.',
+          'Choose the hybrid, where most established practices land: software runs the always-on baseline — profile, reviews, AI visibility, measurement — and an agency or freelancer is brought in for defined projects on top of it. You keep the data and the systems; they bring the judgment for the moments that need it. Our companion pieces work through the related questions: dental agency vs in-house marketing covers the hiring side, and dentist SEO vs dental marketing agencies goes deeper on the SEO slice specifically.',
+          'Red flags on either side: an agency that will not show you your own data, or reports only in their dashboard, on their terms; software that promises rankings or AI recommendations as a guarantee — nobody controls Google\'s or ChatGPT\'s output; and either side that cannot explain, in plain words, what happens in the first 30 days.'
+        ],
+        keyTakeaway: 'Software first when the foundation is broken and someone can operate it; an agency when the gap is creative, strategic, or truly done-for-you; the hybrid — software baseline, people for projects — is where most established practices land.'
+      },
+      {
+        id: 'start-with-diagnosis',
+        heading: '9. Start With the Diagnosis, Whichever Route You Choose',
+        content: [
+          'Every version of this decision gets easier with one piece of information: where your practice actually stands today. LocoraAI\'s free checkup shows you — your Google presence, your AI visibility, and the specific gaps, in the order they should be fixed. If the list is mostly basics, you have your answer: start with software. If the basics are clean and the gaps are creative, you\'ll hire help with your eyes open.',
+          'Deeper reading: AI Visibility for Dentists, our Google Business Profile guide, and LocoraAI for dentists.'
+        ],
+        keyTakeaway: 'Diagnose before you decide: if the checkup shows mostly basics, start with software; if the basics are clean and the gaps are creative, hire help with your eyes open.'
+      }
+    ],
+    faqs: [
+      {
+        q: 'Is dental marketing software enough on its own?',
+        a: 'For the recurring visibility work — a complete Google profile, consistent details, a steady review flow, a crawlable website, and knowing whether AI assistants recommend you — yes, that is exactly what software is for. It is not enough if your gap is creative or strategic: branding, campaigns, video, or managed advertising need people. Most practices find the honest answer is software for the baseline, people for the projects.'
+      },
+      {
+        q: 'When does a dental marketing agency genuinely earn its fee?',
+        a: 'When you are buying judgment and breadth you cannot hire or build: a rebrand, a new-location launch, a multi-channel campaign, or serious paid-media management. An agency earns its fee on projects with a beginning and an end. It earns it least on the recurring basics — profile upkeep, review requests, visibility checks — which software performs at software prices.'
+      },
+      {
+        q: 'Can I use software and an agency together?',
+        a: 'Yes — it is the arrangement most established practices end up with. Software keeps the always-on baseline running and gives you independent measurement of your visibility, which also keeps any agency honest: you can see for yourself whether rankings and AI recommendations move. Bring the agency in for defined creative or campaign work on top of that foundation.'
+      },
+      {
+        q: 'How should I compare the cost of software vs an agency fairly?',
+        a: 'Compare shapes, not slogans. Software is a flat subscription that stays constant regardless of how much you use it (LocoraAI Pro is $29/month; the checkup is free). An agency is a larger fixed monthly retainer that buys people\'s time — worth it when you use the judgment, wasteful when the month produced only basics. And count your own team\'s time in both columns: software needs an hour or two a week of operation; an agency needs less, and charges accordingly.'
       }
     ]
   }

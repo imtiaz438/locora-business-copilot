@@ -37,6 +37,7 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
   onClaimBusiness,
 }) => {
   const [analyzing, setAnalyzing] = useState(true);
+  const [notAudited, setNotAudited] = useState(false);
   const [analysisStep, setAnalysisStep] = useState('Connecting to website crawler...');
   const [checkupData, setCheckupData] = useState<{
     overallScore: number;
@@ -74,6 +75,7 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
 
     let isMounted = true;
     setAnalyzing(true);
+    setNotAudited(false);
     setAnalysisStep('Checking local presence, rankings, and website speed...');
 
     // Phase 4.1: Track directory_checkup_started
@@ -128,11 +130,24 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
 
         if (!isMounted) return;
 
-        // Build deterministic teaser from real audit or directory diagnostic snapshot
-        const rawSeo = business.diagnosticSnapshot?.seoScore || 82;
-        const rawPerf = business.diagnosticSnapshot?.performanceScore || 78;
-        const hasSchema = business.diagnosticSnapshot?.hasSchema ?? Boolean(realAudit?.detectedBusinessData?.hasLocalBusinessSchema);
-        const issuesCount = business.diagnosticSnapshot?.issuesCount || (realAudit?.gatedReport?.topIssues?.length || 4);
+        // Honesty rule (2026-11-10): scores come ONLY from a real audit — the
+        // live /api/public/checkup result above, or the listing's stored
+        // diagnostic snapshot (only ever written by a real audit run). With
+        // neither, show the neutral "not yet audited" state — never invent
+        // fallback scores for an un-audited listing.
+        const snapshot = business.diagnosticSnapshot;
+        if (!realAudit && !snapshot) {
+          if (isMounted) {
+            setNotAudited(true);
+            setAnalyzing(false);
+          }
+          return;
+        }
+
+        const rawSeo = snapshot?.seoScore ?? 0;
+        const rawPerf = snapshot?.performanceScore ?? 0;
+        const hasSchema = snapshot?.hasSchema ?? Boolean(realAudit?.detectedBusinessData?.hasLocalBusinessSchema);
+        const issuesCount = snapshot?.issuesCount ?? realAudit?.gatedReport?.topIssues?.length ?? 0;
 
         const overall = realAudit ? realAudit.overallScore : Math.round((rawSeo * 0.45) + (rawPerf * 0.3) + (hasSchema ? 25 : 10));
 
@@ -176,7 +191,13 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
             structuredData: realAudit?.scores?.structuredData ?? (hasSchema ? 85 : 35),
           },
           priorityIssues: derivedIssues,
-          totalOpportunitiesCount: Math.max(issuesCount, 7),
+          // --- Separate honesty nit (2026-11-10, independently droppable):
+          // previously floored at 7 via Math.max(issuesCount, 7), inventing
+          // opportunities that were never detected. Show the real detected
+          // count instead — the audit/snapshot issue count, never less than
+          // the priority issues actually listed below it, so the "(X of N)"
+          // header and "(N - 3) More Insights" teaser stay truthful.
+          totalOpportunitiesCount: Math.max(issuesCount, derivedIssues.length),
           pagesAnalyzed: realAudit?.pagesCrawled || 3,
           scanTimestamp: new Date().toLocaleDateString('en-US', {
             month: 'short',
@@ -323,6 +344,21 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
                 </div>
               </div>
             </div>
+          ) : notAudited ? (
+            <div className="py-16 text-center space-y-4">
+              <div className="inline-flex p-4 rounded-2xl bg-slate-50 text-slate-500">
+                <Search className="w-8 h-8" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-base font-bold text-slate-900 font-heading">
+                  Not Yet Audited
+                </h4>
+                <p className="text-sm text-slate-500 font-sans max-w-md mx-auto">
+                  We haven't run a checkup on {business.businessName} yet, so there are no scores to show.
+                  Claim this listing to run the free checkup and see its real Local Health Score.
+                </p>
+              </div>
+            </div>
           ) : checkupData ? (
             <>
               {/* 1. Basic Discovered Business Information */}
@@ -337,7 +373,8 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
                 </div>
                 <div>
                   <span className="text-[10px] uppercase font-bold text-slate-400 block">Primary Location</span>
-                  <span className="font-semibold text-slate-700 truncate block">{checkupData.discoveredData.address || 'Melbourne, VIC'}</span>
+                  {/* Separate honesty nit (2026-11-10, independently droppable): was a hardcoded 'Melbourne, VIC' fallback — a fabricated location for listings with no recorded address. */}
+                  <span className="font-semibold text-slate-700 truncate block">{checkupData.discoveredData.address || 'Not listed'}</span>
                 </div>
                 <div>
                   <span className="text-[10px] uppercase font-bold text-slate-400 block">Schema Status</span>
