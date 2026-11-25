@@ -138,7 +138,12 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
       rating: l.gbpData?.averageRating,
       reviewCount: l.gbpData?.reviewCount,
     })),
-    forceNoIndex: isSearchActive || isThinPage,
+    // Thin-content noindex applies to filtered views only (city/category/search
+    // states). The base hub must never be noindexed by a client-side fetch state:
+    // renderers that snapshot before /api/directory/listings settles would
+    // otherwise inherit a noindex the server never sent (GSC live-test finding,
+    // 2026-11-25). The hub carries server-rendered substance + listings.
+    forceNoIndex: isSearchActive || (isThinPage && pageType !== 'directory_hub'),
   });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
