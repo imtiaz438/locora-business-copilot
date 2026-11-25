@@ -25,6 +25,7 @@ import { SEO_USE_CASES_DATABASE } from '../src/data/seo/useCasesData';
 import { SEO_RESOURCES_DATABASE } from '../src/data/seo/resourcesData';
 import { escapeHtml } from '../src/utils/seoMetadata';
 import type { HowToStep, ProsAndCons } from '../src/data/seo/types';
+import type { PublishedBusinessEntity } from '../src/lib/seo/types';
 
 const e = escapeHtml;
 
@@ -787,6 +788,169 @@ ${articleList}
 </article>`;
 }
 
+/* ---------------- About page (/about) ---------------- */
+
+// Mirrors src/components/public/AboutView.tsx — the page's own copy,
+// heading for heading. The React view is fully static, so this is a
+// faithful no-JS rendering of exactly what visitors see.
+function buildAboutStaticHtml(): string {
+  return `<article>
+<header>
+<h1>Democratizing Enterprise AI for Local Businesses</h1>
+<p>Locora AI was built with a clear purpose: eliminate administrative friction for local business owners and growth agencies so they can focus on closing deals and serving customers.</p>
+</header>
+<section>
+<h2>Why We Built Locora AI</h2>
+<p>In 2024, our founders ran a digital growth agency in Austin, Texas. Every week, our account managers spent 20+ hours manually drafting proposals, creating Google Business schema markup, copying client invoices, and assembling PDF strategy roadmaps.</p>
+<p>Existing software was either too complex, fragmented across 6 expensive subscriptions, or produced generic AI gibberish. We built Locora AI to combine multi-model AI accuracy with crisp, white-label client operations.</p>
+<h3>Our Core Operating Pillars</h3>
+<ul>
+  <li><strong>Speed &amp; Simplicity First</strong> — Generates structured client assets in under 3 seconds.</li>
+  <li><strong>Strict Privacy &amp; Security</strong> — Client CRM records are never used to train public LLM models.</li>
+  <li><strong>Measurable Revenue Impact</strong> — Every feature is designed to increase proposal win rates and client retention.</li>
+</ul>
+</section>
+<section>
+<h2>Built by Practitioners</h2>
+<p>LocoraAI is built and run by a small team of engineers and local-search practitioners. Every feature ships from real agency workflows — and everything we publish speaks as one team.</p>
+</section>
+<section>
+<h2>Locora AI Headquarters</h2>
+<p>Operating from our central headquarters to power local service businesses and agencies globally.</p>
+<p><strong>LocoraAI</strong><br>Serving local businesses across the United States</p>
+<p><a href="/contact">Get in Touch with Our Team</a></p>
+</section>
+</article>`;
+}
+
+/* ---------------- Contact page (/contact) ---------------- */
+
+// Mirrors src/components/public/ContactView.tsx — its headings, intro and
+// published contact channels, verbatim. The message form itself is a
+// React interaction (submit handler + ticket state), so the static layer
+// carries the page's substantive content and points to the form and the
+// direct channels; it does not fake a form.
+function buildContactStaticHtml(): string {
+  return `<article>
+<header>
+<h1>Get in Touch with Locora AI</h1>
+<p>Have questions about our AI Copilot, custom agency workflows, or enterprise tier features? Our growth team responds within 2 business hours.</p>
+</header>
+<section>
+<h2>Direct Communication Channels</h2>
+<h3>Email Support &amp; Sales</h3>
+<p><a href="mailto:support@locoraai.com">support@locoraai.com</a><br>Avg Response: &lt; 2 Hours</p>
+<h3>Phone Support (US Toll Free)</h3>
+<p><a href="tel:+15717062446">+1 (571) 706-2446</a><br>Mon - Fri • 8am - 8pm EST</p>
+<h3>Locora AI Headquarters</h3>
+<p>100 Innovation Way, Suite 400<br>San Francisco, CA 94105, United States</p>
+<h3>Follow Our Official Channels</h3>
+<p><a href="https://www.linkedin.com/company/locoracopilot" rel="noopener noreferrer">LinkedIn</a> · <a href="https://www.facebook.com/profile.php?id=61593321283379" rel="noopener noreferrer">Facebook</a></p>
+</section>
+<section>
+<h2>Need an Instant Answer?</h2>
+<p>Ask our live AI Business Copilot directly in your workspace.</p>
+</section>
+<section>
+<h2>Send Us a Message</h2>
+<p>Use the contact form on this page to send us a message and our growth team will get back to you, or email us directly at <a href="mailto:support@locoraai.com">support@locoraai.com</a>.</p>
+</section>
+</article>`;
+}
+
+/* ---------------- Directory hub (/directory) ---------------- */
+
+// Static substance of src/components/directory/DirectoryHubView.tsx: its
+// hero, category bar and trust section, in the page's own words. The
+// listings themselves are live published data, fetched client-side by
+// the React hub from /api/directory/listings, so they cannot be baked
+// in at build time — the server injects buildDirectoryListingsHtml()
+// output right after this block's </header> at serve time (see
+// server.ts handleHtmlRequest), from the same published snapshot that
+// backs the API. No listing is ever hardcoded here.
+function buildDirectoryStaticHtml(): string {
+  return `<article>
+<header>
+<h1>Find &amp; Hire Verified Local Businesses</h1>
+<p>Real Google Business Profile reviews, live operating hours, and direct contact with the business — no middleman.</p>
+<p>Verified Local Businesses • Direct Customer Quotes • No Middleman Fees</p>
+</header>
+<section>
+<h2>Popular Local Service Categories</h2>
+${ul([
+  'Dentist / Dental Clinic',
+  'Plumbing Services',
+  'HVAC & Air Conditioning',
+  'Roofing & Gutters',
+  'Legal Services & Lawyers',
+  'Software & AI Marketing',
+])}
+</section>
+<section>
+<h2>A Real, Verified Business Directory</h2>
+<p>Connecting local residents directly with trusted professionals. No inflated broker fees or hidden commissions.</p>
+<h3>Verified Google Reviews</h3>
+<p>Real customer ratings synchronized directly from Google Business Profiles, filtering out spam or fake feedback.</p>
+<h3>Direct Contact &amp; Quotes</h3>
+<p>Call pros directly or send instant quote requests. Your inquiry goes straight to the owner with zero middleman markup.</p>
+<h3>Live Hours &amp; Availability</h3>
+<p>Up-to-date operating schedules, verified addresses, and service specializations so you get help when you need it.</p>
+</section>
+<section>
+<h2>Are You a Local Business Owner?</h2>
+<p>Own a business? Get listed and run your free visibility checkup.</p>
+<p><a href="/checkup">Run the free checkup</a> · <a href="/pricing">See pricing</a></p>
+</section>
+</article>`;
+}
+
+/**
+ * Listings section for the directory hub, built at serve time from the
+ * published-entities snapshot (the unified published set behind
+ * GET /api/directory/listings). Every entry is a real published listing
+ * with a crawlable link to its /biz/<slug> detail page. The honesty
+ * guards mirror bizStatic.ts: a rating line appears only when a real
+ * rating AND a real review count exist; absent fields are skipped,
+ * never padded. With no published listings it returns the hub's own
+ * empty-state copy.
+ */
+export function buildDirectoryListingsHtml(
+  businesses: PublishedBusinessEntity[]
+): string {
+  const listings = (businesses || []).filter((b) => b && b.name && b.slug);
+  if (listings.length === 0) {
+    return `<section>
+<h2>All Verified Businesses</h2>
+<p>No businesses are currently published in the directory.</p>
+</section>`;
+  }
+  const items = listings
+    .map((b) => {
+      const cityState = [b.city, b.state].filter(Boolean).join(', ');
+      const subline = b.category
+        ? cityState
+          ? `${b.category} in ${cityState}`
+          : b.category
+        : cityState;
+      const ratingLine =
+        typeof b.rating === 'number' &&
+        b.rating > 0 &&
+        typeof b.reviewCount === 'number' &&
+        b.reviewCount > 0
+          ? ` — Rated ${b.rating.toFixed(1)} out of 5 based on ${b.reviewCount} customer reviews`
+          : '';
+      return `  <li><a href="/biz/${e(b.slug)}">${e(b.name)}</a>${subline ? ` — ${e(subline)}` : ''}${ratingLine}</li>`;
+    })
+    .join('\n');
+  return `<section>
+<h2>All Verified Businesses</h2>
+<p>Showing ${listings.length} verified ${listings.length === 1 ? 'listing' : 'listings'} linked to real-time Google Business Profiles.</p>
+<ul>
+${items}
+</ul>
+</section>`;
+}
+
 /* ---------------- Dispatcher + injector ---------------- */
 
 export function getPageStaticHtml(route: string): string | null {
@@ -798,6 +962,9 @@ export function getPageStaticHtml(route: string): string | null {
   if (route === '/features') return buildFeaturesIndexHtml();
   if (route === '/use-cases') return buildUseCasesIndexHtml();
   if (route === '/resources') return buildResourcesIndexHtml();
+  if (route === '/about') return buildAboutStaticHtml();
+  if (route === '/contact') return buildContactStaticHtml();
+  if (route === '/directory') return buildDirectoryStaticHtml();
 
   const f = route.match(/^\/features\/([a-z0-9-]+)$/);
   if (f && SEO_FEATURES_DATABASE[f[1]]) return buildFeatureStaticHtml(f[1]);

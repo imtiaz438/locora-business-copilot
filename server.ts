@@ -16,7 +16,7 @@ import * as rankTracking from './server/rankTracking.ts';
 const resolveMxAsync = promisify(dns.resolveMx);
 import { resolveRouteMetadata, injectMetadataIntoHtml } from './src/utils/seoMetadata.ts';
 import { SEO_RESOURCES_DATABASE } from './src/data/seo/resourcesData.ts';
-import { getPageStaticHtml } from './scripts/prerenderPages.ts';
+import { getPageStaticHtml, buildDirectoryListingsHtml } from './scripts/prerenderPages.ts';
 import { buildBizStaticHtml } from './src/lib/seo/bizStatic.ts';
 import { getOrCreateUser } from './src/db/users.ts';
 import * as dbService from './src/db/service.ts';
@@ -18410,9 +18410,16 @@ async function handleHtmlRequest(req: express.Request, res: express.Response, vi
         !ua ||
         /bot|spider|crawler|gptbot|claudebot|perplexity|chatgpt|oai-searchbot|bytespider|facebookexternalhit|meta-externalagent|twitterbot|linkedinbot|slackbot|whatsapp|telegrambot|slurp|ia_archiver|cohere|mistralai|deepseek|prerender|lighthouse|inspectiontool/.test(ua);
 
-      if (cleanPath && isCrawler && !metadata.isDashboard && !isAppHost && fs.existsSync(directHtmlPath)) {
+      // /directory is excluded from the prerendered-file branch: its
+      // content depends on serve-time published data (the listings), and
+      // its build-time file carries fallback metadata resolved without
+      // the entity snapshot, which disagrees with the snapshot-driven
+      // metadata browsers receive. Like the homepage, it is injected at
+      // serve time in the fallback branch below. The prerendered file
+      // remains as a static fallback for direct .html fetches.
+      if (cleanPath && cleanPath !== 'directory' && isCrawler && !metadata.isDashboard && !isAppHost && fs.existsSync(directHtmlPath)) {
         html = fs.readFileSync(directHtmlPath, 'utf-8');
-      } else if (cleanPath && isCrawler && !metadata.isDashboard && !isAppHost && fs.existsSync(nestedIndexPath)) {
+      } else if (cleanPath && cleanPath !== 'directory' && isCrawler && !metadata.isDashboard && !isAppHost && fs.existsSync(nestedIndexPath)) {
         html = fs.readFileSync(nestedIndexPath, 'utf-8');
       } else {
         const baseTemplate = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
@@ -18464,6 +18471,35 @@ async function handleHtmlRequest(req: express.Request, res: express.Response, vi
               html = html.replace('<div id="root"></div>', `<div id="root">\n${bizStatic}\n</div>`);
             } else {
               html = html.replace('<div id="root">', `<div id="root">\n${bizStatic}\n`);
+            }
+          }
+        }
+        // Directory hub (/directory): the hub's listings are live
+        // published data fetched client-side by React, so non-JS
+        // crawlers otherwise receive an empty #root here too. Inject
+        // the hub's static substance (scripts/prerenderPages.ts — the
+        // same copy the React hub renders) plus a listings section
+        // built from this request's published snapshot, the unified
+        // published set behind GET /api/directory/listings, so the
+        // body carries crawlable links to the real /biz/<slug> detail
+        // pages. The head metadata above already comes from that same
+        // snapshot, so crawler and browser responses now agree.
+        // Crawlers only, mirroring the homepage and /biz injections;
+        // human browsers keep the clean shell. When the snapshot
+        // failed to load, the listings section is simply skipped.
+        if (cleanPath === 'directory' && isCrawler && !metadata.isDashboard && !isAppHost) {
+          const dirStatic = getPageStaticHtml('/directory');
+          if (dirStatic) {
+            const listingsHtml = entitySnapshot
+              ? buildDirectoryListingsHtml(entitySnapshot.businesses || [])
+              : '';
+            const dirContent = listingsHtml
+              ? dirStatic.replace('</header>', `</header>\n${listingsHtml}`)
+              : dirStatic;
+            if (html.includes('<div id="root"></div>')) {
+              html = html.replace('<div id="root"></div>', `<div id="root">\n${dirContent}\n</div>`);
+            } else {
+              html = html.replace('<div id="root">', `<div id="root">\n${dirContent}\n`);
             }
           }
         }
