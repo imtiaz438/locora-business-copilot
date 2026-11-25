@@ -212,6 +212,26 @@ app.use((req, res, next) => {
     return res.redirect(301, `https://locoraai.com${req.path.replace(/\/+$/, '')}${qs}`);
   }
 
+  // 2026-11-25 (Task 1): checklist consolidation. /resources/local-business-
+  // audit-checklist duplicated /resources/local-seo-checklist — it was the
+  // article-database key, while local-seo-checklist (a client/prerender
+  // alias of the same article) is the URL Google actually shows: GSC 28d to
+  // Nov 23 gave local-seo-checklist 384 impressions across 49 queries at
+  // avg position 23.2 vs 1 impression for the audit-checklist URL. The
+  // article now lives only under the local-seo-checklist slug, so the
+  // duplicate 301s to it in one hop (the trailing-slash rule above has
+  // already normalised any slash variant, mirroring the www rule's
+  // one-hop guarantee for the canonical URL).
+  if (
+    !isAppHost &&
+    !isDirectoryHost &&
+    (req.method === 'GET' || req.method === 'HEAD') &&
+    req.path === '/resources/local-business-audit-checklist'
+  ) {
+    const qs = req.originalUrl.slice(req.path.length);
+    return res.redirect(301, `https://locoraai.com/resources/local-seo-checklist${qs}`);
+  }
+
   // B6 (2026-10-24): directory subdomain retired. It duplicated the main
   // domain's directory and earned search impressions for other businesses'
   // names (GSC: "west town auto repair", 16 impressions). All human traffic

@@ -21,9 +21,13 @@ const ARTICLE_ROUTE_RE = /^\/resources\/([a-z0-9-]+)\/?$/;
 
 // Mirrors the client-side alias mapping in ResourceDetailPage.tsx so the
 // server-rendered content matches what JS users see.
+// 2026-11-25 (Task 1): the checklist article was consolidated onto the
+// local-seo-checklist slug (the URL that owns the GSC impressions); the
+// former audit-checklist slug now resolves to it here, in the client, and
+// via a 301 in server.ts.
 const SLUG_ALIASES: Record<string, string> = {
-  'local-seo-checklist': 'local-business-audit-checklist',
-  'local-seo-audit-checklist': 'local-business-audit-checklist',
+  'local-business-audit-checklist': 'local-seo-checklist',
+  'local-seo-audit-checklist': 'local-seo-checklist',
 };
 
 /** Returns the article slug for a route, or null when the route is not a known article. */

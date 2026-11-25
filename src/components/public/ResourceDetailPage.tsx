@@ -42,8 +42,8 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
       : 'how-to-improve-local-seo');
 
   const currentSlug =
-    rawSlug === 'local-seo-checklist' || rawSlug === 'local-seo-audit-checklist'
-      ? 'local-business-audit-checklist'
+    rawSlug === 'local-business-audit-checklist' || rawSlug === 'local-seo-audit-checklist'
+      ? 'local-seo-checklist'
       : rawSlug;
 
   const article: SeoResourceArticle =

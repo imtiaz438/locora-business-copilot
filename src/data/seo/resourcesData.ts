@@ -126,7 +126,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'how-to-create-seo-proposal': {
     slug: 'how-to-create-seo-proposal',
-    relatedSlugs: ['local-business-audit-checklist', 'how-to-improve-local-seo', 'google-business-profile-guide'],
+    relatedSlugs: ['local-seo-checklist', 'how-to-improve-local-seo', 'google-business-profile-guide'],
     title: 'How to Create an SEO Proposal That Closes: 3-Tier SOW Blueprint',
     category: 'Proposals & Sales',
     readingTime: '10 min read',
@@ -228,7 +228,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'google-business-profile-guide': {
     slug: 'google-business-profile-guide',
-    relatedSlugs: ['google-business-profile-suspended', 'google-business-profile-verification', 'remove-duplicate-google-business-listing', 'business-not-showing-on-google-maps'],
+    relatedSlugs: ['google-business-profile-suspended', 'google-business-profile-verification', 'remove-duplicate-google-business-listing', 'business-not-showing-on-google-maps', 'local-seo-checklist'],
     title: 'Google Business Profile Optimization Guide (2026 Edition)',
     category: 'Google Business',
     readingTime: '11 min read',
@@ -317,184 +317,274 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
     ]
   },
 
-  'local-business-audit-checklist': {
-    slug: 'local-business-audit-checklist',
-    relatedSlugs: ['google-business-profile-guide', 'how-to-create-seo-proposal', 'business-not-showing-on-google-maps'],
-    title: 'Free Local Business Audit Checklist',
+  'local-seo-checklist': {
+    slug: 'local-seo-checklist',
+    relatedSlugs: ['how-to-improve-local-seo', 'google-business-profile-guide', 'business-not-showing-on-google-maps'],
+    title: 'Free Local SEO Checklist for Small Businesses',
     category: 'Checklists & SOPs',
-    readingTime: '13 min read',
+    readingTime: '15 min read',
     publishedDate: 'August 2026',
     authorName: 'The LocoraAI Team',
     authorRole: 'Local Search Experts',
-    metaTitle: 'Free 40-Point Local Business Audit Checklist (Interactive) | LocoraAI',
-    metaDescription: 'Free local business audit checklist: check your site speed, Google Business Profile, schema, citations and mobile — tick each item off as you go.',
-    targetKeywords: ['local business audit checklist', 'local SEO audit SOP', 'agency audit template', 'website health checklist', 'local marketing audit'],
+    metaTitle: 'Free 40-Point Local SEO Checklist for Small Businesses | LocoraAI',
+    metaDescription: 'Free 40-point local SEO checklist for small businesses: Google Business Profile, categories, citations, reviews, service pages, Maps visibility and measurement — tick each item off as you go.',
+    targetKeywords: ['local seo checklist', 'local SEO checklist for small businesses', 'local seo audit checklist', 'google business profile checklist', 'local search checklist'],
     targetTab: 'website_review',
     ctaText: 'Test Interactive Audit Checklist in Sandbox',
     ctaHeadline: 'Run Automated 7-Point Audits in 10 Seconds',
     ctaDescription: 'Skip manual spreadsheet audits. Use Locora AI to scan any URL and produce white-label diagnostic teardowns instantly.',
-    summary: 'Work through the checks that decide whether customers find you: your site\'s speed, your Google Business Profile, your schema, your citations, and how your site converts on a phone. Tick each item off as you verify it — your progress is tracked as you go, right here in your browser. No download, no signup.',
+    summary: 'The 40 checks that decide whether nearby customers find you: your Google Business Profile, your business details across the web, your reviews, your service pages, your site\'s technical health and your Maps visibility — in priority order. Tick each item off as you verify it; your progress is tracked in your browser. No download, no signup.',
     prosAndCons: {
       pros: [
-        'Standardizes quality assurance across all agency client onboarding audits',
-        'Uncovers hidden technical and conversion bottlenecks that cost businesses thousands',
-        'Provides an objective, data-backed foundation for $2,500/month retainer pitches',
-        'Interactive format allows you to track progress directly in your browser'
+        'Free and interactive — tick items off in your browser, with no download or signup',
+        'Ordered by impact: your profile first, then your website, then your reputation',
+        'Covers the signals map results and AI assistants draw on, not just traditional blue-link SEO',
+        'Written for business owners, not agencies — every item is something you can verify yourself'
       ],
       cons: [
-        'Manual execution of all 40 points can take 2-3 hours without automated AI audit tools',
-        'Requires access to Google Search Console and analytics for full data depth',
-        'Must be updated annually to align with new Core Web Vitals and Google algorithm updates'
+        'Working through all 40 checks by hand takes about an hour the first time',
+        'A few items need free Google tools (Search Console, PageSpeed Insights) to verify properly',
+        'Fixing an item does not move rankings overnight — Google re-processes changes over days to weeks'
       ]
     },
     tableOfContents: [
       { id: 'start', title: 'Start Here — How to Use This Checklist' },
-      { id: 'technical', title: '1. Technical Performance & Core Web Vitals' },
-      { id: 'onpage', title: '2. On-Page SEO & Local Keyword Targeting' },
-      { id: 'schema', title: '3. LocalBusiness Entity Schema & Structured Data' },
-      { id: 'gbp', title: '4. Google Business Profile & Map Pack Signals' },
-      { id: 'conversion', title: '5. Mobile User Experience & Conversion Funnel' },
-      { id: 'citations', title: '6. Citations & Directory Consistency' },
-      { id: 'reviews', title: '7. Reviews & Reputation' }
+      { id: 'gbp', title: '1. Google Business Profile: Setup, Verification & Categories' },
+      { id: 'nap', title: '2. Business Details (NAP) & Citations' },
+      { id: 'reviews', title: '3. Reviews & Reputation' },
+      { id: 'keywords', title: '4. Local Keyword Research & Service-Area Relevance' },
+      { id: 'pages', title: '5. Location & Service Pages and On-Page SEO' },
+      { id: 'technical', title: '6. Technical SEO Fundamentals' },
+      { id: 'mobile', title: '7. Mobile Usability & Turning Visits into Calls' },
+      { id: 'schema', title: '8. LocalBusiness Structured Data' },
+      { id: 'links', title: '9. Local Backlinks & Partnerships' },
+      { id: 'maps', title: '10. Check Your Google Maps Visibility Like a Customer' },
+      { id: 'measure', title: '11. Measuring Local Search Performance' },
+      { id: 'mistakes', title: '12. Common Local SEO Mistakes to Avoid' },
+      { id: 'priorities', title: 'Your First 10 Fixes — In Priority Order' }
     ],
     sections: [
       {
         id: 'start',
-        heading: 'Start Here — It Takes About a Minute per Section',
+        heading: 'Start Here — How to Use This Checklist',
         content: [
-          'Start now: open your website on your phone, work down the first section and tick off what already passes. Whatever is left unticked is your fix list, in priority order.',
-          'Prefer not to check by hand? LocoraAI\'s free checkup scans your business automatically — the checklist below shows everything it looks at, and everything you can verify yourself.'
+          'Work from the top. The sections are ordered by how much they matter for a local business: your Google Business Profile first, then the copies of your business details across the web, then reviews, then your website, then measurement. Tick off what already passes; whatever is left unticked, in section order, is your fix list.',
+          'One honest note before you start: no checklist can guarantee a ranking. Where you appear also depends on how close the searcher is to you and how strong your competitors are. What this checklist does is remove the common, self-inflicted problems that quietly hold local businesses back — the ones entirely within your control.',
+          'Prefer not to check everything by hand? LocoraAI\'s free checkup scans your business automatically. This checklist shows you everything it looks at, and everything you can verify yourself for free.'
         ],
         keyTakeaway: 'Tick off what already passes as you go; whatever remains unticked, in section order, is your prioritised fix list.'
       },
       {
-        id: 'technical',
-        heading: '1. Technical Performance & Core Web Vitals',
-        content: [
-          'Technical site speed is the foundation of local conversion. Over 70% of local service searches occur on mobile devices over cellular networks. If your page takes longer than 3 seconds to render, potential customers bounce back to Google to call your competitor.',
-          'Measure Largest Contentful Paint (LCP), Cumulative Layout Shift (CLS), and Total Blocking Time (TBT) using Google PageSpeed Insights. Verify that all images are served in modern compressed formats like WebP or AVIF.'
-        ],
-        keyTakeaway: 'Aim for a mobile LCP under 2.5 seconds and zero cumulative layout shifts to maximize mobile conversions.',
-        checklistItems: [
-          'Mobile Largest Contentful Paint (LCP) under 2.5 seconds',
-          'Cumulative Layout Shift (CLS) score below 0.1',
-          'SSL / HTTPS certificate active with 100% secure resource loading',
-          'Mobile viewport meta tag configured for responsive scaling',
-          'Clean XML sitemap submitted to Google Search Console',
-          'No mixed-content warnings — every page resource loads over HTTPS',
-          'Top pages return no 404 errors and use no unnecessary redirect chains'
-        ]
-      },
-      {
-        id: 'onpage',
-        heading: '2. On-Page SEO & Local Keyword Targeting',
-        content: [
-          'Every primary service page must feature your target city and service keyword in the `<title>` tag, `<meta description>`, and `<h1>` headline.',
-          'Avoid thin 200-word service descriptions. Provide comprehensive details on your service process, warranty coverage, emergency availability, and pricing estimates.'
-        ],
-        keyTakeaway: 'Ensure every service page contains geographic keyword intent in the Title tag, H1 heading, and body copy.',
-        checklistItems: [
-          'Primary keyword and city name present in the Title tag (under 60 characters)',
-          'Meta description under 155 characters with clear click-to-call CTA',
-          'Single H1 tag on every page matching the primary service keyword',
-          'Dedicated sub-pages for all major adjacent suburbs within service radius',
-          'Internal links connecting suburb pages to primary service categories',
-          'Every service page shows a clear call-to-action above the fold',
-          'All images carry descriptive alt text'
-        ]
-      },
-      {
-        id: 'schema',
-        heading: '3. LocalBusiness Entity Schema & Structured Data',
-        content: [
-          'Validate that structured JSON-LD entity schema is embedded in the site header. The schema must contain exact latitude/longitude coordinates, postal address matching GBP, and opening hours for each day of the week.'
-        ],
-        keyTakeaway: 'Error-free LocalBusiness JSON-LD markup confirms your entity data to search engine crawlers.',
-        checklistItems: [
-          'Valid LocalBusiness JSON-LD schema with specific industry subtype',
-          'Exact GeoCoordinates (latitude and longitude) matching Google Maps pin',
-          'Complete openingHoursSpecification covering all operating days',
-          'Zero schema syntax errors in Google Rich Results Test tool'
-        ]
-      },
-      {
         id: 'gbp',
-        heading: '4. Google Business Profile & Map Pack Signals',
+        heading: '1. Google Business Profile: Setup, Verification & Categories',
         content: [
-          'Confirm that the legal business name, address, and local phone number on your website footer match your Google Business Profile listing character-for-character.'
+          'For most local searches, your Google Business Profile — the listing that appears in Google Maps and the map pack — is what customers see first, often before your website. Claim it at google.com/business and complete verification (Google offers postcard, phone or video verification depending on the business). An unverified profile can be edited by anyone\'s suggestion and will not perform reliably.',
+          'Choose your primary category as what your business IS, not what it does or what you want to rank for: "Dentist", not "Teeth whitening service"; "Plumber", not "Emergency plumbing repairs". Add secondary categories for your other genuine services. The primary category is one of the strongest signals for which searches your profile appears in, so compare it against the categories your top local competitors use.',
+          'Then complete every field a customer could act on: accurate hours (including holiday hours), your full services list with short descriptions, attributes that apply (for example, wheelchair accessible, women-led, outdoor seating), and a description written for customers — what you do, who you serve, and since when — not stuffed with keywords. Add real photos of your premises, your team and your work, and keep adding them: a profile with fresh, genuine photos answers the question every customer asks, "is this place real and busy?"'
         ],
-        keyTakeaway: 'NAP consistency across website, GBP, and local citations is non-negotiable for map pack rankings.',
+        keyTakeaway: 'Claim and verify the profile, set the primary category to your core trade, and complete every field — an unfinished profile is the most common local SEO problem there is.',
         checklistItems: [
-          'Primary category aligned with top 3 local competitors in target city',
-          '100% NAP consistency between website footer and GBP listing',
-          'Active review response rate exceeding 90% across all customer ratings',
-          'At least 20+ high-resolution, geo-tagged photos uploaded to profile',
-          'GBP services list completed with every service the business offers',
-          'GBP Q&A section seeded with answers to the business\'s most common questions'
+          'Profile claimed and verified (postcard, phone or video verification completed)',
+          'Primary category is your core trade (e.g. "Plumber"), not a keyword or an occasional service',
+          'Secondary categories added for every other genuine service you provide',
+          'Hours accurate, including holiday and special hours for the next 30 days',
+          'Services list completed — every service named, each with a short plain-language description',
+          'At least 10 real photos of your premises, team and work, with new ones added monthly'
         ]
       },
       {
-        id: 'conversion',
-        heading: '5. Mobile User Experience & Conversion Funnel',
+        id: 'nap',
+        heading: '2. Business Details (NAP) & Citations',
         content: [
-          'Test the website on a real smartphone. Verify that the main phone number is prominently visible in a sticky top header and functions as a one-tap `tel:` link.',
-          'Keep contact and quote intake forms short: 3 to 4 required fields max to minimize user drop-off.'
+          'Citations are the copies of your business name, address and phone number (NAP) held by directories, maps platforms and data aggregators. Search engines cross-check them against your Google Business Profile: when the copies agree, the business looks established; when they conflict — an old address here, a different phone number there — the listing looks unreliable, and the directories themselves can send customers to the wrong place.',
+          'Pick one canonical format for your name, address and phone number and use it everywhere, character for character — including details like "Suite 200" versus "#200". Work through the major directories and aggregators your customers actually use, correct every mismatch at the source, and hunt down duplicates. A duplicate listing splits your reviews and your visibility, so flag every one you find for removal or merging.'
         ],
-        keyTakeaway: 'Make calling or booking as frictionless as possible with sticky phone buttons and streamlined intake forms.',
+        keyTakeaway: 'Every directory copy of your name, address and phone should match your Google Business Profile exactly — and duplicates should be merged or removed.',
         checklistItems: [
-          'Click-to-call phone number sticky in mobile header',
-          'Contact form requires 4 or fewer fields on mobile screens',
-          'Prominent trust badges (BBB, state license #, insurance proof) displayed',
-          'Real customer 5-star testimonials visible above the fold on service pages',
-          'Quote or contact route tested end-to-end on a real phone within the last 30 days'
-        ]
-      },
-      {
-        id: 'citations',
-        heading: '6. Citations & Directory Consistency',
-        content: [
-          'Your citations are the copies of your business name, address, and phone number (NAP) held by directories, maps platforms, and data aggregators. Search engines cross-check them against your Google Business Profile: when the copies agree, the business looks established; when they conflict — an old address here, a different phone number there — the listing looks unreliable, and the directories themselves can send customers to the wrong place.',
-          'Work through the major directories and aggregators your customers actually use, correct every mismatch at the source, and hunt down duplicates. A duplicate listing splits your reviews and your visibility, so flag every one you find for removal or merging.'
-        ],
-        keyTakeaway: 'Every directory copy of your name, address, and phone should match your Google Business Profile exactly — and duplicates should be merged or removed.',
-        checklistItems: [
-          'Primary directories and data aggregators carry a name, address, and phone identical to GBP',
-          'Duplicate listings found and flagged for removal or merging',
+          'Name, address and phone identical — character for character — on your website, GBP and top directories',
           'Apple Maps and Bing Places listings claimed, with details matching GBP',
-          'Directory categories consistent with the GBP primary category',
-          'Phone number format identical everywhere — no tracking-number mismatch on the website itself',
-          'Business hours consistent across the top directories'
+          'Duplicate listings on Google and major directories flagged for merging or removal',
+          'Directory categories consistent with your GBP primary category',
+          'Business hours consistent across your website and top directories'
         ]
       },
       {
         id: 'reviews',
-        heading: '7. Reviews & Reputation',
+        heading: '3. Reviews & Reputation',
         content: [
-          'Reviews are the public record customers read before they ever reach your website — and part of the raw material AI assistants draw on when they describe a business. An audit that stops at the profile and the pages misses the evidence most buyers actually act on.',
-          'Benchmark your count and average rating against the competitors customers compare you with, make sure every recent review has a response, and confirm there is a working route — a direct link or QR code — that invites every customer to review you, not only the ones you expect to be happy.'
+          'Reviews are the public record customers read before they ever reach your website — and part of the raw material AI assistants draw on when they describe a business. They also influence which profiles Google shows for competitive searches, because a profile nobody rates gives Google little reason to recommend it.',
+          'Respond to every review, good and bad: it shows future customers how you handle problems, and it is free. Ask every customer for a review using your Google review link or a QR code at the till, in invoices and in follow-up messages. Never filter who gets asked (asking only happy customers is called review gating and violates Google\'s policies), never offer incentives, and never buy reviews — fake reviews are periodically purged and can get a profile suspended.',
+          'Finally, benchmark yourself: look up the review counts and average ratings of the three competitors customers compare you with. That gap — not an arbitrary target — is the number to close.'
         ],
-        keyTakeaway: 'Know your review count and rating against your top local competitors, respond to everything recent, and keep an always-on, ungated route for new reviews.',
+        keyTakeaway: 'Respond to everything, ask everyone through one always-on route, and measure your count and rating against your real local competitors.',
         checklistItems: [
-          'Review count and average rating checked against the top 3 local competitors',
-          'Responses posted to all reviews received in the last 90 days',
-          'Working review-request route (direct link or QR code) in active use',
-          'No review gating — every customer is invited to review, not only happy ones',
-          'Reviews visible on, or linked from, the business website'
+          'Every review from the last 90 days has a response',
+          'A review link or QR code is given to every customer — no review gating, no incentives, no bought reviews',
+          'Review count and average rating checked against your top 3 local competitors',
+          'Recent reviews are shown on your website and kept current'
         ]
+      },
+      {
+        id: 'keywords',
+        heading: '4. Local Keyword Research & Service-Area Relevance',
+        content: [
+          'Local keyword research is simpler than it sounds. Customers search for a service plus a place — "emergency plumber Austin", "dentist near me" — and your job is to know exactly which combinations apply to your business. Find them from evidence, not guesswork: Google Search Console shows the real queries your site already appears for, your GBP performance tab shows what people searched to find your profile, and your customers\' own words ("do you do X in Y?") are the most reliable source of all.',
+          'Write the list down in "service + town" form. Every entry on it should map to something real: a GBP service, a dedicated page on your website, or both. If you are a service-area business that travels to customers, set your GBP service area to where you genuinely go — adding towns you do not serve produces enquiries you cannot fulfil and a profile Google trusts less.'
+        ],
+        keyTakeaway: 'Build your keyword list from Search Console, GBP insights and real customer language — then make sure every money keyword maps to a real service and a real page.',
+        checklistItems: [
+          'A written list of money keywords in "service + town" form, built from Search Console, GBP insights and customer language',
+          'Every service on that list has its own page or GBP service entry — none is only mentioned in passing',
+          'GBP service area reflects where you genuinely travel — no towns added that you do not serve'
+        ]
+      },
+      {
+        id: 'pages',
+        heading: '5. Location & Service Pages and On-Page SEO',
+        content: [
+          'Your website is where profile clicks turn into calls, and it is the asset you fully control. Give every core service its own page. A single "Services" page with one paragraph per service gives Google nothing substantial to rank and customers nothing convincing to read. A proper service page covers what the service involves, who it is for, the areas you cover from that page, honest pricing guidance, and answers to the questions customers ask before booking.',
+          'Put the service and the place in the page title and main heading naturally — "Emergency Plumbing in Austin" as a title, not a comma-separated keyword list. If you have more than one real premises, each gets a location page with its own address, phone number, hours, embedded map and genuinely local content (the team there, the neighbourhoods served from it).',
+          'One warning: do not mass-produce near-identical city pages with the town name swapped in. Search engines treat those as doorway pages, they rarely rank, and they can drag down the pages that would. A location page is worth building only when you can write something true and different for it.'
+        ],
+        keyTakeaway: 'One substantive page per service (and per real location), titled in natural language, written to convince a customer — not padded to catch keywords.',
+        checklistItems: [
+          'One dedicated page per core service — not a single "Services" page listing everything in a paragraph',
+          'Service + location appears in each page\'s title tag and H1, written naturally (no keyword lists)',
+          'Each service page has substantive, unique copy: process, service area, pricing guidance and FAQs',
+          'Every location page (real premises only) shows that location\'s address, phone, hours and an embedded map',
+          'Related service pages link to each other and to the contact or booking page',
+          'Images carry descriptive alt text naming the service or place shown'
+        ]
+      },
+      {
+        id: 'technical',
+        heading: '6. Technical SEO Fundamentals',
+        content: [
+          'Technical problems rarely announce themselves — the site looks fine to you while search engines struggle with it. Start with speed on a real mobile connection: run your homepage and top service page through Google PageSpeed Insights and fix what it flags first, especially a Largest Contentful Paint (LCP) above 2.5 seconds, which is Google\'s published "good" threshold, and layout shift (CLS) that makes buttons jump as the page loads.',
+          'Then confirm the basics an auditor checks: everything loads over HTTPS with no mixed-content warnings; your XML sitemap is submitted in Search Console and lists only live, canonical URLs; your most important pages return no 404 errors and sit behind no redirect chains; and nothing you want found is accidentally blocked by a noindex tag — Search Console\'s Pages report shows exactly what Google has indexed and what it has excluded, and why.'
+        ],
+        keyTakeaway: 'Fast on mobile, secure everywhere, and fully indexable: if Google cannot crawl and load a page cleanly, nothing else on this checklist can save it.',
+        checklistItems: [
+          'Mobile LCP under 2.5 seconds on top pages in PageSpeed Insights (Google\'s "good" threshold)',
+          'Every page loads over HTTPS with no mixed-content warnings',
+          'XML sitemap submitted in Search Console and free of redirected or dead URLs',
+          'No 404 errors or redirect chains on your top 20 pages',
+          'No accidental noindex on any page you want found (checked in Search Console\'s Pages report)'
+        ]
+      },
+      {
+        id: 'mobile',
+        heading: '7. Mobile Usability & Turning Visits into Calls',
+        content: [
+          'Most local searches happen on a phone, usually with immediate intent — someone needs a plumber, a dentist or a table today. The visit is won or lost in seconds. Test the whole journey on your own phone: search for your main service, open your page, and try to call. If the number is an image, buried in the footer, or the form asks for six fields before it will submit, you have found the leak.',
+          'Make the phone number a tap-to-call link that stays visible as the page scrolls, keep forms to the few fields you genuinely need to respond, and repeat the test after any website change. Small frictions here cost more local business than any ranking position.'
+        ],
+        keyTakeaway: 'On mobile, the distance between finding you and calling you should be one tap — test the full journey on a real phone, not a desktop preview.',
+        checklistItems: [
+          'Phone number is a tap-to-call link, visible without scrolling on mobile',
+          'Contact or quote form asks for 4 or fewer fields on mobile',
+          'The full journey — search, page, call or form — tested end-to-end on a real phone within the last 30 days'
+        ]
+      },
+      {
+        id: 'schema',
+        heading: '8. LocalBusiness Structured Data',
+        content: [
+          'Structured data (LocalBusiness JSON-LD in your page code) states your business facts — name, address, phone, coordinates, opening hours — in a format search engines can read without guessing. Use the most specific subtype that fits (Dentist, Plumber, Restaurant and many more exist) and make every value match your Google Business Profile exactly.',
+          'Be clear about what it does: schema helps engines understand and confirm your details; it is not a ranking switch, and it must never contain anything untrue. Invented review stars or ratings in schema are a well-known route to a manual penalty. Validate yours free with Google\'s Rich Results Test and fix every error it reports.'
+        ],
+        keyTakeaway: 'Accurate LocalBusiness schema, matching your profile exactly and passing validation, helps engines trust your details — fake data in it does the opposite.',
+        checklistItems: [
+          'Valid LocalBusiness JSON-LD with your specific subtype (e.g. Dentist, Plumber) on the homepage or location pages',
+          'Schema name, address, phone, geo coordinates and opening hours match GBP exactly',
+          'Schema passes Google\'s Rich Results Test with zero errors — and contains no invented reviews or ratings'
+        ]
+      },
+      {
+        id: 'links',
+        heading: '9. Local Backlinks & Partnerships',
+        content: [
+          'A backlink is another website linking to yours. For local businesses, relevance beats volume every time: a link from your town\'s chamber of commerce, a local newspaper story, a supplier\'s stockist page or a charity you sponsor tells Google more about where you belong than a hundred links from unrelated directories overseas.',
+          'Work the legitimate list: organisations you are actually a member of, suppliers and brands you stock, venues and businesses you partner with (the wedding venue that lists its recommended florist, the gym that lists its physio), local events you sponsor, and genuine local press — a new premises, an award, a community project. Most of these listings are yours for the asking; almost nobody asks.',
+          'And the negative rule, stated plainly: never buy links or "backlink packages". They are the most common way small businesses waste money in SEO, and the bad ones can attract penalties that take months to undo.'
+        ],
+        keyTakeaway: 'Earn a handful of links from local organisations you genuinely belong to or work with — and never buy links, however the package is dressed up.',
+        checklistItems: [
+          'Listed, with a link, by at least one local organisation you genuinely belong to (chamber, trade body, sponsored charity or club)',
+          'Every supplier or partner who lists partners or stockists has been asked for your listing and link',
+          'No paid link schemes, link farms or "100 backlinks" packages — ever'
+        ]
+      },
+      {
+        id: 'maps',
+        heading: '10. Check Your Google Maps Visibility Like a Customer',
+        content: [
+          'Do not judge your visibility from your own desk, logged into your own Google account, standing in your own premises — Google personalises results and weighs the searcher\'s location heavily, so you will almost always see yourself flatteringly. Instead, search your main "service + town" term on a phone, ideally away from the business, and record honestly whether you appear in the map pack of three.',
+          'Understand the one factor you cannot fix: proximity. A searcher across town may never see you, however good your profile is, because a competent competitor is closer. What you control is everything in sections 1–3 of this checklist — category, completeness, reviews — which decide who wins among the businesses near the searcher. Also drag-and-drop check your map pin: a pin dropped on the wrong street quietly sends customers, and delivery drivers, to the wrong place.'
+        ],
+        keyTakeaway: 'Check visibility as a customer would, and spend your effort on the factors you control — category, completeness and reviews — not on chasing proximity you cannot change.',
+        checklistItems: [
+          'You have searched your main "service + town" term on a phone and recorded whether you appear in the map pack',
+          'Your map pin location is correct (and a fix requested in GBP if it is off)'
+        ]
+      },
+      {
+        id: 'measure',
+        heading: '11. Measuring Local Search Performance',
+        content: [
+          'You cannot tell whether any of this worked without a monthly fifteen minutes of measurement. Google Search Console shows the real searches your website appears for, your average positions, and which pages earn clicks — watch the queries, not just the totals. Your GBP performance tab shows how many people called, requested directions or found you through Search and Maps; for most local businesses, calls and direction requests are the numbers closest to revenue.',
+          'Add one low-tech habit: ask every new customer how they found you, and note the answer. It catches everything the tools miss. Judge progress over quarters, not days — local rankings move slowly, and a single week of data will mislead you in both directions.'
+        ],
+        keyTakeaway: 'Fifteen minutes a month: Search Console queries, GBP calls and directions, and a note of how each new customer found you.'
+      },
+      {
+        id: 'mistakes',
+        heading: '12. Common Local SEO Mistakes to Avoid',
+        content: [
+          'Stuffing keywords into your business name on Google ("Best Cheap Plumber Austin — 24/7 Emergency") violates Google\'s guidelines and risks suspension; when you are forced to reinstate with your real name, you lose the (illegitimate) benefit anyway. Use your real trading name, always.',
+          'Listing an address you do not staff — a virtual office, a PO box, a friend\'s premises in a town you want to rank in — is the other classic suspension trigger, and it strands customers who follow the pin. Buying reviews, gating reviews, and leaving duplicate listings to rot round out the list of unforced errors.',
+          'The quietest mistake is neglect: a profile claimed in 2021 and never touched since — stale hours, unanswered reviews, a dead phone number. Everything in this checklist decays, which is why it is a quarterly habit, not a one-time project.'
+        ],
+        keyTakeaway: 'Real name, real address, honestly earned reviews, and a profile you revisit quarterly — most local SEO disasters are self-inflicted and avoidable.'
+      },
+      {
+        id: 'priorities',
+        heading: 'Your First 10 Fixes — In Priority Order',
+        content: [
+          'If the full list feels like a lot, start here. These ten fixes, in this order, cover the large majority of what holds a local business back:',
+          '1. Claim and verify your Google Business Profile.',
+          '2. Set your primary category to your core trade and add secondary categories.',
+          '3. Make your name, address and phone identical on your website, GBP and top directories.',
+          '4. Claim your Apple Maps and Bing Places listings.',
+          '5. Respond to every recent review and put your review link where every customer sees it.',
+          '6. Make your phone number a tap-to-call link, visible without scrolling on mobile.',
+          '7. Give each core service its own page with substantive, unique copy.',
+          '8. Fix any speed blocker PageSpeed Insights flags on your top pages.',
+          '9. Add accurate LocalBusiness schema and validate it.',
+          '10. Record your baseline — Search Console queries and GBP calls — so you can prove what improves.'
+        ],
+        keyTakeaway: 'Profile, details, reviews, phone, pages, speed, schema, baseline — in that order, these ten fixes come before anything else.'
       }
     ],
     faqs: [
       {
-        q: 'How long does it take to audit a local business using this checklist?',
-        a: 'A thorough manual audit takes 1.5 to 2 hours. Using Locora AI’s automated 7-point audit engine reduces this to approximately 10 seconds for initial diagnostic findings.'
+        q: 'How long does it take to work through this local SEO checklist?',
+        a: 'Most owners can check all 40 items in about an hour. Fixing whatever fails takes longer — some items are five-minute edits, others (like merging duplicate listings) involve waiting on Google. LocoraAI\'s free checkup automates many of the website and profile checks if you would rather start from a report.'
       },
       {
-        q: 'What is the most common conversion barrier found in local audits?',
-        a: 'The most common conversion barrier is a phone number that is displayed as an unclickable image or plain text, forcing mobile visitors to memorize the digits rather than tapping once to dial.'
+        q: 'Do I need to pass all 40 checks to rank on Google?',
+        a: 'No — and no honest checklist can promise a ranking. Where you appear also depends on the searcher\'s distance from you and how strong nearby competitors are. The checklist removes the common problems that are entirely within your control, which is the part of local SEO you can actually decide.'
+      },
+      {
+        q: 'How often should I re-run this checklist?',
+        a: 'Quarterly is a good rhythm. Re-run it sooner whenever something changes: you move premises, change your phone number, rename the business, add a service, or your reviews take a sudden turn.'
+      },
+      {
+        q: 'What is the single most important item on the list?',
+        a: 'A claimed, verified Google Business Profile with the right primary category. For most local searches it is what customers see first — in Maps and the map pack, often before your website — and every other signal in this checklist supports it.'
       }
     ]
   },
-
   'google-business-profile-suspended': {
     slug: 'google-business-profile-suspended',
     relatedSlugs: ['google-business-profile-verification', 'remove-duplicate-google-business-listing', 'google-business-profile-guide'],

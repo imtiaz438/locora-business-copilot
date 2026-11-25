@@ -328,8 +328,8 @@ export const PublicFooter: React.FC = () => {
                 </button>
               </li>
               <li>
-                <button onClick={() => navigateTo('/resources/local-business-audit-checklist', 'resource_local-business-audit-checklist')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
-                  40-Point Local Audit Checklist
+                <button onClick={() => navigateTo('/resources/local-seo-checklist', 'resource_local-seo-checklist')} className="hover:text-[#059669] transition-colors cursor-pointer text-left">
+                  40-Point Local SEO Checklist
                 </button>
               </li>
               <li className="pt-2 border-t border-slate-200">
