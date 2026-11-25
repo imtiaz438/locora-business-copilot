@@ -48,6 +48,10 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
   const [business, setBusiness] = useState<DirectoryBusinessListing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Definitive not-found only: set when the API itself reports the listing
+  // does not exist / is not published / is suspended. A transient fetch
+  // failure (network error, 5xx) must never set this — see BusinessDetailSeo.
+  const [notFound, setNotFound] = useState(false);
 
   // Quote Form State
   const [quoteForm, setQuoteForm] = useState({
@@ -97,6 +101,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
     const fetchBusiness = async () => {
       setLoading(true);
       setError(null);
+      setNotFound(false);
       try {
         const authEmail = (typeof window !== 'undefined' ? localStorage.getItem('locora_auth_email') || localStorage.getItem('locora_user_email') : '') || '';
         const emailQuery = authEmail ? `?userEmail=${encodeURIComponent(authEmail)}` : '';
@@ -145,6 +150,17 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               .catch(() => {});
           }
         } else {
+          // Definitive API verdicts (not transient failures): the listing
+          // genuinely is not publicly available, so the rendered page may
+          // carry a noindex. A 5xx / FAILED_TO_FETCH response falls through
+          // with notFound still false.
+          if (
+            data.error === 'BUSINESS_NOT_FOUND' ||
+            data.error === 'LISTING_NOT_PUBLISHED' ||
+            data.error === 'LISTING_SUSPENDED'
+          ) {
+            setNotFound(true);
+          }
           setError(data.message || 'Business profile not found.');
         }
       } catch (err: any) {
@@ -157,50 +173,25 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
     fetchBusiness();
   }, [slug]);
 
-  // Dynamic Central SEO & GEO Keyword Engine integration
-  const businessServices = business?.scrapedContent?.serviceTags || business?.targetKeywords || [];
-  const businessPhone = business?.phone || business?.gbpData?.phone || undefined;
-  const businessAddress = business?.gbpData?.address || undefined;
-  const businessRating = business?.gbpData?.averageRating;
-  const businessReviews = business?.gbpData?.reviewCount;
-  const businessHours = business?.gbpData?.hours
-    ? Object.entries(business.gbpData.hours).map(([day, hrs]) => `${day}: ${hrs}`)
-    : undefined;
-
-  const { seoResult } = useDynamicSeo({
-    pageType: 'business_detail',
-    businessName: business?.businessName,
-    businessSlug: business?.slug,
-    category: business?.categoryName,
-    city: business?.cityName,
-    services: businessServices,
-    phone: businessPhone,
-    website: business?.websiteUrl,
-    address: businessAddress,
-    rating: businessRating,
-    reviewCount: businessReviews,
-    openingHours: businessHours,
-    availableBusinessesCount: business ? 1 : 0,
-    availableBusinesses: business
-      ? [
-          {
-            id: business.id,
-            name: business.businessName,
-            slug: business.slug,
-            category: business.categoryName,
-            city: business.cityName,
-            services: businessServices,
-            phone: businessPhone,
-            website: business.websiteUrl,
-            address: businessAddress,
-            rating: businessRating,
-            reviewCount: businessReviews,
-            openingHours: businessHours,
-          },
-        ]
-      : [],
-    forceNoIndex: Boolean(error) || (!business && !loading),
-  });
+  // Dynamic Central SEO & GEO Keyword Engine integration.
+  // The SEO hook lives in BusinessDetailSeo (below) and is mounted ONLY once
+  // the listing fetch has settled with a definitive outcome — the business
+  // itself, or a definitive not-found from the API. While the fetch is in
+  // flight, and when it fails transiently (network error / 5xx), NO client
+  // metadata is written at all: the server-rendered head (snapshot-driven,
+  // index,follow for published listings) stands. Previously the hook ran on
+  // every render with forceNoIndex derived from transient states
+  // (Boolean(error) || (!business && !loading)) plus a no-name template
+  // branch, so a renderer that snapshotted before/without a successful API
+  // response inherited a noindex the server never sent — the same latent
+  // pattern that failed /directory in GSC live tests (Task 2). Preventive
+  // hardening: the 2026-11-25 GSC live test on the one real listing passed
+  // with no noindex finding, so this closes an error-branch risk rather
+  // than a live failure.
+  const seoNode =
+    !loading && (business !== null || notFound) ? (
+      <BusinessDetailSeo business={business} notFound={notFound && business === null} />
+    ) : null;
 
   const handlePhoneClick = () => {
     trackDirectoryEvent('phone_click');
@@ -347,6 +338,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
   if (error || !business) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        {seoNode}
         <div className="bg-white rounded-2xl border border-slate-200 p-8 max-w-md text-center shadow-lg">
           <AlertCircle className="w-10 h-10 text-amber-500 mx-auto mb-3" />
           <h2 className="text-lg font-bold text-slate-900 font-heading">Listing Not Found</h2>
@@ -565,6 +557,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-24">
+      {seoNode}
       {/* Schema.org JSON-LD Scripts */}
       <script
         type="application/ld+json"
@@ -1659,4 +1652,67 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
       )}
     </div>
   );
+};
+
+/**
+ * BusinessDetailSeo — owns the useDynamicSeo write for the detail view.
+ *
+ * Mounted by DirectoryBusinessDetailView ONLY after the listing fetch has
+ * settled with a definitive outcome (the business, or an API-confirmed
+ * not-found). It is deliberately NOT mounted while the fetch is in flight
+ * or after a transient failure, so in those states the client writes no
+ * metadata at all and the server-rendered head stands — for a published
+ * listing that head is snapshot-driven and indexable. forceNoIndex is the
+ * definitive notFound flag only; it no longer derives from transient
+ * error/loading state.
+ */
+const BusinessDetailSeo: React.FC<{
+  business: DirectoryBusinessListing | null;
+  notFound: boolean;
+}> = ({ business, notFound }) => {
+  const businessServices = business?.scrapedContent?.serviceTags || business?.targetKeywords || [];
+  const businessPhone = business?.phone || business?.gbpData?.phone || undefined;
+  const businessAddress = business?.gbpData?.address || undefined;
+  const businessRating = business?.gbpData?.averageRating;
+  const businessReviews = business?.gbpData?.reviewCount;
+  const businessHours = business?.gbpData?.hours
+    ? Object.entries(business.gbpData.hours).map(([day, hrs]) => `${day}: ${hrs}`)
+    : undefined;
+
+  useDynamicSeo({
+    pageType: 'business_detail',
+    businessName: business?.businessName,
+    businessSlug: business?.slug,
+    category: business?.categoryName,
+    city: business?.cityName,
+    services: businessServices,
+    phone: businessPhone,
+    website: business?.websiteUrl,
+    address: businessAddress,
+    rating: businessRating,
+    reviewCount: businessReviews,
+    openingHours: businessHours,
+    availableBusinessesCount: business ? 1 : 0,
+    availableBusinesses: business
+      ? [
+          {
+            id: business.id,
+            name: business.businessName,
+            slug: business.slug,
+            category: business.categoryName,
+            city: business.cityName,
+            services: businessServices,
+            phone: businessPhone,
+            website: business.websiteUrl,
+            address: businessAddress,
+            rating: businessRating,
+            reviewCount: businessReviews,
+            openingHours: businessHours,
+          },
+        ]
+      : [],
+    forceNoIndex: notFound,
+  });
+
+  return null;
 };
