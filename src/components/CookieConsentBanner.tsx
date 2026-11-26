@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Cookie, ShieldCheck, X, SlidersHorizontal, Check, Info, Lock } from 'lucide-react';
+import {
+  ACCEPT_ALL_TOGGLES,
+  ESSENTIAL_ONLY_TOGGLES,
+  readCookieConsent,
+  toggleStateFromConsent,
+  writeCookieConsent,
+  type ConsentToggleState,
+  type CookiePreferences,
+} from '../lib/consent';
 
-export interface CookiePreferences {
-  essential: boolean;
-  analytics: boolean;
-  functional: boolean;
-  marketing: boolean;
-  acceptedAt?: string;
-}
-
-const STORAGE_KEY = 'locora_cookie_consent';
+// Re-exported for compatibility; the canonical definition lives in lib/consent.
+export type { CookiePreferences };
 
 export const CookieConsentBanner: React.FC = () => {
   const [showBanner, setShowBanner] = useState<boolean>(false);
@@ -20,27 +22,29 @@ export const CookieConsentBanner: React.FC = () => {
   const [functional, setFunctional] = useState<boolean>(true);
   const [marketing, setMarketing] = useState<boolean>(false);
 
+  // Derive the toggle state from the stored record — the dialog's single
+  // source of truth (Task 6). Used on mount and on every reopen so the
+  // displayed preferences can never contradict what is stored, and any
+  // unsaved in-dialog edits are discarded in favour of the stored record.
+  const syncTogglesFromStorage = () => {
+    const state = toggleStateFromConsent(readCookieConsent());
+    setAnalytics(state.analytics);
+    setFunctional(state.functional);
+    setMarketing(state.marketing);
+  };
+
   useEffect(() => {
     // Check if consent has already been given
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) {
-      // Show disclaimer on first visit
+    if (!readCookieConsent()) {
+      // Show disclaimer on first visit (no readable stored choice)
       setShowBanner(true);
     } else {
-      try {
-        const parsed: CookiePreferences = JSON.parse(stored);
-        if (parsed) {
-          setAnalytics(parsed.analytics ?? true);
-          setFunctional(parsed.functional ?? true);
-          setMarketing(parsed.marketing ?? false);
-        }
-      } catch (e) {
-        setShowBanner(true);
-      }
+      syncTogglesFromStorage();
     }
 
     // Global listener to reopen cookie settings from footer or policy links
     const handleOpenSettings = () => {
+      syncTogglesFromStorage();
       setShowPreferences(true);
       setShowBanner(false);
     };
@@ -49,47 +53,34 @@ export const CookieConsentBanner: React.FC = () => {
     return () => {
       window.removeEventListener('open_cookie_settings', handleOpenSettings);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const saveConsent = (prefs: CookiePreferences) => {
-    const data: CookiePreferences = {
-      ...prefs,
-      essential: true, // Always required
-      acceptedAt: new Date().toISOString(),
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  const saveConsent = (toggles: ConsentToggleState) => {
+    // Persist through the single write path, then derive the displayed
+    // state FROM the record actually stored — never from handler-local
+    // assumptions — so UI and storage cannot diverge. (Task 6 root cause:
+    // Accept All previously saved without updating the toggle state, and
+    // a reopened dialog kept showing the stale pre-save state.)
+    const record = writeCookieConsent(toggles);
+    const synced = toggleStateFromConsent(record);
+    setAnalytics(synced.analytics);
+    setFunctional(synced.functional);
+    setMarketing(synced.marketing);
     setShowBanner(false);
     setShowPreferences(false);
   };
 
   const handleAcceptAll = () => {
-    saveConsent({
-      essential: true,
-      analytics: true,
-      functional: true,
-      marketing: true,
-    });
+    saveConsent(ACCEPT_ALL_TOGGLES);
   };
 
   const handleAcceptEssential = () => {
-    setAnalytics(false);
-    setFunctional(false);
-    setMarketing(false);
-    saveConsent({
-      essential: true,
-      analytics: false,
-      functional: false,
-      marketing: false,
-    });
+    saveConsent(ESSENTIAL_ONLY_TOGGLES);
   };
 
   const handleSaveCustom = () => {
-    saveConsent({
-      essential: true,
-      analytics,
-      functional,
-      marketing,
-    });
+    saveConsent({ analytics, functional, marketing });
   };
 
   if (!showBanner && !showPreferences) {
@@ -124,7 +115,10 @@ export const CookieConsentBanner: React.FC = () => {
             <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-end pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100">
               <button
                 type="button"
-                onClick={() => setShowPreferences(true)}
+                onClick={() => {
+                  syncTogglesFromStorage();
+                  setShowPreferences(true);
+                }}
                 className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
               >
                 <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
@@ -175,9 +169,9 @@ export const CookieConsentBanner: React.FC = () => {
                 type="button"
                 onClick={() => {
                   setShowPreferences(false);
-                  // If user hasn't made a choice yet, leave banner open
-                  const stored = localStorage.getItem(STORAGE_KEY);
-                  if (!stored) setShowBanner(true);
+                  // If user hasn't made a choice yet, leave banner open.
+                  // Closing never writes consent — it is not a choice.
+                  if (!readCookieConsent()) setShowBanner(true);
                 }}
                 className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
               >
