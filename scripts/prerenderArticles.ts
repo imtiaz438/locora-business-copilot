@@ -28,6 +28,7 @@ const ARTICLE_ROUTE_RE = /^\/resources\/([a-z0-9-]+)\/?$/;
 const SLUG_ALIASES: Record<string, string> = {
   'local-business-audit-checklist': 'local-seo-checklist',
   'local-seo-audit-checklist': 'local-seo-checklist',
+  'get-dental-practice-recommended-by-chatgpt': 'how-dentists-get-recommended-by-chatgpt',
 };
 
 /** Returns the article slug for a route, or null when the route is not a known article. */

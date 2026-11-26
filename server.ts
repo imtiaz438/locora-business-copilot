@@ -233,6 +233,29 @@ app.use((req, res, next) => {
     return res.redirect(301, `https://locoraai.com/resources/local-seo-checklist${qs}`);
   }
 
+  // 2026-11-26 (Task K2): Cluster A consolidation. /resources/get-dental-
+  // practice-recommended-by-chatgpt duplicated the study page
+  // /resources/how-dentists-get-recommended-by-chatgpt — the same
+  // "get recommended by ChatGPT" playbook intent for dentists. GSC 28d to
+  // Nov 24 split five shared queries between the two URLs (head query:
+  // 24 impressions split 13/11, both ranking at position ~75-79), while
+  // the study holds the better position (36.0 vs 66.3) and the site's
+  // only first-party study data. The playbook's unique material (Bing
+  // Places step, HIPAA-safe review-response pattern, GBP secondary
+  // categories, anti-scam warning, 3 FAQs) was merged into the study and
+  // the article key deleted, so the duplicate 301s to the study in one
+  // hop (the trailing-slash rule above has already normalised any slash
+  // variant, mirroring the Task 1 one-hop guarantee).
+  if (
+    !isAppHost &&
+    !isDirectoryHost &&
+    (req.method === 'GET' || req.method === 'HEAD') &&
+    req.path === '/resources/get-dental-practice-recommended-by-chatgpt'
+  ) {
+    const qs = req.originalUrl.slice(req.path.length);
+    return res.redirect(301, `https://locoraai.com/resources/how-dentists-get-recommended-by-chatgpt${qs}`);
+  }
+
   // B6 (2026-10-24): directory subdomain retired. It duplicated the main
   // domain's directory and earned search impressions for other businesses'
   // names (GSC: "west town auto repair", 16 impressions). All human traffic

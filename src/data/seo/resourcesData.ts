@@ -794,6 +794,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'get-recommended-by-chatgpt': {
     slug: 'get-recommended-by-chatgpt',
+    relatedSlugs: ['how-dentists-get-recommended-by-chatgpt', 'ai-visibility-for-dentists'],
     title: 'How to Get Your Business Recommended by ChatGPT (2026 Playbook)',
     category: 'Local SEO',
     readingTime: '10 min read',
@@ -801,13 +802,13 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
     authorName: 'The LocoraAI Team',
     authorRole: 'Local Search Experts',
     metaTitle: 'How to Get ChatGPT to Recommend Your Business (2026 Playbook) | LocoraAI',
-    metaDescription: 'Customers now ask ChatGPT for local recommendations. Follow the 7-step playbook to make AI search engines find, trust, and recommend your business — plus a free AI visibility check.',
+    metaDescription: 'Customers now ask ChatGPT for local recommendations. Follow the 8-step playbook to make AI search engines find, trust, and recommend your business — plus a free AI visibility check.',
     targetKeywords: ['how to get my business recommended by chatgpt', 'ai search visibility for local business', 'chatgpt business recommendations', 'how to rank in ai search'],
     targetTab: 'local_seo',
     ctaText: 'Check My AI Visibility Free',
     ctaHeadline: 'See How AI Engines See Your Business',
     ctaDescription: 'Audit your AI-search readiness — crawler access, profile completeness, citation consistency, review signals, and schema — scored against local competitors.',
-    summary: 'A practical 7-step playbook for AI search visibility: how ChatGPT, Gemini, and Perplexity choose which local businesses to recommend, and the concrete steps — crawler access, GBP completeness, Bing Places, schema — that put your business in their answers.',
+    summary: 'A practical 8-step playbook for AI search visibility: how ChatGPT, Gemini, and Perplexity choose which local businesses to recommend, and the concrete steps — crawler access, GBP completeness, Bing Places, schema — that put your business in their answers.',
     tableOfContents: [
       { id: 'why-now', title: '1. Why AI Recommendations Matter Now' },
       { id: 'how-they-pick', title: '2. How AI Engines Actually Pick Businesses' },
@@ -833,7 +834,8 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
         heading: '2. How AI Engines Actually Pick Businesses',
         content: [
           'AI assistants do not have a secret local index. They retrieve from the public web — business profiles, review platforms, your website — and synthesize an answer. That means the inputs are familiar: complete business data, consistent listings, reviews, and crawlable website content.',
-          'The difference is the reader. A human skims your homepage; an AI model parses your structured data, cross-references your citations, and weighs review signals. Optimize for machine readability and the recommendations follow.'
+          'The difference is the reader. A human skims your homepage; an AI model parses your structured data, cross-references your citations, and weighs review signals. Optimize for machine readability and the recommendations follow.',
+          'Run a dental practice? Start with our 35-practice study of how dentists actually get recommended by ChatGPT.'
         ],
         keyTakeaway: 'There is no AI-only trick. AI engines recommend businesses with complete, consistent, machine-readable public data.'
       },
@@ -1295,6 +1297,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'ai-visibility-for-dentists': {
     slug: 'ai-visibility-for-dentists',
+    relatedSlugs: ['how-dentists-get-recommended-by-chatgpt', 'dental-website-crawler-schema-checklist', 'google-business-profile-guide'],
     title: 'AI Visibility for Dentists: How ChatGPT Decides Which Practices to Recommend',
     category: 'Local SEO',
     readingTime: '9 min read',
@@ -1351,7 +1354,8 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
         heading: '4. Reviews Are an AI Input, Not Just Social Proof',
         content: [
           'Owners tend to think of reviews as reputation — something future patients read. AI assistants treat them as data. Review text tells the machine what your practice is actually known for: gentle with anxious patients, good with children, transparent about pricing, strong implant work. When a patient asks a specific question, the assistant matches it against exactly this kind of language in your reviews.',
-          'Recency and responses matter too. A steady flow of recent reviews signals a practice that is active and currently treating patients, and your responses become part of the record the assistant reads. That is why review replies deserve care in dentistry: a proper response thanks the reviewer generally, never confirms they are or were a patient, never mentions treatment, and moves any specific concern offline. Written that way, responses are both HIPAA-safe and useful machine-readable evidence of how your practice communicates.'
+          'Recency and responses matter too. A steady flow of recent reviews signals a practice that is active and currently treating patients, and your responses become part of the record the assistant reads. That is why review replies deserve care in dentistry: a proper response thanks the reviewer generally, never confirms they are or were a patient, never mentions treatment, and moves any specific concern offline. Written that way, responses are both HIPAA-safe and useful machine-readable evidence of how your practice communicates.',
+          'This is not theory. When we tested it — 35 Logan, Utah practices, six patient questions, 36 AI answers across ChatGPT, Google\'s AI Overview and Gemini — 24 of the 35 practices were never named once, and a general practice with 473 reviews and a perfect 5.0 rating received zero mentions: review volume by itself did not make a practice recommendable. Our 35-practice study of how dentists get recommended by ChatGPT reports the full findings.'
         ],
         keyTakeaway: 'Reviews tell AI what your practice is known for. Recent reviews and general, HIPAA-safe responses make that signal stronger.'
       },
@@ -1377,7 +1381,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
         id: 'fix-order',
         heading: '7. The Fix Order — and Your Free Starting Point',
         content: [
-          'Work the layers in the order the machine reads them. First, make sure crawlers can access your site and that your core details are identical everywhere. Second, complete your Google Business Profile down to services and descriptions, and keep reviews flowing with careful, general responses. Third, make the website quotable: Dentist schema and a real page for each treatment you want recommended for. Each layer strengthens the next, and none of it requires advertising spend.',
+          'Work the layers in the order the machine reads them. First, make sure crawlers can access your site and that your core details are identical everywhere. Second, complete your Google Business Profile down to services and descriptions, and keep reviews flowing with careful, general responses. Third, make the website quotable: Dentist schema and a real page for each treatment you want recommended for. Each layer strengthens the next, and none of it requires advertising spend. For the full evidence, see our 35-practice study of how dentists get recommended by ChatGPT — its playbook section is the step-by-step version of this fix order.',
           'The fastest way to see where your practice stands today is a structured scan rather than guesswork. LocoraAI\'s free checkup runs a 40-point check of exactly these inputs — Google profile and Maps presence, website health, reviews and AI visibility — and shows your score and top issues with no signup or credit card needed. Run it, fix what it flags first, then repeat your AI-assistant tests monthly. That loop — measure, fix, re-test — is what being visible to AI actually consists of.'
         ],
         keyTakeaway: 'Fix access and consistency first, then profile and reviews, then the website — and start by measuring with a free 40-point checkup.'
@@ -1615,7 +1619,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'dental-website-crawler-schema-checklist': {
     slug: 'dental-website-crawler-schema-checklist',
-    relatedSlugs: ['dentist-seo-vs-dental-marketing-agencies', 'get-dental-practice-recommended-by-chatgpt', 'google-review-response-examples-dentists'],
+    relatedSlugs: ['dentist-seo-vs-dental-marketing-agencies', 'how-dentists-get-recommended-by-chatgpt', 'google-review-response-examples-dentists'],
     title: 'Your Practice Website Through AI\'s Eyes: The Crawler & Schema Checklist for Dentists',
     category: 'Local SEO',
     readingTime: '9 min read',
@@ -1844,7 +1848,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'dentist-seo-vs-dental-marketing-agencies': {
     slug: 'dentist-seo-vs-dental-marketing-agencies',
-    relatedSlugs: ['dentist-seo-vs-google-ads', 'dental-website-crawler-schema-checklist', 'get-dental-practice-recommended-by-chatgpt', 'google-review-response-examples-dentists'],
+    relatedSlugs: ['dentist-seo-vs-google-ads', 'dental-website-crawler-schema-checklist', 'how-dentists-get-recommended-by-chatgpt', 'google-review-response-examples-dentists'],
     title: 'Dentist SEO vs Dental Marketing Agencies: What $29/mo Software Does and Doesn\'t Replace',
     category: 'Local SEO',
     readingTime: '8 min read',
@@ -2056,149 +2060,6 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
     ]
   },
 
-  'get-dental-practice-recommended-by-chatgpt': {
-    slug: 'get-dental-practice-recommended-by-chatgpt',
-    relatedSlugs: ['dental-website-crawler-schema-checklist', 'dentist-seo-vs-dental-marketing-agencies', 'google-review-response-examples-dentists'],
-    title: 'How to Get Your Dental Practice Recommended by ChatGPT',
-    category: 'Local SEO',
-    readingTime: '9 min read',
-    publishedDate: 'November 2026',
-    authorName: 'The LocoraAI Team',
-    authorRole: 'Local Search Experts',
-    metaTitle: 'How to Get Your Dental Practice Recommended by ChatGPT | LocoraAI',
-    metaDescription: 'Get your dental practice recommended by ChatGPT with eight steps: crawler access, complete profiles, consistent details, HIPAA-safe reviews and schema.',
-    targetKeywords: ['how to get your dental practice recommended by chatgpt', 'chatgpt for dentists', 'get my dental practice on chatgpt', 'dental practice ai visibility checklist'],
-    targetTab: 'local_seo',
-    ctaText: 'Check My Practice Free',
-    ctaHeadline: 'Start With Step Zero: Measure Where You Stand',
-    ctaDescription: 'LocoraAI\'s free 40-point checkup shows your Google, Maps and AI visibility score and the top issues to fix first. No signup or credit card needed to see your results.',
-    summary: 'Eight concrete steps to make your dental practice recommendable by ChatGPT: open the door to AI crawlers, complete your Google profile and Bing Places, standardise your details everywhere, build reviews the HIPAA-safe way, add Dentist schema, publish treatment pages, and test monthly.',
-    tableOfContents: [
-      { id: 'the-short-answer', title: 'The Short Answer: How AI Assistants Choose' },
-      { id: 'step-1-crawler-access', title: 'Step 1: Let the AI Crawlers Read Your Site' },
-      { id: 'step-2-google-profile', title: 'Step 2: Complete Your Google Business Profile' },
-      { id: 'step-3-nap-consistency', title: 'Step 3: Make Your Name, Address and Phone Identical Everywhere' },
-      { id: 'step-4-bing-places', title: 'Step 4: Claim and Complete Bing Places' },
-      { id: 'step-5-reviews', title: 'Step 5: Build Review Velocity — and Respond the HIPAA-Safe Way' },
-      { id: 'step-6-dentist-schema', title: 'Step 6: Add Dentist Schema to Your Website' },
-      { id: 'step-7-service-pages', title: 'Step 7: Publish Service Pages for High-Value Treatments' },
-      { id: 'step-8-test-monthly', title: 'Step 8: Test Yourself Monthly — Starting With a Free Checkup' }
-    ],
-    sections: [
-      {
-        id: 'the-short-answer',
-        heading: 'The Short Answer: How AI Assistants Choose Which Dentists to Recommend',
-        content: [
-          'If you have asked an AI assistant how to get your dental practice recommended by AI assistants, here is the direct answer. Assistants like ChatGPT recommend practices they can find, verify, and cite. They build their answers from your Google Business Profile, your Bing Places listing, your website, your reviews, and directory listings — and they name the practices whose information is complete, consistent everywhere, and readable by their crawlers. There is no submission form, no paid placement inside the answer, and no trick: a practice becomes recommendable by being the clearest, most consistent source about itself.',
-          'In practice that means eight things, which are the eight steps of this guide: let the AI crawlers read your site; complete your Google profile; make your name, address, and phone identical everywhere; claim your Bing Places listing; build a steady, honestly-earned flow of reviews and answer them safely; state your facts in Dentist schema; publish a real page for each treatment you want to be recommended for; and test monthly whether you are being named. A practice does not need all eight perfect — but the practices assistants name are, without exception, the ones a machine can describe confidently.',
-          'One warning before the steps: any service that promises to place you inside AI answers for a fee is selling something that does not exist as a product. What exists is the underlying information those answers are assembled from — and that, fortunately, is almost entirely within your control.'
-        ],
-        keyTakeaway: 'AI assistants recommend practices they can find, verify, and cite: complete profiles, consistent details, readable pages, steady reviews. The eight steps below are how to become one of them.'
-      },
-      {
-        id: 'step-1-crawler-access',
-        heading: 'Step 1: Let the AI Crawlers Read Your Site',
-        content: [
-          'Start with the gate everything else depends on. AI assistants send their own crawlers — user-agents such as GPTBot and similar bots from other AI companies — to read websites. If your robots.txt file blocks them, or your hosting security settings reject them, those engines cannot read your site, and no amount of other work gets you recommended from content they never saw.',
-          'Ask whoever manages your website to confirm two things: AI crawler user-agents are allowed in robots.txt, and your key pages return real, readable content without relying on scripts to display it. Many dental websites are built so the text only appears after scripts run; crawlers that do not execute scripts see an empty page. A page that looks fine in your browser can still be blank to the machine deciding whether to cite it.'
-        ],
-        keyTakeaway: 'If AI crawlers are blocked or your pages render empty without scripts, nothing else in this playbook can work. Check access first.'
-      },
-      {
-        id: 'step-2-google-profile',
-        heading: 'Step 2: Complete Your Google Business Profile',
-        content: [
-          'Your Google Business Profile is the most heavily used source when AI assistants answer local questions, so complete it like it matters — because it is doing double duty for Google and AI. Set the primary category to Dentist and add the secondary categories that genuinely apply, such as Cosmetic dentist, Dental implants provider or Emergency dental service, rather than leaving the extras blank.',
-          'Then fill in the substance: every service you offer, with plain-language descriptions; accurate hours including holidays; current photos of the practice and team; and a business description that names your treatments and the area you serve. Assistants quote this material when explaining why they are naming you. Blank services and a one-line description give the machine almost nothing to say on your behalf.'
-        ],
-        keyTakeaway: 'A complete Google profile — categories, services with descriptions, hours, photos — is the raw material AI answers are built from.'
-      },
-      {
-        id: 'step-3-nap-consistency',
-        heading: 'Step 3: Make Your Name, Address and Phone Identical Everywhere',
-        content: [
-          'Pick one canonical version of your practice name, address and phone number, and make every public source match it exactly. That includes your website, Google profile, Bing Places, health and insurance directories, review platforms and social pages. Old addresses from a previous location and tracking numbers from an old marketing campaign are the usual culprits.',
-          'Work through the sources one by one and correct anything that differs — a former phone number on one directory is enough to make an assistant unsure which number is real, and unsure machines recommend the practice whose details agree everywhere. Repeat the sweep whenever you move, change numbers or rebrand, and spot-check it a few times a year, because directories also create and update listings without asking you.'
-        ],
-        keyTakeaway: 'One canonical name, address and phone, matched everywhere. Inconsistency is the quiet reason assistants skip a practice.'
-      },
-      {
-        id: 'step-4-bing-places',
-        heading: 'Step 4: Claim and Complete Bing Places',
-        content: [
-          'ChatGPT\'s answers are grounded partly in Bing\'s index, which makes Bing Places for Business the most skipped step in this playbook. Most dental practices have a Bing listing created automatically from other data — often incomplete or out of date — and have never claimed it.',
-          'Claim the listing, or create it if none exists, and complete it to the same standard as your Google profile: same canonical name, address and phone, same categories and services, same hours and photos. Because so few practices bother, a complete and accurate Bing Places listing is one of the cheapest visibility advantages available to you.'
-        ],
-        keyTakeaway: 'Claim and complete Bing Places. It feeds ChatGPT\'s grounding, and most of your competitors have never touched theirs.'
-      },
-      {
-        id: 'step-5-reviews',
-        heading: 'Step 5: Build Review Velocity — and Respond the HIPAA-Safe Way',
-        content: [
-          'AI assistants read your reviews to learn what your practice is known for, and they weigh recent activity. Build a steady, ethical review habit: invite feedback at natural moments, through your usual follow-up messages or a card at reception, and keep the flow spread across the year rather than in occasional bursts. Never offer incentives for reviews, and never write or buy them — platforms and regulators both treat that as misconduct, and fake patterns are easy to spot.',
-          'Respond to reviews the HIPAA-safe way. Thank the reviewer in general terms, speak about your team\'s standards rather than anyone\'s care, and invite them to contact the practice directly about specifics. Never confirm that the reviewer is or was a patient, never mention a treatment, appointment or condition, and never argue clinical details in public. A safe pattern is: thank you for the kind feedback, our team works hard to make every visit comfortable, and we appreciate you choosing to share your experience. Responses written like this protect patient privacy and still give AI assistants positive, quotable text about your practice.'
-        ],
-        keyTakeaway: 'Steady, honest reviews, answered generally: never confirm a reviewer is a patient, never discuss treatment, move specifics offline.'
-      },
-      {
-        id: 'step-6-dentist-schema',
-        heading: 'Step 6: Add Dentist Schema to Your Website',
-        content: [
-          'Schema is structured data embedded in your website\'s code that states your facts in a format machines cannot misread. For a dental practice the relevant type is Dentist, a subtype of LocalBusiness. Done properly, it spells out your practice name, address, phone, opening hours, geographic location, the services you offer and links to your profiles elsewhere on the web.',
-          'Ask your web developer to add it in JSON-LD format to your homepage and location pages, generated from the same canonical details you standardised in Step 3. Schema does not replace readable content — the visible page still needs the same information in plain text — but it removes ambiguity. When an assistant can lift your hours, services and address from an explicit data block instead of guessing from page layout, your facts are more likely to be repeated accurately.'
-        ],
-        keyTakeaway: 'Dentist schema in JSON-LD states your facts explicitly, so assistants repeat them accurately instead of guessing.'
-      },
-      {
-        id: 'step-7-service-pages',
-        heading: 'Step 7: Publish Service Pages for High-Value Treatments',
-        content: [
-          'Patients rarely ask an assistant for a generic dentist; they ask about a treatment — implants, clear aligners, emergency care, teeth whitening, care for nervous patients. If your website covers all of that in one short services list, the assistant has thin material to match against those specific questions, and it will cite a competitor whose site has a dedicated page instead.',
-          'Publish a real page for each high-value treatment you want to be recommended for. Each page should explain who the treatment suits, what the process involves, what the first appointment looks like and how to book, in plain language a patient — and a machine summarising for one — can follow. This is not keyword stuffing; it is giving the assistant a citable source for the exact questions your future patients are asking.'
-        ],
-        keyTakeaway: 'One page per treatment you want recommended for gives assistants citable answers to treatment-specific questions.'
-      },
-      {
-        id: 'step-8-test-monthly',
-        heading: 'Step 8: Test Yourself Monthly — Starting With a Free Checkup',
-        content: [
-          'Visibility is not a one-time setup. Set a monthly routine: in fresh sessions, ask ChatGPT and other assistants the questions your patients ask — best dentist in your town, recommendations for your key treatments near your neighbourhood — and record who gets named and what is said. Note any wrong fact about your practice, because that error exists in a source you can find and fix.',
-          'Pair the manual tests with a structured check. LocoraAI\'s free checkup scans your practice across 40 points — Google profile, Maps, website, reviews and AI visibility — and shows your score and your top issues, with no signup or credit card needed to see them. Work the fixes in the order this playbook sets out, re-run the checkup, and repeat your assistant tests next month. Step by step, that is how a practice goes from invisible to recommendable.'
-        ],
-        keyTakeaway: 'Test monthly in fresh sessions and back it with the free 40-point checkup — measure, fix, re-test.'
-      }
-    ],
-    faqs: [
-      {
-        q: 'Do I need a new website to get recommended by ChatGPT?',
-        a: 'Usually not. Most practices need access and content fixes on the site they already have: crawler permissions, readable page content, schema, and proper service pages. A rebuild is only necessary if the current site cannot be edited or serves empty pages to crawlers.'
-      },
-      {
-        q: 'How can I respond to Google reviews without risking a HIPAA problem?',
-        a: 'Keep responses general and never confirm the reviewer is or was a patient. Thank them for the feedback, describe your team\'s standards in broad terms, and invite direct contact about anything specific. Never mention treatments, appointments, conditions or visit details in a public reply.'
-      },
-      {
-        q: 'Does Bing Places really affect ChatGPT recommendations?',
-        a: 'Yes — ChatGPT\'s search grounding draws on Bing\'s index, so the business data Bing holds about your practice is part of what ChatGPT can retrieve. Claiming and completing your Bing Places listing takes little time and is widely neglected by dental practices.'
-      },
-      {
-        q: 'How often should I check whether AI assistants recommend my practice?',
-        a: 'Monthly is a sensible rhythm. AI answers shift as profiles, reviews and websites are re-crawled, so a single test proves little. A dated monthly record of who gets named for your key treatments shows whether your fixes are moving you into the answers.'
-      },
-      {
-        q: 'How do I get my dental practice recommended by AI assistants?',
-        a: 'Make your practice easy for a machine to find, verify, and describe. Concretely: allow AI crawlers to read your website, complete your Google Business Profile and Bing Places listing, keep your name, address, and phone identical across every listing, earn a steady flow of genuine reviews and respond to them without ever confirming anyone is a patient, add Dentist schema to your site, and publish a page for each treatment you want to be recommended for. Then test monthly — ask the assistants the questions your patients ask and note who gets named. The eight steps in this guide walk through each part in order.'
-      },
-      {
-        q: 'Why does ChatGPT recommend other dentists in my area instead of mine?',
-        a: 'Usually because those practices give the assistant more to work with: a more complete profile, details that agree across every source, more recent review activity, or a dedicated page for the treatment in the question. Assistants avoid naming businesses whose facts conflict between sources, because they cannot tell which version is right. The fix is rarely one big change — it is closing the gaps, in the order this guide sets out, and then re-testing.'
-      },
-      {
-        q: 'Can I pay to be recommended by ChatGPT or other AI assistants?',
-        a: 'No. There is no paid placement inside an assistant\'s organic answer and no submission that buys a recommendation. Assistants assemble answers from public sources — profiles, listings, websites, and reviews — so the only route in is making those sources complete, consistent, and readable. Anyone selling guaranteed AI recommendations is selling something they do not control.'
-      }
-    ]
-  },
 
   'google-business-profile-suspended-dentists': {
     slug: 'google-business-profile-suspended-dentists',
@@ -2312,7 +2173,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'google-review-response-examples-dentists': {
     slug: 'google-review-response-examples-dentists',
-    relatedSlugs: ['dentist-seo-vs-dental-marketing-agencies', 'get-dental-practice-recommended-by-chatgpt', 'dental-website-crawler-schema-checklist'],
+    relatedSlugs: ['dentist-seo-vs-dental-marketing-agencies', 'how-dentists-get-recommended-by-chatgpt', 'dental-website-crawler-schema-checklist'],
     title: 'Google Review Response Examples for Dentists: 24 Copy-Paste Replies (incl. the 1-Star)',
     category: 'Local SEO',
     readingTime: '11 min read',
@@ -2569,7 +2430,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'orthodontic-marketing-agency-vs-general-dental-marketing-agency': {
     slug: 'orthodontic-marketing-agency-vs-general-dental-marketing-agency',
-    relatedSlugs: ['dentist-seo-vs-dental-marketing-agencies', 'get-dental-practice-recommended-by-chatgpt', 'dentist-seo-vs-google-ads'],
+    relatedSlugs: ['dentist-seo-vs-dental-marketing-agencies', 'how-dentists-get-recommended-by-chatgpt', 'dentist-seo-vs-google-ads'],
     title: 'Orthodontic Marketing Agency vs General Dental Marketing Agency: Which Does an Orthodontist Actually Need?',
     category: 'Local SEO',
     readingTime: '7 min read',
@@ -2680,7 +2541,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'dental-agency-vs-in-house-marketing': {
     slug: 'dental-agency-vs-in-house-marketing',
-    relatedSlugs: ['dentist-seo-vs-dental-marketing-agencies', 'dentist-seo-vs-google-ads', 'get-dental-practice-recommended-by-chatgpt'],
+    relatedSlugs: ['dentist-seo-vs-dental-marketing-agencies', 'dentist-seo-vs-google-ads', 'how-dentists-get-recommended-by-chatgpt'],
     title: 'Dental Marketing Agency vs In-House Marketing: An Honest Cost, Control, and Effort Comparison',
     category: 'Local SEO',
     readingTime: '8 min read',
@@ -2790,7 +2651,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
   },
   'how-dentists-get-recommended-by-chatgpt': {
     slug: 'how-dentists-get-recommended-by-chatgpt',
-    relatedSlugs: ['ai-visibility-for-dentists', 'get-dental-practice-recommended-by-chatgpt', 'google-business-profile-guide', 'how-many-google-reviews-dental-practice', 'dental-website-crawler-schema-checklist', 'dentist-near-me-maps-3-pack'],
+    relatedSlugs: ['ai-visibility-for-dentists', 'google-review-response-examples-dentists', 'google-business-profile-guide', 'how-many-google-reviews-dental-practice', 'dental-website-crawler-schema-checklist', 'dentist-near-me-maps-3-pack'],
     title: 'How Dentists Get Recommended by ChatGPT: What a 36-Answer Test Actually Showed',
     category: 'Local SEO',
     readingTime: '12 min read',
@@ -2863,23 +2724,25 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
         id: 'the-playbook',
         heading: '5. The Playbook: What to Do, in Order',
         content: [
-          'Step 1 — Complete your Google Business Profile like it is your homepage. Correct primary category, every service listed, hours, photos — and a working website link. Our Google Business Profile guide walks through the full setup.',
+          'Step 1 — Complete your Google Business Profile like it is your homepage. Correct primary category, every service listed, hours, photos — and a working website link. Set the primary category to Dentist and add the secondary categories that genuinely apply, such as Cosmetic dentist, Dental implants provider or Emergency dental service, rather than leaving the extras blank. Our Google Business Profile guide walks through the full setup.',
           'Step 2 — Give each high-value service its own clear page. Implants, orthodontics, emergency care, Invisalign: one page each, in plain language, saying who it is for and what it costs in shape if not in numbers. In our Google pass, the sampled practices that did show up in results for service searches were showing up with dedicated service pages. AI answers describe services in plain words — give them plain words to work with.',
           'Step 3 — Make your name, address and phone identical everywhere. Your listing, your website, directories, your socials. Inconsistent details are how AI tools merge you with another location — or invent details to fill a gap.',
-          'Step 4 — Build reviews steadily, and respond to them. Keep asking, keep the flow recent, and reply. But take the review finding above seriously: reviews are necessary groundwork, not a guarantee. Pair them with the steps above instead of treating the count as the whole strategy. Our guide on how many Google reviews a dental practice needs explains how to find your real local benchmark.',
-          'Step 5 — Let the crawlers in and structure your site. Make sure AI crawlers are not blocked and your site carries basic structured data (schema) identifying your practice, services and location. Our dental website crawler and schema checklist covers this in order. Honest note from our sample: no single technical factor explained the winners — the practices named most often had the basics stacked together, not one magic item.',
-          'Step 6 — If you have multiple locations, build each one separately. Separate listing, separate reviews, separate service pages per location. Otherwise, as the wrong-location finding showed, the AI recommends whichever location\'s data is strongest and sends your patients there.',
-          'Step 7 — Test yourself the way a patient would, every month — and test twice. Open fresh sessions in ChatGPT, Google and Gemini. Ask the six question types above for your city. Write down who gets named — and check every fact the tools state about your practice, especially your phone number and address. Repeat on a different day: our two runs disagreed on 3 of the 11 named practices. Visibility you never measure is visibility you are guessing about; visibility you measure once is visibility you may be misreading.',
-          'Step 8 — Don\'t neglect the Map Pack while you chase AI. Only 1 of our 35 practices appeared in any Map Pack — that is paid-attention territory you are also probably missing. The factors are different but the groundwork overlaps; our breakdown of what decides the Maps 3-Pack for dentists covers it.'
+          'Step 4 — Claim and complete Bing Places. ChatGPT\'s answers are grounded partly in Bing\'s index, which makes Bing Places the step most practices skip. Most practices have a Bing listing created automatically from other data — often incomplete or out of date — and have never claimed it. Claim the listing, or create it if none exists, and complete it to the same standard as your Google profile: the same canonical name, address and phone, the same categories and services, the same hours and photos. Because so few practices bother, a complete and accurate Bing Places listing is one of the cheapest visibility advantages available to you.',
+          'Step 5 — Build reviews steadily, and respond to them. Keep asking, keep the flow recent, and reply — and respond the HIPAA-safe way: thank the reviewer in general terms, speak about your team\'s standards rather than anyone\'s care, and invite them to contact the practice directly about specifics. Never confirm that the reviewer is or was a patient, and never mention a treatment, appointment or condition in a public reply. A safe pattern is: thank you for the kind feedback, our team works hard to make every visit comfortable, and we appreciate you choosing to share your experience. Responses like that protect patient privacy and still give AI assistants positive, quotable text about your practice. But take the review finding above seriously: reviews are necessary groundwork, not a guarantee. Pair them with the steps above instead of treating the count as the whole strategy. Our guide on how many Google reviews a dental practice needs explains how to find your real local benchmark.',
+          'Step 6 — Let the crawlers in and structure your site. Make sure AI crawlers are not blocked and your site carries basic structured data (schema) identifying your practice, services and location. Our dental website crawler and schema checklist covers this in order. Honest note from our sample: no single technical factor explained the winners — the practices named most often had the basics stacked together, not one magic item.',
+          'Step 7 — If you have multiple locations, build each one separately. Separate listing, separate reviews, separate service pages per location. Otherwise, as the wrong-location finding showed, the AI recommends whichever location\'s data is strongest and sends your patients there.',
+          'Step 8 — Test yourself the way a patient would, every month — and test twice. Open fresh sessions in ChatGPT, Google and Gemini. Ask the six question types above for your city. Write down who gets named — and check every fact the tools state about your practice, especially your phone number and address. Repeat on a different day: our two runs disagreed on 3 of the 11 named practices. Visibility you never measure is visibility you are guessing about; visibility you measure once is visibility you may be misreading.',
+          'Step 9 — Don\'t neglect the Map Pack while you chase AI. Only 1 of our 35 practices appeared in any Map Pack — that is paid-attention territory you are also probably missing. The factors are different but the groundwork overlaps; our breakdown of what decides the Maps 3-Pack for dentists covers it.',
+          'One warning that applies to every step above: no service can place your practice inside AI answers for a fee — anyone promising that is selling something that does not exist as a product. What exists is the underlying information those answers are assembled from, and that is exactly what these nine steps put in order.'
         ],
-        keyTakeaway: 'In order: a complete Google Business Profile, a clear page per high-value service, identical name, address and phone everywhere, steady answered reviews, crawler access and schema, a separate identity per location, monthly self-testing done twice, and the Map Pack basics underneath.'
+        keyTakeaway: 'In order: a complete Google Business Profile, a clear page per high-value service, identical name, address and phone everywhere, a claimed and completed Bing Places listing, steady answered reviews, crawler access and schema, a separate identity per location, monthly self-testing done twice, and the Map Pack basics underneath.'
       },
       {
         id: 'where-you-stand',
         heading: '6. Find Out Where Your Practice Stands',
         content: [
           'Everything in this article started with one question: does AI recommend us at all? LocoraAI\'s free checkup answers that for your practice — it audits your Google presence and your AI visibility together and shows you the gaps in the order this playbook fixes them.',
-          'For the deeper mechanics, read next: AI Visibility for Dentists, on how ChatGPT decides which practices to recommend, and our step-by-step guide to getting your dental practice recommended by ChatGPT. More guides for dental practices live on our page for dentists.'
+          'For the deeper mechanics, read next: AI Visibility for Dentists, on how ChatGPT decides which practices to recommend, and our dental website crawler and schema checklist, which covers the technical side of this playbook in order. More guides for dental practices live on our page for dentists.'
         ],
         keyTakeaway: 'Start by finding out whether AI recommends your practice at all — the free checkup audits your Google presence and AI visibility together and orders the gaps the way this playbook fixes them.'
       }
@@ -2900,6 +2763,18 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
       {
         q: 'Why does AI keep recommending a different location of our brand?',
         a: 'Because the tools build each answer from the strongest, clearest data they can find, and locations with thin or merged data lose to the location with the complete listing, the most reviews and the clearest pages. Give every location its own complete listing, its own review flow and its own service pages so each one can be recommended on its own merits.'
+      },
+      {
+        q: 'How can I respond to Google reviews without risking a HIPAA problem?',
+        a: 'Keep responses general and never confirm the reviewer is or was a patient. Thank them for the feedback, describe your team\'s standards in broad terms, and invite direct contact about anything specific. Never mention treatments, appointments, conditions or visit details in a public reply.'
+      },
+      {
+        q: 'Does Bing Places really affect ChatGPT recommendations?',
+        a: 'Yes — ChatGPT\'s search grounding draws on Bing\'s index, so the business data Bing holds about your practice is part of what ChatGPT can retrieve. Claiming and completing your Bing Places listing takes little time and is widely neglected by dental practices.'
+      },
+      {
+        q: 'Do I need a new website to get recommended by ChatGPT?',
+        a: 'Usually not. Most practices need access and content fixes on the site they already have: crawler permissions, readable page content, schema, and proper service pages. A rebuild is only necessary if the current site cannot be edited or serves empty pages to crawlers.'
       }
     ]
   },

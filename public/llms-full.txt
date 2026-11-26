@@ -188,6 +188,7 @@
 - Resources & Playbooks: https://locoraai.com/resources
 - AI Visibility for Dentists (pillar guide): https://locoraai.com/resources/ai-visibility-for-dentists
 - How to Get Your Business Recommended by ChatGPT: https://locoraai.com/resources/get-recommended-by-chatgpt
+- How Dentists Get Recommended by ChatGPT (35-practice study): https://locoraai.com/resources/how-dentists-get-recommended-by-chatgpt
 - Full guide index for AI crawlers: https://locoraai.com/llms.txt
 - Pricing & Plans: https://locoraai.com/pricing
 - About & Mission: https://locoraai.com/about

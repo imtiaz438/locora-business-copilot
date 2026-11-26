@@ -44,7 +44,9 @@ export const ResourceDetailPage: React.FC<ResourceDetailPageProps> = ({ slug }) 
   const currentSlug =
     rawSlug === 'local-business-audit-checklist' || rawSlug === 'local-seo-audit-checklist'
       ? 'local-seo-checklist'
-      : rawSlug;
+      : rawSlug === 'get-dental-practice-recommended-by-chatgpt'
+        ? 'how-dentists-get-recommended-by-chatgpt'
+        : rawSlug;
 
   const article: SeoResourceArticle =
     SEO_RESOURCES_DATABASE[currentSlug] ||
