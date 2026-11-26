@@ -411,12 +411,16 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
         await triggerGoogleSSO({
           onStart: () => setLoading(true),
           onSuccess: (authenticatedUser) => {
-            trackSignupCompleted({
-              email: authenticatedUser.email,
-              planTier: authenticatedUser.planTier,
-              companyName: authenticatedUser.companyName,
-              method: 'google',
-            });
+            // sign_up only for a genuine registration, not a returning-user
+            // login (Task 5, 2026-11-26; mirrors AuthModal's gating).
+            if (isSignUp) {
+              trackSignupCompleted({
+                email: authenticatedUser.email,
+                planTier: authenticatedUser.planTier,
+                companyName: authenticatedUser.companyName,
+                method: 'google',
+              });
+            }
             login(
               authenticatedUser.email,
               authenticatedUser.name,
@@ -439,12 +443,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ initialMode = 'login' }) => 
         await triggerLinkedInSSO({
           onStart: () => setLoading(true),
           onSuccess: (authenticatedUser) => {
-            trackSignupCompleted({
-              email: authenticatedUser.email,
-              planTier: authenticatedUser.planTier,
-              companyName: authenticatedUser.companyName,
-              method: 'linkedin',
-            });
+            if (isSignUp) {
+              trackSignupCompleted({
+                email: authenticatedUser.email,
+                planTier: authenticatedUser.planTier,
+                companyName: authenticatedUser.companyName,
+                method: 'linkedin',
+              });
+            }
             login(
               authenticatedUser.email,
               authenticatedUser.name,

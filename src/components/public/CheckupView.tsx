@@ -4,6 +4,7 @@ import {
   trackCheckupStarted,
   trackCheckupSubmitted,
   trackCheckupResultViewed,
+  trackFirstAuditViewed,
   trackCtaClick,
   trackSignupStarted,
 } from '../../lib/analytics';
@@ -59,6 +60,7 @@ export const CheckupView: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [auditResult, setAuditResult] = useState<Audit40EvaluationResult | null>(null);
+  const [currentAuditId, setCurrentAuditId] = useState<string | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   // Read any pre-filled parameters or query strings
@@ -82,6 +84,9 @@ export const CheckupView: React.FC = () => {
         const parsed = JSON.parse(saved);
         if (parsed?.auditResult) {
           setAuditResult(parsed.auditResult);
+          setCurrentAuditId(
+            parsed.submissionId || (parsed.timestamp ? `chk_ts_${parsed.timestamp}` : null)
+          );
           if (parsed.businessName) setBusinessName(parsed.businessName);
           if (parsed.website) setWebsite(parsed.website);
           if (parsed.locationCity) setLocationCity(parsed.locationCity);
@@ -92,15 +97,21 @@ export const CheckupView: React.FC = () => {
     }
   }, []);
 
-  // Track checkup_started on first input interaction
-  const handleInputFocusOrChange = () => {
-    if (!hasStartedForm) {
-      setHasStartedForm(true);
-      trackCheckupStarted('/checkup', {
-        initial_name: businessName || undefined,
-        initial_website: website || undefined,
-      });
-    }
+  // Track checkup_started on the first GENUINE start of the workflow: a
+  // change in which the visitor has actually entered content into a field.
+  // Mere focus / field touch does NOT fire it (Task 5, 2026-11-26), and no
+  // form contents are sent as event parameters. The analytics helper also
+  // enforces once-per-session, so remounts/refreshes cannot re-fire it.
+  const handleInputInteraction = (changedValue?: string) => {
+    if (hasStartedForm) return;
+    const hasContent =
+      Boolean(changedValue && changedValue.trim()) ||
+      Boolean(businessName.trim()) ||
+      Boolean(website.trim()) ||
+      Boolean(locationCity.trim());
+    if (!hasContent) return;
+    setHasStartedForm(true);
+    trackCheckupStarted('/checkup');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -129,14 +140,6 @@ export const CheckupView: React.FC = () => {
     setErrorMessage(null);
     setIsAnalyzing(true);
     setAnalysisProgress("Connecting to Google Search crawlers & scanning website...");
-
-    // Fire checkup_submitted key event
-    trackCheckupSubmitted({
-      businessName: trimmedName,
-      website: trimmedWebsite,
-      city: trimmedCity,
-      category,
-    });
 
     try {
       // Step 1: Progress updates
@@ -191,6 +194,12 @@ export const CheckupView: React.FC = () => {
       const evaluation = build40PointAudit(trimmedWebsite, data);
       setAuditResult(evaluation);
 
+      // Submission succeeded and was accepted: this is the ONLY point where
+      // the checkup_submitted key event may fire (Task 5, 2026-11-26). The
+      // submission id dedupes repeat invocations for the same submission.
+      const submissionId = `chk_${Date.now().toString(36)}`;
+      setCurrentAuditId(submissionId);
+
       // Store in session so user preserves results if they proceed to signup
       sessionStorage.setItem(
         'locora_pending_checkup',
@@ -200,15 +209,22 @@ export const CheckupView: React.FC = () => {
           locationCity: trimmedCity,
           category,
           auditResult: evaluation,
+          submissionId,
           timestamp: new Date().toISOString(),
         })
       );
 
-      // Fire checkup_result_viewed
+      trackCheckupSubmitted({
+        checkupId: submissionId,
+        category,
+        sourcePage: '/checkup',
+      });
+
+      // Legacy generation-time event (kept for continuity; the canonical
+      // viewed event is first_audit_viewed, fired by the render effect).
       trackCheckupResultViewed({
         overallScore: evaluation.overallScore,
-        businessName: trimmedName,
-        website: trimmedWebsite,
+        auditId: submissionId,
       });
 
       // Smooth scroll to initial results
@@ -223,6 +239,19 @@ export const CheckupView: React.FC = () => {
       setAnalysisProgress('');
     }
   };
+
+  // first_audit_viewed: a completed audit result is on screen. The helper
+  // dedupes per audit id, so re-renders and in-session revisits do not
+  // re-fire, while a genuinely new audit does.
+  useEffect(() => {
+    if (auditResult && currentAuditId) {
+      trackFirstAuditViewed({
+        auditId: currentAuditId,
+        overallScore: auditResult.overallScore,
+        sourcePage: '/checkup',
+      });
+    }
+  }, [auditResult, currentAuditId]);
 
   const handleUnlockFullReport = () => {
     trackCtaClick('unlock_full_report', '/checkup', '/signup');
@@ -281,9 +310,8 @@ export const CheckupView: React.FC = () => {
                       value={businessName}
                       onChange={(e) => {
                         setBusinessName(e.target.value);
-                        handleInputFocusOrChange();
+                        handleInputInteraction(e.target.value);
                       }}
-                      onFocus={handleInputFocusOrChange}
                       placeholder="e.g. Metro Dental Care"
                       className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
                     />
@@ -303,9 +331,8 @@ export const CheckupView: React.FC = () => {
                       value={website}
                       onChange={(e) => {
                         setWebsite(e.target.value);
-                        handleInputFocusOrChange();
+                        handleInputInteraction(e.target.value);
                       }}
-                      onFocus={handleInputFocusOrChange}
                       placeholder="e.g. metrodental.com"
                       className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
                     />
@@ -326,9 +353,8 @@ export const CheckupView: React.FC = () => {
                       value={locationCity}
                       onChange={(e) => {
                         setLocationCity(e.target.value);
-                        handleInputFocusOrChange();
+                        handleInputInteraction(e.target.value);
                       }}
-                      onFocus={handleInputFocusOrChange}
                       placeholder="e.g. Austin, TX"
                       className="w-full pl-10 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
                     />
@@ -344,9 +370,8 @@ export const CheckupView: React.FC = () => {
                     value={category}
                     onChange={(e) => {
                       setCategory(e.target.value);
-                      handleInputFocusOrChange();
+                      handleInputInteraction(e.target.value);
                     }}
-                    onFocus={handleInputFocusOrChange}
                     className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-sans transition-all"
                   >
                     {COMMON_CATEGORIES.map((cat) => (

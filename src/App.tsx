@@ -65,7 +65,7 @@ import { DirectoryHubView } from './components/directory/DirectoryHubView';
 import { DirectoryBusinessDetailView } from './components/directory/DirectoryBusinessDetailView';
 import { applyPageMetadata } from './utils/seoMetadata';
 import { resolveRouteFromPath } from './utils/routeUtils';
-import { initUtmAttribution, trackSubscriptionStarted } from './lib/analytics';
+import { initUtmAttribution, trackSubscriptionStarted, trackPurchase } from './lib/analytics';
 
 const PATH_TO_TAB: Record<string, string> = {
   '': 'home',
@@ -302,9 +302,26 @@ const MainContent: React.FC = () => {
           if (data.invoice) {
             setSuccessInvoice(data.invoice);
             setShowSuccessModal(true);
+            // Verified measurement point (Task 5, 2026-11-26): the backend
+            // returned a server-issued invoice, i.e. a completed transaction
+            // recorded by the payment system. Transaction id and amount come
+            // verbatim from that invoice — never from URL params or list
+            // prices — and both helpers dedupe by transaction id.
+            const txnId =
+              data.invoice.transactionId ||
+              data.invoice.whopReceiptId ||
+              data.invoice.whopPaymentId ||
+              data.invoice.id;
             if (!productType) {
-              trackSubscriptionStarted(plan, billingCycle, data.invoice.amount);
+              trackSubscriptionStarted(plan, billingCycle, data.invoice.amount, txnId);
             }
+            trackPurchase({
+              transactionId: txnId,
+              value: data.invoice.amount,
+              currency: 'USD',
+              itemId: productType || plan,
+              itemName: data.invoice.planName || undefined,
+            });
           } else {
             const fallbackInv: SubscriptionInvoice = {
               id: `INV-${new Date().getFullYear()}-WHOP`,
@@ -323,9 +340,10 @@ const MainContent: React.FC = () => {
             };
             setSuccessInvoice(fallbackInv);
             setShowSuccessModal(true);
-            if (!productType) {
-              trackSubscriptionStarted(plan, billingCycle, fallbackInv.amount);
-            }
+            // No conversion events fire here (Task 5, 2026-11-26): this
+            // invoice was constructed locally as a display fallback, not
+            // verified by the backend, so counting it would fabricate a
+            // subscription/purchase.
           }
         })
         .catch(() => {

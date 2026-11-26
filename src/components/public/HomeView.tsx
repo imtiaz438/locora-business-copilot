@@ -4,7 +4,7 @@ import { WebsiteAuditResult, PublicCheckupResult } from '../../types';
 import { LocoraLogo } from '../LocoraLogo';
 import { QuickCheckupReport } from './QuickCheckupReport';
 import { navigateToDirectory, navigateToApp } from '../../utils/domain';
-import { trackCtaClick, trackCheckupStarted, trackCheckupSubmitted } from '../../lib/analytics';
+import { trackCtaClick, trackCheckupStarted, trackCheckupSubmitted, trackFirstAuditViewed } from '../../lib/analytics';
 import {
   Sparkles,
   ArrowRight,
@@ -118,14 +118,20 @@ export const HomeView: React.FC = () => {
     'Completed • Computing deterministic SEO scores & saving audit report...',
   ];
 
-  // Fire checkup_started once on first hero-form interaction (mirrors the /checkup funnel)
-  const handleHeroInputInteraction = () => {
-    if (!hasStartedHeroForm) {
-      setHasStartedHeroForm(true);
-      trackCheckupStarted('/', {
-        initial_website: heroInputUrl || undefined,
-      });
-    }
+  // Fire checkup_started once on the first GENUINE hero-form start: a change
+  // in which the visitor has actually entered content (mirrors the /checkup
+  // funnel). Mere focus / field touch does NOT fire it (Task 5, 2026-11-26),
+  // no form contents are sent, and the helper enforces once-per-session.
+  const handleHeroInputInteraction = (changedValue?: string) => {
+    if (hasStartedHeroForm) return;
+    const hasContent =
+      Boolean(changedValue && changedValue.trim()) ||
+      Boolean(heroInputUrl.trim()) ||
+      Boolean(heroBusinessName.trim()) ||
+      Boolean(heroLocation.trim());
+    if (!hasContent) return;
+    setHasStartedHeroForm(true);
+    trackCheckupStarted('/');
   };
 
   const handleHeroSubmit = async (e?: React.FormEvent, forceRefresh = false) => {
@@ -135,13 +141,6 @@ export const HomeView: React.FC = () => {
       setAuditError('Please enter a valid website URL.');
       return;
     }
-
-    // Count the hero scan in the checkup funnel (source_page '/' distinguishes it from /checkup)
-    trackCheckupSubmitted({
-      businessName: heroBusinessName.trim() || undefined,
-      website: rawUrl,
-      city: heroLocation.trim() || undefined,
-    });
 
     setIsAnalyzing(true);
     setAuditError(null);
@@ -175,6 +174,19 @@ export const HomeView: React.FC = () => {
 
       setPublicAudit(data);
       setCheckupDone(true);
+
+      // Submission succeeded and was accepted by the API: the ONLY point
+      // where checkup_submitted may fire for the hero funnel (Task 5).
+      const heroSubmissionId = `chk_hero_${data.analyzedAt || new Date().toISOString()}`;
+      trackCheckupSubmitted({
+        checkupId: heroSubmissionId,
+        sourcePage: '/',
+      });
+      trackFirstAuditViewed({
+        auditId: heroSubmissionId,
+        overallScore: typeof data.overallScore === 'number' ? data.overallScore : undefined,
+        sourcePage: '/',
+      });
       setTargetBusinessName(data.businessName || 'My Business');
 
       // Update AppContext so workspace is immediately hydrated if already logged in
@@ -358,8 +370,7 @@ export const HomeView: React.FC = () => {
                 <input
                   type="text"
                   value={heroInputUrl}
-                  onChange={(e) => setHeroInputUrl(e.target.value)}
-                  onFocus={handleHeroInputInteraction}
+                  onChange={(e) => { setHeroInputUrl(e.target.value); handleHeroInputInteraction(e.target.value); }}
                   placeholder="Enter website (e.g. yourbusiness.com)"
                   className="w-full pl-10 pr-4 py-3 bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none font-sans"
                 />
@@ -402,8 +413,7 @@ export const HomeView: React.FC = () => {
                   <input
                     type="text"
                     value={heroBusinessName}
-                    onChange={(e) => setHeroBusinessName(e.target.value)}
-                    onFocus={handleHeroInputInteraction}
+                    onChange={(e) => { setHeroBusinessName(e.target.value); handleHeroInputInteraction(e.target.value); }}
                     placeholder="e.g. Gotham Enterprises Ltd"
                     className="w-full px-3 py-2 bg-white/90 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                   />
@@ -413,8 +423,7 @@ export const HomeView: React.FC = () => {
                   <input
                     type="text"
                     value={heroLocation}
-                    onChange={(e) => setHeroLocation(e.target.value)}
-                    onFocus={handleHeroInputInteraction}
+                    onChange={(e) => { setHeroLocation(e.target.value); handleHeroInputInteraction(e.target.value); }}
                     placeholder="e.g. Dallas, TX"
                     className="w-full px-3 py-2 bg-white/90 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                   />
@@ -424,8 +433,7 @@ export const HomeView: React.FC = () => {
                   <input
                     type="email"
                     value={heroEmail}
-                    onChange={(e) => setHeroEmail(e.target.value)}
-                    onFocus={handleHeroInputInteraction}
+                    onChange={(e) => { setHeroEmail(e.target.value); handleHeroInputInteraction(e.target.value); }}
                     placeholder="you@company.com"
                     className="w-full px-3 py-2 bg-white/90 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                   />

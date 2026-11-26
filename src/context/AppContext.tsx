@@ -36,7 +36,7 @@ import { isAppSubdomain } from '../utils/domain';
 import { resolveRouteFromPath, resolvePathFromTab, PATH_TO_TAB, TAB_TO_PATH } from '../utils/routeUtils';
 import { dashboardService } from '../services/dashboardService';
 import type { NormalizedDashboardData } from '../types/production';
-import { trackBusinessAdded, trackSubscriptionStarted, initUtmAttribution } from '../lib/analytics';
+import { trackBusinessAdded, initUtmAttribution } from '../lib/analytics';
 import { creditsForPlan, remainingCredits, DEMO_GUEST_CREDITS } from '../lib/credits';
 
 /**
@@ -1228,9 +1228,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const amount = billingCycle === 'yearly' ? priceMapYearly[plan] : priceMapMonthly[plan];
 
-    if (plan !== 'free') {
-      trackSubscriptionStarted(plan, billingCycle, amount);
-    }
+    // NOTE (Task 5, 2026-11-26): no GA event fires here. subscribePlan also
+    // runs on unverified paths (e.g. the payment-return fallback when
+    // verify-session fails), so a client plan-state change is NOT a verified
+    // subscription. subscription_started + purchase are emitted in App.tsx
+    // only when the backend returns a server-issued invoice.
 
     setUser((prev) => {
       const newCredits = creditsForPlan(plan, false);
