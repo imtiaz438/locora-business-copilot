@@ -82,7 +82,9 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        businessId: business?.id || slug,
+        // Public identifier only — the internal record id is no
+        // longer exposed by the public API (Task 4).
+        businessId: business?.slug || slug,
         directoryProfileId: business?.slug || slug,
         eventType,
         city: business?.cityName,
@@ -140,7 +142,7 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
                       .filter(
                         (l: DirectoryBusinessListing) =>
                           l.slug !== slug &&
-                          l.id !== data.business.id &&
+                          l.slug !== data.business.slug &&
                           l.isPublishedInDirectory === true
                       )
                       .slice(0, 3)
@@ -236,7 +238,10 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
           localStorage.setItem(
             'locora_pending_directory_claim',
             JSON.stringify({
-              businessId: business.id,
+              // Slug fallback: the public API no longer exposes the
+              // internal record id (Task 4); the claim endpoint
+              // resolves slugOrId server-side either way.
+              businessId: business.id || business.slug,
               businessName: business.businessName,
               slug: business.slug,
               websiteUrl: business.websiteUrl,
@@ -292,7 +297,10 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          businessId: business.id,
+          // The lead endpoint re-resolves the canonical business
+          // server-side from the slug (slugOrId) — the internal record
+          // id is no longer exposed by the public API (Task 4).
+          businessId: business.slug,
           directoryProfileId: business.slug || slug,
           leadName: quoteForm.fullName,
           leadPhone: quoteForm.phone,
@@ -360,7 +368,9 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
   const reviewCount = business.gbpData?.reviewCount;
   const reviews = business.gbpData?.reviews || [];
   const hours = business.gbpData?.hours;
-  const isPremium = business.planTier === 'pro' || business.planTier === 'agency' || business.planTier === 'growth';
+  // Premium badge from the serializer's derived boolean — the plan
+  // tier itself is no longer exposed by the public API (Task 4).
+  const isPremium = Boolean(business.isPremium);
   const status = business.directoryStatus || (business.isClaimed ? 'CLAIMED' : 'PUBLISHED');
   const isUnclaimed = !business.isClaimed && status !== 'CLAIMED' && status !== 'VERIFIED';
 
@@ -420,10 +430,14 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
   const fullAddress = addressParts.length > 0 ? addressParts.join(', ') : (business.address || (business.cityName && business.stateCode ? `${business.cityName}, ${business.stateCode}` : null));
   const hasValidMapLocation = hasCoordinates || Boolean(fullAddress);
 
-  // Real Google Business Profile Connection & Sync Status
+  // Real Google Business Profile Connection & Sync Status.
+  // The former middle term read sourceAttributions.gbp — internal
+  // pipeline provenance the public API no longer exposes (Task 4). It
+  // was redundant for database-backed listings (their attributions are
+  // derived from the same connection state as gbpConnected); the two
+  // remaining terms preserve the check.
   const isGbpConnected = Boolean(
     business.gbpConnected ||
-    (business.sourceAttributions?.gbp === 'GOOGLE_BUSINESS_PROFILE' && (business.gbpData?.reviewCount ? business.gbpData.reviewCount > 0 : false)) ||
     (business.reviewSource === 'google_gbp' && typeof business.gbpData?.reviewCount === 'number' && business.gbpData.reviewCount > 0)
   );
 
@@ -1074,8 +1088,8 @@ export const DirectoryBusinessDetailView: React.FC<DirectoryBusinessDetailViewPr
               {/* Review Cards or Verified Status */}
               {reviews.length > 0 ? (
                 <div className="space-y-4">
-                  {displayedReviews.map((rev) => (
-                    <div key={rev.id} className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                  {displayedReviews.map((rev, idx) => (
+                    <div key={rev.id || `rev-${idx}`} className="p-4 rounded-xl bg-slate-50 border border-slate-100">
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div>
                           <span className="text-xs font-bold text-slate-900 block">{rev.authorName}</span>
@@ -1696,7 +1710,9 @@ const BusinessDetailSeo: React.FC<{
     availableBusinesses: business
       ? [
           {
-            id: business.id,
+            // Public identifier (slug) — internal record id is no
+            // longer exposed by the public API (Task 4).
+            id: business.slug,
             name: business.businessName,
             slug: business.slug,
             category: business.categoryName,

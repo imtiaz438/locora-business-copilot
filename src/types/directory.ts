@@ -49,6 +49,9 @@ export interface DirectoryBusinessListing {
   reviewSource?: string | null;
   lastSyncedAt?: string | null;
   planTier: 'free' | 'pro' | 'agency' | 'starter' | 'growth';
+  /** Derived premium-badge flag emitted by the public API serializer
+   *  (Task 4) so public views never need the plan tier itself. */
+  isPremium?: boolean;
   isPublishedInDirectory: boolean;
   isDraft?: boolean;
   directoryStatus?: DirectoryBusinessStatus;

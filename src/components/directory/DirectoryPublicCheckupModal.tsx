@@ -269,7 +269,10 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
       localStorage.setItem(
         'locora_pending_directory_claim',
         JSON.stringify({
-          businessId: business.id,
+          // Slug fallback: the public API no longer exposes the
+          // internal record id (Task 4); the claim endpoint resolves
+          // slugOrId server-side either way.
+          businessId: business.id || business.slug,
           businessName: business.businessName,
           slug: business.slug,
           websiteUrl: business.websiteUrl,
@@ -281,7 +284,7 @@ export const DirectoryPublicCheckupModal: React.FC<DirectoryPublicCheckupModalPr
         })
       );
     }
-    window.location.href = `/auth?mode=signup&claim=true&businessId=${encodeURIComponent(business.id)}&ref=free_checkup`;
+    window.location.href = `/auth?mode=signup&claim=true&businessId=${encodeURIComponent(business.id || business.slug)}&ref=free_checkup`;
   };
 
   const handleClaimAndGrow = () => {

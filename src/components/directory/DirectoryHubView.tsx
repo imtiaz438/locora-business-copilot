@@ -129,7 +129,9 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
     city: selectedCity !== 'all' ? selectedCity : undefined,
     availableBusinessesCount: listings.length,
     availableBusinesses: listings.map((l) => ({
-      id: l.id,
+      // Public API no longer exposes the internal record id (Task 4);
+      // the slug is the public identifier everywhere in the SEO context.
+      id: l.slug,
       name: l.businessName,
       slug: l.slug,
       category: l.categoryName,
@@ -181,7 +183,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         eventType: 'directory_lead_started',
-        businessId: biz.id,
+        businessId: biz.slug,
         directoryProfileId: biz.slug,
         source: 'directory_hub_modal',
         city: biz.cityName,
@@ -204,7 +206,10 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          businessId: activeQuoteBiz.id,
+          // The lead endpoint re-resolves the canonical business
+          // server-side from the slug (slugOrId) — the internal record
+          // id is no longer exposed by the public API (Task 4).
+          businessId: activeQuoteBiz.slug,
           leadName: quoteForm.fullName,
           leadPhone: quoteForm.phone,
           leadEmail: quoteForm.email,
@@ -410,7 +415,10 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
                                  biz.gbpData.reviewCount > 0;
               const rating = hasReviews ? biz.gbpData!.averageRating! : null;
               const reviewsCount = hasReviews ? biz.gbpData!.reviewCount! : 0;
-              const isPremium = biz.planTier === 'pro' || biz.planTier === 'agency' || biz.planTier === 'growth';
+              // Premium badge comes from the serializer's derived
+              // boolean — the plan tier itself is no longer exposed
+              // by the public API (Task 4).
+              const isPremium = Boolean(biz.isPremium);
 
               // Real location resolution (full address / city / state)
               const locationDisplay = [
@@ -421,7 +429,7 @@ export const DirectoryHubView: React.FC<DirectoryHubViewProps> = ({
 
               return (
                 <div
-                  key={biz.id}
+                  key={biz.slug}
                   onClick={() => navigateToBusinessDetail(biz)}
                   className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden group cursor-pointer"
                 >

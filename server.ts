@@ -18,6 +18,7 @@ import { resolveRouteMetadata, injectMetadataIntoHtml } from './src/utils/seoMet
 import { SEO_RESOURCES_DATABASE } from './src/data/seo/resourcesData.ts';
 import { getPageStaticHtml, buildDirectoryListingsHtml } from './scripts/prerenderPages.ts';
 import { buildBizStaticHtml } from './src/lib/seo/bizStatic.ts';
+import { toPublicBusinessDto, isListingOwner } from './src/lib/directory/publicSerializer.ts';
 import { getOrCreateUser } from './src/db/users.ts';
 import * as dbService from './src/db/service.ts';
 import * as onboardingService from './server/onboardingService.ts';
@@ -16883,7 +16884,17 @@ app.get('/api/seo/entities', async (_req, res) => {
 app.get('/api/directory/listings', async (req, res) => {
   try {
     const { category, city, query, page: rawPage, limit: rawLimit, all } = req.query;
-    
+
+    // PRIVACY (Task 4): anonymous and non-owner callers receive the
+    // allowlist public DTO (see src/lib/directory/publicSerializer.ts).
+    // A session-verified owner (or super admin) still receives the full
+    // record for their OWN listing. Identity comes only from the
+    // validated session token — never from client-supplied fields.
+    const sessionEmail = getSessionEmail(req);
+    const isSuperAdmin = Boolean(sessionEmail) && SUPER_ADMIN_EMAILS.has(sessionEmail);
+    const presentListing = (l: any) =>
+      isSuperAdmin || isListingOwner(l, sessionEmail) ? l : toPublicBusinessDto(l);
+
     // Fetch canonical published listings using unified database helper
     const allPublished = await getUnifiedPublishedListings();
 
@@ -16957,7 +16968,7 @@ app.get('/api/directory/listings', async (req, res) => {
         page: 1,
         limit: totalCount,
         hasMore: false,
-        listings,
+        listings: listings.map(presentListing),
         allCategories,
         allCities,
       });
@@ -16977,7 +16988,7 @@ app.get('/api/directory/listings', async (req, res) => {
       page,
       limit,
       hasMore: page < totalPages,
-      listings: pagedListings,
+      listings: pagedListings.map(presentListing),
       allCategories,
       allCities,
     });
@@ -16999,7 +17010,46 @@ app.get('/api/directory/analytics', async (req, res) => {
       console.warn('[Directory Analytics API] Note: Business resolution skipped/anonymous:', bizErr?.message);
     }
 
-    const analytics = getDirectoryAnalytics(business?.id, business?.slug);
+    // PRIVACY (Task 4): per-business analytics (metrics + directory
+    // leads) are owner-only data. This route has no auth middleware, so
+    // resolveAuthenticatedBusiness cannot by itself prove the caller
+    // owns the resolved business — verify ownership here from the
+    // validated session token. Anonymous and non-owner callers receive
+    // directory-wide aggregate counters only: no businessMetrics, no
+    // leads, and no internal business ids in topListings.
+    const sessionEmail = getSessionEmail(req);
+    const resolvedOwnerEmail = (business?.ownerEmail || '').toLowerCase().trim();
+    let isBizOwner = Boolean(
+      sessionEmail &&
+      business &&
+      (sessionEmail === resolvedOwnerEmail || SUPER_ADMIN_EMAILS.has(sessionEmail))
+    );
+    if (!isBizOwner && sessionEmail && business) {
+      // Resolution path 1c (listing that exists only in the directory
+      // engine) collapses ownerEmail to the caller email, which is
+      // empty on this route — fall back to the same listing-record
+      // ownership test the business-detail handler uses.
+      const listing = getDirectoryListingBySlug(business.slug || business.id);
+      isBizOwner = isListingOwner(listing, sessionEmail);
+    }
+
+    const analytics = isBizOwner
+      ? getDirectoryAnalytics(business?.id, business?.slug)
+      : getDirectoryAnalytics();
+
+    if (!isBizOwner) {
+      const publicAnalytics: any = { ...analytics };
+      delete publicAnalytics.businessMetrics;
+      if (Array.isArray(publicAnalytics.topListings)) {
+        publicAnalytics.topListings = publicAnalytics.topListings.map(
+          ({ id, ...rest }: any) => rest
+        );
+      }
+      return res.json({
+        success: true,
+        analytics: publicAnalytics,
+      });
+    }
 
     if (business?.id) {
       // Fetch canonical Postgres directory leads
@@ -17097,15 +17147,11 @@ app.get(['/api/directory/business/:slugOrId', '/api/directory/biz/:slugOrId'], a
     // Identity from the session token when present; anonymous visitors simply aren't owners.
     const userEmail = getSessionEmail(req);
 
-    const listingAny = listing as any;
-    const isOwner = Boolean(
-      userEmail &&
-      (
-        userEmail === (listingAny.ownerEmail || '').toLowerCase() ||
-        userEmail === (listingAny.email || '').toLowerCase() ||
-        userEmail === (listingAny.claimedByEmail || '').toLowerCase()
-      )
-    );
+    // Ownership = session email matching one of the record's owner
+    // identity fields (shared helper, Task 4 — same semantics as the
+    // previous inline comparison).
+    const isOwner = isListingOwner(listing, userEmail);
+    const isSuperAdmin = Boolean(userEmail) && SUPER_ADMIN_EMAILS.has(userEmail);
 
     if (listing.isPublishedInDirectory !== true) {
       if (isOwner) {
@@ -17128,9 +17174,12 @@ app.get(['/api/directory/business/:slugOrId', '/api/directory/biz/:slugOrId'], a
       });
     }
 
+    // PRIVACY (Task 4): the verified owner (and super admins) receive
+    // the full record as before; everyone else — anonymous visitors and
+    // authenticated non-owners — receives the allowlist public DTO.
     res.json({
       success: true,
-      business: listing,
+      business: isOwner || isSuperAdmin ? listing : toPublicBusinessDto(listing),
       canonicalSlug,
       canonicalUrl,
     });
@@ -17541,6 +17590,23 @@ app.get('/api/directory/eligibility', async (req, res) => {
   try {
     const businessId = (req.query.businessId as string) || undefined;
     const { business } = await resolveAuthenticatedBusiness(req, businessId);
+
+    // PRIVACY (Task 4): eligibility returns the business's directory
+    // profile and can rewrite its slug — owner-only data and mutation.
+    // This route has no auth middleware, so resolution alone does not
+    // prove ownership; verify it from the validated session token
+    // before disclosing anything or writing the slug.
+    const sessionEmail = getSessionEmail(req);
+    const resolvedOwnerEmail = (business.ownerEmail || '').toLowerCase().trim();
+    if (
+      !sessionEmail ||
+      (!SUPER_ADMIN_EMAILS.has(sessionEmail) && sessionEmail !== resolvedOwnerEmail)
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: 'Forbidden: directory eligibility is available to the business owner only.',
+      });
+    }
 
     const eligibility = await dbService.getDirectoryEligibility(business.id);
     const directoryProfile = await dbService.getDirectoryProfileByBusinessId(business.id);
@@ -18027,8 +18093,16 @@ app.post('/api/directory/email-automation/trigger', async (req, res) => {
   }
 });
 
-app.get('/api/directory/email-automation/events', async (req, res) => {
+app.get('/api/directory/email-automation/events', attachAuth, async (req, res) => {
   try {
+    // PRIVACY (Task 4): email automation events contain recipient email
+    // addresses and user/business identifiers. The admin twin of this
+    // endpoint (/api/admin/directory-email/events) is admin-gated; this
+    // route was reachable anonymously. Gate it identically (attachAuth
+    // populates the session identity verifyAdminAccessAsync reads).
+    if (!(await verifyAdminAccessAsync(req))) {
+      return res.status(403).json({ success: false, error: 'Access Denied. Admin privileges required.' });
+    }
     const businessId = req.query.businessId as string | undefined;
     const limit = req.query.limit ? Number(req.query.limit) : 50;
     const events = getEmailEvents({ businessId, limit });
@@ -18038,8 +18112,14 @@ app.get('/api/directory/email-automation/events', async (req, res) => {
   }
 });
 
-app.get('/api/directory/email-automation/context/:businessId', async (req, res) => {
+app.get('/api/directory/email-automation/context/:businessId', attachAuth, async (req, res) => {
   try {
+    // PRIVACY (Task 4): the email context embeds owner/business data
+    // used to compose outbound mail — internal automation data, gated
+    // like the other email-automation surfaces.
+    if (!(await verifyAdminAccessAsync(req))) {
+      return res.status(403).json({ success: false, error: 'Access Denied. Admin privileges required.' });
+    }
     const { businessId } = req.params;
     const { business } = await resolveAuthenticatedBusiness(req, businessId);
     const context = await buildRealBusinessEmailContext(business.id);
