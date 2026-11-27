@@ -228,40 +228,44 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'google-business-profile-guide': {
     slug: 'google-business-profile-guide',
-    relatedSlugs: ['google-business-profile-suspended', 'google-business-profile-verification', 'remove-duplicate-google-business-listing', 'business-not-showing-on-google-maps', 'local-seo-checklist'],
+    relatedSlugs: ['google-business-profile-verification', 'google-business-profile-suspended', 'google-map-pack-ranking', 'remove-duplicate-google-business-listing', 'how-dentists-get-recommended-by-chatgpt', 'local-seo-checklist'],
     title: 'Google Business Profile Optimization Guide (2026 Edition)',
     category: 'Google Business',
-    readingTime: '11 min read',
+    readingTime: '13 min read',
     publishedDate: 'August 2026',
     authorName: 'The LocoraAI Team',
     authorRole: 'Local Search Experts',
-    metaTitle: 'Google Business Profile Guide 2026: Setup & Optimization | Locora AI',
-    metaDescription: 'Step-by-step master guide to optimizing your Google Business Profile (GBP) for maximum local search ranking, phone calls, and 5-star reviews.',
-    targetKeywords: ['Google Business Profile guide', 'GBP optimization checklist', 'rank on Google Maps', 'Google My Business setup', 'local map pack ranking'],
+    metaTitle: 'Google Business Profile Optimization Guide 2026: Setup & Optimization | LocoraAI',
+    metaDescription: 'The complete Google Business Profile guide: claim and verify your listing, choose the right categories, complete every field Google and AI assistants read, manage photos and reviews — plus the fix guides for suspensions, stuck verification and missing listings.',
+    targetKeywords: ['Google Business Profile guide', 'GBP optimization checklist', 'rank on Google Maps', 'Google My Business setup', 'local map pack ranking', 'how google business profile information affects ai search recommendations'],
     targetTab: 'local_seo',
     ctaText: 'Test GBP Optimization in Sandbox',
     ctaHeadline: 'Maximize Your Google Business Profile',
     ctaDescription: 'Generate keyword-optimized GBP descriptions, find the top-ranking categories for your niche, and automate review replies in Locora AI.',
-    summary: 'A complete, human-written guide covering the setup, category selection, photo syndication, review management, and suspension prevention for Google Business Profiles in 2026.',
+    summary: 'The hub guide to Google Business Profile: claim and verify your listing, choose the right categories, complete every field Google and AI assistants read, manage photos and reviews, understand how your profile information feeds AI recommendations — and find the right fix guide when something goes wrong.',
     prosAndCons: {
       pros: [
         'Completely free native listing provided by Google with massive commercial intent',
         'Directly captures mobile customers searching for emergency and nearby services',
         'Provides instant click-to-call, driving directions, and booking integrations',
-        'Ranks above traditional organic website links on all mobile devices'
+        'Appears in Maps and the local pack, where nearby ready-to-buy searches happen'
       ],
       cons: [
         'Strict policy guidelines: keyword stuffing names can cause listing suspension',
-        'Requires active ongoing management and weekly photo uploads to stay prominent',
+        'Requires active ongoing management — stale hours, photos and services quietly cost you customers',
         'Fake or negative competitor reviews can harm ratings if not managed proactively'
       ]
     },
     tableOfContents: [
       { id: 'profile-setup', title: '1. Claiming & Verification Best Practices' },
       { id: 'categories', title: '2. Category Optimization & Competitor Analysis' },
-      { id: 'visual-assets', title: '3. Photo & Video Syndication SOP' },
+      { id: 'core-fields', title: '3. Complete Every Core Field' },
       { id: 'products-services', title: '4. Adding Products & Itemized Service Menus' },
-      { id: 'suspension-safety', title: '5. Avoiding Account Suspensions & Policy Traps' }
+      { id: 'visual-assets', title: '5. Photo & Video Syndication SOP' },
+      { id: 'reviews', title: '6. Reviews: Asking, Answering & What AI Does With Them' },
+      { id: 'ai-visibility', title: '7. How Your Profile Information Affects AI Recommendations' },
+      { id: 'suspension-safety', title: '8. Avoiding Account Suspensions & Policy Traps' },
+      { id: 'hub-guides', title: '9. When Something Goes Wrong — and Going Further' }
     ],
     sections: [
       {
@@ -270,7 +274,8 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
         content: [
           'Claiming and verifying your physical location on Google Maps is the first step toward local search dominance. Google supports multiple verification methods: live video verification, phone SMS, postcard, and instant email verification for authorized domains.',
           'During video verification, ensure you have your physical signage, official state business license, company vehicle with branding, and access to the locked office suite ready to show the Google auditor.',
-          'Always use a company-owned Google Workspace email address (e.g. `owner@yourdomain.com`) as the primary owner rather than a personal `@gmail.com` address to prevent ownership lockouts.'
+          'Always use a company-owned Google Workspace email address (e.g. `owner@yourdomain.com`) as the primary owner rather than a personal `@gmail.com` address to prevent ownership lockouts.',
+          'If verification stalls — a postcard that never arrives, a video review that is rejected — do not create a second listing while you wait. Work through our Google Business Profile verification guide, which takes the failure modes in order; a duplicate listing created in frustration becomes a separate problem of its own (covered in section 9).'
         ],
         keyTakeaway: 'Always verify your GBP with official company documentation and a company domain Google account to ensure permanent ownership control.'
       },
@@ -278,31 +283,91 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
         id: 'categories',
         heading: '2. Category Optimization & Competitor Analysis',
         content: [
-          'Google provides over 4,000 distinct business categories. Choosing the right primary category carries immense algorithmic weight.',
+          'Google maintains thousands of distinct business categories, and choosing the right primary category carries immense algorithmic weight — it is the clearest single statement you make about what your business is.',
           'Do not guess your category. Use local search tools to inspect the top 3 ranking businesses for your main keyword in your target city. If all 3 use "Plumber" rather than "Plumbing Supply Store", select "Plumber" as your primary category.',
           'Add secondary categories for all complementary services (e.g. "Heating Contractor", "Drainage Service", "Water Heater Installation") to broaden your query eligibility without diluting your primary focus.'
         ],
         keyTakeaway: 'Match your primary category exactly to the top ranking competitors in your specific target zip code.'
       },
       {
-        id: 'visual-assets',
-        heading: '3. Photo & Video Syndication SOP',
+        id: 'core-fields',
+        heading: '3. Complete Every Core Field',
         content: [
-          'Profiles with 100+ photos receive 520% more calls and 1,065% more website clicks than profiles with minimal imagery.',
-          'Upload photos across 4 key categories: 1) Exterior building signage so customers can find you, 2) Clean interior workspaces and consultation rooms, 3) Real team members in branded uniform, and 4) High-quality before-and-after project photos.',
-          'Upload at least 3–5 new photos every single week to signal to Google’s algorithm that your business is thriving and active.'
+          'A claimed, correctly categorised profile is the skeleton. The core fields are the substance Google — and, increasingly, AI assistants — actually read when deciding what your business is, where it is, and whether to put it in front of a customer.',
+          'Business name: your real-world business name, exactly as it appears on your signage and legal documents. Nothing added — no city, no keywords, no service claims. Section 8 covers what happens when this rule is broken.',
+          'Address and service area: storefront businesses show their address; service-area businesses hide it and list the areas they serve instead. Phone: one consistent number, ideally a local number customers can actually reach you on. Hours: your real opening hours, plus special hours for holidays — few things erode trust faster than a customer arriving at a business Google said was open.',
+          'Website link: link to your own website, and make sure the link works. In our 35-practice study of how AI tools recommend local businesses (linked in section 7), nine of the 35 Google listings had no website link at all — and eight of those nine were never recommended by any AI tool, in any answer. The one exception was still invisible in Google search for its own core service.',
+          'Attributes and description: complete the attributes Google offers for your category (things like accessibility, payment options and appointment availability where they genuinely apply), and write the business description in plain words — what you do, who you do it for, and where. Skip keyword lists; write the description you would want read aloud to a customer asking about you, because AI assistants increasingly do something very close to that.',
+          'Finally, keep the same name, address and phone identical everywhere they appear — your website, directories, social profiles. Inconsistent details are how search engines and AI tools merge you with another business, or fill the gap with details that turn out to be wrong.'
         ],
-        keyTakeaway: 'Weekly photo uploads directly correlate with higher map pack rankings and increased phone inquiry volume.'
+        keyTakeaway: 'Name, address, phone, hours, website link, services, attributes, description — complete them all, keep them accurate, and keep them identical everywhere your business appears.'
+      },
+      {
+        id: 'products-services',
+        heading: '4. Adding Products & Itemized Service Menus',
+        content: [
+          'The services list is where your profile stops being a name and starts being an answer. Add every service you genuinely offer as its own item, named the way a customer would search for it, with a short plain-language description of what it involves.',
+          'This matters beyond tidiness. When we examined what AI answers actually pull from (section 7), one of the clearest patterns was service clarity: answers matched businesses to the specific service in the question — an emergency call-out, a specific treatment, a specific repair — and described businesses by what they clearly offer, in plain words. A service buried inside a paragraph is hard to match; a service listed as its own item, in the words customers use, is easy.',
+          'Retail and product-led businesses should use the products section the same way: real products, real photos, current prices where you show them. Keep the menu honest and current — a service you no longer offer, listed at a price you no longer charge, creates the worst kind of first impression: a customer who feels misled before they have met you.',
+          'Mirror the same service names on your website, ideally one clear page per major service. Your profile and your website corroborate each other; when both state the same services in the same plain words, every system that reads them — Google, AI assistants, and customers — gets the same story.'
+        ],
+        keyTakeaway: 'List every real service as its own item, in the plain words customers search with — and mirror those same services on your website.'
+      },
+      {
+        id: 'visual-assets',
+        heading: '5. Photo & Video Syndication SOP',
+        content: [
+          'Photos do two jobs on a profile: they prove the business is real and currently operating, and they answer the questions customers have before they call — what the place looks like, where to park, who they will meet, what finished work looks like.',
+          'Upload photos across 4 key categories: 1) Exterior building signage so customers can find you, 2) Clean interior workspaces and consultation rooms, 3) Real team members in branded uniform, and 4) High-quality before-and-after project photos.',
+          'Completeness beats quantity. Cover the four categories with real photos of your real business before worrying about totals, and add new ones as things change — new staff, new equipment, a refit — rather than uploading stock imagery. Customers spot stock photos immediately, and a photo set that misrepresents the business costs more trust than a smaller honest one.'
+        ],
+        keyTakeaway: 'A complete, current set of real photos builds the trust that turns a profile view into a call — keep it accurate rather than chasing a count.'
+      },
+      {
+        id: 'reviews',
+        heading: '6. Reviews: Asking, Answering & What AI Does With Them',
+        content: [
+          'Reviews are the part of your profile you cannot write yourself — which is exactly why Google, customers and AI assistants weight them. Manage them as a steady habit, not a campaign: ask every happy customer, at the point where the work is done and the experience is fresh, and make asking easy with a direct review link.',
+          'Respond to every review, good and bad. A response tells the next reader — and the systems summarising your profile — how the business behaves when something goes wrong, which for many customers is the deciding factor. Our guide on how to respond to Google reviews works through examples for every situation, from five-star praise to the review you believe is fake.',
+          'Two rules are not optional. Never buy reviews, offer incentives for them, or filter out unhappy customers before asking (review gating): all three violate Google policy and risk the profile itself. And never treat the count as the whole strategy — in our 35-practice dental study, a practice with 473 reviews and a perfect 5.0 rating was never recommended once by any AI tool across 36 answers, and neither was one with 684 reviews. Reviews are necessary groundwork that works together with completeness, service clarity and consistency — not a substitute for them.',
+          'What reviewers write matters as much as the stars. AI answers describe businesses in patient- and customer-experience language — gentle, upfront about prices, easy to reach — that mirrors the substance of reviews. You cannot script that language, but genuine reviews from real customers, answered like a business that cares, are where it comes from.'
+        ],
+        keyTakeaway: 'Ask steadily, respond to everything, never buy or gate reviews — and remember the substance of reviews now feeds AI answers, not just star ratings on a screen.'
+      },
+      {
+        id: 'ai-visibility',
+        heading: '7. How Your Profile Information Affects AI Recommendations',
+        content: [
+          'Customers increasingly ask ChatGPT, Google\'s AI answers and Gemini for a recommendation instead of scrolling a results page. Those answers are assembled from information that already exists about your business — and your Google Business Profile is one of the main sources they draw on.',
+          'We know this because we tested it. We asked ChatGPT, Google\'s AI Overview and Gemini to recommend dentists 36 times — six patient questions, two runs on two different days — and recorded which of 35 real practices they named, and what the answers said. The full study is linked in the related guides below; here is what it showed about profile information specifically.',
+          'Listing data is quoted directly. Google\'s AI answers printed each named practice\'s rating, review count and address — the contents of a complete, accurate listing. Service clarity decided matches: answers matched practices to the specific service in the question, described in plain words. And review substance carried through: ChatGPT\'s descriptions used the experience language patients write in reviews.',
+          'Completeness beat volume. A general practice with 473 reviews and a 5.0 rating received zero mentions across all 36 answers; so did one with 684 reviews. The most-reviewed practice in the sample (732 reviews) was named exactly once. A big review count by itself did not buy a recommendation — the practices that were named had the basics stacked together: complete listings, clear services, consistent facts across the open web.',
+          'There is no exact recipe, and anyone who claims one is guessing. But the direction of the evidence is consistent: the profile fields covered in this guide — categories, services, hours, website link, reviews — are the same information AI answers are built from. Completing them for Google and completing them for AI is the same work.'
+        ],
+        keyTakeaway: 'AI answers are assembled from listing data, review substance and plainly stated services — the same fields this guide covers. Completeness and consistency beat any single number.'
       },
       {
         id: 'suspension-safety',
-        heading: '5. Avoiding Account Suspensions & Policy Traps',
+        heading: '8. Avoiding Account Suspensions & Policy Traps',
         content: [
           'Google has aggressively increased automated algorithmic suspensions. The #1 trigger is changing your primary business name to include city keywords (e.g. "Bob’s Roofs - Dallas Roofing Contractor").',
           'Ensure your listed business name matches your legal Secretary of State filing and outdoor building signage 100%.',
           'Never list a virtual co-working space, UPS mailbox, or residential home as a storefront location unless you have dedicated, permanently staffed office signage.'
         ],
         keyTakeaway: 'Keep your business name strictly compliant with state licensing to prevent catastrophic Google account suspensions.'
+      },
+      {
+        id: 'hub-guides',
+        heading: '9. When Something Goes Wrong — and Going Further',
+        content: [
+          'This guide is the hub for Google Business Profile on this site. When a specific problem is the reason you are here, go straight to the guide that owns it — each one below is linked in this page\'s related guides or named here so you can find it in the resources index.',
+          'Profile suspended: our reinstatement guide walks through confirming what happened, fixing the violation and filing the appeal. Dental practices have a dedicated version — the dentist\'s reinstatement playbook — covering the first-24-hours mistakes and the proof-of-legitimacy documents Google asks practices for.',
+          'Verification stuck or failed: the verification guide in this hub\'s related guides takes the failure modes in order, from postcard problems to rejected video reviews.',
+          'Not showing on Google Maps: our 7-point diagnostic works through the causes — search error, verification, suspension, address setup, categories, duplicates, and the honest case of being indexed but outranked. Dental practices get a 9-step version of the same diagnosis.',
+          'Duplicate listing: the duplicate-listing guide covers when to merge, when to remove, and how to keep the reviews and history attached to the right profile.',
+          'Going further: ranking in the Map Pack has its own guide to the 2026 ranking factors, and our free 40-point local SEO checklist turns this whole hub into a tick-off audit — profile first, then your website, then your reputation. If you would rather see the verdict than work the list yourself, LocoraAI\'s free business checkup reads your public website and scores how well it backs up your profile — name, phone and address consistency, service pages, structured data and more — in about a minute.'
+        ],
+        keyTakeaway: 'One hub, one guide per problem: suspension, verification, visibility, duplicates and ranking each have a dedicated walkthrough linked from this page.'
       }
     ],
     faqs: [
@@ -312,7 +377,19 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
       },
       {
         q: 'What should I do if my Google Business Profile gets suspended?',
-        a: 'Do not panic. Submit an official reinstatement appeal along with a copy of your state business license, utility bill in the business name, and photo of your company truck or building signage.'
+        a: 'Do not panic. Submit an official reinstatement appeal along with a copy of your state business license, utility bill in the business name, and photo of your company truck or building signage. Our reinstatement guide walks through the full process step by step, and dental practices have a dedicated version of the same playbook.'
+      },
+      {
+        q: 'How does my Google Business Profile information affect AI search recommendations?',
+        a: 'Directly. In our test, we asked ChatGPT, Google\'s AI Overview and Gemini to recommend dentists 36 times and recorded what the answers used: Google\'s AI answers printed each named practice\'s rating, review count and address — the contents of its listing — and the answers matched practices to the specific services they clearly state. Completeness mattered more than any single number: a practice with 473 reviews and a 5.0 rating was never named once, and neither was one with 684 reviews. Complete, consistent profile information is the raw material AI recommendations are assembled from.'
+      },
+      {
+        q: 'Do I still need a website if my Google Business Profile is complete?',
+        a: 'Yes. In the same 35-practice study, nine listings had no website link at all; eight of those nine were never recommended by any AI tool, and the one exception was invisible in Google search for its own core service — patients who wanted to check it out had nowhere to land. Your profile and your website corroborate each other; AI tools recommended the exception despite the gap, not because the gap is fine.'
+      },
+      {
+        q: 'What does LocoraAI\'s free checkup actually check?',
+        a: 'The free checkup reads your public website — the half of your presence that backs up your profile — and scores it across six categories, including how consistent your business name, phone and address are, whether you have dedicated service pages, whether your LocalBusiness structured data carries your phone, address and hours, and how the site performs. It does not access your private Google Business Profile data; connecting your profile inside a LocoraAI workspace is what syncs live reviews and Map Pack tracking. The checkup is free, and you see your score and top issues without signing up.'
       }
     ]
   },
@@ -587,7 +664,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
   },
   'google-business-profile-suspended': {
     slug: 'google-business-profile-suspended',
-    relatedSlugs: ['google-business-profile-verification', 'remove-duplicate-google-business-listing', 'google-business-profile-guide'],
+    relatedSlugs: ['google-business-profile-suspended-dentists', 'google-business-profile-verification', 'remove-duplicate-google-business-listing', 'google-business-profile-guide'],
     title: 'Google Business Profile Suspended? How to Get Reinstated (2026 Guide)',
     category: 'Google Business',
     readingTime: '9 min read',
@@ -617,7 +694,8 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
         content: [
           'Not every disappearance is a suspension. Before doing anything else, work through these checks in order. First, search your exact business name in Google Maps. If the listing appears with a "Suggest an edit" link but no owner controls, it may be unclaimed rather than suspended.',
           'Second, log into your Google Business Profile dashboard. A suspension shows an explicit notice — "Suspended" on the listing, sometimes accompanied by an email explaining why. No notice usually means no suspension.',
-          'Know the two types. A hard suspension removes the listing from Search and Maps entirely. A soft suspension keeps it visible but strips your management access — you cannot edit details, publish posts, or respond to reviews. The reinstatement path below covers both, but hard suspensions require a formal appeal.'
+          'Know the two types. A hard suspension removes the listing from Search and Maps entirely. A soft suspension keeps it visible but strips your management access — you cannot edit details, publish posts, or respond to reviews. The reinstatement path below covers both, but hard suspensions require a formal appeal.',
+          'Dental practices have a dedicated version of this process: our dentist\'s reinstatement playbook covers the same ground plus the first-24-hours mistakes and proof-of-legitimacy documents specific to practices. Everything below is the general process and applies to every business type.'
         ],
         keyTakeaway: 'Verify the suspension notice in your dashboard first. A listing that simply stopped ranking is a visibility problem, not a suspension — and needs a different fix.'
       },
@@ -688,7 +766,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'business-not-showing-on-google-maps': {
     slug: 'business-not-showing-on-google-maps',
-    relatedSlugs: ['google-map-pack-ranking', 'google-business-profile-guide', 'remove-duplicate-google-business-listing'],
+    relatedSlugs: ['google-map-pack-ranking', 'google-business-profile-guide', 'remove-duplicate-google-business-listing', 'dental-practice-not-showing-on-google-maps'],
     title: 'Why Is My Business Not Showing Up on Google Maps? (7-Point Diagnostic)',
     category: 'Google Business',
     readingTime: '8 min read',
@@ -718,7 +796,8 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
         heading: '1. Rule Out Search Error First',
         content: [
           'Before diagnosing anything, search your exact business name in quotes in Google Maps — not just your service plus city. If the listing appears for the exact-name search but not for "plumber near me," you do not have a visibility problem. You have a ranking problem, and the fix is further down at point 7.',
-          'This distinction matters because every step below assumes the listing is genuinely missing. Chasing verification or suspension issues for a listing that is simply outranked wastes days.'
+          'This distinction matters because every step below assumes the listing is genuinely missing. Chasing verification or suspension issues for a listing that is simply outranked wastes days.',
+          'Run a dental practice? There is a dental version of this diagnosis — a 9-step version written for practices, covering the category, address-pin and duplicate problems in the form they usually take for dentists. It is linked in this page\'s related guides.'
         ],
         keyTakeaway: 'Exact-name search works but service search does not means you are indexed and outranked — skip to point 7.'
       },
@@ -912,6 +991,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'how-to-respond-to-google-reviews': {
     slug: 'how-to-respond-to-google-reviews',
+    relatedSlugs: ['google-review-response-examples-dentists', 'how-many-google-reviews-dental-practice', 'dental-reviews-not-showing-on-google'],
     title: 'How to Respond to Google Reviews (Examples for Every Situation)',
     category: 'Google Business',
     readingTime: '7 min read',
@@ -1409,6 +1489,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'dental-practice-not-showing-on-google-maps': {
     slug: 'dental-practice-not-showing-on-google-maps',
+    relatedSlugs: ['business-not-showing-on-google-maps', 'google-business-profile-guide'],
     title: 'Dental Practice Not Showing on Google Maps? A 9-Step Diagnosis',
     category: 'Local SEO',
     readingTime: '8 min read',
@@ -1437,7 +1518,8 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
         heading: '1. First, Work Out Which Problem You Have',
         content: [
           'A practice that is missing from Google Maps has one of two problems, and they need completely different fixes. An existence problem means Google cannot properly show your profile at all: it is unverified, suspended, set up wrongly, or suppressed by a duplicate. A visibility problem means the profile is live and healthy, but it ranks below competitors for the searches patients actually make, like "dentist near me" or "implants in [your city]."',
-          'Separate them with one test. Search your exact practice name plus your city, signed out of Google. If you do not appear even for your own name, you have an existence problem — ranking work is pointless until that is fixed. If you appear for your name but not for generic searches, you have a visibility problem. The nine steps below find which one it is, and where it breaks.'
+          'Separate them with one test. Search your exact practice name plus your city, signed out of Google. If you do not appear even for your own name, you have an existence problem — ranking work is pointless until that is fixed. If you appear for your name but not for generic searches, you have a visibility problem. The nine steps below find which one it is, and where it breaks.',
+          'This is the dental version of our general "business not showing on Google Maps" diagnostic. The underlying process is the same; the checks below are written in the form the problem usually takes for a practice.'
         ],
         keyTakeaway: 'Test with your own name first. Missing for your name means existence; missing only for generic searches means visibility.'
       },
@@ -1509,6 +1591,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'dental-reviews-not-showing-on-google': {
     slug: 'dental-reviews-not-showing-on-google',
+    relatedSlugs: ['how-to-respond-to-google-reviews', 'how-many-google-reviews-dental-practice', 'google-business-profile-guide'],
     title: 'Why Your Dental Reviews Aren\'t Showing Up on Google',
     category: 'Local SEO',
     readingTime: '8 min read',
@@ -1619,7 +1702,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'dental-website-crawler-schema-checklist': {
     slug: 'dental-website-crawler-schema-checklist',
-    relatedSlugs: ['dentist-seo-vs-dental-marketing-agencies', 'how-dentists-get-recommended-by-chatgpt', 'google-review-response-examples-dentists'],
+    relatedSlugs: ['dentist-seo-vs-dental-marketing-agencies', 'how-dentists-get-recommended-by-chatgpt', 'google-review-response-examples-dentists', 'google-business-profile-guide'],
     title: 'Your Practice Website Through AI\'s Eyes: The Crawler & Schema Checklist for Dentists',
     category: 'Local SEO',
     readingTime: '9 min read',
@@ -1738,6 +1821,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'dentist-near-me-maps-3-pack': {
     slug: 'dentist-near-me-maps-3-pack',
+    relatedSlugs: ['google-business-profile-guide', 'google-map-pack-ranking'],
     title: '\'Dentist Near Me\': What Actually Decides the Maps 3-Pack',
     category: 'Local SEO',
     readingTime: '9 min read',
@@ -2063,6 +2147,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'google-business-profile-suspended-dentists': {
     slug: 'google-business-profile-suspended-dentists',
+    relatedSlugs: ['google-business-profile-suspended', 'google-business-profile-guide'],
     title: 'Google Business Profile Suspended: The Dentist\'s Reinstatement Playbook',
     category: 'Local SEO',
     readingTime: '8 min read',
@@ -2092,7 +2177,8 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
         heading: '1. What a Suspension Actually Means',
         content: [
           'A suspension means Google has lost confidence that your profile meets its guidelines for representing a real business, and has restricted it until you prove otherwise. It is a trust state, not a deletion: the profile, its reviews, and its history typically still exist in your dashboard. What changes is what the public can see and what you can do with it.',
-          'Suspensions are generally described as two kinds. In a soft suspension, the listing usually still appears on Search and Maps, but it is treated as unverified — you lose management control and the protection that comes with it. In a hard suspension, the listing is removed from Google entirely, and patients searching for you find competitors instead. The dashboard notice is the starting point either way: read exactly what it says before touching anything.'
+          'Suspensions are generally described as two kinds. In a soft suspension, the listing usually still appears on Search and Maps, but it is treated as unverified — you lose management control and the protection that comes with it. In a hard suspension, the listing is removed from Google entirely, and patients searching for you find competitors instead. The dashboard notice is the starting point either way: read exactly what it says before touching anything.',
+          'This playbook is the dental version of the reinstatement process. If the suspended profile belongs to a different kind of local business, our general reinstatement guide covers the same steps without the dental specifics.'
         ],
         keyTakeaway: 'Suspension is a trust hold, not a deletion. Identify whether yours is soft or hard, then work the process — calmly and once.'
       },
@@ -2173,7 +2259,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'google-review-response-examples-dentists': {
     slug: 'google-review-response-examples-dentists',
-    relatedSlugs: ['dentist-seo-vs-dental-marketing-agencies', 'how-dentists-get-recommended-by-chatgpt', 'dental-website-crawler-schema-checklist'],
+    relatedSlugs: ['dentist-seo-vs-dental-marketing-agencies', 'how-dentists-get-recommended-by-chatgpt', 'dental-website-crawler-schema-checklist', 'how-to-respond-to-google-reviews'],
     title: 'Google Review Response Examples for Dentists: 24 Copy-Paste Replies (incl. the 1-Star)',
     category: 'Local SEO',
     readingTime: '11 min read',
@@ -2320,6 +2406,7 @@ export const SEO_RESOURCES_DATABASE: Record<string, SeoResourceArticle> = {
 
   'how-many-google-reviews-dental-practice': {
     slug: 'how-many-google-reviews-dental-practice',
+    relatedSlugs: ['google-review-response-examples-dentists', 'dental-reviews-not-showing-on-google', 'how-dentists-get-recommended-by-chatgpt'],
     title: 'How Many Google Reviews Does a Dental Practice Need in 2026?',
     category: 'Local SEO',
     readingTime: '8 min read',
